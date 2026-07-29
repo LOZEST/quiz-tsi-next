@@ -4,10 +4,11 @@ Application de révision pour la prépa TSI, pensée d’abord pour l’iPad et 
 
 ## État du projet
 
-PR2 ajoute au socle exécutable l’authentification Supabase, les profils et
-rôles, les routes privées, la page compte minimale et un espace IndexedDB
-isolé par compte. Le tableau blanc, les questions et la progression restent
-volontairement des placeholders jusqu’aux PR responsables.
+PR3 ajoute le moteur manuscrit du tableau blanc : Canvas 2D natif, stylo avec
+pression et inclinaison, gomme par collision, grille, undo/redo, toolbar
+responsive et scènes IndexedDB isolées par compte. Les formes sont reportées à
+PR6 ; les questions et la progression restent hors périmètre jusqu’aux PR
+responsables.
 
 ## Prérequis
 
@@ -110,8 +111,8 @@ Après fusion sur `main`, activer si nécessaire le déploiement via GitHub → 
 ## Limites actuelles
 
 - aucune inscription publique ni récupération de mot de passe ;
-- aucun Canvas ou support Pencil réel ;
-- aucune donnée, question, progression ou préférence ;
+- aucune forme ou opération vectorielle avant PR6 ;
+- aucune question, progression ou synchronisation métier ;
 - hors connexion limité à une session SDK non expirée et un profil local déjà
   validé ; rôle informatif, aucune opération sensible ;
 - aucun service worker ou PWA ;
