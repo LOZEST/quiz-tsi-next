@@ -2,10 +2,12 @@ import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
 
+import { loadPagesBasePath } from './pages-config.mjs';
+
 const host = process.env.HOST || '127.0.0.1';
 const port = Number(process.env.PORT || 4173);
 const distDirectory = resolve('dist');
-const basePath = '/quiz-tsi-next/';
+const basePath = loadPagesBasePath();
 const contentTypes = new Map([
   ['.css', 'text/css; charset=utf-8'],
   ['.html', 'text/html; charset=utf-8'],

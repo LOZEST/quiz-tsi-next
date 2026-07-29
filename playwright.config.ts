@@ -1,6 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = 'http://127.0.0.1:4173/quiz-tsi-next/';
+import { loadPagesBasePath } from './scripts/pages-config.mjs';
+
+const baseURL = new URL(loadPagesBasePath(), 'http://127.0.0.1:4173').href;
 
 export default defineConfig({
   testDir: './tests/browser',

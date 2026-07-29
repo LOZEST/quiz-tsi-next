@@ -19,7 +19,7 @@
 | `npm run format:check` | Réussi |
 | `npm run lint` | Réussi |
 | `npm run typecheck` | Réussi |
-| `npm run test:coverage` | 25 tests réussis ; seuils globaux > 80 % |
+| `npm run test:coverage` | 39 tests réussis ; statements 86,45 %, branches 88 %, functions 84,09 %, lines 88,76 % |
 | `npm run build` | Réussi |
 | `npm run build:pages` | Réussi ; `dist/404.html` généré |
 | `npm run test:browser` | 27 tests réussis sur bureau, iPad portrait et iPad paysage |
@@ -59,5 +59,45 @@ Les lignes restent **En cours** dans la matrice jusqu’à la validation humaine
 - Aucun test sur iPad ou Apple Pencil réel.
 - Aucun lecteur d’écran réel.
 - Les workflows GitHub ne peuvent être observés qu’après push.
-- `npm audit` signale un avis haut lié au mode RSC serveur de React Router ; PR1 utilise uniquement le routage SPA navigateur, sans RSC ni action serveur.
 - Aucun code historique n’a été consulté ou copié.
+
+## Audit des dépendances
+
+Les commandes `npm audit --omit=dev` et `npm audit --json` terminent avec le
+code `1` et signalent deux entrées de sévérité haute : la dépendance transitive
+`react-router` et la dépendance directe `react-router-dom`. Elles correspondent
+au même avis :
+
+- source npm : `1124282` ;
+- identifiant GitHub : `GHSA-qwww-vcr4-c8h2` ;
+- titre : « React Router: RSC Mode CSRF Bypass Allows Action Execution Before
+  400 Response » ;
+- sévérité : haute ;
+- CWE : `CWE-352` ;
+- plage vulnérable publiée : `react-router >=7.12.0 <8.3.0` ;
+- version corrigée annoncée : `8.3.0`.
+
+L’entrée `react-router` est transitive, installée sous
+`node_modules/react-router`, touche la plage `7.12.0 - 8.2.0` et affecte
+`react-router-dom`. L’entrée `react-router-dom` est directe, installée sous
+`node_modules/react-router-dom`, et sa plage auditée est `>=7.12.0-pre.0`. Le
+score CVSS fourni par npm vaut `0` avec un vecteur `null`. Les métadonnées de
+l’audit comptent `2` avis hauts, `0` critique et `2` au total.
+
+Au moment de cette correction, npm publie `react-router-dom@7.18.2` comme
+dernière version stable et ne connaît pas `react-router-dom@8.3.0`. La suggestion
+automatique de l’audit (`7.11.0`) est une rétrogradation hors plage touchée, pas
+la version corrigée annoncée ; npm la qualifie en outre de changement SemVer
+majeur. Elle n’est donc pas appliquée.
+
+L’avis précise que l’exposition concerne les API RSC instables. PR1 n’utilise
+que `BrowserRouter`, `Routes`, `Navigate`, `NavLink` et `useLocation` dans une
+SPA rendue avec `createRoot` : aucun paquet ou API RSC, rendu serveur, action
+serveur ou exécution d’action n’est présent. Le risque résiduel est accepté
+temporairement pour PR1, car la dépendance reste formellement dans la plage
+signalée et une évolution future pourrait introduire les API concernées.
+
+Cette acceptation expire dès la publication d’une version stable corrigée
+compatible, ou avant toute introduction de RSC, SSR ou action serveur. Le
+contrôle de dépendances préalable à PR2 devra réévaluer l’avis ; il ne démarre
+pas PR2 dans la présente pull request.
