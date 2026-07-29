@@ -85,4 +85,18 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | FILTER-006 | Filtres | Aucun résultat strict | combinaison vide | appliquer | message, aucun relâchement | intégration | recette | PR4 | À implémenter |
 | IMPORT-001 | Import | Banque versionnée importable | bundle valide | importer | questions et rapport | intégration | revue rapport | PR4 | À implémenter |
 | IMPORT-002 | Import | Invalide en quarantaine | bundle mixte | importer | valides conservées | intégration | revue rapport | PR4 | À implémenter |
-| IMPORT-003 | Import | Import idempotent | bundle déjà importé | réimporter | aucun doublon | intégration | inspection | PR7 | À implémenter |
+| IMPORT-003 | Import | Import idempotent | bundle déjà importé | réimporter | aucun doublon | intégration | inspection | PR4 | À implémenter |
+| WHITEBOARD-009 | Tableau | OverlayDrawer sur grand écran | `/whiteboard` ouvert sur grand écran | ouvrir le menu | menu superposé ; taille, position et coordonnées du Canvas et de la question strictement identiques | Playwright géométrie avant/après | inspection grand écran | PR3 | À implémenter |
+| MATH-004 | Math | Priorité déterministe | source combinant opérateurs | analyser | arbre conforme à l'ordre normatif | unit AST | revue | PR4 | À implémenter |
+| MATH-005 | Math | Multiplication implicite refusée | source `2x` | analyser | refus et exemple `2*x` | unit erreur | revue message | PR4 | À implémenter |
+| MATH-006 | Math | Symboles sûrs | symboles du Clavier mathématique | analyser | tokens analysés sans exécution arbitraire | sécurité/unit | recette hostile | PR4 | À implémenter |
+| MATH-007 | Math | Décimaux normalisés | sources `1,5` et `1.5` | analyser | même valeur normalisée | unit | revue | PR4 | À implémenter |
+| MATH-008 | Math | Division ambiguë refusée | source `a/b/c` | analyser | refus avec les deux parenthésages proposés | unit erreur | revue message | PR4 | À implémenter |
+| AUTHORING-012 | Création | Valeur cohérente partout | variante générée | afficher énoncé, indice et correction | même variable, même valeur partout | intégration | revue variante | PR7 | À implémenter |
+| AUTHORING-013 | Création | Référence inconnue bloquante | `@nom` non défini | publier | publication bloquée et référence signalée | intégration | recette | PR7 | À implémenter |
+| AUTHORING-014 | Création | Renommage atomique | variable utilisée | renommer | toutes les références mises à jour sans perte ni état cassé persisté | unit transaction/intégration | recette | PR7 | À implémenter |
+| AUTHORING-015 | Création | Variable inutilisée signalée | définition sans référence | valider | avertissement non bloquant | unit validation | inspection | PR7 | À implémenter |
+| FILTER-007 | Filtres | Tous les chapitres globaux accessibles | Toutes les parties | ouvrir Chapitre | tous accessibles sans ambiguïté, option générale première | unit/RTL | inspection | PR4 | À implémenter |
+| FILTER-008 | Filtres | Sortie de Réflexe | Réflexe sélectionné | choisir un autre type | Difficulté revient à Toutes les difficultés | unit reducer/RTL | recette | PR4 | À implémenter |
+| FILTER-009 | Filtres | Homonymes distinguables | chapitres ou notions homonymes | ouvrir options | libellés ou groupes identifient les parents | RTL | inspection | PR4 | À implémenter |
+| IMPORT-004 | Import | Rapport avancé par question | bundle importé | consulter rapport | chaque question est acceptée, rejetée, mise à jour, ignorée ou mise en quarantaine | intégration | revue rapport | PR7 | À implémenter |

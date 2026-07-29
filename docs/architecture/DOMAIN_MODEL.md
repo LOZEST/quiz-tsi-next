@@ -210,18 +210,57 @@ interface SyncConflict { id: string; accountId: string; operationId: string; ent
 ## Création, syntaxe et import
 
 ```ts
+type MathSyntaxCategory =
+  | "operations"
+  | "fractions"
+  | "powers-indices"
+  | "functions"
+  | "comparisons"
+  | "vectors"
+  | "variables";
+type MathSyntaxVersion = number;
+interface MathSource { syntaxVersion: MathSyntaxVersion; source: string; }
 interface MathSyntaxCommand {
   id: string; syntax: string; example: string; description: string;
-  category: string; availableSince: number;
+  category: MathSyntaxCategory; availableSince: MathSyntaxVersion;
+}
+interface MathParseError {
+  code: string; message: string;
+  sourceStart: number | null; sourceEnd: number | null;
+  correctionExample: string | null;
 }
 interface MathSymbolEntry {
   id: string; symbol: string; label: string;
   category: "sets" | "greek" | "logic" | "analysis" | "geometry";
   aliases: string[]; availableSince: number;
 }
+interface QuestionSourceReference {
+  sourceLabel: string;
+  sourceReference: string | null;
+  sourceLocator: string | null;
+}
+interface QuestionProvenance {
+  bundleId: string;
+  importedAt: string;
+  references: QuestionSourceReference[];
+}
+interface QuestionBankEntry {
+  question: Question;
+  provenance: { mode: "default" | "extend" | "replace"; references: QuestionSourceReference[] } | null;
+}
 interface QuestionBankBundle {
-  schemaVersion: number; bundleId: string; sourceLabel: string;
-  sourceReference: string | null; generatedAt: string; questions: Question[];
+  schemaVersion: number; bundleId: string; generatedAt: string;
+  defaultProvenance: QuestionSourceReference[] | null;
+  questions: QuestionBankEntry[];
+}
+interface QuestionImportReportEntry {
+  questionExternalId: string | null;
+  status: "accepted" | "rejected" | "updated" | "ignored" | "quarantined";
+  message: string;
+}
+interface QuestionImportReport {
+  bundleId: string; importedAt: string;
+  entries: QuestionImportReportEntry[];
 }
 type FilterSelection<T> = { kind: "all" } | { kind: "one"; value: T };
 type DifficultyFilterSelection =
@@ -240,3 +279,25 @@ Commandes et symboles sont versionnés et constituent la source unique de l'anal
 `QuestionBankBundle` reste conceptuel jusqu'aux données réelles. L'import conserve source et version, produit un rapport, met les invalides en quarantaine, préserve les valides et ne crée aucun doublon à répétition.
 
 Les options générales de `FreeRevisionFilters` ne dépendent pas de leur traduction et ne sont pas des entrées du programme. Réflexe emploie `not-applicable`; une difficulté précise l'exclut. Un parent changé réinitialise ses enfants incompatibles à `{ kind: "all" }`.
+
+## Contrats finalisés de PR0.2
+
+### Analyse mathématique
+
+Une même source et une même version produisent le même arbre. Le parser ne dépend ni de la langue de l'interface ni du navigateur ; le rendu n'est jamais la source de vérité. Les migrations de syntaxe sont idempotentes. Commandes et symboles viennent uniquement du registre versionné. `eval`, `new Function` et toute exécution de JavaScript arbitraire sont interdits.
+
+### Références de variables dans le contenu
+
+Une référence `@nom` peut apparaître dans le texte et les formules de l'énoncé, l'indice, le titre d'une étape de correction et son contenu. L'instanciation d'une variante emploie une seule table `parameterValues` dans tous ces emplacements. Toute référence inconnue bloque la publication ; une définition inutilisée produit un avertissement. Un renommage modifie toutes les références atomiquement sans persister d'état intermédiaire. La suppression d'une variable utilisée passe par une confirmation interne ; celle d'une variable inutilisée n'est pas destructive et n'en demande pas.
+
+### Transitions des filtres
+
+Avec `{ kind: "all" }` pour Partie, Chapitre offre d'abord **Tous les chapitres**, puis tous les chapitres distingués par partie. Avec une partie précise et Chapitre général, Notion offre d'abord **Toutes les notions**, puis toutes les notions de la partie distinguées par chapitre. Quand Partie et Chapitre sont généraux, toutes les notions sont distinguées par partie et chapitre. Un changement de partie remet chapitre et notion incompatibles à `{ kind: "all" }` ; un changement de chapitre fait de même pour la notion incompatible.
+
+Choisir Réflexe fixe `difficulty` à `{ kind: "not-applicable" }`. Quitter Réflexe vers **Tous les types**, Formules, Cours ou Calcul fixe toujours `difficulty` à `{ kind: "all" }`, sans restaurer d'ancienne valeur cachée. Une difficulté précise exclut Réflexe mais ne modifie pas `questionType` et peut produire un résultat vide explicite.
+
+### Provenance et import
+
+Chaque question importée peut conserver sa provenance propre. Le bundle peut fournir une provenance par défaut ; une question peut la compléter ou la remplacer explicitement. Plusieurs références sont permises. Aucune source absente n'est inventée : les références fournies sont conservées exactement et une valeur absente reste `null`. `sourceLocator` accepte tout localisateur fourni, notamment page, chapitre, section, URL ou identifiant. Ce contrat reste adaptable lorsque les banques réelles seront reçues et ne fige pas prématurément leur format.
+
+Dès PR4, l'import initial est versionné, validé, idempotent et traçable. Il conserve toutes les entrées valides, met les invalides en quarantaine et produit un `QuestionImportReport`. Le rapport avancé de PR7 indique pour chaque question si elle est acceptée, rejetée, mise à jour, ignorée ou mise en quarantaine.

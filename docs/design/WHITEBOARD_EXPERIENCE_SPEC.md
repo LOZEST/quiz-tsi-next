@@ -12,7 +12,9 @@ L'expérience est sobre, classique, très lisible, minimale, rapide et tactile. 
 
 La question reste centrée dans le viewport complet, après la safe area supérieure. Compacte, réductible sans perte, lisible en portrait et paysage, elle ne monopolise pas le tableau et ne se déplace jamais à l'ouverture du menu.
 
-Le menu s'ouvre depuis la gauche au-dessus du tableau. Il ne redimensionne jamais le Canvas, ne transforme aucune coordonnée et ne déplace ni question, trait ni forme. Il se ferme par son bouton, le fond, Échap ou une navigation, puis restaure le focus sur son déclencheur hors navigation.
+Le menu est un `OverlayDrawer` qui s'ouvre depuis la gauche au-dessus du tableau sur téléphone, tablette, iPad, ordinateur et grand écran. Sa largeur est responsive, il respecte les safe areas et ne participe jamais à la largeur de mise en page. Il ne redimensionne jamais le Canvas, ne transforme aucune coordonnée logique et ne déplace ni question, trait ni forme. Il possède un backdrop et se ferme par son bouton, le backdrop, Échap ou une navigation. Ouvert, il piège le focus et permet une navigation clavier complète ; fermé, il restaure le focus sur son déclencheur hors navigation.
+
+`Sidebar` n'est jamais utilisée sur `/whiteboard` : aucune barre latérale persistante ne réduit le Canvas. Une éventuelle `Sidebar` reste réservée à un écran secondaire explicitement autorisé par un document normatif. L'ancien nom `MobileDrawer` ne désigne pas le composant normatif, qui n'est pas limité au mobile.
 
 Ordre exact :
 

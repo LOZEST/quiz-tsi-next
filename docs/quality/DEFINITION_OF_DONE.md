@@ -44,3 +44,15 @@ Erreur réseau, combinaison paramétrée impossible, contenu absent/invalide ou 
 
 ### Système de filtres
 - [ ] option Tout et cascade parent/enfant testées ; aucun résultat et protection du brouillon testés ; interactions Réflexe/difficulté testées.
+
+### Parser mathématique
+- [ ] grammaire versionnée, priorités et décimaux point/virgule testés ; multiplication implicite et divisions ambiguës refusées ; Unicode et erreurs pédagogiques testés ; migrations idempotentes ; absence d'exécution dynamique vérifiée.
+
+### Variables
+- [ ] références dans tous les contenus, renommage atomique et cohérence entre énoncé, indice et correction testés ; suppression confirmée lorsqu'utilisée ; référence inconnue bloquante ; variable inutilisée signalée.
+
+### Filtres
+- [ ] listes globales, homonymes, cascades parent/enfant et transitions Réflexe testés ; aucune restauration silencieuse d'une difficulté cachée et aucun filtre relâché silencieusement.
+
+### Imports
+- [ ] provenance et idempotence dès PR4, rapport et quarantaine testés ; aucun doublon et aucune perte d'entrée valide.

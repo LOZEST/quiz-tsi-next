@@ -285,3 +285,27 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 - **Préconditions :** **Tous les types**. **Étapes :** choisir Standard. **Résultat attendu :** aucune question Réflexe n'est admissible.
 ### FLOW-FILTER-006 — Aucun résultat
 - **Préconditions :** combinaison sans question. **Étapes :** appliquer. **Résultat attendu :** message explicite et aucun filtre ignoré, contenu incompatible ou question fabriquée.
+
+### FLOW-AUTHORING-009 — Renommer une variable utilisée
+- **Préconditions :** variable définie et référencée dans un ou plusieurs contenus. **Étapes :** renommer la variable. **Résultat attendu :** toutes les références dans l'énoncé, les formules, l'indice et la correction sont mises à jour atomiquement ; aucun état cassé n'est persisté.
+
+### FLOW-AUTHORING-010 — Détecter une référence inconnue
+- **Préconditions :** un contenu contient un `@nom` sans définition. **Étapes :** demander la publication. **Résultat attendu :** publication bloquée, référence identifiée et brouillon conservé.
+
+### FLOW-AUTHORING-011 — Afficher la même valeur dans l’énoncé et la correction
+- **Préconditions :** variante paramétrée valide. **Étapes :** ouvrir son aperçu. **Résultat attendu :** la même variable affiche la même valeur dans le texte et les formules de l'énoncé, l'indice, les titres et contenus des étapes de correction.
+
+### FLOW-FILTER-007 — Parcourir tous les chapitres depuis Toutes les parties
+- **Préconditions :** Partie vaut **Toutes les parties**. **Étapes :** ouvrir Chapitre. **Résultat attendu :** **Tous les chapitres** est premier, tous les chapitres sont disponibles et chacun est regroupé ou libellé avec sa partie sans homonyme ambigu.
+
+### FLOW-FILTER-008 — Quitter Réflexe et restaurer Toutes les difficultés
+- **Préconditions :** Réflexe sélectionné et Difficulté non applicable. **Étapes :** choisir **Tous les types**, Formules, Cours ou Calcul. **Résultat attendu :** Difficulté réapparaît sur **Toutes les difficultés** ; aucune valeur cachée antérieure n'est restaurée.
+
+### FLOW-FILTER-009 — Distinguer deux notions homonymes
+- **Préconditions :** Partie et Chapitre utilisent leurs options générales et deux notions ont le même nom. **Étapes :** ouvrir Notion. **Résultat attendu :** chaque notion est identifiable par sa partie et son chapitre.
+
+## Contrat transversal des filtres
+
+Quand Partie vaut **Toutes les parties**, Chapitre contient d'abord **Tous les chapitres**, puis tous les chapitres regroupés ou libellés par partie. Avec une partie précise et **Tous les chapitres**, Notion contient d'abord **Toutes les notions**, puis toutes celles de la partie regroupées ou libellées par chapitre. Avec **Toutes les parties** et **Tous les chapitres**, toutes les notions restent accessibles et identifiables par partie et chapitre.
+
+Changer Partie remet tout chapitre incompatible sur **Tous les chapitres** et toute notion incompatible sur **Toutes les notions**. Changer Chapitre remet toute notion incompatible sur **Toutes les notions**. Choisir Réflexe fixe `difficulty` à `{ kind: "not-applicable" }` et masque le contrôle ; le quitter remet toujours `difficulty` à `{ kind: "all" }`. Une difficulté précise exclut Réflexe sans changer Type et peut produire un état sans résultat explicite.

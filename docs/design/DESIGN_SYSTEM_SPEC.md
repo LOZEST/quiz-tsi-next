@@ -40,8 +40,8 @@ Aucune police distante. Police : `-apple-system, BlinkMacSystemFont, "SF Pro Tex
 | Composant | Responsabilité et variantes | États / accessibilité / tactile | Ne doit pas |
 |---|---|---|---|
 | AppShell | cadre routes, zones landmark | chargement/offline ; skip link, ordre DOM | contenir logique métier |
-| Sidebar | navigation persistante grands écrans | actif ; `nav`, `aria-current`, liens ≥44 | devenir dashboard |
-| MobileDrawer | navigation superposée | ouvert/fermé ; Échap, inert, focus, backdrop | déplacer/redimensionner le Canvas |
+| Sidebar | navigation persistante d'un écran secondaire explicitement autorisé | actif ; `nav`, `aria-current`, liens ≥44 | être utilisée sur `/whiteboard` ou devenir un dashboard |
+| OverlayDrawer | navigation superposée responsive | ouvert/fermé ; Échap, inert, piège/restauration du focus, backdrop, clavier complet | participer à la largeur de page ou déplacer/redimensionner le Canvas |
 | PageHeader | titre et action principale rare | compact/standard ; titre hiérarchique | accumuler statistiques/actions |
 | Section | grouper contenu titré | ouverte/simple ; relation titre-contenu | simuler une carte sans raison |
 | Surface | fond et séparation | défaut/muted/interactive ; contraste | imposer logique/navigation |
@@ -63,5 +63,11 @@ Aucune police distante. Police : `-apple-system, BlinkMacSystemFont, "SF Pro Tex
 | OfflineBanner | réseau indisponible et impact | passive/actionable ; `role=status` | promettre une sync non réalisée |
 
 ## Interdictions visuelles
+
+### OverlayDrawer du tableau blanc
+
+`OverlayDrawer` est le composant normatif de `/whiteboard` sur téléphone, tablette, iPad, ordinateur et grand écran. Il se superpose au contenu, possède une largeur responsive, respecte les safe areas et ne participe jamais à la largeur de mise en page. Son ouverture ne redimensionne pas le Canvas, ne déplace pas la question et ne transforme pas les coordonnées logiques. Il possède un backdrop et se ferme par bouton, backdrop ou Échap. Lorsqu'il est ouvert, il piège le focus, permet une navigation clavier complète et restaure le focus à la fermeture.
+
+`Sidebar` n'est jamais utilisée sur `/whiteboard` et aucune barre latérale persistante ne peut y réduire le Canvas. Une éventuelle `Sidebar` est réservée aux écrans secondaires lorsqu'un document normatif l'autorise explicitement. L'ancien nom `MobileDrawer` ne désigne pas ce composant et ne doit pas laisser croire que le tiroir normatif serait limité au mobile.
 
 Grands dégradés, néon, glassmorphism généralisé, grosses ombres, cartes multicolores, animations permanentes, grandes illustrations décoratives, formes inutiles, icônes colorées sans fonction, accent différent par page, dashboard générique, grande bannière marketing, zoom au survol et interface dépendante uniquement du hover sont interdits.
