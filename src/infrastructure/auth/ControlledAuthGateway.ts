@@ -5,7 +5,10 @@ import { isUserRole, type UserRole } from '@domain/auth/UserRole';
 
 const STORAGE_KEY = 'qtsi-controlled-auth-session';
 
-function createSession(email: string): AuthSession {
+function createSession(
+  email: string,
+  validity: AuthSession['validity'] = 'valid',
+): AuthSession {
   const roleValue = email.split('@')[0];
   const role: UserRole = isUserRole(roleValue) ? roleValue : 'user';
   return {
@@ -16,7 +19,7 @@ function createSession(email: string): AuthSession {
       displayName: `Compte ${role}`,
     },
     expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    validity: 'valid',
+    validity,
     workspaceGeneration: 0,
   };
 }
@@ -27,8 +30,17 @@ function createSession(email: string): AuthSession {
  */
 export class ControlledAuthGateway implements AuthGateway {
   getCurrentSession(): Promise<AuthSession | null> {
-    const email = sessionStorage.getItem(STORAGE_KEY);
-    return Promise.resolve(email ? createSession(email) : null);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
+    if (!stored) return Promise.resolve(null);
+    try {
+      const parsed = JSON.parse(stored) as {
+        email: string;
+        validity: AuthSession['validity'];
+      };
+      return Promise.resolve(createSession(parsed.email, parsed.validity));
+    } catch {
+      return Promise.resolve(createSession(stored));
+    }
   }
 
   signInWithPassword(email: string, password: string): Promise<AuthSession> {

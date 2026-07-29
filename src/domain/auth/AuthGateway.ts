@@ -1,6 +1,7 @@
 import type { AuthSession } from './AuthSession';
 
 export type AuthChangeHandler = (session: AuthSession | null) => void;
+export type AuthChangeErrorHandler = (error: unknown) => void;
 
 export interface AuthGateway {
   getCurrentSession(signal?: AbortSignal): Promise<AuthSession | null>;
@@ -10,5 +11,8 @@ export interface AuthGateway {
     signal?: AbortSignal,
   ): Promise<AuthSession>;
   signOut(): Promise<void>;
-  subscribeToAuthChanges(handler: AuthChangeHandler): () => void;
+  subscribeToAuthChanges(
+    handler: AuthChangeHandler,
+    onError?: AuthChangeErrorHandler,
+  ): () => void;
 }

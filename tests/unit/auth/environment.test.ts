@@ -58,4 +58,20 @@ describe('controlled browser-test gateway', () => {
     );
     expect(unsubscribe()).toBeUndefined();
   });
+
+  it('restores the controlled offline-unverified state used by browser coverage', async () => {
+    sessionStorage.setItem(
+      'qtsi-controlled-auth-session',
+      JSON.stringify({
+        email: 'owner@example.test',
+        validity: 'offline-unverified',
+      }),
+    );
+    await expect(
+      new ControlledAuthGateway().getCurrentSession(),
+    ).resolves.toMatchObject({
+      user: { role: 'owner' },
+      validity: 'offline-unverified',
+    });
+  });
 });

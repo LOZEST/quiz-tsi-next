@@ -5,6 +5,18 @@ const rawSession = {
   user: { id: 'account-a', email: 'a@example.test' },
   expires_at: 2_000_000_000,
 } as Session;
+const rawSessionB = {
+  user: { id: 'account-b', email: 'b@example.test' },
+  expires_at: 2_000_000_000,
+} as Session;
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 function createClient(options?: {
   session?: Session | null;
@@ -65,6 +77,7 @@ function createClient(options?: {
       authHandler?.(event, session);
     },
     unsubscribe,
+    single,
   };
 }
 
@@ -132,20 +145,92 @@ describe('SupabaseAuthGateway', () => {
     });
   });
 
-  it('maps refreshed sessions and closes subscriptions', async () => {
-    const controlled = createClient();
+  it.each(['SIGNED_IN', 'TOKEN_REFRESHED'])(
+    'maps %s sessions and closes subscriptions',
+    async (event) => {
+      const controlled = createClient();
+      const handler = vi.fn();
+      const unsubscribe = new SupabaseAuthGateway(
+        controlled.client,
+      ).subscribeToAuthChanges(handler);
+      controlled.emit(event, rawSession);
+      await vi.waitFor(() =>
+        expect(handler).toHaveBeenCalledWith(
+          expect.objectContaining({ validity: 'valid' }),
+        ),
+      );
+      unsubscribe();
+      expect(controlled.unsubscribe).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('reports profile revalidation failures without treating them as sign-out', async () => {
+    const controlled = createClient({
+      profileError: { code: 'PGRST116', message: 'no rows' },
+    });
     const handler = vi.fn();
-    const unsubscribe = new SupabaseAuthGateway(
-      controlled.client,
-    ).subscribeToAuthChanges(handler);
-    controlled.emit('TOKEN_REFRESHED', rawSession);
+    const onError = vi.fn();
+    new SupabaseAuthGateway(controlled.client).subscribeToAuthChanges(
+      handler,
+      onError,
+    );
+    controlled.emit('SIGNED_IN', rawSession);
     await vi.waitFor(() =>
-      expect(handler).toHaveBeenCalledWith(
-        expect.objectContaining({ validity: 'valid' }),
+      expect(onError).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'profile-missing' }),
       ),
     );
-    controlled.emit('OTHER', null);
-    expect(handler).toHaveBeenCalledWith(null);
-    unsubscribe();
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('ignores a late profile response from A after B has been activated', async () => {
+    const controlled = createClient();
+    const profileA = deferred<{
+      data: unknown;
+      error: null;
+    }>();
+    const profileB = deferred<{
+      data: unknown;
+      error: null;
+    }>();
+    controlled.single
+      .mockReset()
+      .mockReturnValueOnce(profileA.promise)
+      .mockReturnValueOnce(profileB.promise);
+    const handler = vi.fn();
+    new SupabaseAuthGateway(controlled.client).subscribeToAuthChanges(handler);
+
+    controlled.emit('SIGNED_IN', rawSession);
+    controlled.emit('SIGNED_IN', rawSessionB);
+    profileB.resolve({
+      data: {
+        user_id: 'account-b',
+        email: 'b@example.test',
+        display_name: 'Béatrice',
+        role: 'owner',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      error: null,
+    });
+    await vi.waitFor(() => expect(handler).toHaveBeenCalledOnce());
+    const activatedSession = handler.mock.calls[0]?.[0] as
+      | { user: { id: string } }
+      | undefined;
+    expect(activatedSession?.user.id).toBe('account-b');
+    profileA.resolve({
+      data: {
+        user_id: 'account-a',
+        email: 'a@example.test',
+        display_name: 'Ada',
+        role: 'user',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z',
+      },
+      error: null,
+    });
+    await profileA.promise;
+    await Promise.resolve();
+    expect(handler).toHaveBeenCalledOnce();
   });
 });

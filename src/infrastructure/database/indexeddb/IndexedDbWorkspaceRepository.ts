@@ -14,24 +14,40 @@ interface WorkspaceSchema extends DBSchema {
   };
 }
 
+type WorkspaceDatabase = IDBPDatabase<WorkspaceSchema>;
+type OpenWorkspaceDatabase = () => Promise<WorkspaceDatabase>;
+
+function openWorkspaceDatabase(): Promise<WorkspaceDatabase> {
+  return openDB<WorkspaceSchema>(DATABASE_NAME, DATABASE_VERSION, {
+    upgrade(db) {
+      if (!db.objectStoreNames.contains('workspaces')) {
+        db.createObjectStore('workspaces');
+      }
+    },
+  });
+}
+
 export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
-  private database: IDBPDatabase<WorkspaceSchema> | null = null;
+  private database: WorkspaceDatabase | null = null;
   private active: { userId: string; generation: number } | null = null;
+  private openAttempt = 0;
+
+  constructor(
+    private readonly openDatabase: OpenWorkspaceDatabase = openWorkspaceDatabase,
+  ) {}
 
   async open(userId: string, generation: number): Promise<UserWorkspace> {
     await this.close();
+    const activeAttempt = ++this.openAttempt;
     try {
-      const database = await openDB<WorkspaceSchema>(
-        DATABASE_NAME,
-        DATABASE_VERSION,
-        {
-          upgrade(db) {
-            if (!db.objectStoreNames.contains('workspaces')) {
-              db.createObjectStore('workspaces');
-            }
-          },
-        },
-      );
+      const database = await this.openDatabase();
+      if (this.openAttempt !== activeAttempt) {
+        database.close();
+        throw new AuthError(
+          'storage-unavailable',
+          'A newer IndexedDB workspace replaced this opening attempt.',
+        );
+      }
       this.database = database;
       this.active = { userId, generation };
       const existing = await database.get('workspaces', userId);
@@ -48,8 +64,11 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
       await database.put('workspaces', workspace, userId);
       return workspace;
     } catch (error) {
-      this.database = null;
-      this.active = null;
+      if (this.openAttempt === activeAttempt) {
+        this.database = null;
+        this.active = null;
+      }
+      if (error instanceof AuthError) throw error;
       throw new AuthError(
         'storage-unavailable',
         'IndexedDB workspace could not be opened.',
@@ -88,6 +107,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
   }
 
   close(): Promise<void> {
+    this.openAttempt += 1;
     this.active = null;
     this.database?.close();
     this.database = null;

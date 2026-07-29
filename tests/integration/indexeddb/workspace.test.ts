@@ -1,5 +1,14 @@
 import 'fake-indexeddb/auto';
+import type { IDBPDatabase } from 'idb';
 import { IndexedDbWorkspaceRepository } from '@infrastructure/database/indexeddb/IndexedDbWorkspaceRepository';
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 describe('IndexedDbWorkspaceRepository', () => {
   it('opens, caches and isolates account workspaces', async () => {
@@ -55,5 +64,38 @@ describe('IndexedDbWorkspaceRepository', () => {
     expect(await repository.getCachedProfile('keep-b')).toMatchObject({
       id: 'keep-b',
     });
+  });
+
+  it('closes a stale opening attempt without replacing the newer workspace', async () => {
+    const openingA = deferred<IDBPDatabase<never>>();
+    const openingB = deferred<IDBPDatabase<never>>();
+    const databaseA = {
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+    } as unknown as IDBPDatabase<never>;
+    const databaseB = {
+      get: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+    } as unknown as IDBPDatabase<never>;
+    const openDatabase = vi
+      .fn()
+      .mockReturnValueOnce(openingA.promise)
+      .mockReturnValueOnce(openingB.promise);
+    const repository = new IndexedDbWorkspaceRepository(openDatabase);
+
+    const openA = repository.open('account-a', 10);
+    const openB = repository.open('account-b', 11);
+    openingB.resolve(databaseB);
+    await expect(openB).resolves.toMatchObject({ userId: 'account-b' });
+    openingA.resolve(databaseA);
+    await expect(openA).rejects.toMatchObject({ code: 'storage-unavailable' });
+
+    expect(databaseA.close).toHaveBeenCalledOnce();
+    expect(databaseB.close).not.toHaveBeenCalled();
+    expect(repository.isGenerationActive(10, 'account-a')).toBe(false);
+    expect(repository.isGenerationActive(11, 'account-b')).toBe(true);
+    await repository.close();
   });
 });

@@ -37,6 +37,13 @@ const sessions: Record<'user' | 'admin' | 'owner', AuthSession> = {
   },
 };
 
+const offlineSessions = Object.fromEntries(
+  Object.entries(sessions).map(([role, session]) => [
+    role,
+    { ...session, validity: 'offline-unverified' },
+  ]),
+) as Record<'user' | 'admin' | 'owner', AuthSession>;
+
 function services(session: AuthSession | null): AppServices {
   const authGateway: AuthGateway = {
     getCurrentSession: vi.fn().mockResolvedValue(session),
@@ -176,6 +183,27 @@ describe('application routing', () => {
       await screen.findByRole('heading', { name: 'Administration' }),
     ).toBeInTheDocument();
   });
+
+  it.each(['user', 'admin', 'owner'] as const)(
+    'requires online permission verification for an offline %s on /admin',
+    async (role) => {
+      renderRoute('/admin', offlineSessions[role]);
+      expect(
+        await screen.findByRole('heading', {
+          name: 'Vérification en ligne requise',
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/permissions d’administration.*vérifiées en ligne/i),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole('heading', { name: 'Administration' }),
+      ).toBeNull();
+      expect(
+        screen.queryByRole('heading', { name: 'Accès refusé' }),
+      ).toBeNull();
+    },
+  );
 
   it('renders the compact account card without logout or admin for a user', async () => {
     const user = userEvent.setup();

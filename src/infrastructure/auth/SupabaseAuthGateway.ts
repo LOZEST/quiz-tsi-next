@@ -1,6 +1,10 @@
 import type { Session, SupabaseClient } from '@supabase/supabase-js';
 import { AuthError } from '@domain/auth/AuthError';
-import type { AuthChangeHandler, AuthGateway } from '@domain/auth/AuthGateway';
+import type {
+  AuthChangeErrorHandler,
+  AuthChangeHandler,
+  AuthGateway,
+} from '@domain/auth/AuthGateway';
 import type { AuthSession } from '@domain/auth/AuthSession';
 import {
   mapProfile,
@@ -50,16 +54,35 @@ export class SupabaseAuthGateway implements AuthGateway {
     if (error) throw mapSupabaseError(error);
   }
 
-  subscribeToAuthChanges(handler: AuthChangeHandler): () => void {
+  subscribeToAuthChanges(
+    handler: AuthChangeHandler,
+    onError?: AuthChangeErrorHandler,
+  ): () => void {
+    let eventGeneration = 0;
     const { data } = this.client.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) handler(null);
-      if (event === 'TOKEN_REFRESHED' && session) {
+      const activeEventGeneration = ++eventGeneration;
+      if (event === 'SIGNED_OUT' || !session) {
+        handler(null);
+        return;
+      }
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         void this.loadSession(session)
-          .then(handler)
-          .catch(() => handler(null));
+          .then((loadedSession) => {
+            if (eventGeneration === activeEventGeneration) {
+              handler(loadedSession);
+            }
+          })
+          .catch((error: unknown) => {
+            if (eventGeneration === activeEventGeneration) {
+              onError?.(error);
+            }
+          });
       }
     });
-    return () => data.subscription.unsubscribe();
+    return () => {
+      eventGeneration += 1;
+      data.subscription.unsubscribe();
+    };
   }
 
   private async loadSession(

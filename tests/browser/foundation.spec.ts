@@ -109,6 +109,28 @@ for (const [role, label] of [
   });
 }
 
+test('requires online verification for cached administrator permissions', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem(
+      'qtsi-controlled-auth-session',
+      JSON.stringify({
+        email: 'admin@example.test',
+        validity: 'offline-unverified',
+      }),
+    );
+  });
+  await page.goto('admin');
+  await expect(
+    page.getByRole('heading', { name: 'Vérification en ligne requise' }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Administration' }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('button')).toHaveCount(2);
+});
+
 test('restores the authenticated session after reload', async ({ page }) => {
   await login(page, 'owner');
   await page.reload();

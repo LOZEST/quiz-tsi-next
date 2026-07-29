@@ -75,6 +75,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [workspaceRepository],
   );
 
+  const transitionToSession = useCallback(
+    async (session: AuthSession): Promise<boolean> => {
+      controller.current?.abort();
+      const activeGeneration = ++generation.current;
+      const activeOperation = ++operation.current;
+      const abortController = new AbortController();
+      controller.current = abortController;
+      dispatch({
+        type: 'AUTHENTICATE_START',
+        generation: activeGeneration,
+        operationId: activeOperation,
+      });
+      try {
+        await workspaceRepository.close();
+        if (generation.current !== activeGeneration) return false;
+        await activateSession(session, activeGeneration, activeOperation);
+        return generation.current === activeGeneration;
+      } catch (error) {
+        if (
+          abortController.signal.aborted ||
+          generation.current !== activeGeneration
+        ) {
+          return false;
+        }
+        await workspaceRepository.close();
+        dispatch({
+          type: 'AUTHENTICATE_FAILURE',
+          generation: activeGeneration,
+          operationId: activeOperation,
+          error: normalizeError(error),
+        });
+        return false;
+      }
+    },
+    [activateSession, workspaceRepository],
+  );
+
   useEffect(() => {
     const activeGeneration = generation.current;
     const activeOperation = operation.current;
@@ -149,22 +186,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       });
 
-    const unsubscribe = authGateway.subscribeToAuthChanges((session) => {
-      if (!session && stateRef.current.status === 'authenticated') {
+    const unsubscribe = authGateway.subscribeToAuthChanges(
+      (session) => {
+        if (session) {
+          void transitionToSession(session);
+          return;
+        }
         const nextGeneration = ++generation.current;
         controller.current?.abort();
-        void workspaceRepository.close().finally(() => {
-          dispatch({ type: 'SESSION_INVALIDATED', generation: nextGeneration });
+        void workspaceRepository.close().then(() => {
+          if (generation.current === nextGeneration) {
+            dispatch({
+              type: 'SESSION_INVALIDATED',
+              generation: nextGeneration,
+            });
+          }
         });
-      }
-    });
+      },
+      (error) => {
+        controller.current?.abort();
+        const activeGeneration = ++generation.current;
+        const activeOperation = ++operation.current;
+        dispatch({
+          type: 'AUTHENTICATE_START',
+          generation: activeGeneration,
+          operationId: activeOperation,
+        });
+        void workspaceRepository.close().then(() => {
+          if (generation.current === activeGeneration) {
+            dispatch({
+              type: 'AUTHENTICATE_FAILURE',
+              generation: activeGeneration,
+              operationId: activeOperation,
+              error: normalizeError(error),
+            });
+          }
+        });
+      },
+    );
 
     return () => {
       abortController.abort();
       unsubscribe();
       void workspaceRepository.close();
     };
-  }, [activateSession, authGateway, workspaceRepository]);
+  }, [activateSession, authGateway, transitionToSession, workspaceRepository]);
 
   const signIn = useCallback(
     async (email: string, password: string): Promise<boolean> => {
