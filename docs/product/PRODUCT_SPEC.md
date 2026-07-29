@@ -56,7 +56,9 @@ Aucune permission sensible ne dépend uniquement de l'interface.
 
 ## Routes
 
-Application React à routage client : `/` redirige vers `/login` sans session et `/whiteboard` avec session valide ou espace hors connexion restauré ; `/login` authentifie ; `/whiteboard` porte question, tableau, parcours, correction et autoévaluation ; `/progress` porte Mon parcours ; `/questions` banque et édition ; `/settings` préférences/données/synchronisation/sauvegardes/hors connexion ; `/account` identité, rôle, session, synchronisation et déconnexion ; `/admin` est visible et accessible seulement selon permissions serveur. Navigation directe, rechargement, PWA, hors connexion et basename GitHub Pages sont obligatoires.
+Application React à routage client : `/` redirige vers `/login` sans session et `/whiteboard` avec session valide ou espace hors connexion restauré ; `/login` authentifie ; `/whiteboard` porte question, tableau, parcours, correction et autoévaluation ; `/progress` porte Mon parcours ; `/questions` banque et édition ; `/settings` préférences/données/synchronisation/sauvegardes/hors connexion ; `/account` fournit dès PR2 une page compte minimale, enrichie en PR8 ; `/admin` fournit dès PR2 un placeholder protégé et n'accueille l'administration complète qu'en PR8. Navigation directe, rechargement, PWA, hors connexion et basename GitHub Pages sont obligatoires.
+
+PR2 protège réellement les routes privées selon la session et le rôle. Pour `/admin`, `user` reçoit un refus compréhensible ; `admin` et `owner` accèdent uniquement au placeholder protégé, sans action sensible. Les permissions serveur restent l'autorité finale. PR8 ajoute l'administration complète, notamment la gestion des contenus, comptes et rôles selon les permissions serveur, ainsi que les actions sensibles et leurs refus serveur.
 
 ## Tableau blanc
 
@@ -130,7 +132,14 @@ Recherche, filtres, liste, aperçu, création/modification/duplication/publicati
 Apparence, Apple Pencil, Données locales, Synchronisation, Sauvegardes, Hors connexion ; secondaires fermées. Ne pas exposer outbox interne, tokens, URL/clés Supabase, identifiants techniques ou logs complets sans nécessité.
 
 ### Compte (`/account`)
-Initiale/avatar, nom, email, rôle traduit, connexion, synchronisation, données locales pertinentes, déconnexion. La déconnexion n'est pas proéminente sur le tableau.
+Dès PR2, la page compte minimale affiche uniquement l'identité réelle, l'email s'il est utile, le rôle traduit, l'état de session utile et la déconnexion réelle. Les rôles sont `user` — Élève, `admin` — Administrateur et `owner` — Propriétaire. Une carte compte compacte dans le tiroir donne accès à cette page ; la déconnexion n'est pas proéminente sur le tableau.
+
+PR8 enrichit `/account` avec l'édition des informations autorisées, les réglages généraux et Pencil, la sauvegarde, l'import/export, la synchronisation détaillée, les données locales et appareils, la gestion avancée hors connexion et les diagnostics utiles. Ces fonctions complètes ne font pas partie de la page compte minimale de PR2. PR8 ne réimplémente ni l'authentification ni la déconnexion de base.
+
+### Administration (`/admin`)
+Dès PR2, la route est protégée selon le rôle : `user` reçoit un état d'accès refusé compréhensible ; `admin` et `owner` voient uniquement un placeholder protégé. Aucune modification de rôle, gestion des utilisateurs, gestion administrative ou action sensible n'est disponible en PR2.
+
+PR8 fournit l'administration complète : gestion des contenus selon le rôle, gestion des comptes et rôles selon les permissions serveur, actions sensibles, refus serveur et interface complète pour `admin` et `owner`. Un contrôle client ne suffit jamais à autoriser une action sensible.
 
 ### Connexion (`/login`)
 Quiz TSI, phrase courte, email, mot de passe, afficher/masquer, Se connecter, erreur compréhensible, chargement et restauration hors connexion autorisée. Pas de hero marketing, carrousel, grande illustration, statistiques publiques, décor excessif ou inscription publique non administrée.

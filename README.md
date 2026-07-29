@@ -78,4 +78,4 @@ Après fusion sur `main`, activer si nécessaire le déploiement via GitHub → 
 - Héritage : [politique de migration](docs/legacy/LEGACY_MIGRATION_POLICY.md) et [inventaire](docs/legacy/LEGACY_INVENTORY.md)
 - Livraison : [roadmap](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [matrice d’acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md) et [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md)
 
-La hiérarchie définie dans ces documents reste l’autorité. PR2 ne commence qu’après fusion de PR1.
+La hiérarchie définie dans ces documents reste l’autorité. La chaîne courante est PR1 → PR1.1 documentaire → PR2 ; PR2 ne commence qu’après fusion de la clarification PR1.1.

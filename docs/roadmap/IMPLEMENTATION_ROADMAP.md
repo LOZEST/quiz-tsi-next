@@ -1,9 +1,9 @@
 # Feuille de route d’implémentation
 
-> **Objectif :** imposer l’ordre et le périmètre des PR0 à PR9, incluant PR0.1 et PR0.2. **Document normatif.**
+> **Objectif :** imposer l’ordre et le périmètre des PR0 à PR9, incluant PR0.1, PR0.2 et PR1.1. **Document normatif.**
 
 ## Sommaire
-- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR0.1](#pr01--expérience-utilisateur-et-création-de-questions) · [PR0.2](#pr02--finalisation-des-contrats) · [PR1](#pr1--socle-du-projet) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-de-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
+- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR0.1](#pr01--expérience-utilisateur-et-création-de-questions) · [PR0.2](#pr02--finalisation-des-contrats) · [PR1](#pr1--socle-du-projet) · [PR1.1](#pr11--clarification-authentification-compte-et-administration) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-de-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
 
 ## Règle de dépendance
 
@@ -66,19 +66,27 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Critères de fusion :** CI verte, preview, a11y shell.
 - **Hors périmètre :** auth et logique métier.
 
+## PR1.1 — Clarification authentification, compte et administration
+
+- **Objectif :** clarifier les frontières de PR2 et PR8, aucune implémentation.
+- **Dépendances :** PR1 fusionnée.
+- **Sorties :** contrats documentaires cohérents pour l'authentification, la page compte minimale, la déconnexion, le placeholder protégé et l'administration complète.
+- **Critères de fusion :** cohérence documentaire validée ; aucun code ; aucune dépendance.
+- **Hors périmètre :** tout démarrage de PR2.
+
 ## PR2 — Authentification et espace utilisateur
 
-- **Objectif :** Supabase dev, connexion/session/profils/rôles, repositories, IndexedDB, comptes, offline initial.
-- **Dépendances :** PR1 fusionnée.
+- **Objectif :** Supabase dev ; connexion email et mot de passe ; restauration et expiration de session ; déconnexion réelle ; profil minimal ; lecture des rôles `user`, `admin` et `owner` ; page compte minimale ; carte compte compacte dans le tiroir ; protection des routes privées ; placeholder `/admin` protégé avec état d'accès refusé ; repositories et IndexedDB isolés par compte ; offline initial.
+- **Dépendances :** PR1.1 fusionnée.
 - **Entrées :** ports domaine et projet Supabase dev.
-- **Sorties :** isolation compte et login opérationnels.
-- **Fichiers probables :** features/auth, infrastructure DB/Supabase.
+- **Sorties :** isolation compte, authentification, déconnexion, page compte minimale et contrôle d'accès aux routes opérationnels.
+- **Fichiers probables :** features/auth/account, routes, infrastructure DB/Supabase.
 - **Historique concerné :** auth/workspace/migrations.
-- **Tests obligatoires :** unitaires ports, intégration RLS/isolation.
-- **Tests manuels :** login, refus, changement compte, offline.
+- **Tests obligatoires :** unitaires ports/rôles/routes, intégration RLS/isolation et routage Playwright.
+- **Tests manuels :** login, déconnexion, refus, changement compte, offline et accès `/admin` avec les trois rôles.
 - **Risques :** RLS/fuite intercompte.
 - **Critères de fusion :** tests sécurité et récupération verts.
-- **Hors périmètre :** tableau et progression.
+- **Hors périmètre :** tableau et progression ; gestion complète du compte ; réglages complets ; gestion des appareils ; import/export ; gestion administrative ; modification des rôles ; action sensible ; interface d'administration complète.
 
 ## PR3 — Moteur de tableau blanc
 
@@ -152,17 +160,17 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR8 — Réglages, compte et administration
 
-- **Objectif :** préférences/Pencil avancé, sync, sauvegardes, import/export, compte/déconnexion/admin.
+- **Objectif :** enrichir `/account` ; édition des informations autorisées ; réglages généraux et Pencil ; sauvegarde ; import/export ; synchronisation détaillée ; données locales et appareils ; gestion avancée hors connexion ; administration complète ; gestion des contenus selon le rôle ; gestion des comptes et rôles selon les permissions serveur ; actions sensibles et refus serveur ; interface complète pour `admin` et `owner`. PR8 ne réimplémente pas l'authentification ni la déconnexion de base fournies par PR2.
 - **Dépendances :** PR7 fusionnée.
 - **Entrées :** repositories et politiques serveur.
-- **Sorties :** écrans secondaires et opérations sécurisées.
+- **Sorties :** page Compte complète, réglages complets, interface d'administration complète et opérations sécurisées.
 - **Fichiers probables :** features/settings/account/admin.
 - **Historique concerné :** team/workspace/sync.
 - **Tests obligatoires :** permissions, backups, roundtrip, comptes.
-- **Tests manuels :** sections, logout, owner/admin, restauration.
+- **Tests manuels :** sections, compte enrichi, owner/admin, refus serveur et restauration.
 - **Risques :** opérations sensibles/perte donnée.
 - **Critères de fusion :** SETTINGS/ACCOUNT/admin validés.
-- **Hors périmètre :** service worker final.
+- **Hors périmètre :** authentification, déconnexion de base et service worker final.
 
 ## PR9 — PWA, migration et recette finale
 
