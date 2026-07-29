@@ -136,6 +136,38 @@ Une configuration `reflex` impose `difficulty: null` et 60 secondes. Un blueprin
 
 ## Tableau
 
+PR3 persiste uniquement le moteur manuscrit. Une scène PR3 ne contient que des objets `stroke` et couvre le stylo, la pression, l'inclinaison, la gomme, la grille et undo/redo. Les formes et les opérations sur objets sont des extensions de PR6 ; elles ne sont ni requises ni exposées par PR3.
+
+```ts
+interface WhiteboardStrokeStyle {
+  color: string;
+  width: number;
+  opacity: number;
+  lineCap: "round" | "square";
+  lineJoin: "round" | "bevel" | "miter";
+}
+interface WhiteboardPoint {
+  x: number;
+  y: number;
+  pressure: number;
+  tiltX: number | null;
+  tiltY: number | null;
+}
+interface WhiteboardStroke {
+  kind: "stroke";
+  id: string;
+  style: WhiteboardStrokeStyle;
+  points: WhiteboardPoint[];
+}
+interface WhiteboardScene {
+  schemaVersion: number; sceneId: string; questionInstanceId: string;
+  logicalWidth: number; logicalHeight: number; objects: WhiteboardStroke[];
+  updatedAt: string;
+}
+```
+
+PR6 étend de façon versionnée ce contrat manuscrit avec les objets vectoriels suivants :
+
 ```ts
 type WhiteboardShapeKind =
   | "line"
@@ -148,13 +180,6 @@ type WhiteboardShapeKind =
   | "coordinate-system"
   | "trigonometric-circle";
 
-interface WhiteboardStrokeStyle {
-  color: string;
-  width: number;
-  opacity: number;
-  lineCap: "round" | "square";
-  lineJoin: "round" | "bevel" | "miter";
-}
 interface WhiteboardShapeGeometry {
   schemaVersion: number;
   x: number;
@@ -165,16 +190,16 @@ interface WhiteboardShapeGeometry {
   properties: Record<string, ParameterPrimitive>;
 }
 type WhiteboardObject =
-  | { kind: "stroke"; id: string; style: WhiteboardStrokeStyle; points: Array<{ x: number; y: number; pressure: number }> }
+  | WhiteboardStroke
   | { kind: "shape"; id: string; shapeKind: WhiteboardShapeKind; style: WhiteboardStrokeStyle; geometry: WhiteboardShapeGeometry };
-interface WhiteboardScene {
+interface AdvancedWhiteboardScene {
   schemaVersion: number; sceneId: string; questionInstanceId: string;
   logicalWidth: number; logicalHeight: number; objects: WhiteboardObject[];
   updatedAt: string;
 }
 ```
 
-Les coordonnées, positions et dimensions sont logiques, indépendantes des pixels et du tiroir. `id` reste stable. `geometry.schemaVersion` permet de migrer la géométrie sans invalider toutes les scènes ; `rotation` est `null` quand elle n'est pas pertinente. `properties` est validé par forme et n'accepte que les clés documentées pour son `shapeKind`. Une restauration met en quarantaine les objets invalides sans perdre les objets sains.
+Les coordonnées, positions et dimensions sont logiques, indépendantes des pixels et du tiroir. `id` reste stable. PR6 ajoute la sélection, le déplacement et le redimensionnement des objets vectoriels sans modifier les contrats manuscrits de PR3. `geometry.schemaVersion` permet de migrer la géométrie sans invalider toutes les scènes ; `rotation` est `null` quand elle n'est pas pertinente. `properties` est validé par forme et n'accepte que les clés documentées pour son `shapeKind`. Une restauration met en quarantaine les objets invalides sans perdre les objets sains.
 
 Toute nouvelle forme nécessite une évolution documentée du contrat, une migration de scène, un test de sérialisation, un test de restauration, un test de géométrie et un test de compatibilité avec les scènes précédentes.
 
