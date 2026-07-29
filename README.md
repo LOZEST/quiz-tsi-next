@@ -4,7 +4,10 @@ Application de révision pour la prépa TSI, pensée d’abord pour l’iPad et 
 
 ## État du projet
 
-PR1 fournit le socle exécutable : Vite, React, TypeScript strict, routes, shell accessible, design system minimal, tests, CI et build GitHub Pages. L’authentification, le tableau blanc, les questions et toute logique métier restent volontairement absents.
+PR2 ajoute au socle exécutable l’authentification Supabase, les profils et
+rôles, les routes privées, la page compte minimale et un espace IndexedDB
+isolé par compte. Le tableau blanc, les questions et la progression restent
+volontairement des placeholders jusqu’aux PR responsables.
 
 ## Prérequis
 
@@ -16,10 +19,37 @@ PR1 fournit le socle exécutable : Vite, React, TypeScript strict, routes, shell
 ```bash
 nvm use
 npm ci
+npm run supabase:start
+npm run supabase:reset
 npm run dev
 ```
 
 Vite affiche l’URL locale à ouvrir.
+
+Copier `.env.example` vers `.env.local`, puis renseigner uniquement :
+
+```dotenv
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=<clé anon locale>
+```
+
+Ces valeurs sont publiques par conception. Une clé `service_role`, un mot de
+passe de base, un JWT secret ou un identifiant personnel ne doivent jamais
+être placés dans une variable `VITE_*` ni committés.
+
+Supabase local applique les migrations de `supabase/migrations`. L’inscription
+publique est désactivée. Créer les utilisateurs temporaires via Supabase Studio
+local. Le trigger crée chaque profil avec le rôle `user`. Pour une recette
+locale, attribuer `admin` ou `owner` uniquement depuis l’éditeur SQL local avec
+un rôle serveur autorisé :
+
+```sql
+update public.profiles
+set role = 'admin'
+where user_id = '<uuid temporaire>';
+```
+
+Cette opération n’est pas exposée au navigateur.
 
 ## Qualité et tests
 
@@ -31,9 +61,24 @@ npm run test:unit
 npm run test:coverage
 npx playwright install chromium
 npm run test:browser
+npm run test:rls
 ```
 
 Les tests navigateur utilisent Chromium avec trois profils : bureau, iPad portrait et iPad paysage. Ces profils reproduisent les viewports et interactions tactiles ; ils ne remplacent pas une recette sur iPad réel.
+
+Les tests navigateur construisent une prévisualisation avec un adapter
+d’authentification contrôlé par `VITE_AUTH_ADAPTER=controlled`. Cet adapter
+existe uniquement pour Playwright, n’est pas un compte de démonstration et ne
+contient aucun secret. Ne jamais définir cette variable dans un déploiement.
+
+Les tests RLS nécessitent Docker. Leur séquence reproductible est :
+
+```bash
+npm run supabase:start
+npm run supabase:reset
+npm run test:rls
+npm run supabase:stop
+```
 
 ## Builds et prévisualisation
 
@@ -56,18 +101,20 @@ Après fusion sur `main`, activer si nécessaire le déploiement via GitHub → 
 - `src/pages` : composition des routes temporaires
 - `src/design-system` : tokens, styles et composants génériques
 - `src/features` : futurs cas d’usage
-- `src/domain` : futurs contrats et règles purs
-- `src/infrastructure` : futurs adaptateurs
+- `src/domain` : contrats Auth et Workspace purs
+- `src/infrastructure` : adapters Supabase et IndexedDB
 - `tests/unit` : composants, routes et fallback Pages
 - `tests/browser` : clavier, tactile, responsive, accessibilité et routes profondes
 - `scripts` : génération et prévisualisation du fallback Pages
 
 ## Limites actuelles
 
-- aucune authentification ou session ;
+- aucune inscription publique ni récupération de mot de passe ;
 - aucun Canvas ou support Pencil réel ;
 - aucune donnée, question, progression ou préférence ;
-- aucun stockage, mode hors connexion, service worker ou PWA ;
+- hors connexion limité à une session SDK non expirée et un profil local déjà
+  validé ; rôle informatif, aucune opération sensible ;
+- aucun service worker ou PWA ;
 - aucune recette sur iPad ou avec un lecteur d’écran réel.
 
 ## Documentation normative

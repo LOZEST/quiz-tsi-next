@@ -11,10 +11,10 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | GLOBAL-003 | Global | Divulgation progressive | écran chargé | observer puis ouvrir détails | secondaire fermé puis accessible | RTL états | inspection | PR1 | En cours |
 | GLOBAL-004 | Global | Cibles tactiles de 44 px | composants rendus | mesurer cibles | minimum 44×44 px | Playwright dimensions | iPad | PR1 | En cours |
 | GLOBAL-005 | Global | Échap et restauration du focus | tiroir/dialogue ouvert | presser Échap | fermé, focus déclencheur | Playwright | clavier | PR1 | En cours |
-| AUTH-001 | Auth | Connexion réussie | compte valide | se connecter | `/whiteboard` isolé | intégration | recette | PR2 | À implémenter |
-| AUTH-002 | Auth | Erreur compréhensible | identifiants refusés | soumettre | texte actionnable | RTL | recette | PR2 | À implémenter |
-| AUTH-003 | Auth | Isolation des comptes | A puis B | changer compte | aucune donnée A | intégration concurrence | recette A/B | PR2 | À implémenter |
-| AUTH-004 | Auth | Protection de la route administration | utilisateurs `user`, `admin` et `owner` authentifiés | ouvrir `/admin` | `user` reçoit un refus compréhensible ; `admin` et `owner` accèdent uniquement au placeholder protégé ; aucune action sensible n'est disponible en PR2 | tests de routage et Playwright | recette des trois rôles | PR2 | À implémenter |
+| AUTH-001 | Auth | Connexion réussie | compte valide | se connecter | `/whiteboard` isolé | intégration | recette | PR2 | En cours |
+| AUTH-002 | Auth | Erreur compréhensible | identifiants refusés | soumettre | texte actionnable | RTL | recette | PR2 | En cours |
+| AUTH-003 | Auth | Isolation des comptes | A puis B | changer compte | aucune donnée A | intégration concurrence | recette A/B | PR2 | En cours |
+| AUTH-004 | Auth | Protection de la route administration | utilisateurs `user`, `admin` et `owner` authentifiés | ouvrir `/admin` | `user` reçoit un refus compréhensible ; `admin` et `owner` accèdent uniquement au placeholder protégé ; aucune action sensible n'est disponible en PR2 | tests de routage et Playwright | recette des trois rôles | PR2 | En cours |
 | WHITEBOARD-001 | Tableau | Accueil après connexion | session valide | ouvrir `/` | redirigé tableau prêt | route e2e | inspection | PR3 | À implémenter |
 | WHITEBOARD-002 | Tableau | Question centrée | question active | mesurer portrait/paysage | centrée sur viewport | test visuel | iPad | PR3 | À implémenter |
 | WHITEBOARD-003 | Tableau | Tiroir sans déplacement | scène active | ouvrir tiroir | question/Canvas/coordonnées immobiles | Playwright géométrie | Pencil | PR3 | À implémenter |
@@ -41,12 +41,12 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | QUESTIONS-003 | Banque | Brouillon hors connexion | offline | créer/enregistrer | brouillon local + outbox | intégration IDB | mode avion | PR7 | À implémenter |
 | QUESTIONS-004 | Banque | Publication selon le rôle | rôles variés | publier | serveur autorise/refuse | tests RLS | recette rôles | PR7 | À implémenter |
 | SETTINGS-001 | Réglages | Sections repliables | page ouverte | observer/ouvrir | secondaires fermées par défaut | RTL | inspection | PR8 | À implémenter |
-| ACCOUNT-001 | Compte | Rôles traduits | profils rôles | ouvrir compte | Élève/Administrateur/Propriétaire | unit | inspection | PR2 | À implémenter |
-| ACCOUNT-002 | Compte | Déconnexion hors du menu principal | tableau ouvert | ouvrir tiroir | pas de gros bouton déconnexion | RTL absence | inspection | PR2 | À implémenter |
+| ACCOUNT-001 | Compte | Rôles traduits | profils rôles | ouvrir compte | Élève/Administrateur/Propriétaire | unit | inspection | PR2 | En cours |
+| ACCOUNT-002 | Compte | Déconnexion hors du menu principal | tableau ouvert | ouvrir tiroir | pas de gros bouton déconnexion | RTL absence | inspection | PR2 | En cours |
 | OFFLINE-001 | Offline | Démarrage hors connexion | espace autorisé | lancer offline | tableau local accessible | browser SW | mode avion | PR9 | À implémenter |
 | OFFLINE-002 | Offline | Travail hors connexion | offline | résoudre/corriger | écriture locale sans perte | browser | mode avion iPad | PR9 | À implémenter |
 | SYNC-001 | Sync | Outbox reprise | opérations offline | rétablir réseau | push puis pull idempotent | intégration | recette réseau | PR9 | À implémenter |
-| SYNC-002 | Sync | Réponse tardive isolée par compte | requête A en vol | passer B puis réponse A | réponse ignorée | test concurrence | recette A/B | PR2 | À implémenter |
+| SYNC-002 | Sync | Réponse tardive isolée par compte | requête A en vol | passer B puis réponse A | réponse ignorée | test concurrence | recette A/B | PR2 | En cours |
 | PWA-001 | PWA | Installation | navigateur compatible | installer/lancer | standalone fonctionnel | Playwright audit | iPad installation | PR9 | À implémenter |
 | PWA-002 | PWA | Aucune donnée Supabase privée en cache | session active | inspecter caches | zéro réponse privée | test SW | DevTools | PR9 | À implémenter |
 | A11Y-001 | Accessibilité | Navigation clavier | application ouverte | parcourir clavier | ordre/action complets | Playwright axe/clavier | lecteur écran | PR9 | À implémenter |

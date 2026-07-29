@@ -14,4 +14,5 @@ export const appRoutes = [
   '/settings',
   '/account',
   '/admin',
+  '/access-denied',
 ] as const;

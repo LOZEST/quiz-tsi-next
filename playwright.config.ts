@@ -16,7 +16,8 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   webServer: {
-    command: 'npm run build:pages && npm run preview:pages',
+    command:
+      'VITE_AUTH_ADAPTER=controlled npm run build:pages && npm run preview:pages',
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

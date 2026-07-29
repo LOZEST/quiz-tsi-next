@@ -4,7 +4,7 @@ export function AdminPage() {
   return (
     <PageHeader
       title="Administration"
-      description="Les contrôles d’administration seront ajoutés dans la PR8."
+      description="Espace protégé. Les fonctions d’administration seront ajoutées dans la PR8."
     />
   );
 }

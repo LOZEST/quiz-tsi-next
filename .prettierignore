@@ -6,3 +6,5 @@ docs/product/
 docs/quality/
 docs/roadmap/
 AGENTS.md
+supabase/.branches/
+supabase/.temp/

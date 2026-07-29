@@ -1,0 +1,33 @@
+.form {
+  display: grid;
+  gap: var(--qtsi-space-5);
+}
+
+.field {
+  display: grid;
+  gap: var(--qtsi-space-2);
+}
+
+.field label {
+  font-weight: 650;
+}
+
+.field input {
+  min-block-size: var(--qtsi-touch-target);
+  padding-inline: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-2);
+  font: inherit;
+}
+
+.field input:focus-visible {
+  outline: 3px solid var(--qtsi-accent);
+  outline-offset: 2px;
+}
+
+.error {
+  margin: 0;
+  color: var(--qtsi-danger);
+}

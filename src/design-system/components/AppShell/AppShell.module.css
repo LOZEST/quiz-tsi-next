@@ -25,6 +25,16 @@
   letter-spacing: -0.01em;
 }
 
+.offlineBanner {
+  padding: var(--qtsi-space-3)
+    calc(var(--qtsi-space-5) + var(--qtsi-safe-right)) var(--qtsi-space-3)
+    calc(var(--qtsi-space-5) + var(--qtsi-safe-left));
+  color: var(--qtsi-text);
+  background: #fff7df;
+  border-block-end: 1px solid var(--qtsi-border);
+  text-align: center;
+}
+
 .main {
   inline-size: min(calc(100% - var(--qtsi-space-8)), var(--qtsi-content-width));
   margin-inline: auto;
@@ -38,6 +48,35 @@
   margin: var(--qtsi-space-4) 0 0;
   padding: 0;
   list-style: none;
+}
+
+.accountCard {
+  display: grid;
+  min-block-size: var(--qtsi-touch-target);
+  gap: var(--qtsi-space-1);
+  margin-block-start: auto;
+  padding: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface-muted);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  text-decoration: none;
+}
+
+.accountIdentity {
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountRole {
+  color: var(--qtsi-text-secondary);
+}
+
+.accountAction {
+  color: var(--qtsi-accent);
+  font-size: 0.875rem;
 }
 
 .link,
