@@ -53,13 +53,13 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR3 — Moteur de tableau blanc
 
-- **Objectif :** Canvas autonome, Pencil/pression/gomme/undo/grille/formes/scènes/brouillons/rotation/main.
+- **Objectif :** Canvas autonome, Pencil/pression/gomme/undo/grille/formes mathématiques/scènes/brouillons/rotation/main, géométries versionnées, migrations de scènes et compatibilité des versions.
 - **Dépendances :** PR2 fusionnée.
 - **Entrées :** contrats scène et repository compte.
 - **Sorties :** moteur sérialisable testé navigateur.
 - **Fichiers probables :** domain/whiteboard, features, browser tests.
 - **Historique concerné :** board/model/shapes/sérialisation.
-- **Tests obligatoires :** géométrie, roundtrip, corruption, Playwright.
+- **Tests obligatoires :** géométrie par forme, sérialisation/restauration, migrations idempotentes, compatibilité des scènes précédentes, corruption, Playwright.
 - **Tests manuels :** iPad Pencil, rotation, gaucher/droitier.
 - **Risques :** performance/iOS.
 - **Critères de fusion :** scènes sûres et PERF cible validée.
@@ -67,13 +67,13 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR4 — Programme, questions et parcours
 
-- **Objectif :** programme, statique, générateurs, math, types/difficultés, 4 parcours, filtres immédiats, Réflexe.
+- **Objectif :** programme, statique, contrats de questions paramétrées, générateurs déterministes, validation d’au moins dix variantes, rendu mathématique sécurisé, types/difficultés, 4 parcours, filtres immédiats, Réflexe.
 - **Dépendances :** PR3 fusionnée.
 - **Entrées :** inventaire caractérisé et moteur Canvas.
 - **Sorties :** question compatible affichée pour chaque parcours.
 - **Fichiers probables :** domain/questions, features/session, import adapters.
 - **Historique concerné :** programme/concepts/pièges/générateurs/math/engine.
-- **Tests obligatoires :** convertisseurs, sélection déterministe, XSS.
+- **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication, AST en liste blanche, XSS.
 - **Tests manuels :** filtres et protection brouillon.
 - **Risques :** qualité données/contenu.
 - **Critères de fusion :** SESSION et whiteboard concernés validés.

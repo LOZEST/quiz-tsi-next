@@ -24,6 +24,62 @@ Libellés : `user` Élève, `admin` Administrateur, `owner` Propriétaire ; `for
 
 ## Contenu
 
+### Questions paramétrées
+
+```ts
+type ParameterPrimitive = string | number | boolean;
+type VariableKind = "integer" | "decimal" | "choice";
+
+interface IntegerVariableDomain {
+  kind: "integer";
+  minimum: number;
+  maximum: number;
+  step: number;
+  excludedValues: number[];
+}
+interface DecimalVariableDomain {
+  kind: "decimal";
+  minimum: number;
+  maximum: number;
+  decimals: number;
+  excludedValues: number[];
+}
+interface ChoiceVariableDomain {
+  kind: "choice";
+  values: ParameterPrimitive[];
+}
+type VariableDomain =
+  | IntegerVariableDomain
+  | DecimalVariableDomain
+  | ChoiceVariableDomain;
+interface VariableDefinition {
+  id: string;
+  label: string;
+  domain: VariableDomain;
+}
+
+type SafeExpressionNode =
+  | { kind: "literal"; value: ParameterPrimitive }
+  | { kind: "variable"; variableId: string }
+  | { kind: "unary"; operator: "negate" | "absolute"; operand: SafeExpressionNode }
+  | { kind: "binary"; operator: "add" | "subtract" | "multiply" | "divide" | "modulo" | "power"; left: SafeExpressionNode; right: SafeExpressionNode }
+  | { kind: "comparison"; operator: "equal" | "not-equal" | "less-than" | "less-than-or-equal" | "greater-than" | "greater-than-or-equal"; left: SafeExpressionNode; right: SafeExpressionNode }
+  | { kind: "math-function"; function: "abs" | "sqrt" | "min" | "max" | "round" | "floor" | "ceil"; arguments: SafeExpressionNode[] }
+  | { kind: "logical"; operator: "and" | "or"; operands: SafeExpressionNode[] }
+  | { kind: "logical-not"; operand: SafeExpressionNode };
+
+interface ParameterizedQuestionSpec {
+  schemaVersion: number;
+  variables: VariableDefinition[];
+  constraints: SafeExpressionNode[];
+  validationVariantCount: number;
+}
+```
+
+`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides.
+
+### Question et instance
+
 ```ts
 interface CorrectionStep { id: string; title: string | null; content: ContentSegment[]; }
 interface Question {
@@ -31,18 +87,22 @@ interface Question {
   ownerId: string | null; status: "draft" | "published" | "archived";
   partId: string; chapterId: string; notionId: string;
   type: QuestionType; difficulty: Difficulty | null;
+  parameterization: ParameterizedQuestionSpec | null;
   prompt: ContentSegment[]; hint: ContentSegment[]; correction: CorrectionStep[];
   tags: string[]; validated: boolean; createdAt: string; updatedAt: string;
 }
 interface QuestionInstance {
   id: string; questionId: string; questionVersion: number; sessionId: string;
-  ordinal: number; frozenQuestion: Question; parameters: Record<string, string | number>;
+  ordinal: number; frozenQuestion: Question;
+  parameterValues: Record<string, ParameterPrimitive>; seed: string;
   createdAt: string;
 }
 interface FrozenQuestionInstance extends QuestionInstance { contentHash: string; }
 ```
 
 Le contenu distant est constitué de segments, jamais de HTML arbitraire. Le LaTeX est rendu de façon contrôlée. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
+
+`parameterization` vaut `null` pour une question non paramétrée. Avant publication d'une question paramétrée, `validationVariantCount` vaut au minimum 10 et autant de variantes valides sont contrôlées. Toutes les valeurs générées satisfont leur domaine et toutes les contraintes. Une seed identique produit les mêmes valeurs et le même contenu. Une combinaison impossible produit une erreur explicite ; aucune variante invalide n'est publiée silencieusement.
 
 ## Sessions
 
@@ -69,14 +129,41 @@ interface WeakPointItem {
 }
 ```
 
-Une configuration `reflex` impose `difficulty: null` et 60 secondes. Un blueprint conserve seed, ordre, paramètres et versions.
+Une configuration `reflex` impose `difficulty: null` et 60 secondes. Un blueprint conserve seed, ordre, `parameterValues` et versions de chaque instance.
 
 ## Tableau
 
 ```ts
+type WhiteboardShapeKind =
+  | "line"
+  | "arrow"
+  | "rectangle"
+  | "square"
+  | "circle"
+  | "triangle"
+  | "axes"
+  | "coordinate-system"
+  | "trigonometric-circle";
+
+interface WhiteboardStrokeStyle {
+  color: string;
+  width: number;
+  opacity: number;
+  lineCap: "round" | "square";
+  lineJoin: "round" | "bevel" | "miter";
+}
+interface WhiteboardShapeGeometry {
+  schemaVersion: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number | null;
+  properties: Record<string, ParameterPrimitive>;
+}
 type WhiteboardObject =
-  | { kind: "stroke"; id: string; points: Array<{ x: number; y: number; pressure: number }> }
-  | { kind: "shape"; id: string; shape: "line" | "arrow" | "rectangle" | "circle"; x: number; y: number; width: number; height: number };
+  | { kind: "stroke"; id: string; style: WhiteboardStrokeStyle; points: Array<{ x: number; y: number; pressure: number }> }
+  | { kind: "shape"; id: string; shapeKind: WhiteboardShapeKind; style: WhiteboardStrokeStyle; geometry: WhiteboardShapeGeometry };
 interface WhiteboardScene {
   schemaVersion: number; sceneId: string; questionInstanceId: string;
   logicalWidth: number; logicalHeight: number; objects: WhiteboardObject[];
@@ -84,19 +171,23 @@ interface WhiteboardScene {
 }
 ```
 
-Les coordonnées sont logiques, indépendantes des pixels et du tiroir. Une restauration ignore/quarantaines les objets invalides sans perdre les objets sains.
+Les coordonnées, positions et dimensions sont logiques, indépendantes des pixels et du tiroir. `id` reste stable. `geometry.schemaVersion` permet de migrer la géométrie sans invalider toutes les scènes ; `rotation` est `null` quand elle n'est pas pertinente. `properties` est validé par forme et n'accepte que les clés documentées pour son `shapeKind`. Une restauration met en quarantaine les objets invalides sans perdre les objets sains.
+
+Toute nouvelle forme nécessite une évolution documentée du contrat, une migration de scène, un test de sérialisation, un test de restauration, un test de géométrie et un test de compatibilité avec les scènes précédentes.
 
 ## Progression
 
 ```ts
 interface MasteryEvent {
   id: string; userId: string; notionId: string; questionId: string;
+  sessionId: string; questionInstanceId: string;
   questionVersion: number; sessionMode: SessionMode; result: EvaluationResult;
-  hintUsed: boolean; timeLimitExceeded: boolean; occurredAt: string;
+  hintUsed: boolean; timeLimitExceeded: boolean; durationMs: number | null;
+  occurredAt: string;
 }
 ```
 
-Les événements sont append-only. `success` exige aucune aide et respect du temps Réflexe ; une réussite avec indice ou dépassement est `partial` ; Raté est `failed` ; Passer est `skipped` et n'influence pas la maîtrise sans règle future explicite.
+Les événements sont append-only. `sessionId` relie la séance ou le test réel ; `questionInstanceId` relie la variante réellement affichée ; `durationMs` conserve la durée observée, ou `null` si elle n'est pas mesurable. La durée ne devient jamais automatiquement un score sans règle pédagogique dédiée. `success` exige aucune aide et respect du temps Réflexe ; une réussite avec indice ou dépassement est `partial` ; Raté est `failed` ; Passer est `skipped` et n'influence pas la maîtrise sans règle future explicite.
 
 ## Compte et synchronisation
 

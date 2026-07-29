@@ -17,8 +17,8 @@ Une fonctionnalité n'est terminée que si :
 - [ ] portrait et paysage traités ;
 - [ ] accessibilité WCAG AA et tactile traitée ;
 - [ ] isolation des comptes vérifiée, y compris réponse réseau tardive ;
-- [ ] persistance et migrations/version/idempotence/quarantaine vérifiées ;
-- [ ] tests unitaires et d'intégration réussis ;
+- [ ] persistance et migrations/version/idempotence/quarantaine vérifiées, avec compatibilité des scènes précédentes pour toute nouvelle forme ;
+- [ ] tests unitaires et d'intégration réussis, incluant déterminisme, domaines, contraintes et variantes si la question est paramétrée ;
 - [ ] tests navigateur réalisés lorsque nécessaires ;
 - [ ] captures et comparaison visuelle réalisées lorsque nécessaires ;
 - [ ] aucune régression connue masquée ni test affaibli ;
@@ -32,4 +32,4 @@ La PR relie chaque scénario de la matrice à une preuve automatique et/ou manue
 
 ## Cas non idéal
 
-Erreur réseau, contenu absent/invalide, migration partielle, stockage saturé, conflit, permission refusée, rotation, réduction de mouvement, lecteur d'écran, compte changé et réponse tardive sont des cas normaux. Si un cas ne concerne réellement pas la fonctionnalité, la PR le justifie au lieu de le cocher implicitement.
+Erreur réseau, combinaison paramétrée impossible, contenu absent/invalide ou non sûr, migration partielle, stockage saturé, conflit, permission refusée, rotation, réduction de mouvement, lecteur d'écran, compte changé et réponse tardive sont des cas normaux. Si un cas ne concerne réellement pas la fonctionnalité, la PR le justifie au lieu de le cocher implicitement.

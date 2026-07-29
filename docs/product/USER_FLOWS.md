@@ -231,3 +231,23 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 - **Résultat attendu :** aucune donnée/réponse tardive de A.
 - **Erreurs :** échec arrête en sécurité.
 - **Reprise :** fermer ressources et revenir login.
+
+## PARAMÉTRAGE ET COMPATIBILITÉ
+
+### FLOW-QUESTIONS-004 — Valider une question paramétrée
+
+- **Préconditions :** définition de variables et AST sûr valides.
+- **Étapes :** choisir une seed, générer au moins dix variantes, valider puis demander la publication.
+- **États :** validation des domaines → contraintes → contenu segmenté → publication.
+- **Résultat attendu :** une seed identique reproduit valeurs et contenu ; seules des variantes valides et rendues sans HTML/JavaScript arbitraire sont publiables.
+- **Erreurs :** combinaison impossible, opérateur non autorisé ou moins de dix variantes valides produit une erreur explicite.
+- **Reprise :** corriger domaines/contraintes sans publier silencieusement une variante invalide.
+
+### FLOW-WHITEBOARD-006 — Restaurer une scène versionnée
+
+- **Préconditions :** scène d'une version antérieure, éventuellement avec un objet endommagé.
+- **Étapes :** charger, migrer, restaurer les formes puis répéter la migration.
+- **États :** validation → migration → quarantaine ciblée → rendu.
+- **Résultat attendu :** migration idempotente, formes valides sans perte et objet invalide isolé.
+- **Erreurs :** une géométrie inconnue est expliquée et ne bloque pas les objets valides.
+- **Reprise :** conserver la source et le rapport de quarantaine pour une migration ultérieure.

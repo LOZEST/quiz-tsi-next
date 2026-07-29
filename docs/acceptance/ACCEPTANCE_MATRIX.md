@@ -7,7 +7,7 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | ID | domaine | scénario | précondition | action | résultat attendu | preuve automatique | preuve manuelle | PR responsable | statut |
 |---|---|---|---|---|---|---|---|---|---|
 | GLOBAL-001 | Global | Navigation principale limitée aux destinations prévues | shell ouvert | inspecter navigation | 4 destinations tableau prévues | RTL liens | clavier/visuel | PR1 | À implémenter |
-| GLOBAL-002 | Global | Absence de dashboard chargé | connexion faite | ouvrir accueil | tableau immédiat, pas dashboard | test route | inspection | PR1 | À implémenter |
+| GLOBAL-002 | Global | Absence de dashboard chargé | authentification et redirection PR2 disponibles | se connecter puis ouvrir l’accueil | tableau immédiat, pas dashboard | test de route après authentification | inspection | PR3 | À implémenter |
 | GLOBAL-003 | Global | Divulgation progressive | écran chargé | observer puis ouvrir détails | secondaire fermé puis accessible | RTL états | inspection | PR1 | À implémenter |
 | GLOBAL-004 | Global | Cibles tactiles de 44 px | composants rendus | mesurer cibles | minimum 44×44 px | Playwright dimensions | iPad | PR1 | À implémenter |
 | GLOBAL-005 | Global | Échap et restauration du focus | tiroir/dialogue ouvert | presser Échap | fermé, focus déclencheur | Playwright | clavier | PR1 | À implémenter |
@@ -51,4 +51,15 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | A11Y-001 | Accessibilité | Navigation clavier | application ouverte | parcourir clavier | ordre/action complets | Playwright axe/clavier | lecteur écran | PR9 | À implémenter |
 | A11Y-002 | Accessibilité | Focus visible | clavier | tabuler | focus toujours visible | visual/axe | inspection | PR1 | À implémenter |
 | A11Y-003 | Accessibilité | prefers-reduced-motion | préférence reduce | utiliser app | mouvements réduits/supprimés | media e2e | inspection | PR1 | À implémenter |
+| PARAM-001 | Paramétrage | Seed déterministe | question paramétrée valide | générer deux fois avec la même seed | mêmes valeurs et même contenu | test unitaire déterministe | inspection des variantes | PR4 | À implémenter |
+| PARAM-002 | Paramétrage | Domaines et contraintes respectés | domaines et contraintes valides | générer des variantes | chaque valeur satisfait domaine et contraintes | tests génératifs bornés | revue d’échantillons | PR4 | À implémenter |
+| PARAM-003 | Paramétrage | Configuration impossible explicite | contraintes impossibles | demander une variante | erreur explicite, aucune variante publiée | test unitaire d’échec | inspection du message | PR4 | À implémenter |
+| PARAM-004 | Paramétrage | Dix variantes contrôlées avant publication | question paramétrée candidate | lancer validation/publication | au moins 10 variantes valides contrôlées | test validation/publication | revue du rapport | PR4 | À implémenter |
+| SECURITY-001 | Sécurité | Aucun HTML ou JavaScript distant arbitraire | contenu distant malveillant | charger et rendre la question | contenu rejeté ou rendu par segments sûrs, rien exécuté | intégration assainissement/CSP | test de contenu hostile | PR7 | À implémenter |
+| SECURITY-002 | Sécurité | Absence d’eval et new Function | générateur disponible | analyser et exécuter génération | aucune exécution dynamique arbitraire | analyse statique et tests AST | revue de code | PR4 | À implémenter |
+| BOARD-007 | Tableau | Formes mathématiques sérialisées sans perte | chaque forme supportée existe | sérialiser puis restaurer | géométrie, style, identifiant et propriétés identiques | test round-trip par forme | inspection visuelle | PR3 | À implémenter |
+| BOARD-008 | Tableau | Migration idempotente d’une ancienne scène | fixture de version antérieure | migrer deux fois | résultat courant identique sans doublon | test migration/idempotence | inspection de fixture | PR3 | À implémenter |
+| DATA-003 | Données | Objet historique invalide mis en quarantaine | scène mixte valide/invalide | restaurer ou migrer | invalide quarantainé, valides disponibles | test intégration migration | inspection du rapport | PR9 | À implémenter |
+| ADMIN-001 | Administration | Refus serveur impossible à contourner | action interdite par RLS/politique | manipuler l’interface et appeler l’adapter | serveur refuse et aucune mutation locale validée | test RLS/intégration | recette rôle insuffisant | PR8 | À implémenter |
+| ROUTING-001 | Routage | Route directe GitHub Pages | preview avec basename | ouvrir/recharger une route profonde | route correcte restaurée sans HashRouter | Playwright sur preview | navigation directe manuelle | PR1 | À implémenter |
 | PERF-001 | Performance | Tableau fluide sur iPad cible | appareil cible/scène réaliste | écrire/effacer/zoomer | seuil mesuré défini en PR3 sans perte d'entrée | trace browser | iPad cible | PR3 | À implémenter |
