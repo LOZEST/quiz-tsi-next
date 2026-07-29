@@ -1,0 +1,8 @@
+.surface {
+  max-inline-size: 46rem;
+  padding: var(--qtsi-space-5);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-3);
+  box-shadow: var(--qtsi-shadow-subtle);
+}

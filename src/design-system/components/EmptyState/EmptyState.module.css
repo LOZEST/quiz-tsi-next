@@ -1,0 +1,14 @@
+.state {
+  max-inline-size: 34rem;
+  padding-block: var(--qtsi-space-5);
+}
+
+.state h2 {
+  margin-block: 0 var(--qtsi-space-2);
+}
+
+.state p {
+  margin: 0;
+  color: var(--qtsi-text-secondary);
+  line-height: 1.6;
+}

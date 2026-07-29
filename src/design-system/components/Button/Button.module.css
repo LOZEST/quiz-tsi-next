@@ -1,0 +1,42 @@
+.button {
+  min-block-size: var(--qtsi-touch-target);
+  padding: 0 var(--qtsi-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--qtsi-radius-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color var(--qtsi-duration) var(--qtsi-easing),
+    border-color var(--qtsi-duration) var(--qtsi-easing);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.primary {
+  color: white;
+  background: var(--qtsi-accent);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--qtsi-accent-hover);
+}
+
+.secondary {
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  border-color: var(--qtsi-border-strong);
+}
+
+.secondary:hover:not(:disabled),
+.quiet:hover:not(:disabled) {
+  background: var(--qtsi-surface-hover);
+}
+
+.quiet {
+  color: var(--qtsi-text);
+  background: transparent;
+}

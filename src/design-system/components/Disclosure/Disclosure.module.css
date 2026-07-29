@@ -1,0 +1,20 @@
+.trigger {
+  display: flex;
+  inline-size: 100%;
+  min-block-size: var(--qtsi-touch-target);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--qtsi-space-2) 0;
+  color: var(--qtsi-text);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+
+.content {
+  padding-block: var(--qtsi-space-2) var(--qtsi-space-4);
+  color: var(--qtsi-text-secondary);
+}

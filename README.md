@@ -1,26 +1,81 @@
 # Quiz TSI Next
 
-Application de révision pour la prépa TSI, pensée d'abord pour l'iPad et l'Apple Pencil. **Statut : reconstruction en cours. Aucune fonctionnalité de production n'existe encore.**
+Application de révision pour la prépa TSI, pensée d’abord pour l’iPad et l’Apple Pencil.
 
-Le projet est une réécriture contrôlée. L'[ancien dépôt](https://github.com/LOZEST/quizz-prepa) est une référence en lecture seule : aucun import ou copier-coller global n'est autorisé.
+## État du projet
 
-## Architecture documentaire
+PR1 fournit le socle exécutable : Vite, React, TypeScript strict, routes, shell accessible, design system minimal, tests, CI et build GitHub Pages. L’authentification, le tableau blanc, les questions et toute logique métier restent volontairement absents.
+
+## Prérequis
+
+- Node.js 24 LTS (`.nvmrc`)
+- npm 11
+
+## Installation et développement
+
+```bash
+nvm use
+npm ci
+npm run dev
+```
+
+Vite affiche l’URL locale à ouvrir.
+
+## Qualité et tests
+
+```bash
+npm run format:check
+npm run lint
+npm run typecheck
+npm run test:unit
+npm run test:coverage
+npx playwright install chromium
+npm run test:browser
+```
+
+Les tests navigateur utilisent Chromium avec trois profils : bureau, iPad portrait et iPad paysage. Ces profils reproduisent les viewports et interactions tactiles ; ils ne remplacent pas une recette sur iPad réel.
+
+## Builds et prévisualisation
+
+```bash
+npm run build
+npm run preview
+npm run build:pages
+npm run preview:pages
+```
+
+La prévisualisation Pages est disponible sur `http://127.0.0.1:4173/quiz-tsi-next/`.
+
+Le mode Pages construit l’application sous `/quiz-tsi-next/`, génère `dist/404.html`, puis le serveur de prévisualisation reproduit la réponse 404 statique de GitHub Pages. Le fallback transporte le chemin, la query string et le hash vers l’index ; l’application restaure ensuite l’URL avec `history.replaceState` avant d’initialiser React Router. Aucun `HashRouter` n’est utilisé.
+
+Après fusion sur `main`, activer si nécessaire le déploiement via GitHub → Settings → Pages → Source → GitHub Actions.
+
+## Structure
+
+- `src/app` : bootstrap, routage et erreurs globales
+- `src/pages` : composition des routes temporaires
+- `src/design-system` : tokens, styles et composants génériques
+- `src/features` : futurs cas d’usage
+- `src/domain` : futurs contrats et règles purs
+- `src/infrastructure` : futurs adaptateurs
+- `tests/unit` : composants, routes et fallback Pages
+- `tests/browser` : clavier, tactile, responsive, accessibilité et routes profondes
+- `scripts` : génération et prévisualisation du fallback Pages
+
+## Limites actuelles
+
+- aucune authentification ou session ;
+- aucun Canvas ou support Pencil réel ;
+- aucune donnée, question, progression ou préférence ;
+- aucun stockage, mode hors connexion, service worker ou PWA ;
+- aucune recette sur iPad ou avec un lecteur d’écran réel.
+
+## Documentation normative
 
 - Produit : [spécification produit](docs/product/PRODUCT_SPEC.md), [parcours utilisateur](docs/product/USER_FLOWS.md) et [création de questions](docs/product/QUESTION_AUTHORING_SPEC.md)
 - Design : [design system](docs/design/DESIGN_SYSTEM_SPEC.md) et [expérience du tableau blanc](docs/design/WHITEBOARD_EXPERIENCE_SPEC.md)
 - Architecture : [architecture technique](docs/architecture/TECHNICAL_ARCHITECTURE.md) et [modèle de domaine](docs/architecture/DOMAIN_MODEL.md)
 - Héritage : [politique de migration](docs/legacy/LEGACY_MIGRATION_POLICY.md) et [inventaire](docs/legacy/LEGACY_INVENTORY.md)
-- Livraison : [roadmap PR0–PR0.1–PR0.2–PR1–PR9](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [matrice d'acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md) et [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md)
+- Livraison : [roadmap](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [matrice d’acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md) et [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md)
 
-## Feuille de route
-
-PR0 documentation et audit ; PR0.1 expérience utilisateur et création de questions (fusionnée) ; PR0.2 finalisation des contrats ; PR1 socle ; PR2 authentification ; PR3 tableau blanc ; PR4 questions et parcours ; PR5 correction et tests ; PR6 progression ; PR7 banque ; PR8 réglages, compte et administration ; PR9 PWA, migration et recette.
-
-La chaîne normative est **PR0 → PR0.1 → PR0.2 → PR1 → PR2 → PR3 → PR4 → PR5 → PR6 → PR7 → PR8 → PR9**. PR1 dépend explicitement de PR0, PR0.1 et PR0.2 fusionnées ; aucune PR de code ne commence avant la fusion de PR0.2.
-
-PR0 ne constitue pas une application fonctionnelle et n'ajoute ni dépendance, ni code applicatif, ni configuration d'exécution.
-
-
-## Ordre normatif
-
-Prévalence : [spécification produit](docs/product/PRODUCT_SPEC.md), [parcours utilisateur](docs/product/USER_FLOWS.md), [création de questions](docs/product/QUESTION_AUTHORING_SPEC.md), [design system](docs/design/DESIGN_SYSTEM_SPEC.md), [expérience du tableau blanc](docs/design/WHITEBOARD_EXPERIENCE_SPEC.md), [architecture technique](docs/architecture/TECHNICAL_ARCHITECTURE.md), [modèle de domaine](docs/architecture/DOMAIN_MODEL.md), [matrice d'acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md), [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md), [roadmap](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [politique de migration](docs/legacy/LEGACY_MIGRATION_POLICY.md), [inventaire](docs/legacy/LEGACY_INVENTORY.md). En cas de contradiction, le document placé le plus haut prévaut.
+La hiérarchie définie dans ces documents reste l’autorité. PR2 ne commence qu’après fusion de PR1.

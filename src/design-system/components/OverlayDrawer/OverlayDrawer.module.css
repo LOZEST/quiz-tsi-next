@@ -1,0 +1,53 @@
+.dialog {
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: 100%;
+  max-block-size: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+}
+
+.dialog::backdrop {
+  background: rgb(29 29 31 / 42%);
+}
+
+.panel {
+  inline-size: min(23rem, calc(100vw - var(--qtsi-space-8)));
+  block-size: 100%;
+  padding: calc(var(--qtsi-safe-top) + var(--qtsi-space-4)) var(--qtsi-space-5)
+    calc(var(--qtsi-safe-bottom) + var(--qtsi-space-5))
+    calc(var(--qtsi-safe-left) + var(--qtsi-space-5));
+  overflow-y: auto;
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  box-shadow: var(--qtsi-shadow-overlay);
+  animation: drawer-enter var(--qtsi-duration) var(--qtsi-easing);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-block-end: var(--qtsi-space-5);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+@keyframes drawer-enter {
+  from {
+    transform: translateX(-1rem);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+}

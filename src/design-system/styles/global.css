@@ -1,0 +1,57 @@
+body {
+  color: var(--qtsi-text);
+  background: var(--qtsi-bg);
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 3px solid var(--qtsi-accent);
+  outline-offset: 3px;
+}
+
+.qtsi-scroll-locked {
+  overflow: hidden;
+  scrollbar-gutter: stable;
+}
+
+.qtsi-centered-state,
+.qtsi-login {
+  display: grid;
+  min-block-size: 100dvh;
+  padding: calc(var(--qtsi-space-6) + var(--qtsi-safe-top))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-right))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-bottom))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-left));
+  place-items: center;
+}
+
+.qtsi-login > div {
+  inline-size: min(100%, 34rem);
+}
+
+.qtsi-wordmark {
+  margin: 0 0 var(--qtsi-space-4);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.qtsi-text-link {
+  display: inline-flex;
+  min-block-size: var(--qtsi-touch-target);
+  align-items: center;
+  color: var(--qtsi-accent);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
