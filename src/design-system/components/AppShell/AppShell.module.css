@@ -2,6 +2,13 @@
   min-block-size: 100dvh;
 }
 
+.whiteboardShell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  block-size: 100dvh;
+  overflow: hidden;
+}
+
 .topbar {
   position: sticky;
   inset-block-start: 0;
@@ -40,6 +47,43 @@
   margin-inline: auto;
   padding-block: var(--qtsi-space-8)
     calc(var(--qtsi-space-8) + var(--qtsi-safe-bottom));
+}
+
+.whiteboardShell .main {
+  inline-size: 100%;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.drawerSection {
+  padding-block: var(--qtsi-space-3);
+}
+
+.drawerSection h3,
+.drawerSection p {
+  margin: 0;
+}
+
+.drawerSection p {
+  color: var(--qtsi-text-secondary);
+}
+
+.drawerSettings {
+  display: grid;
+  gap: var(--qtsi-space-3);
+  padding-block: var(--qtsi-space-3);
+}
+
+.drawerSettings label {
+  display: flex;
+  min-block-size: var(--qtsi-touch-target);
+  align-items: center;
+  gap: var(--qtsi-space-2);
+}
+
+.drawerSettings fieldset {
+  border: 0;
 }
 
 .navigation {

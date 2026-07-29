@@ -16,6 +16,10 @@ body {
   scrollbar-gutter: stable;
 }
 
+html.qtsi-scroll-locked:has(.qtsi-whiteboard-shell) {
+  scrollbar-gutter: auto;
+}
+
 .qtsi-centered-state,
 .qtsi-login {
   display: grid;
