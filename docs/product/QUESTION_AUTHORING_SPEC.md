@@ -8,7 +8,7 @@ L'auteur manipule des blocs de texte, formule, saut de ligne structuré, étape 
 
 **+ Formule** crée un bloc avec source simple modifiable, aperçu mathématique immédiat, état valide ou invalide et erreur pédagogique. Une erreur ne vide ni ne réécrit automatiquement la source.
 
-La chaîne de vérité est : syntaxe mathématique simple → analyseur sécurisé → arbre mathématique contrôlé → rendu KaTeX → affichage. La source et sa version sont persistées ; le HTML KaTeX ne l'est jamais comme source de vérité. Une migration versionnée et idempotente maintient les anciennes formules lisibles.
+La chaîne de vérité est : syntaxe mathématique simple → `MathSource` versionné → analyseur sécurisé → arbre mathématique contrôlé → adaptateur KaTeX temporaire → affichage. `MathSource` est la seule source persistée d'une formule : le LaTeX éventuellement généré pour KaTeX et le HTML KaTeX ne sont jamais persistés comme sources de vérité. L'auteur ne saisit et ne voit jamais directement du LaTeX. Une migration versionnée et idempotente convertit un ancien contenu LaTeX persistant vers une forme contrôlée ou le met en quarantaine, sans interpréter silencieusement un contenu invalide.
 
 ## Langage mathématique simplifié
 
@@ -77,13 +77,17 @@ Les parenthèses sont obligatoires : `sqrt(x)`, `abs(x)`, `vec(u)`, `sin(x)`, `c
 
 ### 5.10 Comparaisons
 
-La version 1 supporte au minimum `a<=b`, `a>=b` et `a!=b`. Les symboles Unicode correspondants peuvent être insérés depuis le **Clavier mathématique** seulement s'ils appartiennent au registre.
+La version 1 définit exactement les formes `a=b`, `a<b`, `a>b`, `a<=b`, `a>=b` et `a!=b`, en cohérence avec les opérateurs de `SafeExpressionNode`. `=` représente une égalité mathématique, notamment dans `∑_(k=1)^n`. Les formes Unicode `≤`, `≥` et `≠` produisent respectivement les mêmes opérateurs internes que `<=`, `>=` et `!=`.
 
 ### 5.11 Symboles Unicode
 
-Les tokens sûrs supportés au minimum sont `ℕ ℤ ℚ ℝ ℂ ∅`, `α β γ δ ε θ λ μ π ρ σ φ ω`, `Δ Σ Ω`, `∈ ∉ ⊂ ⊆ ∪ ∩`, `∀ ∃ ⇒ ⇔`, `∞ ∑ ∏ ∫ ∂ ∇` et `∥ ⟂ ∠`. Les formes déterministes minimales sont `x ∈ ℝ`, `θ ∈ [0;pi]`, `∑_(k=1)^n` et `∫_a^b`. Ces tokens ne sont jamais interprétés comme HTML ou JavaScript. La grammaire n'est jamais étendue silencieusement.
+Les tokens sûrs supportés au minimum sont `ℕ ℤ ℚ ℝ ℂ ∅`, `α β γ δ ε θ λ μ π ρ σ φ ω`, `Δ Σ Ω`, `∈ ∉ ⊂ ⊆ ∪ ∩`, `∀ ∃ ⇒ ⇔`, `∞ ∑ ∏ ∫ ∂ ∇` et `∥ ⟂ ∠`. Les formes déterministes minimales sont `x ∈ ℝ`, `θ ∈ [0;π]`, `∑_(k=1)^n` et `∫_a^b`. Le symbole `π` provient du **Clavier mathématique** et représente une constante mathématique ; l'identifiant latin `pi` n'est pas un raccourci de version 1. Ces tokens ne sont jamais interprétés comme HTML ou JavaScript. La grammaire n'est jamais étendue silencieusement.
 
-### 5.12 Erreurs
+### 5.12 Intervalles
+
+Les intervalles de version 1 utilisent `;` comme séparateur : `[a;b]` est fermé aux deux extrémités, `]a;b[` est ouvert aux deux extrémités, `[a;b[` est fermé à gauche et ouvert à droite, et `]a;b]` est ouvert à gauche et fermé à droite. Les bornes peuvent contenir toute expression valide ainsi que `∞`. Exemples : `[0;π]`, `]-∞;0]` et `[1;∞[`.
+
+### 5.13 Erreurs
 
 Chaque erreur fournit une explication humaine, l'élément concerné, la source originale intacte et un exemple correct, sans trace interne du parser. « Syntax error at position 6. » est interdit. Message attendu : « La fonction `sqrt` doit contenir une expression entre parenthèses. Exemple : `sqrt(x+1)`. »
 

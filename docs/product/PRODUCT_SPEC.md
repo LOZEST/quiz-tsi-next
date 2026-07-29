@@ -91,6 +91,8 @@ Type Réflexe masque Difficulté. **Tous les types** l'affiche. **Toutes les dif
 
 Sélectionner Réflexe fixe `difficulty` à `{ kind: "not-applicable" }` et masque Difficulté. Quitter Réflexe vers **Tous les types**, Formules, Cours ou Calcul remet toujours `difficulty` à `{ kind: "all" }` : aucune ancienne difficulté cachée n'est restaurée. Une difficulté précise exclut Réflexe sans modifier silencieusement Type et peut produire l'état explicite sans résultat.
 
+La configuration persistée d'une Révision libre utilise exclusivement `FreeRevisionFilters`, avec `FilterSelection<T>` et `DifficultyFilterSelection`. `null` ne représente jamais simultanément Tout, une absence ou une valeur non applicable : Réflexe emploie `{ kind: "not-applicable" }` et **Toutes les difficultés** emploie `{ kind: "all" }`.
+
 Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. Types : `formula` Formules, `course` Cours, `calculation` Calcul, `reflex` Réflexe. Difficultés : `fundamental` Fondamental, `standard` Standard, `trap` Piège. Réflexe est un type, jamais une difficulté : difficulté masquée et explicitement non applicable, 60 secondes, dépassement non bloquant et réussite tardive `partial`.
 
 ### Changement de configuration
