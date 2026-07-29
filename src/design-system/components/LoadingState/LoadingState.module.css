@@ -1,0 +1,27 @@
+.state {
+  display: flex;
+  min-block-size: var(--qtsi-touch-target);
+  align-items: center;
+  gap: var(--qtsi-space-3);
+  color: var(--qtsi-text-secondary);
+}
+
+.indicator {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+  background: var(--qtsi-accent);
+  border-radius: 50%;
+  animation: loading-pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes loading-pulse {
+  to {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    animation: none;
+  }
+}

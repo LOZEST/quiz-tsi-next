@@ -1,0 +1,18 @@
+.button {
+  display: inline-grid;
+  inline-size: var(--qtsi-touch-target);
+  block-size: var(--qtsi-touch-target);
+  padding: 0;
+  place-items: center;
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  font: inherit;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: var(--qtsi-surface-hover);
+}
