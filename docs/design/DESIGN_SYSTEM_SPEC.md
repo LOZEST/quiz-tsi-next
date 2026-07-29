@@ -29,7 +29,7 @@ Esthétique blanche cassée/blanche/gris clair, texte presque noir, unique bleu 
 --qtsi-warning: #9a6700;
 ```
 
-Police : `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif`. Espacement : 4, 8, 12, 16, 20, 24, 32, 40, 48 px. Rayons : 10, 14, 18, 22 px et complet. Toute cible interactive : au moins 44×44 px. Animation : 160–220 ms, `cubic-bezier(0.2, 0, 0, 1)`, supprimée/réduite avec `prefers-reduced-motion`.
+Aucune police distante. Police : `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif`. Espacement : 4, 8, 12, 16, 20, 24, 32, 40, 48 px. Rayons : 10, 14, 18, 22 px et complet. Toute cible interactive : au moins 44×44 px. Animation : 160–220 ms, `cubic-bezier(0.2, 0, 0, 1)`, supprimée/réduite avec `prefers-reduced-motion`.
 
 ## Règles d'interaction
 

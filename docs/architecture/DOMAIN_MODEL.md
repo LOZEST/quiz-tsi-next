@@ -206,3 +206,37 @@ interface SyncConflict { id: string; accountId: string; operationId: string; ent
 - Chaque donnée locale appartient à un compte. Une réponse réseau porte le compte et la génération de repository attendus avant application.
 - `admin` inclut Élève ; `owner` inclut Administrateur. Le serveur reste l'autorité des permissions.
 - Toute donnée invalide est expliquée et mise en quarantaine ; elle ne bloque pas l'ouverture du reste de l'espace.
+
+## Création, syntaxe et import
+
+```ts
+interface MathSyntaxCommand {
+  id: string; syntax: string; example: string; description: string;
+  category: string; availableSince: number;
+}
+interface MathSymbolEntry {
+  id: string; symbol: string; label: string;
+  category: "sets" | "greek" | "logic" | "analysis" | "geometry";
+  aliases: string[]; availableSince: number;
+}
+interface QuestionBankBundle {
+  schemaVersion: number; bundleId: string; sourceLabel: string;
+  sourceReference: string | null; generatedAt: string; questions: Question[];
+}
+type FilterSelection<T> = { kind: "all" } | { kind: "one"; value: T };
+type DifficultyFilterSelection =
+  | { kind: "all" }
+  | { kind: "one"; value: Difficulty }
+  | { kind: "not-applicable" };
+interface FreeRevisionFilters {
+  part: FilterSelection<string>; chapter: FilterSelection<string>;
+  notion: FilterSelection<string>; questionType: FilterSelection<QuestionType>;
+  difficulty: DifficultyFilterSelection;
+}
+```
+
+Commandes et symboles sont versionnés et constituent la source unique de l'analyseur, des **Raccourcis**, exemples, erreurs, tutoriel et tests. Une formule persiste sa source en langage mathématique simplifié et sa version, jamais le HTML rendu. Une même source/version produit le même arbre ; les migrations sont idempotentes.
+
+`QuestionBankBundle` reste conceptuel jusqu'aux données réelles. L'import conserve source et version, produit un rapport, met les invalides en quarantaine, préserve les valides et ne crée aucun doublon à répétition.
+
+Les options générales de `FreeRevisionFilters` ne dépendent pas de leur traduction et ne sont pas des entrées du programme. Réflexe emploie `not-applicable`; une difficulté précise l'exclut. Un parent changé réinitialise ses enfants incompatibles à `{ kind: "all" }`.

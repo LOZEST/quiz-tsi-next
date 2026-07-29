@@ -251,3 +251,37 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 - **Résultat attendu :** migration idempotente, formes valides sans perte et objet invalide isolé.
 - **Erreurs :** une géométrie inconnue est expliquée et ne bloque pas les objets valides.
 - **Reprise :** conserver la source et le rapport de quarantaine pour une migration ultérieure.
+
+## AUTHORING
+
+### FLOW-AUTHORING-001 — Créer une question avec texte et formule
+- **Préconditions :** auteur autorisé, brouillon ouvert. **Étapes :** écrire du texte, choisir **+ Formule**, saisir la source. **Résultat attendu :** blocs coexistants, aperçu rendu, brouillon restaurable.
+### FLOW-AUTHORING-002 — Saisir un raccourci
+- **Préconditions :** bloc formule actif. **Étapes :** saisir `sqrt(x)` ou `(a+b)/(c-d)`. **Résultat attendu :** aperçu immédiat conforme au registre.
+### FLOW-AUTHORING-003 — Insérer un symbole
+- **Préconditions :** curseur dans une formule. **Étapes :** ouvrir le **Clavier mathématique**, choisir ℝ. **Résultat attendu :** insertion au curseur sans effacement.
+### FLOW-AUTHORING-004 — Corriger une formule invalide
+- **Préconditions :** source invalide. **Étapes :** lire l'erreur pédagogique, corriger. **Résultat attendu :** source initiale conservée puis aperçu valide.
+### FLOW-AUTHORING-005 — Créer une variable
+- **Préconditions :** question paramétrée. **Étapes :** **+ Variable**, renseigner nom, type et domaine. **Résultat attendu :** `@nom` insérable, AST invisible.
+### FLOW-AUTHORING-006 — Créer une contrainte visuelle
+- **Préconditions :** variable définie. **Étapes :** composer une phrase de contrainte. **Résultat attendu :** règle sûre créée sans afficher l'AST.
+### FLOW-AUTHORING-007 — Tester dix variantes
+- **Préconditions :** domaines et contraintes saisis. **Étapes :** générer, contrôler, régénérer. **Résultat attendu :** au moins dix variantes valides avant publication ; impossibilité expliquée.
+### FLOW-AUTHORING-008 — Consulter les aides
+- **Préconditions :** Banque de questions ouverte. **Étapes :** ouvrir **Raccourcis**, puis Banque de questions → Aide → Créer une question. **Résultat attendu :** registre réel et tutoriel PR7 accessibles.
+
+## FILTER
+
+### FLOW-FILTER-001 — Démarrer sans restriction
+- **Préconditions :** Révision libre ouverte. **Étapes :** observer les filtres. **Résultat attendu :** les cinq options générales exactes sont sélectionnées.
+### FLOW-FILTER-002 — Restreindre une partie
+- **Préconditions :** filtres généraux. **Étapes :** choisir une partie. **Résultat attendu :** **Tous les chapitres** et **Toutes les notions** restent actifs ; toutes les questions de la partie sont admissibles.
+### FLOW-FILTER-003 — Réinitialiser les enfants incompatibles
+- **Préconditions :** partie, chapitre et notion précis. **Étapes :** choisir une autre partie. **Résultat attendu :** chapitre et notion reviennent immédiatement aux options générales.
+### FLOW-FILTER-004 — Choisir Réflexe
+- **Préconditions :** Type visible. **Étapes :** choisir Réflexe. **Résultat attendu :** Difficulté est masquée et marquée non applicable.
+### FLOW-FILTER-005 — Choisir une difficulté précise
+- **Préconditions :** **Tous les types**. **Étapes :** choisir Standard. **Résultat attendu :** aucune question Réflexe n'est admissible.
+### FLOW-FILTER-006 — Aucun résultat
+- **Préconditions :** combinaison sans question. **Étapes :** appliquer. **Résultat attendu :** message explicite et aucun filtre ignoré, contenu incompatible ou question fabriquée.

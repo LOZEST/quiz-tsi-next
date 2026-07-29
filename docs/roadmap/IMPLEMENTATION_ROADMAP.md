@@ -25,7 +25,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR1 — Socle du projet
 
-- **Objectif :** Vite, React, TS strict, routes, dossiers, ESLint/formatage, Vitest/RTL/Playwright, Actions, preview, tokens, fondamentaux, shell vide fonctionnel.
+- **Objectif :** socle, routes, design tokens et composants génériques : Vite, React, TS strict, dossiers, ESLint/formatage, Vitest/RTL/Playwright, Actions et preview. Aucun éditeur de questions ni parser mathématique métier.
 - **Dépendances :** PR0 fusionnée.
 - **Entrées :** documents et compatibilités vérifiées.
 - **Sorties :** build/test/deploy de shell.
@@ -53,7 +53,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR3 — Moteur de tableau blanc
 
-- **Objectif :** Canvas autonome, Pencil/pression/gomme/undo/grille/formes mathématiques/scènes/brouillons/rotation/main, géométries versionnées, migrations de scènes et compatibilité des versions.
+- **Objectif :** tableau blanc, question centrée, tiroir superposé sans changement de coordonnées, responsive portrait/paysage, Canvas autonome, Pencil/pression/gomme/undo/grille/formes mathématiques/scènes/brouillons/rotation/main, géométries versionnées, migrations et compatibilité.
 - **Dépendances :** PR2 fusionnée.
 - **Entrées :** contrats scène et repository compte.
 - **Sorties :** moteur sérialisable testé navigateur.
@@ -67,7 +67,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR4 — Programme, questions et parcours
 
-- **Objectif :** programme, statique, contrats de questions paramétrées, générateurs déterministes, validation d’au moins dix variantes, rendu mathématique sécurisé, types/difficultés, 4 parcours, filtres immédiats, Réflexe.
+- **Objectif :** programme, options Tout et filtres dépendants, moteur de sélection, registre du langage mathématique, parser sécurisé, rendu des questions, variables déjà instanciées, types/difficultés, quatre parcours et Réflexe ; import initial des banques validées lorsqu’elles seront disponibles.
 - **Dépendances :** PR3 fusionnée.
 - **Entrées :** inventaire caractérisé et moteur Canvas.
 - **Sorties :** question compatible affichée pour chaque parcours.
@@ -109,7 +109,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR7 — Banque de questions
 
-- **Objectif :** cache local, recherche/filtres, éditeur/paramétrées, privé/commun, publication, conflits/permissions.
+- **Objectif :** cache local, recherche/filtres, éditeur texte/formules, Clavier mathématique, panneau Raccourcis, assistant de variables, constructeur de contraintes, aperçu de variantes, tutoriel, création/modification/publication, import avancé et rapports, privé/commun, conflits/permissions.
 - **Dépendances :** PR6 fusionnée.
 - **Entrées :** contrats et RLS disponibles.
 - **Sorties :** cycle complet local-first de question.

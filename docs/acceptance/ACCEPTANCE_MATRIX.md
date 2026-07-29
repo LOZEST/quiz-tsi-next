@@ -63,3 +63,26 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | ADMIN-001 | Administration | Refus serveur impossible à contourner | action interdite par RLS/politique | manipuler l’interface et appeler l’adapter | serveur refuse et aucune mutation locale validée | test RLS/intégration | recette rôle insuffisant | PR8 | À implémenter |
 | ROUTING-001 | Routage | Route directe GitHub Pages | preview avec basename | ouvrir/recharger une route profonde | route correcte restaurée sans HashRouter | Playwright sur preview | navigation directe manuelle | PR1 | À implémenter |
 | PERF-001 | Performance | Tableau fluide sur iPad cible | appareil cible/scène réaliste | écrire/effacer/zoomer | seuil mesuré défini en PR3 sans perte d'entrée | trace browser | iPad cible | PR3 | À implémenter |
+| AUTHORING-001 | Création | Texte et formules coexistent | brouillon | ajouter les deux blocs | contenu ordonné rendu | intégration éditeur | revue | PR7 | À implémenter |
+| AUTHORING-002 | Création | Syntaxe simple rendue | registre chargé | saisir les syntaxes minimales | rendu attendu | tests registre/rendu | revue | PR7 | À implémenter |
+| AUTHORING-003 | Création | Erreur sans perte | formule invalide | corriger | source conservée, exemple utile | test état | recette | PR7 | À implémenter |
+| AUTHORING-004 | Création | Clavier sans doublons | clavier ouvert | inspecter | aucun raccourci simple dupliqué | test registre | inspection | PR7 | À implémenter |
+| AUTHORING-005 | Création | Ensembles et grec insérables | formule active | insérer | symbole au curseur | browser | lecteur d'écran | PR7 | À implémenter |
+| AUTHORING-006 | Création | Raccourcis issus du registre | registre chargé | ouvrir Raccourcis | liste identique au registre | test dérivation | inspection | PR7 | À implémenter |
+| AUTHORING-007 | Création | AST invisible | éditeur ouvert | parcourir UI | aucun contrat interne affiché | RTL absence | inspection | PR7 | À implémenter |
+| AUTHORING-008 | Création | Variable `@nom` | variable créée | insérer | référence distincte | unit/intégration | recette | PR7 | À implémenter |
+| AUTHORING-009 | Création | Contrainte visuelle | variables créées | composer phrase | AST sûr produit sans exposition | unit | recette | PR7 | À implémenter |
+| AUTHORING-010 | Création | Dix variantes avant publication | candidate paramétrée | publier | dix valides contrôlées | intégration | rapport | PR7 | À implémenter |
+| AUTHORING-011 | Création | Tutoriel conforme au registre | tutoriel PR7 | comparer | aucune commande inexistante | test cohérence | revue | PR7 | À implémenter |
+| MATH-001 | Math | Déterminisme source/version | source fixée | analyser deux fois | même arbre | unit snapshot | revue | PR4 | À implémenter |
+| MATH-002 | Math | Migration idempotente | ancienne version | migrer deux fois | résultat courant identique | unit migration | revue fixture | PR4 | À implémenter |
+| MATH-003 | Math | Aucune exécution arbitraire | contenu hostile | analyser/rendre | HTML/JavaScript non exécuté | sécurité/CSP | recette hostile | PR4 | À implémenter |
+| FILTER-001 | Filtres | Cinq options générales par défaut | Révision libre | ouvrir | libellés exacts sélectionnés | RTL | inspection | PR4 | À implémenter |
+| FILTER-002 | Filtres | Tout n'est pas une entrée | programme chargé | sélectionner Tout | absence de restriction | unit modèle | inspection données | PR4 | À implémenter |
+| FILTER-003 | Filtres | Enfants incompatibles réinitialisés | sélection précise | changer parent | enfants sur Tout | unit reducer | recette | PR4 | À implémenter |
+| FILTER-004 | Filtres | Réflexe masque Difficulté | filtres ouverts | choisir Réflexe | difficulté masquée/non applicable | RTL | inspection | PR4 | À implémenter |
+| FILTER-005 | Filtres | Difficulté précise exclut Réflexe | Tous les types | choisir Standard | aucun Réflexe | unit sélection | recette | PR4 | À implémenter |
+| FILTER-006 | Filtres | Aucun résultat strict | combinaison vide | appliquer | message, aucun relâchement | intégration | recette | PR4 | À implémenter |
+| IMPORT-001 | Import | Banque versionnée importable | bundle valide | importer | questions et rapport | intégration | revue rapport | PR4 | À implémenter |
+| IMPORT-002 | Import | Invalide en quarantaine | bundle mixte | importer | valides conservées | intégration | revue rapport | PR4 | À implémenter |
+| IMPORT-003 | Import | Import idempotent | bundle déjà importé | réimporter | aucun doublon | intégration | inspection | PR7 | À implémenter |
