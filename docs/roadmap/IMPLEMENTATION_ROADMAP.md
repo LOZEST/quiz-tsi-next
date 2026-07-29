@@ -1,9 +1,9 @@
 # Feuille de route d’implémentation
 
-> **Objectif :** imposer l’ordre et le périmètre des PR0 à PR9. **Document normatif.**
+> **Objectif :** imposer l’ordre et le périmètre des PR0 à PR9, incluant PR0.1 et PR0.2. **Document normatif.**
 
 ## Sommaire
-- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR1](#pr1--socle-du-projet) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-de-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
+- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR0.1](#pr01--expérience-utilisateur-et-création-de-questions) · [PR0.2](#pr02--finalisation-des-contrats) · [PR1](#pr1--socle-du-projet) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-de-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
 
 ## Règle de dépendance
 
@@ -23,10 +23,39 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Critères de fusion :** documents validés, draft non fusionnée.
 - **Hors périmètre :** tout code/dépendance.
 
+## PR0.1 — Expérience utilisateur et création de questions
+
+- **État :** fusionnée.
+- **Objectif :**
+  - définir l'expérience visuelle ;
+  - définir le langage mathématique simplifié ;
+  - définir le **Clavier mathématique** ;
+  - définir l'assistant de variables ;
+  - définir les filtres Tout ;
+  - aucune implémentation.
+- **Dépendances :** PR0 fusionnée.
+- **Sorties :** contrats UX et de création de questions documentés.
+- **Hors périmètre :** toute implémentation.
+
+## PR0.2 — Finalisation des contrats
+
+- **Objectif :**
+  - supprimer les ambiguïtés restantes ;
+  - fixer la grammaire mathématique version 1 ;
+  - fixer les transitions des filtres ;
+  - fixer la provenance des questions ;
+  - harmoniser le tiroir du tableau ;
+  - compléter les critères d'acceptation ;
+  - aucune implémentation.
+- **Dépendances :** PR0.1 fusionnée.
+- **Sorties :** documentation complète et non ambiguë avant PR1.
+- **Critères de fusion :** cohérence documentaire validée ; aucun code ; aucune dépendance ; aucun contrat restant volontairement ambigu pour PR1, PR3, PR4 ou PR7.
+- **Hors périmètre :** toute implémentation et tout démarrage de PR1.
+
 ## PR1 — Socle du projet
 
 - **Objectif :** socle, routes, design tokens et composants génériques : Vite, React, TS strict, dossiers, ESLint/formatage, Vitest/RTL/Playwright, Actions et preview. Aucun éditeur de questions ni parser mathématique métier.
-- **Dépendances :** PR0 fusionnée.
+- **Dépendances :** PR0, PR0.1 et PR0.2 fusionnées. Aucune PR de code ne peut commencer avant fusion de PR0.2.
 - **Entrées :** documents et compatibilités vérifiées.
 - **Sorties :** build/test/deploy de shell.
 - **Fichiers probables :** configurations, src/app, design-system, tests.
@@ -73,7 +102,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Sorties :** question compatible affichée pour chaque parcours.
 - **Fichiers probables :** domain/questions, features/session, import adapters.
 - **Historique concerné :** programme/concepts/pièges/générateurs/math/engine.
-- **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication, AST en liste blanche, XSS.
+- **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication, AST en liste blanche, XSS ; import initial versionné, validé, idempotent, traçable, avec rapport, quarantaine et conservation des entrées valides.
 - **Tests manuels :** filtres et protection brouillon.
 - **Risques :** qualité données/contenu.
 - **Critères de fusion :** SESSION et whiteboard concernés validés.
@@ -115,7 +144,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Sorties :** cycle complet local-first de question.
 - **Fichiers probables :** features/questions, adapters Supabase.
 - **Historique concerné :** question-bank, générateurs, migrations.
-- **Tests obligatoires :** validation, RLS, offline, conflits, contenu sûr.
+- **Tests obligatoires :** validation, RLS, offline, conflits, contenu sûr et rapport avancé par question.
 - **Tests manuels :** tous états, rôles, variantes.
 - **Risques :** éditeur/math/conflits.
 - **Critères de fusion :** QUESTIONS validés et audit sécurité.

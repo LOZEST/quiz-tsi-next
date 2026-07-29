@@ -10,11 +10,13 @@ Le projet est une réécriture contrôlée. L'[ancien dépôt](https://github.co
 - Design : [design system](docs/design/DESIGN_SYSTEM_SPEC.md) et [expérience du tableau blanc](docs/design/WHITEBOARD_EXPERIENCE_SPEC.md)
 - Architecture : [architecture technique](docs/architecture/TECHNICAL_ARCHITECTURE.md) et [modèle de domaine](docs/architecture/DOMAIN_MODEL.md)
 - Héritage : [politique de migration](docs/legacy/LEGACY_MIGRATION_POLICY.md) et [inventaire](docs/legacy/LEGACY_INVENTORY.md)
-- Livraison : [roadmap PR0–PR9](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [matrice d'acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md) et [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md)
+- Livraison : [roadmap PR0–PR0.1–PR0.2–PR1–PR9](docs/roadmap/IMPLEMENTATION_ROADMAP.md), [matrice d'acceptation](docs/acceptance/ACCEPTANCE_MATRIX.md) et [Definition of Ready/Done](docs/quality/DEFINITION_OF_DONE.md)
 
 ## Feuille de route
 
-PR0 documentation et audit ; PR1 socle ; PR2 authentification ; PR3 tableau blanc ; PR4 questions et parcours ; PR5 correction et tests ; PR6 progression ; PR7 banque ; PR8 réglages, compte et administration ; PR9 PWA, migration et recette.
+PR0 documentation et audit ; PR0.1 expérience utilisateur et création de questions (fusionnée) ; PR0.2 finalisation des contrats ; PR1 socle ; PR2 authentification ; PR3 tableau blanc ; PR4 questions et parcours ; PR5 correction et tests ; PR6 progression ; PR7 banque ; PR8 réglages, compte et administration ; PR9 PWA, migration et recette.
+
+La chaîne normative est **PR0 → PR0.1 → PR0.2 → PR1 → PR2 → PR3 → PR4 → PR5 → PR6 → PR7 → PR8 → PR9**. PR1 dépend explicitement de PR0, PR0.1 et PR0.2 fusionnées ; aucune PR de code ne commence avant la fusion de PR0.2.
 
 PR0 ne constitue pas une application fonctionnelle et n'ajoute ni dépendance, ni code applicatif, ni configuration d'exécution.
 

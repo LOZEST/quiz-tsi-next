@@ -15,8 +15,8 @@ type SessionMode = "daily" | "weak-points" | "free" | "chapter-test";
 type EvaluationResult = "success" | "partial" | "failed" | "skipped";
 type ContentSegment =
   | { kind: "text"; value: string }
-  | { kind: "inline-math"; latex: string }
-  | { kind: "display-math"; latex: string }
+  | { kind: "inline-math"; math: MathSource }
+  | { kind: "display-math"; math: MathSource }
   | { kind: "line-break" };
 ```
 
@@ -85,6 +85,7 @@ interface CorrectionStep { id: string; title: string | null; content: ContentSeg
 interface Question {
   id: string; version: number; source: "static" | "private" | "shared";
   ownerId: string | null; status: "draft" | "published" | "archived";
+  provenance: QuestionProvenance | null;
   partId: string; chapterId: string; notionId: string;
   type: QuestionType; difficulty: Difficulty | null;
   parameterization: ParameterizedQuestionSpec | null;
@@ -100,18 +101,20 @@ interface QuestionInstance {
 interface FrozenQuestionInstance extends QuestionInstance { contentHash: string; }
 ```
 
-Le contenu distant est constitué de segments, jamais de HTML arbitraire. Le LaTeX est rendu de façon contrôlée. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
+Le contenu distant est constitué de segments, jamais de HTML arbitraire. `MathSource` est la seule source persistée d'une formule. Le langage mathématique simplifié est analysé de façon contrôlée ; le LaTeX éventuellement généré pour KaTeX reste un résultat temporaire de l'adapter, et ni ce LaTeX ni le HTML KaTeX ne sont persistés comme source de vérité. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
+
+Une migration convertit tout ancien contenu persistant du LaTeX vers un `MathSource` contrôlé ou le met en quarantaine. Aucun contenu invalide n'est interprété silencieusement. L'auteur ne saisit et ne voit jamais directement du LaTeX.
 
 `parameterization` vaut `null` pour une question non paramétrée. Avant publication d'une question paramétrée, `validationVariantCount` vaut au minimum 10 et autant de variantes valides sont contrôlées. Toutes les valeurs générées satisfont leur domaine et toutes les contraintes. Une seed identique produit les mêmes valeurs et le même contenu. Une combinaison impossible produit une erreur explicite ; aucune variante invalide n'est publiée silencieusement.
 
 ## Sessions
 
 ```ts
-interface SessionConfig {
-  mode: SessionMode; partId: string | null; chapterId: string | null;
-  notionId: string | null; questionType: QuestionType | null;
-  difficulty: Difficulty | null;
-}
+type SessionConfig =
+  | { mode: "daily" }
+  | { mode: "weak-points" }
+  | { mode: "free"; filters: FreeRevisionFilters }
+  | { mode: "chapter-test"; chapterId: string; questionCount: 20 | 40 };
 interface ChapterTestBlueprint {
   id: string; seed: string; chapterId: string; questionCount: 20 | 40;
   createdAt: string; questions: FrozenQuestionInstance[];
@@ -210,18 +213,60 @@ interface SyncConflict { id: string; accountId: string; operationId: string; ent
 ## Création, syntaxe et import
 
 ```ts
+type MathSyntaxCategory =
+  | "operations"
+  | "fractions"
+  | "powers-indices"
+  | "functions"
+  | "comparisons"
+  | "vectors"
+  | "variables";
+type MathSyntaxVersion = number;
+interface MathSource { syntaxVersion: MathSyntaxVersion; source: string; }
 interface MathSyntaxCommand {
   id: string; syntax: string; example: string; description: string;
-  category: string; availableSince: number;
+  category: MathSyntaxCategory; availableSince: MathSyntaxVersion;
+}
+interface MathParseError {
+  code: string; message: string;
+  sourceStart: number | null; sourceEnd: number | null;
+  correctionExample: string | null;
 }
 interface MathSymbolEntry {
   id: string; symbol: string; label: string;
   category: "sets" | "greek" | "logic" | "analysis" | "geometry";
   aliases: string[]; availableSince: number;
 }
+interface QuestionSourceReference {
+  sourceLabel: string;
+  sourceReference: string | null;
+  sourceLocator: string | null;
+}
+interface QuestionProvenance {
+  bundleId: string;
+  importedAt: string;
+  references: QuestionSourceReference[];
+}
+interface QuestionBankEntry {
+  question: Question;
+  provenance: { mode: "default" | "extend" | "replace"; references: QuestionSourceReference[] } | null;
+}
 interface QuestionBankBundle {
-  schemaVersion: number; bundleId: string; sourceLabel: string;
-  sourceReference: string | null; generatedAt: string; questions: Question[];
+  schemaVersion: number; bundleId: string; generatedAt: string;
+  defaultProvenance: QuestionSourceReference[] | null;
+  questions: QuestionBankEntry[];
+}
+interface QuestionImportReportEntry {
+  entryIndex: number;
+  questionExternalId: string | null;
+  questionId: string | null;
+  sourceLocator: string | null;
+  status: "accepted" | "rejected" | "updated" | "ignored" | "quarantined";
+  message: string;
+}
+interface QuestionImportReport {
+  bundleId: string; importedAt: string;
+  entries: QuestionImportReportEntry[];
 }
 type FilterSelection<T> = { kind: "all" } | { kind: "one"; value: T };
 type DifficultyFilterSelection =
@@ -240,3 +285,33 @@ Commandes et symboles sont versionnés et constituent la source unique de l'anal
 `QuestionBankBundle` reste conceptuel jusqu'aux données réelles. L'import conserve source et version, produit un rapport, met les invalides en quarantaine, préserve les valides et ne crée aucun doublon à répétition.
 
 Les options générales de `FreeRevisionFilters` ne dépendent pas de leur traduction et ne sont pas des entrées du programme. Réflexe emploie `not-applicable`; une difficulté précise l'exclut. Un parent changé réinitialise ses enfants incompatibles à `{ kind: "all" }`.
+
+## Contrats finalisés de PR0.2
+
+### Analyse mathématique
+
+Une même source et une même version produisent le même arbre. Le parser ne dépend ni de la langue de l'interface ni du navigateur ; le rendu n'est jamais la source de vérité. Les migrations de syntaxe sont idempotentes. Commandes et symboles viennent uniquement du registre versionné. `eval`, `new Function` et toute exécution de JavaScript arbitraire sont interdits.
+
+`MathSource` est l'unique forme persistée d'une formule dans un `ContentSegment`. Le LaTeX de rendu et le HTML KaTeX sont des sorties temporaires d'infrastructure, jamais des sources persistées.
+
+### Références de variables dans le contenu
+
+Une référence `@nom` peut apparaître dans le texte et les formules de l'énoncé, l'indice, le titre d'une étape de correction et son contenu. L'instanciation d'une variante emploie une seule table `parameterValues` dans tous ces emplacements. Toute référence inconnue bloque la publication ; une définition inutilisée produit un avertissement. Un renommage modifie toutes les références atomiquement sans persister d'état intermédiaire. La suppression d'une variable utilisée passe par une confirmation interne ; celle d'une variable inutilisée n'est pas destructive et n'en demande pas.
+
+### Transitions des filtres
+
+Avec `{ kind: "all" }` pour Partie, Chapitre offre d'abord **Tous les chapitres**, puis tous les chapitres distingués par partie. Avec une partie précise et Chapitre général, Notion offre d'abord **Toutes les notions**, puis toutes les notions de la partie distinguées par chapitre. Quand Partie et Chapitre sont généraux, toutes les notions sont distinguées par partie et chapitre. Un changement de partie remet chapitre et notion incompatibles à `{ kind: "all" }` ; un changement de chapitre fait de même pour la notion incompatible.
+
+Choisir Réflexe fixe `difficulty` à `{ kind: "not-applicable" }`. Quitter Réflexe vers **Tous les types**, Formules, Cours ou Calcul fixe toujours `difficulty` à `{ kind: "all" }`, sans restaurer d'ancienne valeur cachée. Une difficulté précise exclut Réflexe mais ne modifie pas `questionType` et peut produire un résultat vide explicite.
+
+Une Révision libre persistée utilise exclusivement `FilterSelection<T>`, `DifficultyFilterSelection` et `FreeRevisionFilters`. `null` ne représente jamais à la fois Tout, une absence et une valeur non applicable : **Toutes les difficultés** vaut `{ kind: "all" }` et Réflexe impose `{ kind: "not-applicable" }`.
+
+### Provenance et import
+
+Chaque question importée peut conserver sa provenance propre. Le bundle peut fournir une provenance par défaut ; une question peut la compléter ou la remplacer explicitement. Plusieurs références sont permises. Aucune source absente n'est inventée : les références fournies sont conservées exactement et une valeur absente reste `null`. `sourceLocator` accepte tout localisateur fourni, notamment page, chapitre, section, URL ou identifiant. Ce contrat reste adaptable lorsque les banques réelles seront reçues et ne fige pas prématurément leur format.
+
+`QuestionBankEntry.provenance` décrit la provenance d'entrée. Après application de `default`, `extend` ou `replace`, `Question.provenance` contient la provenance résolue persistée. Une question créée manuellement peut conserver `null`. Pour une question importée, la provenance reste présente après synchronisation, export, réimport et modification ; une modification du contenu ne la supprime jamais silencieusement.
+
+Dès PR4, l'import initial est versionné, validé, idempotent et traçable. Il conserve toutes les entrées valides, met les invalides en quarantaine et produit un `QuestionImportReport`. Le rapport avancé de PR7 indique pour chaque question si elle est acceptée, rejetée, mise à jour, ignorée ou mise en quarantaine.
+
+Dans chaque `QuestionImportReportEntry`, `entryIndex` identifie toujours la position de l'entrée dans le bundle, même sans identifiant externe. `questionId` contient l'identifiant interne lorsqu'une question a été créée ou retrouvée et `sourceLocator` reprend le localisateur fourni lorsqu'il existe. Deux entrées du rapport ne peuvent jamais être impossibles à distinguer. `accepted` signifie qu'une nouvelle question valide est créée ; `updated`, qu'une question existante est mise à jour ; `ignored`, qu'une entrée valide ne demande aucun changement ; `rejected`, qu'elle est refusée sans conservation ; `quarantined`, qu'une entrée invalide est conservée pour diagnostic ou correction ultérieure.

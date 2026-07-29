@@ -15,7 +15,15 @@ Lis, avant tout changement, les documents normatifs dans cet ordre :
 11. `docs/legacy/LEGACY_MIGRATION_POLICY.md` — récupération autorisée.
 12. `docs/legacy/LEGACY_INVENTORY.md` — inventaire réellement constaté.
 
-En cas de contradiction, le document placé le plus haut prévaut. En cas d'ambiguïté, n'improvise pas et ne choisis pas silencieusement : bloque l'implémentation, propose une modification documentaire dédiée et fais-la valider avant de coder.
+La hiérarchie normative détermine le document faisant autorité.
+
+Toute contradiction détectée doit néanmoins être signalée.
+
+Codex ne doit jamais choisir silencieusement entre deux exigences.
+
+Lorsqu’une contradiction affecte un comportement à implémenter, le travail concerné est bloqué jusqu’à correction documentaire validée.
+
+Le document supérieur indique la décision de référence, mais ne dispense jamais de corriger la contradiction.
 
 ## Travail obligatoire
 
