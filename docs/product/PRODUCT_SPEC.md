@@ -7,7 +7,7 @@
 
 ## Autorité
 
-Ordre normatif : (1) `PRODUCT_SPEC.md` comportement produit ; (2) `USER_FLOWS.md` parcours ; (3) `DESIGN_SYSTEM_SPEC.md` rendu et composants ; (4) `TECHNICAL_ARCHITECTURE.md` architecture ; (5) `DOMAIN_MODEL.md` contrats ; (6) `ACCEPTANCE_MATRIX.md` preuves ; (7) `DEFINITION_OF_DONE.md` fin ; (8) `IMPLEMENTATION_ROADMAP.md` ordre des PR ; (9) `LEGACY_MIGRATION_POLICY.md` récupération ; (10) `LEGACY_INVENTORY.md` constat historique.
+Ordre normatif : (1) `PRODUCT_SPEC.md` ; (2) `USER_FLOWS.md` ; (3) `QUESTION_AUTHORING_SPEC.md` ; (4) `DESIGN_SYSTEM_SPEC.md` ; (5) `WHITEBOARD_EXPERIENCE_SPEC.md` ; (6) `TECHNICAL_ARCHITECTURE.md` ; (7) `DOMAIN_MODEL.md` ; (8) `ACCEPTANCE_MATRIX.md` ; (9) `DEFINITION_OF_DONE.md` ; (10) `IMPLEMENTATION_ROADMAP.md` ; (11) `LEGACY_MIGRATION_POLICY.md` ; (12) `LEGACY_INVENTORY.md`. En cas de contradiction, le document placé le plus haut prévaut.
 
 En cas de contradiction : ne pas improviser ni choisir silencieusement ; bloquer l'implémentation concernée, créer une modification documentaire dédiée et faire valider la décision avant de coder.
 
@@ -71,7 +71,13 @@ Moteur TypeScript Canvas 2D autonome, scène hors cycle React. Stylo/pression, g
 Quatre parcours exacts : `daily` — Révision du jour ; `weak-points` — Consolidation des points faibles ; `free` — Révision libre ; `chapter-test` — Test de chapitres.
 
 ### Révision libre
-Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. Types : `formula` Formules, `course` Cours, `calculation` Calcul, `reflex` Réflexe. Difficultés : `fundamental` Fondamental, `standard` Standard, `trap` Piège. Réflexe est un type, jamais une difficulté : difficulté masquée et choisie automatiquement, 60 secondes, dépassement non bloquant et réussite tardive `partial`.
+Filtres ordonnés : Partie, Chapitre, Notion, Type de question, Difficulté. Leurs premières options, sélectionnées par défaut, sont exactement **Toutes les parties**, **Tous les chapitres**, **Toutes les notions**, **Tous les types**, **Toutes les difficultés**. « Tout » signifie absence de restriction et n'est jamais une entrée du programme.
+
+Les listes sont dépendantes : une partie ne propose que ses chapitres et un chapitre que ses notions, tout en gardant l'option générale en premier. Un parent changé réinitialise immédiatement tout enfant incompatible à son option générale ; aucun identifiant invisible ne subsiste.
+
+Type Réflexe masque Difficulté. **Tous les types** l'affiche. **Toutes les difficultés** inclut Réflexe ; une difficulté précise exclut Réflexe. L'état sans résultat dit : « Aucune question ne correspond à ces filtres. Modifie un critère ou sélectionne « Tout » pour élargir la recherche. » Aucun filtre n'est relâché silencieusement.
+
+Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. Types : `formula` Formules, `course` Cours, `calculation` Calcul, `reflex` Réflexe. Difficultés : `fundamental` Fondamental, `standard` Standard, `trap` Piège. Réflexe est un type, jamais une difficulté : difficulté masquée et explicitement non applicable, 60 secondes, dépassement non bloquant et réussite tardive `partial`.
 
 ### Changement de configuration
 **Cas A, non commencée** (aucun trait, forme, indice ni correction) : appliquer immédiatement, charger automatiquement une compatible, sans confirmation, Question suivante ni rechargement.

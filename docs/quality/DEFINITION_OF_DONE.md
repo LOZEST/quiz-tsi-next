@@ -33,3 +33,14 @@ La PR relie chaque scénario de la matrice à une preuve automatique et/ou manue
 ## Cas non idéal
 
 Erreur réseau, combinaison paramétrée impossible, contenu absent/invalide ou non sûr, migration partielle, stockage saturé, conflit, permission refusée, rotation, réduction de mouvement, lecteur d'écran, compte changé et réponse tardive sont des cas normaux. Si un cas ne concerne réellement pas la fonctionnalité, la PR le justifie au lieu de le cocher implicitement.
+
+## Portes spécialisées
+
+### Fonctionnalité mathématique
+- [ ] registre mis à jour ; parser et rendu testés ; aide synchronisée ; migration de version idempotente testée ; erreurs pédagogiques testées ; aucune exécution dynamique arbitraire.
+
+### Éditeur de question
+- [ ] brouillon restaurable ; source conservée après erreur ; clavier, tactile, navigation clavier et lecteur d'écran testés ; publication invalide impossible ; au moins dix variantes contrôlées.
+
+### Système de filtres
+- [ ] option Tout et cascade parent/enfant testées ; aucun résultat et protection du brouillon testés ; interactions Réflexe/difficulté testées.

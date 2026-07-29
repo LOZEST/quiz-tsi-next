@@ -4,16 +4,18 @@ Lis, avant tout changement, les documents normatifs dans cet ordre :
 
 1. `docs/product/PRODUCT_SPEC.md` — comportement produit.
 2. `docs/product/USER_FLOWS.md` — parcours utilisateur.
-3. `docs/design/DESIGN_SYSTEM_SPEC.md` — rendu et composants visuels.
-4. `docs/architecture/TECHNICAL_ARCHITECTURE.md` — architecture logicielle.
-5. `docs/architecture/DOMAIN_MODEL.md` — contrats métier.
-6. `docs/acceptance/ACCEPTANCE_MATRIX.md` — preuves nécessaires.
-7. `docs/quality/DEFINITION_OF_DONE.md` — conditions de fin.
-8. `docs/roadmap/IMPLEMENTATION_ROADMAP.md` — ordre des PR.
-9. `docs/legacy/LEGACY_MIGRATION_POLICY.md` — récupération autorisée.
-10. `docs/legacy/LEGACY_INVENTORY.md` — inventaire réellement constaté.
+3. `docs/product/QUESTION_AUTHORING_SPEC.md` — création de questions et langage mathématique.
+4. `docs/design/DESIGN_SYSTEM_SPEC.md` — rendu et composants visuels.
+5. `docs/design/WHITEBOARD_EXPERIENCE_SPEC.md` — expérience du tableau blanc.
+6. `docs/architecture/TECHNICAL_ARCHITECTURE.md` — architecture logicielle.
+7. `docs/architecture/DOMAIN_MODEL.md` — contrats métier.
+8. `docs/acceptance/ACCEPTANCE_MATRIX.md` — preuves nécessaires.
+9. `docs/quality/DEFINITION_OF_DONE.md` — conditions de fin.
+10. `docs/roadmap/IMPLEMENTATION_ROADMAP.md` — ordre des PR.
+11. `docs/legacy/LEGACY_MIGRATION_POLICY.md` — récupération autorisée.
+12. `docs/legacy/LEGACY_INVENTORY.md` — inventaire réellement constaté.
 
-En cas de contradiction ou d'ambiguïté, n'improvise pas et ne choisis pas silencieusement : bloque l'implémentation, propose une modification documentaire dédiée et fais-la valider avant de coder.
+En cas de contradiction, le document placé le plus haut prévaut. En cas d'ambiguïté, n'improvise pas et ne choisis pas silencieusement : bloque l'implémentation, propose une modification documentaire dédiée et fais-la valider avant de coder.
 
 ## Travail obligatoire
 

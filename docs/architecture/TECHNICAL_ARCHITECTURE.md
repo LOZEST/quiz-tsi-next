@@ -112,3 +112,9 @@ flowchart LR
 ```
 
 Cette chaîne exprime une barrière de fusion : aucune PR dépendante ne commence avant fusion de sa dépendance dans `main`.
+
+## Langage mathématique et imports de banques
+
+Le domaine PR4 possède un registre versionné unique de commandes et symboles, un analyseur déterministe en liste blanche, un arbre contrôlé et un adaptateur de rendu KaTeX. L'interface, le tutoriel et les tests lisent le registre ; aucun HTML rendu n'est persisté comme source et aucune exécution dynamique n'est autorisée.
+
+Les adaptateurs d'import PR4/PR7 lisent une enveloppe versionnée, valident chaque question indépendamment, conservent la provenance, produisent un rapport et isolent les rejets. Leur idempotence empêche les doublons et une entrée invalide ne provoque jamais la perte des entrées valides.
