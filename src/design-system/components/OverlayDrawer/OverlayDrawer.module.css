@@ -15,6 +15,8 @@
 }
 
 .panel {
+  display: flex;
+  flex-direction: column;
   inline-size: min(23rem, calc(100vw - var(--qtsi-space-8)));
   block-size: 100%;
   padding: calc(var(--qtsi-safe-top) + var(--qtsi-space-4)) var(--qtsi-space-5)
