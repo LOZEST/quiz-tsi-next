@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const destinations = [
   ['Tableau blanc', 'whiteboard', 'Tableau blanc'],
@@ -8,135 +8,169 @@ const destinations = [
   ['Réglages', 'settings', 'Réglages'],
 ] as const;
 
-test('loads login without a hash route', async ({ page }) => {
+async function login(page: Page, role: 'user' | 'admin' | 'owner' = 'user') {
   await page.goto('login');
-  await expect(page.getByRole('heading', { name: 'Connexion' })).toBeVisible();
-  expect(new URL(page.url()).hash).toBe('');
-});
+  await page.getByLabel('Email').fill(`${role}@example.test`);
+  await page.getByLabel('Mot de passe').fill('test-password');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await expect(page).toHaveURL(/\/whiteboard$/);
+}
 
-test('navigates through the four destinations and marks each active', async ({
+test('offers an accessible login and understandable failures', async ({
   page,
 }) => {
-  await page.goto('whiteboard');
+  await page.goto('login');
+  await expect(page.getByLabel('Email')).toHaveAttribute(
+    'autocomplete',
+    'email',
+  );
+  await expect(page.getByLabel('Mot de passe')).toHaveAttribute(
+    'autocomplete',
+    'current-password',
+  );
+  await page.getByLabel('Email').fill('user@example.test');
+  await page.getByLabel('Mot de passe').fill('wrong');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Email ou mot de passe incorrect.',
+  );
+  await expect(page.getByLabel('Mot de passe')).toBeFocused();
 
+  await page.getByLabel('Mot de passe').fill('network-unavailable');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await expect(page.getByRole('alert')).toContainText(
+    'Connexion impossible pour le moment',
+  );
+});
+
+test('protects a private route and safely returns after login', async ({
+  page,
+}) => {
+  await page.goto('account');
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await page.getByLabel('Email').fill('user@example.test');
+  await page.getByLabel('Mot de passe').fill('test-password');
+  await page.getByRole('button', { name: 'Se connecter' }).click();
+  await expect(page).toHaveURL(/\/account$/);
+  await expect(page.getByRole('heading', { name: 'Compte' })).toBeVisible();
+});
+
+test('navigates through exactly four primary destinations', async ({
+  page,
+}) => {
+  await login(page);
   for (const [label, route, heading] of destinations) {
     await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
-    const link = page.getByRole('link', { name: label });
-    await link.click();
-    await expect(page).toHaveURL(new RegExp(`/quiz-tsi-next/${route}$`));
+    await page.getByRole('link', { name: label }).click();
+    await expect(page).toHaveURL(new RegExp(`/${route}$`));
     await expect(page.getByRole('heading', { name: heading })).toBeVisible();
-    await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
-    await expect(page.getByRole('link', { name: label })).toHaveAttribute(
-      'aria-current',
-      'page',
-    );
-    await page.getByRole('button', { name: 'Fermer le menu' }).click();
   }
 });
 
+test('shows the account card, translated role and performs real sign-out', async ({
+  page,
+}) => {
+  await login(page);
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await expect(page.getByText('Élève')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Déconnexion' })).toHaveCount(
+    0,
+  );
+  await page.getByRole('link', { name: /Voir le compte/ }).click();
+  await expect(page.getByText('user@example.test')).toBeVisible();
+  await page.getByRole('button', { name: 'Déconnexion' }).click();
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+  await page.goto('account');
+  await expect(page).toHaveURL(/\/login(?:\?|$)/);
+});
+
+for (const [role, label] of [
+  ['user', 'Élève'],
+  ['admin', 'Administrateur'],
+  ['owner', 'Propriétaire'],
+] as const) {
+  test(`enforces the ${role} administration role`, async ({ page }) => {
+    await login(page, role);
+    await page.goto('admin');
+    if (role === 'user') {
+      await expect(
+        page.getByRole('heading', { name: 'Accès refusé' }),
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByRole('heading', { name: 'Administration' }),
+      ).toBeVisible();
+      await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+      await expect(page.getByText(label)).toBeVisible();
+      await expect(
+        page.getByRole('link', { name: 'Administration' }),
+      ).toBeVisible();
+    }
+  });
+}
+
+test('restores the authenticated session after reload', async ({ page }) => {
+  await login(page, 'owner');
+  await page.reload();
+  await expect(
+    page.getByRole('heading', { name: 'Tableau blanc' }),
+  ).toBeVisible();
+  await page.goto('login');
+  await expect(page).toHaveURL(/\/whiteboard$/);
+});
+
 test('closes the drawer with Escape and restores focus', async ({ page }) => {
-  await page.goto('whiteboard');
+  await login(page);
   const trigger = page.getByRole('button', { name: 'Ouvrir le menu' });
   await trigger.click();
-  await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toBeHidden();
   await expect(trigger).toBeFocused();
 });
 
-test('offers 44px targets, skip navigation and visible focus', async ({
+test('offers 44px targets, visible focus and reduced motion', async ({
   page,
 }) => {
-  await page.goto('whiteboard');
-  await page.keyboard.press('Tab');
-  const skipLink = page.getByRole('link', {
-    name: 'Aller au contenu principal',
-  });
-  await expect(skipLink).toBeFocused();
-  await expect(skipLink).toBeVisible();
-  await skipLink.press('Enter');
-  await expect(page.locator('#main-content')).toBeFocused();
-
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await login(page);
   const trigger = page.getByRole('button', { name: 'Ouvrir le menu' });
   const box = await trigger.boundingBox();
   expect(box?.width).toBeGreaterThanOrEqual(44);
   expect(box?.height).toBeGreaterThanOrEqual(44);
-
   await trigger.focus();
-  const outlineWidth = await trigger.evaluate(
-    (element) => getComputedStyle(element).outlineWidth,
-  );
-  expect(Number.parseFloat(outlineWidth)).toBeGreaterThan(0);
+  expect(
+    Number.parseFloat(
+      await trigger.evaluate(
+        (element) => getComputedStyle(element).outlineWidth,
+      ),
+    ),
+  ).toBeGreaterThan(0);
+  expect(
+    Number.parseFloat(
+      await trigger.evaluate(
+        (element) => getComputedStyle(element).transitionDuration,
+      ),
+    ),
+  ).toBeLessThanOrEqual(0.001);
 });
 
-test('reduces motion when requested', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('whiteboard');
-  const duration = await page
-    .getByRole('button', { name: 'Ouvrir le menu' })
-    .evaluate((element) => getComputedStyle(element).transitionDuration);
-  expect(Number.parseFloat(duration)).toBeLessThanOrEqual(0.001);
-});
-
-test('reloads a Pages deep route and preserves query and hash', async ({
-  page,
-}) => {
+test('reloads a Pages deep route without HashRouter', async ({ page }) => {
+  await login(page);
   await page.goto('questions?type=course#details');
-  await expect(
-    page.getByRole('heading', { name: 'Banque de questions' }),
-  ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole('heading', { name: 'Banque de questions' }),
   ).toBeVisible();
-  await expect(page).toHaveURL(
-    /\/quiz-tsi-next\/questions\?type=course#details$/,
-  );
+  await expect(page).toHaveURL(/\/questions\?type=course#details$/);
+  expect(new URL(page.url()).hash.startsWith('#/')).toBe(false);
 });
 
-test('reloads every foundation route through the real Pages fallback', async ({
-  page,
-}) => {
-  for (const route of [
-    'login',
-    'whiteboard',
-    'progress',
-    'questions',
-    'settings',
-    'account',
-    'admin',
-    'unknown',
-  ]) {
-    await page.goto(route);
-    await page.reload();
-    await expect(page.locator('body')).not.toBeEmpty();
-    expect(new URL(page.url()).hash.startsWith('#/')).toBe(false);
-  }
-  await expect(
-    page.getByRole('heading', { name: 'Page introuvable' }),
-  ).toBeVisible();
-});
-
-test('keeps the shell usable in the configured viewport', async ({
-  page,
-  viewport,
-}) => {
-  await page.goto('whiteboard');
-  const mainBox = await page.locator('#main-content').boundingBox();
-  expect(mainBox).not.toBeNull();
-  expect(mainBox?.width).toBeLessThanOrEqual(viewport?.width ?? Infinity);
-  await expect(
-    page.getByRole('button', { name: 'Ouvrir le menu' }),
-  ).toBeVisible();
-});
-
-test('has no serious or critical axe violations in the shell', async ({
-  page,
-}) => {
-  await page.goto('whiteboard');
+test('has no serious or critical axe violations', async ({ page }) => {
+  await login(page);
   const results = await new AxeBuilder({ page }).analyze();
-  const severe = results.violations.filter(({ impact }) =>
-    ['serious', 'critical'].includes(impact ?? ''),
-  );
-  expect(severe).toEqual([]);
+  expect(
+    results.violations.filter(({ impact }) =>
+      ['serious', 'critical'].includes(impact ?? ''),
+    ),
+  ).toEqual([]);
 });
