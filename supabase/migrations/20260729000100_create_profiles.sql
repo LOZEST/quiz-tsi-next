@@ -17,7 +17,7 @@ to authenticated
 using ((select auth.uid()) = user_id);
 
 revoke all on table public.profiles from anon;
-revoke insert, update, delete on table public.profiles from authenticated;
+revoke all on table public.profiles from authenticated;
 grant select on table public.profiles to authenticated;
 
 create or replace function public.handle_new_user_profile()

@@ -16,6 +16,8 @@ export default tseslint.config(
       '**/*.d.mts',
       'node_modules/**',
       'playwright-report/**',
+      'supabase/.branches/**',
+      'supabase/.temp/**',
       'test-results/**',
     ],
   },

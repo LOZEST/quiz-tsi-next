@@ -3,7 +3,14 @@ begin;
 select plan(9);
 
 select has_table('public', 'profiles', 'profiles exists');
-select row_security_active('public.profiles'::regclass, 'RLS is active');
+select ok(
+  (
+    select relrowsecurity
+    from pg_class
+    where oid = 'public.profiles'::regclass
+  ),
+  'RLS is active'
+);
 select col_is_pk('public', 'profiles', 'user_id', 'user_id is the primary key');
 select col_not_null('public', 'profiles', 'email', 'email is required');
 select col_not_null('public', 'profiles', 'role', 'role is required');
