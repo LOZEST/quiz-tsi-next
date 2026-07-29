@@ -3,7 +3,7 @@
 > **Objectif :** imposer l’ordre et le périmètre des PR0 à PR9, incluant PR0.1, PR0.2 et PR1.1. **Document normatif.**
 
 ## Sommaire
-- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR0.1](#pr01--expérience-utilisateur-et-création-de-questions) · [PR0.2](#pr02--finalisation-des-contrats) · [PR1](#pr1--socle-du-projet) · [PR1.1](#pr11--clarification-authentification-compte-et-administration) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-de-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
+- [Règle de dépendance](#règle-de-dépendance) · [PR0](#pr0--produit-architecture-et-règles) · [PR0.1](#pr01--expérience-utilisateur-et-création-de-questions) · [PR0.2](#pr02--finalisation-des-contrats) · [PR1](#pr1--socle-du-projet) · [PR1.1](#pr11--clarification-authentification-compte-et-administration) · [PR2](#pr2--authentification-et-espace-utilisateur) · [PR3](#pr3--moteur-manuscrit-du-tableau-blanc) · [PR4](#pr4--programme-questions-et-parcours) · [PR5](#pr5--correction-et-tests) · [PR6](#pr6--advanced-whiteboard-tools-et-mon-parcours) · [PR7](#pr7--banque-de-questions) · [PR8](#pr8--réglages-compte-et-administration) · [PR9](#pr9--pwa-migration-et-recette-finale)
 
 ## Règle de dépendance
 
@@ -88,19 +88,19 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Critères de fusion :** tests sécurité et récupération verts.
 - **Hors périmètre :** tableau et progression ; gestion complète du compte ; réglages complets ; gestion des appareils ; import/export ; gestion administrative ; modification des rôles ; action sensible ; interface d'administration complète.
 
-## PR3 — Moteur de tableau blanc
+## PR3 — Moteur manuscrit du tableau blanc
 
-- **Objectif :** tableau blanc, question centrée, tiroir superposé sans changement de coordonnées, responsive portrait/paysage, Canvas autonome, Pencil/pression/gomme/undo/grille/formes mathématiques/scènes/brouillons/rotation/main, géométries versionnées, migrations et compatibilité.
+- **Objectif :** moteur manuscrit uniquement : Canvas 2D natif autonome, Apple Pencil, pression, inclinaison, stylo, gomme, grille, undo/redo, scènes versionnées, persistance locale isolée, brouillons et toolbar minimale ; question centrée, tiroir superposé sans changement de coordonnées et responsive portrait/paysage.
 - **Dépendances :** PR2 fusionnée.
 - **Entrées :** contrats scène et repository compte.
-- **Sorties :** moteur sérialisable testé navigateur.
+- **Sorties :** moteur manuscrit sérialisable testé navigateur.
 - **Fichiers probables :** domain/whiteboard, features, browser tests.
-- **Historique concerné :** board/model/shapes/sérialisation.
-- **Tests obligatoires :** géométrie par forme, sérialisation/restauration, migrations idempotentes, compatibilité des scènes précédentes, corruption, Playwright.
+- **Historique concerné :** board/model/sérialisation manuscrite ; les formes historiques restent réservées à PR6.
+- **Tests obligatoires :** capture pression/inclinaison, traits et gomme, undo/redo, sérialisation/restauration des traits, migrations idempotentes, isolation de la persistance locale, corruption, Playwright.
 - **Tests manuels :** iPad Pencil, rotation, gaucher/droitier.
 - **Risques :** performance/iOS.
-- **Critères de fusion :** scènes sûres et PERF cible validée.
-- **Hors périmètre :** questions/parcours.
+- **Critères de fusion :** scènes manuscrites sûres et PERF cible validée.
+- **Hors périmètre :** questions/parcours ; formes géométriques ; lignes ; rectangles ; cercles ; flèches ; objets vectoriels ; sélection, déplacement ou redimensionnement d'objets.
 
 ## PR4 — Programme, questions et parcours
 
@@ -130,18 +130,18 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Critères de fusion :** EVALUATION/TEST validés.
 - **Hors périmètre :** progression agrégée.
 
-## PR6 — Mon parcours
+## PR6 — Advanced Whiteboard Tools et Mon parcours
 
-- **Objectif :** maîtrise, répétition, plan du jour, faibles, calendrier, progression, activité.
+- **Objectif :** formes géométriques, lignes, rectangles, cercles, flèches et autres objets vectoriels ; sélection, déplacement et redimensionnement d'objets ; maîtrise, répétition, plan du jour, faibles, calendrier, progression et activité.
 - **Dépendances :** PR5 fusionnée.
-- **Entrées :** MasteryEvent fiable.
-- **Sorties :** synthèse et détails local-first.
-- **Fichiers probables :** domain/mastery, features/progress.
-- **Historique concerné :** scheduler/mastery/repetition/progress-sync.
-- **Tests obligatoires :** algorithmes/dates/agrégats/sync.
-- **Tests manuels :** vue synthétique et disclosures.
-- **Risques :** biais temporel/explicabilité.
-- **Critères de fusion :** PROGRESS et plans validés.
+- **Entrées :** moteur manuscrit et scènes versionnées de PR3 ; MasteryEvent fiable.
+- **Sorties :** outils vectoriels avancés compatibles avec les scènes PR3 ; synthèse et détails local-first.
+- **Fichiers probables :** domain/whiteboard, features/whiteboard, domain/mastery, features/progress.
+- **Historique concerné :** board-shapes/géométries ; scheduler/mastery/repetition/progress-sync.
+- **Tests obligatoires :** géométrie et round-trip par forme, sélection/déplacement/redimensionnement, migration et compatibilité des scènes PR3 ; algorithmes/dates/agrégats/sync.
+- **Tests manuels :** outils vectoriels sur iPad, vue synthétique et disclosures.
+- **Risques :** géométrie/compatibilité des scènes ; biais temporel/explicabilité.
+- **Critères de fusion :** outils vectoriels, PROGRESS et plans validés.
 - **Hors périmètre :** éditeur banque.
 
 ## PR7 — Banque de questions

@@ -8,11 +8,19 @@ Après connexion, l'utilisateur arrive directement au tableau blanc, sans dashbo
 
 L'expérience est sobre, classique, très lisible, minimale, rapide et tactile. Elle privilégie iPad et Apple Pencil tout en restant complète à la souris et au clavier ; son élégance ne recherche aucun effet spectaculaire.
 
+## Livraison progressive des outils
+
+PR3 fournit exclusivement le moteur manuscrit : Canvas 2D natif, Apple Pencil, pression, inclinaison, stylo, gomme, grille, undo/redo, scènes versionnées, persistance locale isolée et toolbar minimale.
+
+PR3 ne fournit aucune forme géométrique, ligne, rectangle, cercle, flèche ou autre objet vectoriel. Il ne fournit pas non plus la sélection, le déplacement ni le redimensionnement d'objets.
+
+PR6, **Advanced Whiteboard Tools**, ajoute ces formes et objets vectoriels ainsi que leur sélection, leur déplacement et leur redimensionnement, en conservant la compatibilité avec les scènes manuscrites versionnées de PR3.
+
 ## Question, Canvas et menu
 
 La question reste centrée dans le viewport complet, après la safe area supérieure. Compacte, réductible sans perte, lisible en portrait et paysage, elle ne monopolise pas le tableau et ne se déplace jamais à l'ouverture du menu.
 
-Le menu est un `OverlayDrawer` qui s'ouvre depuis la gauche au-dessus du tableau sur téléphone, tablette, iPad, ordinateur et grand écran. Sa largeur est responsive, il respecte les safe areas et ne participe jamais à la largeur de mise en page. Il ne redimensionne jamais le Canvas, ne transforme aucune coordonnée logique et ne déplace ni question, trait ni forme. Il possède un backdrop et se ferme par son bouton, le backdrop, Échap ou une navigation. Ouvert, il piège le focus et permet une navigation clavier complète ; fermé, il restaure le focus sur son déclencheur hors navigation.
+Le menu est un `OverlayDrawer` qui s'ouvre depuis la gauche au-dessus du tableau sur téléphone, tablette, iPad, ordinateur et grand écran. Sa largeur est responsive, il respecte les safe areas et ne participe jamais à la largeur de mise en page. Il ne redimensionne jamais le Canvas, ne transforme aucune coordonnée logique et ne déplace ni question ni trait ; à partir de PR6, cette garantie couvre aussi les formes et autres objets vectoriels. Il possède un backdrop et se ferme par son bouton, le backdrop, Échap ou une navigation. Ouvert, il piège le focus et permet une navigation clavier complète ; fermé, il restaure le focus sur son déclencheur hors navigation.
 
 `Sidebar` n'est jamais utilisée sur `/whiteboard` : aucune barre latérale persistante ne réduit le Canvas. Une éventuelle `Sidebar` reste réservée à un écran secondaire explicitement autorisé par un document normatif. L'ancien nom `MobileDrawer` ne désigne pas le composant normatif, qui n'est pas limité au mobile.
 
