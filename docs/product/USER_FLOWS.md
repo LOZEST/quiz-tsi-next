@@ -36,6 +36,15 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 - **Erreurs :** espace absent/corrompu expliqué.
 - **Reprise :** quarantaine puis login ou essai en ligne.
 
+### FLOW-AUTH-004 — Accès à `/admin` en PR2
+
+- **Préconditions :** utilisateur `user`, `admin` ou `owner` authentifié.
+- **Étapes :** ouvrir directement `/admin`.
+- **États :** vérification de session et de rôle → refus ou placeholder protégé.
+- **Résultat attendu :** `user` reçoit un refus compréhensible ; `admin` et `owner` accèdent uniquement au placeholder protégé ; aucune action sensible n'est disponible avant PR8.
+- **Erreurs :** une session absente ou expirée revient à `/login` ; les permissions serveur restent l'autorité finale.
+- **Reprise :** se reconnecter ou revenir à une route autorisée, sans contourner le refus.
+
 ## WHITEBOARD
 
 ### FLOW-WHITEBOARD-001 — Arrivée après connexion
@@ -231,6 +240,15 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 - **Résultat attendu :** aucune donnée/réponse tardive de A.
 - **Erreurs :** échec arrête en sécurité.
 - **Reprise :** fermer ressources et revenir login.
+
+### FLOW-ACCOUNT-002 — Déconnexion en PR2
+
+- **Préconditions :** session valide et page compte minimale `/account` ouverte.
+- **Étapes :** activer Déconnexion.
+- **États :** fermer l'espace local courant → nettoyer l'état mémoire → terminer la session → revenir à `/login`.
+- **Résultat attendu :** repositories et données en mémoire du compte fermés, session réellement terminée et `/login` affiché.
+- **Erreurs :** un échec de fermeture arrête la transition en sécurité et n'expose aucune donnée d'un autre compte.
+- **Reprise :** terminer le nettoyage puis revenir à `/login`, sans réponse tardive du compte précédent.
 
 ## PARAMÉTRAGE ET COMPATIBILITÉ
 

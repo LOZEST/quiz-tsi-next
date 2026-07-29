@@ -108,10 +108,10 @@ Cible WCAG AA : focus visible, clavier, Échap, restauration du focus, `aria-cur
 
 ```mermaid
 flowchart LR
-  PR0 --> PR01["PR0.1"] --> PR02["PR0.2"] --> PR1 --> PR2 --> PR3 --> PR4 --> PR5 --> PR6 --> PR7 --> PR8 --> PR9
+  PR0 --> PR01["PR0.1"] --> PR02["PR0.2"] --> PR1 --> PR11["PR1.1"] --> PR2 --> PR3 --> PR4 --> PR5 --> PR6 --> PR7 --> PR8 --> PR9
 ```
 
-La chaîne normative est **PR0 → PR0.1 → PR0.2 → PR1 → PR2 → PR3 → PR4 → PR5 → PR6 → PR7 → PR8 → PR9**. PR0.1, fusionnée, a défini l'expérience utilisateur et la création de questions sans implémentation. PR0.2 finalise les contrats, dépend de PR0.1 et interdit le démarrage de PR1 avant sa fusion. Cette chaîne exprime une barrière de fusion : aucune PR dépendante ne commence avant fusion de sa dépendance dans `main`.
+La chaîne normative est **PR0 → PR0.1 → PR0.2 → PR1 → PR1.1 documentaire → PR2 → PR3 → PR4 → PR5 → PR6 → PR7 → PR8 → PR9**. PR0.1, fusionnée, a défini l'expérience utilisateur et la création de questions sans implémentation. PR0.2 a finalisé les contrats avant PR1. PR1.1 clarifie les frontières entre le socle d'authentification de PR2 et les fonctions complètes de compte et d'administration de PR8 ; PR2 ne commence pas avant sa fusion. Cette chaîne exprime une barrière de fusion : aucune PR dépendante ne commence avant fusion de sa dépendance dans `main`.
 
 ## Langage mathématique et imports de banques
 
