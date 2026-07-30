@@ -76,7 +76,7 @@ interface ParameterizedQuestionSpec {
 }
 ```
 
-`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides.
+`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides. Sa validation est bornée à une profondeur de 32, 256 nœuds et 32 arguments ou opérandes par liste. `abs`, `sqrt`, `round`, `floor` et `ceil` acceptent exactement un argument ; `min` et `max` en acceptent au moins deux ; `and` et `or` ont au moins deux opérandes.
 
 ### Question et instance
 
@@ -100,6 +100,16 @@ interface QuestionInstance {
 }
 interface FrozenQuestionInstance extends QuestionInstance { contentHash: string; }
 ```
+
+Invariant de propriété selon `source` :
+
+- `static` : `ownerId === null` ;
+- `private` : `ownerId` est l'identifiant non vide de son auteur ;
+- `shared` : `ownerId` est l'identifiant non vide de son auteur. Le partage
+  modifie la visibilité de la question, pas son attribution.
+
+Une question privée ou partagée sans auteur connu n'est pas complétée avec une
+valeur inventée : elle est invalide.
 
 Le contenu distant est constitué de segments, jamais de HTML arbitraire. `MathSource` est la seule source persistée d'une formule. Le langage mathématique simplifié est analysé de façon contrôlée ; le LaTeX éventuellement généré pour KaTeX reste un résultat temporaire de l'adapter, et ni ce LaTeX ni le HTML KaTeX ne sont persistés comme source de vérité. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
 
@@ -145,19 +155,37 @@ type WeakPointsState =
   | { kind: "ready"; items: WeakPointItem[] }
   | { kind: "calibrating"; evidence: CalibrationEvidence | null; message: string }
   | { kind: "unavailable"; message: string };
-interface ChapterTestPreparation {
-  chapterId: string;
-  questionCount: 20 | 40;
-  compatibleQuestionCount: number;
-  status: "available" | "insufficient-stock";
-}
+type ChapterTestPreparation =
+  | {
+      kind: "available";
+      chapterId: string;
+      questionCount: 20 | 40;
+      compatibleQuestionCount: number;
+    }
+  | {
+      kind: "insufficient-stock";
+      chapterId: string;
+      questionCount: 20 | 40;
+      compatibleQuestionCount: number;
+    }
+  | { kind: "unavailable"; message: string };
 ```
 
 Une `Question` de type `reflex` impose `difficulty: null` et une séance Réflexe utilise 60 secondes. Un blueprint conserve seed, ordre, `parameterValues` et versions de chaque instance.
 
 `DailyPlanState` et `WeakPointsState` sont fournis à PR4 par des ports ou repositories fiables. PR4 ne calcule pas les algorithmes pédagogiques qui produisent ces états. Hors `ready`, aucune `QuestionInstance` n'est créée et aucune ancienne question ne reste active. Une jauge de calibration déterminée utilise uniquement des valeurs cohérentes de `CalibrationEvidence`; sinon elle reste indéterminée et sans pourcentage.
 
-`ChapterTestPreparation` est le seul contrat de test utilisé en production par PR4. `ChapterTestBlueprint` est un contrat cible de PR5 : PR4 ne le crée, ne le persiste et ne l'utilise pas. Le démarrage et toute la passation appartiennent à PR5.
+`ChapterTestPreparation` est discriminé exclusivement par `kind`. L'ancienne
+forme avec `status` est invalide. Son état `unavailable` représente honnêtement
+l'absence de données exploitables sans fabriquer de stock. Il est le seul
+contrat de test utilisé en production par PR4. `ChapterTestBlueprint` est un
+contrat cible de PR5 : PR4 ne le crée, ne le persiste et ne l'utilise pas. Le
+démarrage et toute la passation appartiennent à PR5.
+
+À ce stade, les références `variable` des contraintes d'une question publiée
+doivent correspondre à une variable déclarée. L'analyse des références `@nom`
+dans `MathSource` ou les segments textuels dépend des blocs C et D et n'est pas
+réalisée par le validateur structurel du bloc A.
 
 ## Tableau
 

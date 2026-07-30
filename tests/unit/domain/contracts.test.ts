@@ -3,9 +3,15 @@ import {
   DIFFICULTIES,
   QUESTION_SOURCES,
   QUESTION_TYPES,
+  SAFE_EXPRESSION_MAX_DEPTH,
+  SAFE_EXPRESSION_MAX_LIST_ITEMS,
+  SAFE_EXPRESSION_MAX_NODES,
   createQuestionInstance,
   validateContentSegment,
   validateQuestion,
+  validateQuestionProvenance,
+  validateQuestionSourceReference,
+  validateSafeExpression,
   type ContentSegment,
   type Question,
 } from '@domain/questions/Question';
@@ -141,6 +147,24 @@ describe('content and questions', () => {
       validateQuestion(question({ source: 'private', ownerId: null })).ok,
     ).toBe(false);
     expect(
+      validateQuestion(question({ source: 'shared', ownerId: 'author-1' })).ok,
+    ).toBe(true);
+    for (const ownerId of [
+      42,
+      { id: 'author-1' },
+      ['author-1'],
+      true,
+      undefined,
+    ]) {
+      expect(
+        validateQuestion({
+          ...question(),
+          source: 'shared',
+          ownerId,
+        }).ok,
+      ).toBe(false);
+    }
+    expect(
       validateQuestion(
         question({
           parameterization: {
@@ -227,7 +251,10 @@ describe('content and questions', () => {
       {
         kind: 'logical',
         operator: 'and',
-        operands: [{ kind: 'literal', value: true }],
+        operands: [
+          { kind: 'literal', value: true },
+          { kind: 'literal', value: false },
+        ],
       },
       {
         kind: 'logical-not',
@@ -269,6 +296,114 @@ describe('content and questions', () => {
         }).ok,
       ).toBe(expected);
     }
+  });
+
+  it('validates provenance and its source references', () => {
+    const reference = {
+      sourceLabel: 'Banque historique',
+      sourceReference: null,
+      sourceLocator: 'sheet:questions',
+    };
+    const provenance = {
+      bundleId: 'bundle-1',
+      importedAt: now,
+      references: [reference],
+    };
+    expect(validateQuestionSourceReference(reference).ok).toBe(true);
+    expect(validateQuestionProvenance(provenance).ok).toBe(true);
+    expect(validateQuestion(question({ provenance })).ok).toBe(true);
+    expect(
+      validateQuestion(question({ provenance: 'legacy' as never })).ok,
+    ).toBe(false);
+    expect(
+      validateQuestion({
+        ...question(),
+        provenance: { importedAt: now, references: [] },
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateQuestion({
+        ...question(),
+        provenance: {
+          ...provenance,
+          references: [{ ...reference, sourceLabel: '' }],
+        },
+      }).ok,
+    ).toBe(false);
+  });
+
+  it('bounds and validates safe expression ASTs without recursion', () => {
+    let tooDeep: unknown = { kind: 'literal', value: 1 };
+    for (let depth = 0; depth < SAFE_EXPRESSION_MAX_DEPTH; depth += 1) {
+      tooDeep = { kind: 'logical-not', operand: tooDeep };
+    }
+    expect(validateSafeExpression(tooDeep).ok).toBe(false);
+
+    const groups = Array.from({ length: 32 }, () => ({
+      kind: 'logical',
+      operator: 'and',
+      operands: Array.from({ length: 8 }, () => ({
+        kind: 'literal',
+        value: true,
+      })),
+    }));
+    const tooManyNodes = {
+      kind: 'logical',
+      operator: 'or',
+      operands: groups,
+    };
+    expect(SAFE_EXPRESSION_MAX_NODES).toBe(256);
+    expect(validateSafeExpression(tooManyNodes).ok).toBe(false);
+    expect(SAFE_EXPRESSION_MAX_LIST_ITEMS).toBe(32);
+    expect(
+      validateSafeExpression({
+        kind: 'math-function',
+        function: 'max',
+        arguments: Array.from(
+          { length: SAFE_EXPRESSION_MAX_LIST_ITEMS + 1 },
+          () => ({ kind: 'literal', value: 1 }),
+        ),
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSafeExpression({
+        kind: 'math-function',
+        function: 'sqrt',
+        arguments: [
+          { kind: 'literal', value: 1 },
+          { kind: 'literal', value: 2 },
+        ],
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSafeExpression({
+        kind: 'math-function',
+        function: 'min',
+        arguments: [{ kind: 'literal', value: 1 }],
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateSafeExpression({
+        kind: 'logical',
+        operator: 'and',
+        operands: [{ kind: 'literal', value: true }],
+      }).ok,
+    ).toBe(false);
+  });
+
+  it('rejects unknown variables in published constraints', () => {
+    expect(
+      validateQuestion(
+        question({
+          parameterization: {
+            schemaVersion: 1,
+            variables: [],
+            constraints: [{ kind: 'variable', variableId: 'missing' }],
+            validationVariantCount: 10,
+          },
+        }),
+      ).ok,
+    ).toBe(false);
   });
 
   it('distinguishes reflex question difficulty from reflex filters', () => {
@@ -314,12 +449,36 @@ describe('content and questions', () => {
     if (!result.ok) return;
     expect(Object.isFrozen(result.value)).toBe(true);
     expect(Object.isFrozen(result.value.frozenQuestion.prompt)).toBe(true);
+    expect(Object.isFrozen(frozenQuestion)).toBe(false);
+    expect(Object.isFrozen(frozenQuestion.prompt)).toBe(false);
+    expect(frozenQuestion).toEqual(question());
     expect(
       createQuestionInstance({
         ...result.value,
         questionVersion: 2,
       }).ok,
     ).toBe(false);
+
+    for (const parameterValue of [
+      { nested: true },
+      [1],
+      Number.NaN,
+      Infinity,
+    ]) {
+      expect(
+        createQuestionInstance({
+          id: 'instance-invalid',
+          questionId: frozenQuestion.id,
+          questionVersion: frozenQuestion.version,
+          sessionId: 'session-1',
+          ordinal: 0,
+          frozenQuestion,
+          parameterValues: { invalid: parameterValue } as never,
+          seed: 'seed-1',
+          createdAt: now,
+        }).ok,
+      ).toBe(false);
+    }
   });
 });
 
@@ -404,6 +563,14 @@ describe('session state unions', () => {
       }).ok,
     ).toBe(false);
     expect(validateChapterTestPreparation(null).ok).toBe(false);
+    expect(
+      validateChapterTestPreparation({
+        status: 'available',
+        chapterId: 'chapter-1',
+        questionCount: 20,
+        compatibleQuestionCount: 20,
+      }).ok,
+    ).toBe(false);
   });
 });
 

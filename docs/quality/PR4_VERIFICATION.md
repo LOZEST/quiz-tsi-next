@@ -13,6 +13,11 @@
 | Programme versionné et validé | `src/domain/program/Program.ts` | `tests/unit/domain/contracts.test.ts` | Revue des données au bloc B | partiel | Contrats et validation structurelle implémentés ; validation complète au bloc B |
 | Parser mathématique v1 sécurisé | À créer | À créer | À réaliser | partiel | Grammaire normative existante, aucun parser PR4 |
 | Génération déterministe par seed | `src/domain/questions/Question.ts` pour les contrats | `tests/unit/domain/contracts.test.ts` | À réaliser au bloc D | partiel | Instance et seed contractuelles ; aucun générateur avant le bloc D |
+| Propriété des questions selon leur source | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue des trois variantes `static`, `private`, `shared` | implémenté | `static` impose `null` ; `private` et `shared` imposent un identifiant d'auteur non vide |
+| Provenance structurelle des questions | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue d'une provenance valide et de formes rejetées | implémenté | Bundle, timestamp UTC, tableau et références sont validés sans compléter les données absentes |
+| Valeurs primitives d'une instance figée | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue de l'absence de mutation de la source | implémenté | Seuls chaîne, booléen et nombre fini sont acceptés ; la copie seule est figée |
+| AST structurel sûr et borné | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue des limites exportées et des arités | implémenté | Parcours itératif limité à 32 niveaux, 256 nœuds et 32 éléments par liste ; références de contraintes publiées contrôlées |
+| Références `@nom` dans le contenu | À créer aux blocs C et D | À créer aux blocs C et D | À réaliser | partiel | Dépend du parser mathématique et de l'instanciation ; explicitement exclu du correctif A |
 | Import versionné, idempotent et traçable | À créer | À créer | À réaliser | partiel | Contrats définis ; fixtures de test uniquement |
 | Banque historique de production | Aucun | Sans objet avant validation | Revue licence/provenance requise | bloqué | Licence, droits, provenance et conversions non validés |
 | Sélection et filtres dépendants | À créer | À créer | À réaliser | partiel | Contrats documentaires existants |

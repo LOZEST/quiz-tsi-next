@@ -23,6 +23,10 @@ export type QuestionSource = (typeof QUESTION_SOURCES)[number];
 
 export type ParameterPrimitive = string | number | boolean;
 
+export const SAFE_EXPRESSION_MAX_DEPTH = 32;
+export const SAFE_EXPRESSION_MAX_NODES = 256;
+export const SAFE_EXPRESSION_MAX_LIST_ITEMS = 32;
+
 export type ContentSegment =
   | Readonly<{ kind: 'text'; value: string }>
   | Readonly<{ kind: 'inline-math'; math: MathSource }>
@@ -263,15 +267,17 @@ function validateParameterization(
     }
     ids.add(variable.id);
   }
-  if (
-    value.constraints.some((constraint) => !validateSafeExpression(constraint))
-  ) {
-    return [
-      issue(
-        'parameterization.constraints',
-        'Contrainte structurellement invalide.',
-      ),
-    ];
+  for (const [index, constraint] of value.constraints.entries()) {
+    const result = validateSafeExpression(
+      constraint,
+      published ? ids : undefined,
+    );
+    if (!result.ok) {
+      return result.issues.map((entry) => ({
+        ...entry,
+        path: `parameterization.constraints.${index}.${entry.path}`,
+      }));
+    }
   }
   return [];
 }
@@ -348,46 +354,144 @@ const mathFunctions = new Set([
   'ceil',
 ]);
 
-function validateSafeExpression(value: unknown): value is SafeExpressionNode {
-  if (!isRecord(value)) return false;
-  if (value.kind === 'literal') return isPrimitive(value.value);
-  if (value.kind === 'variable') return isNonEmptyString(value.variableId);
-  if (value.kind === 'unary') {
-    return (
-      (value.operator === 'negate' || value.operator === 'absolute') &&
-      validateSafeExpression(value.operand)
-    );
+export function validateSafeExpression(
+  value: unknown,
+  definedVariableIds?: ReadonlySet<string>,
+): ValidationResult<SafeExpressionNode> {
+  const pending: Array<{ node: unknown; depth: number }> = [
+    { node: value, depth: 1 },
+  ];
+  let nodeCount = 0;
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current) break;
+    nodeCount += 1;
+    if (
+      current.depth > SAFE_EXPRESSION_MAX_DEPTH ||
+      nodeCount > SAFE_EXPRESSION_MAX_NODES
+    ) {
+      return invalid(
+        issue('expression.limits', 'AST trop profond ou trop grand.'),
+      );
+    }
+    if (!isRecord(current.node)) {
+      return invalid(issue('expression.node', 'Nœud AST invalide.'));
+    }
+    const node = current.node;
+    const push = (...children: unknown[]) => {
+      for (const child of children) {
+        pending.push({ node: child, depth: current.depth + 1 });
+      }
+    };
+
+    if (node.kind === 'literal') {
+      if (!isPrimitive(node.value)) {
+        return invalid(issue('expression.literal', 'Littéral invalide.'));
+      }
+      continue;
+    }
+    if (node.kind === 'variable') {
+      if (
+        !isNonEmptyString(node.variableId) ||
+        (definedVariableIds !== undefined &&
+          !definedVariableIds.has(node.variableId))
+      ) {
+        return invalid(
+          issue('expression.variable', 'Référence de variable invalide.'),
+        );
+      }
+      continue;
+    }
+    if (node.kind === 'unary') {
+      if (node.operator !== 'negate' && node.operator !== 'absolute') {
+        return invalid(issue('expression.unary', 'Opérateur unaire invalide.'));
+      }
+      push(node.operand);
+      continue;
+    }
+    if (node.kind === 'binary' || node.kind === 'comparison') {
+      const operators =
+        node.kind === 'binary' ? binaryOperators : comparisonOperators;
+      if (!operators.has(node.operator as string)) {
+        return invalid(issue('expression.operator', 'Opérateur invalide.'));
+      }
+      push(node.left, node.right);
+      continue;
+    }
+    if (node.kind === 'math-function') {
+      if (
+        !mathFunctions.has(node.function as string) ||
+        !Array.isArray(node.arguments) ||
+        node.arguments.length > SAFE_EXPRESSION_MAX_LIST_ITEMS
+      ) {
+        return invalid(issue('expression.function', 'Fonction invalide.'));
+      }
+      const arityIsValid =
+        node.function === 'min' || node.function === 'max'
+          ? node.arguments.length >= 2
+          : node.arguments.length === 1;
+      if (!arityIsValid) {
+        return invalid(issue('expression.function', 'Arité invalide.'));
+      }
+      for (const argument of node.arguments as unknown[]) push(argument);
+      continue;
+    }
+    if (node.kind === 'logical') {
+      if (
+        (node.operator !== 'and' && node.operator !== 'or') ||
+        !Array.isArray(node.operands) ||
+        node.operands.length < 2 ||
+        node.operands.length > SAFE_EXPRESSION_MAX_LIST_ITEMS
+      ) {
+        return invalid(issue('expression.logical', 'Logique invalide.'));
+      }
+      for (const operand of node.operands as unknown[]) push(operand);
+      continue;
+    }
+    if (node.kind === 'logical-not') {
+      push(node.operand);
+      continue;
+    }
+    return invalid(issue('expression.kind', 'Type de nœud AST invalide.'));
   }
-  if (value.kind === 'binary') {
-    return (
-      binaryOperators.has(value.operator as string) &&
-      validateSafeExpression(value.left) &&
-      validateSafeExpression(value.right)
-    );
+
+  return valid(value as SafeExpressionNode);
+}
+
+export function validateQuestionSourceReference(
+  value: unknown,
+): ValidationResult<QuestionSourceReference> {
+  if (
+    !isRecord(value) ||
+    !isNonEmptyString(value.sourceLabel) ||
+    !(
+      value.sourceReference === null ||
+      typeof value.sourceReference === 'string'
+    ) ||
+    !(value.sourceLocator === null || typeof value.sourceLocator === 'string')
+  ) {
+    return invalid(issue('provenance.reference', 'Référence source invalide.'));
   }
-  if (value.kind === 'comparison') {
-    return (
-      comparisonOperators.has(value.operator as string) &&
-      validateSafeExpression(value.left) &&
-      validateSafeExpression(value.right)
-    );
+  return valid(value as unknown as QuestionSourceReference);
+}
+
+export function validateQuestionProvenance(
+  value: unknown,
+): ValidationResult<QuestionProvenance> {
+  if (
+    !isRecord(value) ||
+    !isNonEmptyString(value.bundleId) ||
+    !isIsoDate(value.importedAt) ||
+    !Array.isArray(value.references)
+  ) {
+    return invalid(issue('provenance', 'Provenance de question invalide.'));
   }
-  if (value.kind === 'math-function') {
-    return (
-      mathFunctions.has(value.function as string) &&
-      Array.isArray(value.arguments) &&
-      value.arguments.every(validateSafeExpression)
-    );
+  for (const reference of value.references) {
+    const result = validateQuestionSourceReference(reference);
+    if (!result.ok) return result;
   }
-  if (value.kind === 'logical') {
-    return (
-      (value.operator === 'and' || value.operator === 'or') &&
-      Array.isArray(value.operands) &&
-      value.operands.length > 0 &&
-      value.operands.every(validateSafeExpression)
-    );
-  }
-  return value.kind === 'logical-not' && validateSafeExpression(value.operand);
+  return valid(value as unknown as QuestionProvenance);
 }
 
 export function validateQuestion(value: unknown): ValidationResult<Question> {
@@ -436,13 +540,17 @@ export function validateQuestion(value: unknown): ValidationResult<Question> {
     );
   }
   if (
-    value.source === 'private'
-      ? !isNonEmptyString(value.ownerId)
-      : value.source === 'static' && value.ownerId !== null
+    (value.source === 'static' && value.ownerId !== null) ||
+    ((value.source === 'private' || value.source === 'shared') &&
+      !isNonEmptyString(value.ownerId))
   ) {
     issues.push(
       issue('question.ownerId', 'Propriétaire incohérent avec la source.'),
     );
+  }
+  if (value.provenance !== null) {
+    const provenance = validateQuestionProvenance(value.provenance);
+    if (!provenance.ok) issues.push(...provenance.issues);
   }
   issues.push(...validateSegments(value.prompt, 'question.prompt', false));
   issues.push(...validateSegments(value.hint, 'question.hint', true));
@@ -519,7 +627,8 @@ export function createQuestionInstance(
     !Number.isInteger(value.ordinal) ||
     value.ordinal < 0 ||
     !isIsoDate(value.createdAt) ||
-    !isRecord(value.parameterValues)
+    !isRecord(value.parameterValues) ||
+    !Object.values(value.parameterValues).every(isPrimitive)
   ) {
     issues.push(issue('instance', 'Structure d’instance invalide.'));
   }
