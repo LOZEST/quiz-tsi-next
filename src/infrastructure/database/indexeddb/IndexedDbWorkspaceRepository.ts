@@ -3,14 +3,27 @@ import { AuthError } from '@domain/auth/AuthError';
 import type { AuthUser } from '@domain/auth/AuthUser';
 import type { UserWorkspace } from '@domain/workspace/UserWorkspace';
 import type { WorkspaceRepository } from '@domain/workspace/WorkspaceRepository';
+import type { WhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 
 const DATABASE_NAME = 'quiz-tsi-user-workspaces';
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
+const WORKSPACE_SCHEMA_VERSION = 1;
+
+interface StoredWhiteboardScene {
+  key: string;
+  userId: string;
+  scene: WhiteboardScene;
+}
 
 interface WorkspaceSchema extends DBSchema {
   workspaces: {
     key: string;
     value: UserWorkspace;
+  };
+  whiteboardScenes: {
+    key: string;
+    value: StoredWhiteboardScene;
+    indexes: { 'by-user': string };
   };
 }
 
@@ -22,6 +35,12 @@ function openWorkspaceDatabase(): Promise<WorkspaceDatabase> {
     upgrade(db) {
       if (!db.objectStoreNames.contains('workspaces')) {
         db.createObjectStore('workspaces');
+      }
+      if (!db.objectStoreNames.contains('whiteboardScenes')) {
+        const scenes = db.createObjectStore('whiteboardScenes', {
+          keyPath: 'key',
+        });
+        scenes.createIndex('by-user', 'userId');
       }
     },
   });
@@ -57,7 +76,7 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
         : {
             userId,
             workspaceGeneration: generation,
-            schemaVersion: DATABASE_VERSION,
+            schemaVersion: WORKSPACE_SCHEMA_VERSION,
             createdAt: now,
             updatedAt: now,
           };
@@ -118,7 +137,22 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     const database =
       this.database ??
       (await openDB<WorkspaceSchema>(DATABASE_NAME, DATABASE_VERSION));
-    await database.delete('workspaces', userId);
+    const transaction = database.transaction(
+      ['workspaces', 'whiteboardScenes'],
+      'readwrite',
+    );
+    await transaction.objectStore('workspaces').delete(userId);
+    let cursor = await transaction
+      .objectStore('whiteboardScenes')
+      .index('by-user')
+      .openKeyCursor(userId);
+    while (cursor) {
+      await transaction
+        .objectStore('whiteboardScenes')
+        .delete(cursor.primaryKey);
+      cursor = await cursor.continue();
+    }
+    await transaction.done;
     if (!this.database) database.close();
   }
 
@@ -126,5 +160,35 @@ export class IndexedDbWorkspaceRepository implements WorkspaceRepository {
     return (
       this.active?.generation === generation && this.active.userId === userId
     );
+  }
+
+  async getWhiteboardScene(
+    sceneId: string,
+    generation: number,
+    userId: string,
+  ): Promise<unknown> {
+    if (!this.database || !this.isGenerationActive(generation, userId)) {
+      return null;
+    }
+    const stored = await this.database.get(
+      'whiteboardScenes',
+      `${userId}:${sceneId}`,
+    );
+    return this.isGenerationActive(generation, userId)
+      ? (stored?.scene ?? null)
+      : null;
+  }
+
+  async saveWhiteboardScene(
+    scene: WhiteboardScene,
+    generation: number,
+    userId: string,
+  ): Promise<void> {
+    if (!this.database || !this.isGenerationActive(generation, userId)) return;
+    await this.database.put('whiteboardScenes', {
+      key: `${userId}:${scene.sceneId}`,
+      userId,
+      scene,
+    });
   }
 }

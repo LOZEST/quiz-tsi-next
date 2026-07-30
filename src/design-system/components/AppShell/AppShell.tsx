@@ -8,6 +8,59 @@ import { SkipLink } from '@design-system/components/SkipLink/SkipLink';
 import styles from './AppShell.module.css';
 import { useAuth } from '@app/providers/AuthProvider';
 import { userRoleLabels } from '@domain/auth/UserRole';
+import {
+  WhiteboardProvider,
+  useWhiteboard,
+} from '@app/providers/WhiteboardProvider';
+
+function WhiteboardDrawerSettings() {
+  const settings = useWhiteboard();
+  return (
+    <div className={styles.drawerSettings}>
+      <label>
+        Épaisseur du stylo
+        <input
+          aria-label="Épaisseur du stylo"
+          type="range"
+          min="1"
+          max="12"
+          value={settings.penWidth}
+          onChange={(event) => settings.setPenWidth(Number(event.target.value))}
+        />
+      </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.gridEnabled}
+          onChange={(event) => settings.setGridEnabled(event.target.checked)}
+        />
+        Afficher la grille
+      </label>
+      <fieldset>
+        <legend>Main d’écriture</legend>
+        <label>
+          <input
+            type="radio"
+            name="whiteboard-handedness"
+            checked={settings.handedness === 'right'}
+            onChange={() => settings.setHandedness('right')}
+          />
+          Droitier
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="whiteboard-handedness"
+            checked={settings.handedness === 'left'}
+            onChange={() => settings.setHandedness('left')}
+          />
+          Gaucher
+        </label>
+      </fieldset>
+      <p>Outil actif : {settings.activeTool === 'pen' ? 'Stylo' : 'Gomme'}</p>
+    </div>
+  );
+}
 
 export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,90 +71,115 @@ export function AppShell() {
   const { user } = state.session;
 
   return (
-    <div className={styles.shell}>
-      <SkipLink />
-      <header className={styles.topbar}>
-        <IconButton
-          ref={menuButtonRef}
-          label="Ouvrir le menu"
-          aria-expanded={menuOpen}
-          aria-controls="main-navigation"
-          onClick={() => setMenuOpen(true)}
-        >
-          ☰
-        </IconButton>
-        <span className={styles.brand}>Quiz TSI</span>
-      </header>
-      {state.offline ? (
-        <div className={styles.offlineBanner} role="status">
-          Hors connexion — les données locales validées restent accessibles. Le
-          rôle est informatif et les opérations sensibles sont désactivées.
-        </div>
-      ) : null}
-
-      <OverlayDrawer
-        open={menuOpen}
-        title="Menu"
-        triggerRef={menuButtonRef}
-        onClose={() => setMenuOpen(false)}
+    <WhiteboardProvider>
+      <div
+        className={`${styles.shell} ${
+          location.pathname === '/whiteboard'
+            ? `${styles.whiteboardShell} qtsi-whiteboard-shell`
+            : ''
+        }`}
       >
-        <Disclosure label="À propos de cette version">
-          Le socle technique est prêt. Les parcours et réglages interactifs
-          arriveront dans les prochaines PR.
-        </Disclosure>
-        <nav id="main-navigation" aria-label="Navigation principale">
-          <ul className={styles.navigation}>
-            {mainNavigation.map((destination) => (
-              <li key={destination.to}>
-                <NavLink
-                  to={destination.to}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive ? styles.activeLink : styles.link
-                  }
-                >
-                  {destination.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        {user.role !== 'user' ? (
-          <nav aria-label="Navigation secondaire">
-            <NavLink
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                isActive ? styles.activeLink : styles.link
-              }
-            >
-              Administration
-            </NavLink>
-          </nav>
+        <SkipLink />
+        <header className={styles.topbar}>
+          <IconButton
+            ref={menuButtonRef}
+            label="Ouvrir le menu"
+            aria-expanded={menuOpen}
+            aria-controls="main-navigation"
+            onClick={() => setMenuOpen(true)}
+          >
+            ☰
+          </IconButton>
+          <span className={styles.brand}>Quiz TSI</span>
+        </header>
+        {state.offline ? (
+          <div className={styles.offlineBanner} role="status">
+            Hors connexion — les données locales validées restent accessibles.
+            Le rôle est informatif et les opérations sensibles sont désactivées.
+          </div>
         ) : null}
-        <NavLink
-          className={styles.accountCard!}
-          to="/account"
-          onClick={() => setMenuOpen(false)}
-        >
-          <span className={styles.accountIdentity}>
-            {user.displayName || user.email}
-          </span>
-          <span className={styles.accountRole}>
-            {userRoleLabels[user.role]}
-          </span>
-          <span className={styles.accountAction}>Voir le compte</span>
-        </NavLink>
-      </OverlayDrawer>
 
-      <main
-        id="main-content"
-        className={styles.main}
-        tabIndex={-1}
-        key={location.pathname}
-      >
-        <Outlet />
-      </main>
-    </div>
+        <OverlayDrawer
+          open={menuOpen}
+          title="Menu"
+          triggerRef={menuButtonRef}
+          onClose={() => setMenuOpen(false)}
+        >
+          {location.pathname === '/whiteboard' ? (
+            <>
+              <section
+                className={styles.drawerSection}
+                aria-labelledby="active-session"
+              >
+                <h3 id="active-session">Espace libre</h3>
+                <p>Tableau principal</p>
+              </section>
+              <Disclosure label="Options du parcours">
+                Les parcours seront disponibles dans une prochaine version.
+              </Disclosure>
+              <Disclosure label="Réglages Apple Pencil">
+                <WhiteboardDrawerSettings />
+              </Disclosure>
+            </>
+          ) : (
+            <Disclosure label="À propos de cette version">
+              Authentification et espace utilisateur actifs.
+            </Disclosure>
+          )}
+          <nav id="main-navigation" aria-label="Navigation principale">
+            <ul className={styles.navigation}>
+              {mainNavigation.map((destination) => (
+                <li key={destination.to}>
+                  <NavLink
+                    to={destination.to}
+                    onClick={() => setMenuOpen(false)}
+                    className={({ isActive }) =>
+                      isActive ? styles.activeLink : styles.link
+                    }
+                  >
+                    {destination.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          {user.role !== 'user' ? (
+            <nav aria-label="Navigation secondaire">
+              <NavLink
+                to="/admin"
+                onClick={() => setMenuOpen(false)}
+                className={({ isActive }) =>
+                  isActive ? styles.activeLink : styles.link
+                }
+              >
+                Administration
+              </NavLink>
+            </nav>
+          ) : null}
+          <NavLink
+            className={styles.accountCard!}
+            to="/account"
+            onClick={() => setMenuOpen(false)}
+          >
+            <span className={styles.accountIdentity}>
+              {user.displayName || user.email}
+            </span>
+            <span className={styles.accountRole}>
+              {userRoleLabels[user.role]}
+            </span>
+            <span className={styles.accountAction}>Voir le compte</span>
+          </NavLink>
+        </OverlayDrawer>
+
+        <main
+          id="main-content"
+          className={styles.main}
+          tabIndex={-1}
+          key={location.pathname}
+        >
+          <Outlet />
+        </main>
+      </div>
+    </WhiteboardProvider>
   );
 }
