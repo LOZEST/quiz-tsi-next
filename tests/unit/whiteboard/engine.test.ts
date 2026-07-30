@@ -178,6 +178,16 @@ function createRenderingFixture() {
     set lineCap(_: CanvasLineCap) {},
     set lineJoin(_: CanvasLineJoin) {},
   } as unknown as CanvasRenderingContext2D;
+  const capturedPointers = new Set<number>();
+  const setPointerCapture = vi.fn((pointerId: number) => {
+    capturedPointers.add(pointerId);
+  });
+  const releasePointerCapture = vi.fn((pointerId: number) => {
+    capturedPointers.delete(pointerId);
+  });
+  const hasPointerCapture = vi.fn((pointerId: number) =>
+    capturedPointers.has(pointerId),
+  );
   const canvas = {
     width: 1024,
     height: 768,
@@ -185,10 +195,21 @@ function createRenderingFixture() {
     clientHeight: 768,
     getContext: vi.fn(() => context),
     getBoundingClientRect: vi.fn(() => new DOMRect(0, 0, 1024, 768)),
-    setPointerCapture: vi.fn(),
-    releasePointerCapture: vi.fn(),
+    setPointerCapture,
+    releasePointerCapture,
+    hasPointerCapture,
   } as unknown as HTMLCanvasElement;
-  return { canvas, context, calls };
+  return {
+    canvas,
+    context,
+    calls,
+    pointerCapture: {
+      capturedPointers,
+      setPointerCapture,
+      releasePointerCapture,
+      hasPointerCapture,
+    },
+  };
 }
 
 describe('CanvasRenderer', () => {
@@ -229,28 +250,15 @@ describe('CanvasRenderer', () => {
 });
 
 describe('CanvasController', () => {
-  it('draws, commits, switches tools and supports undo/redo', () => {
-    const { canvas } = createRenderingFixture();
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      vi.fn(() => 1),
-    );
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
-    class Observer {
-      observe = vi.fn();
-      disconnect = vi.fn();
-    }
-    vi.stubGlobal('ResizeObserver', Observer);
-    const commits: ReturnType<typeof createEmptyScene>[] = [];
-    const controller = new CanvasController(
-      canvas,
-      createEmptyScene(),
-      (scene) => commits.push(scene),
-    );
-    const pointer = {
-      pointerId: 1,
-      pointerType: 'mouse',
-      pressure: 0.5,
+  const pointer = (
+    pointerId: number,
+    pointerType: 'mouse' | 'pen' | 'touch',
+    overrides: Partial<PointerEvent> = {},
+  ) =>
+    ({
+      pointerId,
+      pointerType,
+      pressure: pointerType === 'mouse' ? 0.5 : 0.7,
       tiltX: 0,
       tiltY: 0,
       timeStamp: 1,
@@ -258,12 +266,41 @@ describe('CanvasController', () => {
       clientY: 30,
       preventDefault: vi.fn(),
       getCoalescedEvents: () => [],
-    } as unknown as PointerEvent;
+      ...overrides,
+    }) as unknown as PointerEvent;
+
+  function prepareController(
+    onCommit: (scene: ReturnType<typeof createEmptyScene>) => void = vi.fn(),
+  ) {
+    const fixture = createRenderingFixture();
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn(() => 1),
+    );
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const controller = new CanvasController(
+      fixture.canvas,
+      createEmptyScene(),
+      onCommit,
+    );
+    return { controller, ...fixture };
+  }
+
+  it('draws, commits, switches tools and supports undo/redo', () => {
+    class Observer {
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+    vi.stubGlobal('ResizeObserver', Observer);
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller } = prepareController((scene) => commits.push(scene));
+    const mouse = pointer(1, 'mouse');
     controller.setPenWidth(6);
-    controller.pointerDown(pointer);
-    controller.pointerMove({ ...pointer, clientX: 40 } as PointerEvent);
-    controller.pointerUp({ ...pointer, clientX: 50 } as PointerEvent);
+    controller.pointerDown(mouse);
+    controller.pointerMove(pointer(1, 'mouse', { clientX: 40 }));
+    controller.pointerUp(pointer(1, 'mouse', { clientX: 50 }));
     expect(commits.at(-1)?.objects).toHaveLength(1);
+    expect(commits.at(-1)?.objects[0]?.points).toHaveLength(3);
     controller.undo();
     expect(commits.at(-1)?.objects).toEqual([]);
     controller.redo();
@@ -276,21 +313,104 @@ describe('CanvasController', () => {
   });
 
   it('ignores touch drawing input', () => {
-    const { canvas } = createRenderingFixture();
-    vi.stubGlobal(
-      'requestAnimationFrame',
-      vi.fn(() => 1),
+    const commit = vi.fn();
+    const { controller, pointerCapture } = prepareController(commit);
+    controller.pointerDown(pointer(2, 'touch'));
+    expect(pointerCapture.setPointerCapture).not.toHaveBeenCalled();
+    expect(commit).not.toHaveBeenCalled();
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('isolates an active Pencil stroke from touch and other pointers', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller, pointerCapture } = prepareController((scene) =>
+      commits.push(scene),
     );
-    vi.stubGlobal('cancelAnimationFrame', vi.fn());
-    const controller = new CanvasController(
-      canvas,
-      createEmptyScene(),
-      vi.fn(),
+    controller.pointerDown(pointer(10, 'pen'));
+    controller.pointerDown(pointer(11, 'mouse'));
+    controller.pointerMove(pointer(20, 'touch', { clientX: 300 }));
+    controller.pointerMove(pointer(11, 'mouse', { clientX: 400 }));
+    controller.pointerUp(pointer(20, 'touch'));
+    controller.pointerUp(pointer(11, 'mouse'));
+    expect(commits).toEqual([]);
+    expect(pointerCapture.setPointerCapture).toHaveBeenCalledTimes(1);
+    expect(pointerCapture.setPointerCapture).toHaveBeenCalledWith(10);
+    expect(pointerCapture.releasePointerCapture).not.toHaveBeenCalled();
+
+    controller.pointerMove(pointer(10, 'pen', { clientX: 40 }));
+    controller.pointerUp(pointer(10, 'pen', { clientX: 50 }));
+    expect(commits).toHaveLength(1);
+    expect(commits[0]?.objects[0]?.points).toHaveLength(3);
+    expect(pointerCapture.releasePointerCapture).toHaveBeenCalledWith(10);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('falls back to the current move when coalesced events are empty', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller } = prepareController((scene) => commits.push(scene));
+    controller.pointerDown(pointer(5, 'pen'));
+    controller.pointerMove(
+      pointer(5, 'pen', {
+        clientX: 40,
+        getCoalescedEvents: () => [],
+      }),
     );
-    controller.pointerDown({
-      pointerType: 'touch',
-      preventDefault: vi.fn(),
-    } as unknown as PointerEvent);
+    controller.pointerUp(pointer(5, 'pen', { clientX: 60 }));
+    expect(commits[0]?.objects[0]?.points.map(({ x }) => x)).toEqual([
+      20, 40, 60,
+    ]);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('handles cancellation and allows a new mouse gesture', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller, pointerCapture } = prepareController((scene) =>
+      commits.push(scene),
+    );
+    controller.pointerDown(pointer(8, 'pen'));
+    controller.pointerCancel(pointer(99, 'touch'));
+    expect(commits).toEqual([]);
+    controller.pointerCancel(pointer(8, 'pen'));
+    expect(commits).toHaveLength(1);
+    expect(pointerCapture.releasePointerCapture).toHaveBeenCalledWith(8);
+
+    controller.pointerDown(pointer(9, 'mouse'));
+    controller.pointerUp(pointer(9, 'mouse'));
+    expect(commits).toHaveLength(2);
+    expect(commits[1]?.objects).toHaveLength(2);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('handles lost capture without releasing it again', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller, pointerCapture } = prepareController((scene) =>
+      commits.push(scene),
+    );
+    controller.pointerDown(pointer(12, 'pen'));
+    pointerCapture.capturedPointers.delete(12);
+    controller.lostPointerCapture(pointer(13, 'pen'));
+    expect(commits).toEqual([]);
+    controller.lostPointerCapture(pointer(12, 'pen'));
+    expect(commits).toHaveLength(1);
+    expect(pointerCapture.releasePointerCapture).not.toHaveBeenCalled();
+    controller.pointerDown(pointer(14, 'mouse'));
+    expect(pointerCapture.setPointerCapture).toHaveBeenLastCalledWith(14);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not throw when capture is lost just before release', () => {
+    const { controller, pointerCapture } = prepareController();
+    controller.pointerDown(pointer(30, 'pen'));
+    pointerCapture.hasPointerCapture.mockReturnValueOnce(true);
+    pointerCapture.releasePointerCapture.mockImplementationOnce(() => {
+      throw new DOMException('Capture was lost.');
+    });
+    expect(() => controller.pointerUp(pointer(30, 'pen'))).not.toThrow();
     controller.destroy();
     vi.unstubAllGlobals();
   });

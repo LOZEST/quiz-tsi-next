@@ -18,7 +18,8 @@ export class CanvasController {
   });
   private undoStack: WhiteboardScene[] = [];
   private redoStack: WhiteboardScene[] = [];
-  private drawing = false;
+  private activePointerId: number | null = null;
+  private activePointerType: string | null = null;
   private resizeObserver: ResizeObserver | null = null;
 
   constructor(
@@ -60,20 +61,23 @@ export class CanvasController {
   }
 
   pointerDown(event: PointerEvent) {
-    if (event.pointerType === 'touch') return;
+    if (event.pointerType === 'touch' || this.activePointerId !== null) return;
     event.preventDefault();
     this.canvas.setPointerCapture(event.pointerId);
+    this.activePointerId = event.pointerId;
+    this.activePointerType = event.pointerType;
     this.undoStack.push(snapshotScene(this.scene).scene);
     this.redoStack = [];
-    this.drawing = true;
     this.scene = this.tools.current.begin(this.scene, this.input(event)).scene;
     this.renderer.schedule(this.scene);
   }
 
   pointerMove(event: PointerEvent) {
-    if (!this.drawing) return;
-    const coalesced = event.getCoalescedEvents?.() ?? [event];
-    for (const sample of coalesced) {
+    if (!this.isActivePointer(event)) return;
+    const coalesced = event.getCoalescedEvents?.();
+    const samples = coalesced && coalesced.length > 0 ? coalesced : [event];
+    for (const sample of samples) {
+      if (!this.isActivePointer(sample)) continue;
       this.scene = this.tools.current.move(
         this.scene,
         this.input(sample),
@@ -83,11 +87,40 @@ export class CanvasController {
   }
 
   pointerUp(event: PointerEvent) {
-    if (!this.drawing) return;
+    if (!this.isActivePointer(event)) return;
     this.scene = this.tools.current.end(this.scene, this.input(event)).scene;
-    this.drawing = false;
-    this.canvas.releasePointerCapture(event.pointerId);
+    this.finishPointer(event.pointerId, true);
     this.commit();
+  }
+
+  pointerCancel(event: PointerEvent) {
+    if (!this.isActivePointer(event)) return;
+    this.finishPointer(event.pointerId, true);
+    this.commit();
+  }
+
+  lostPointerCapture(event: PointerEvent) {
+    if (!this.isActivePointer(event)) return;
+    this.finishPointer(event.pointerId, false);
+    this.commit();
+  }
+
+  private isActivePointer(event: PointerEvent): boolean {
+    return (
+      event.pointerId === this.activePointerId &&
+      event.pointerType === this.activePointerType
+    );
+  }
+
+  private finishPointer(pointerId: number, releaseCapture: boolean) {
+    this.activePointerId = null;
+    this.activePointerType = null;
+    if (!releaseCapture || !this.canvas.hasPointerCapture(pointerId)) return;
+    try {
+      this.canvas.releasePointerCapture(pointerId);
+    } catch {
+      // The browser may lose capture between the ownership check and release.
+    }
   }
 
   selectTool(tool: 'pen' | 'eraser') {
@@ -137,6 +170,8 @@ export class CanvasController {
     this.renderer.schedule(this.scene);
   }
   destroy() {
+    this.activePointerId = null;
+    this.activePointerType = null;
     this.resizeObserver?.disconnect();
     this.renderer.destroy();
   }
