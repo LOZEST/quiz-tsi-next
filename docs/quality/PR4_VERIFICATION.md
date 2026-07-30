@@ -4,15 +4,15 @@
 
 | Exigence | Implémentation | Test automatique | Vérification manuelle | État réel | Justification |
 |---|---|---|---|---|---|
-| `SESSION-005` — filtre Réflexe non applicable | À créer | À créer | À réaliser | partiel | Contrat documentaire corrigé ; aucun code PR4 |
-| `SESSION-007` — aucune révision prévue | À créer | À créer | À réaliser | partiel | Contrat documentaire défini ; aucun code PR4 |
-| `SESSION-008` — révision terminée | À créer | À créer | À réaliser | partiel | Contrat documentaire défini ; aucun code PR4 |
-| `SESSION-009` — points faibles en calibration | À créer | À créer | À réaliser | partiel | Contrat documentaire défini ; aucun code PR4 |
-| `SESSION-010` — configuration du futur test | À créer | À créer | À réaliser | partiel | Contrat documentaire défini ; passation réservée à PR5 |
+| `SESSION-005` — filtre Réflexe non applicable | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Contrat et validation structurelle implémentés ; interface hors bloc A |
+| `SESSION-007` — aucune révision prévue | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Union d'état implémentée ; comportement UI hors bloc A |
+| `SESSION-008` — révision terminée | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Union d'état implémentée ; comportement UI hors bloc A |
+| `SESSION-009` — points faibles en calibration | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Union et preuves de calibration implémentées ; UI hors bloc A |
+| `SESSION-010` — configuration du futur test | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Configuration et cohérence du stock implémentées ; passation réservée à PR5 |
 | `IMPORT-007` — aucune banque validée | À créer | À créer | À réaliser | partiel | Message et comportement documentaire définis |
-| Programme versionné et validé | À créer | À créer | À réaliser | partiel | Ancien programme caractérisé, conversion non réalisée |
+| Programme versionné et validé | `src/domain/program/Program.ts` | `tests/unit/domain/contracts.test.ts` | Revue des données au bloc B | partiel | Contrats et validation structurelle implémentés ; validation complète au bloc B |
 | Parser mathématique v1 sécurisé | À créer | À créer | À réaliser | partiel | Grammaire normative existante, aucun parser PR4 |
-| Génération déterministe par seed | À créer | À créer | À réaliser | partiel | Contrat existant, aucun générateur PR4 |
+| Génération déterministe par seed | `src/domain/questions/Question.ts` pour les contrats | `tests/unit/domain/contracts.test.ts` | À réaliser au bloc D | partiel | Instance et seed contractuelles ; aucun générateur avant le bloc D |
 | Import versionné, idempotent et traçable | À créer | À créer | À réaliser | partiel | Contrats définis ; fixtures de test uniquement |
 | Banque historique de production | Aucun | Sans objet avant validation | Revue licence/provenance requise | bloqué | Licence, droits, provenance et conversions non validés |
 | Sélection et filtres dépendants | À créer | À créer | À réaliser | partiel | Contrats documentaires existants |
