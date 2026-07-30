@@ -6,7 +6,8 @@
 ## Environnement et révisions
 
 - Base fusionnée : `42cb1cef3d96a56257739ecb18e6ee5027be4f61`
-- Candidat fonctionnel testé : `93b9c81`
+- Candidat fonctionnel initial : `93b9c81`
+- Durcissement Pencil testé : `5dac2e6`
 - Branche : `feat/pr3-whiteboard-engine`
 - Système : macOS arm64
 - Node.js : `v24.14.1`
@@ -49,6 +50,22 @@ borné à 2. Le redimensionnement est idempotent et le passage portrait/paysage
 utilise une transformation uniforme centrée : les coordonnées et proportions
 logiques ne changent pas.
 
+## Isolation du pointeur actif
+
+Le contrôleur conserve l'identifiant et le type du pointeur actif. Après un
+`pointerdown` Pencil ou souris accepté, tout mouvement, relâchement,
+`pointercancel` ou `lostpointercapture` provenant d'un autre pointeur est
+ignoré. Un doigt, une paume ou un second pointeur ne peut donc ni ajouter un
+point au trait actif, ni le terminer, ni libérer sa capture.
+
+La fin et l'annulation remettent l'état actif à zéro. La capture n'est libérée
+que si le Canvas la possède encore ; une perte concurrente ne propage aucune
+exception. Une annulation ou perte de capture conserve et persiste le trait
+partiel déjà reçu, puis autorise immédiatement un nouveau geste.
+
+Lorsque `getCoalescedEvents()` est absent ou renvoie une liste vide,
+l'événement `pointermove` courant est utilisé comme échantillon de secours.
+
 ## Outils et stockage
 
 - stylo avec largeur réglable et épaisseur influencée par la pression ;
@@ -69,8 +86,8 @@ logiques ne changent pas.
 | `npm run format:check` | Réussi |
 | `npm run lint` | Réussi ; avertissement informatif du resolver sur les multiples tsconfig |
 | `npm run typecheck` | Réussi |
-| `npm run test:coverage` | 101 tests réussis |
-| Couverture | statements 89,02 %, branches 80,86 %, functions 85,57 %, lines 93,35 % |
+| `npm run test:coverage` | 106 tests réussis |
+| Couverture | statements 89,39 %, branches 82,12 %, functions 85,02 %, lines 93,54 % |
 | `npm run build` | Réussi ; 141 modules transformés |
 | `npm run build:pages` | Réussi ; fallback Pages généré |
 | `npm run test:browser` | 48 tests réussis : 16 bureau, 16 iPad portrait, 16 iPad paysage |
