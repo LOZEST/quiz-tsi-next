@@ -602,19 +602,42 @@ export function validateQuestion(value: unknown): ValidationResult<Question> {
     : valid(value as unknown as Question);
 }
 
+function isPlainPrimitiveRecord(
+  value: unknown,
+): value is Record<string, ParameterPrimitive> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  if (prototype !== Object.prototype && prototype !== null) return false;
+  if (Object.getOwnPropertySymbols(value).length > 0) return false;
+  return Object.values(value).every(isPrimitive);
+}
+
 function deepFreeze<T>(value: T): Readonly<T> {
-  if (typeof value !== 'object' || value === null || Object.isFrozen(value)) {
-    return value;
+  if (typeof value !== 'object' || value === null) return value;
+  const pending: object[] = [value];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+    for (const key of Reflect.ownKeys(current)) {
+      const descriptor = Object.getOwnPropertyDescriptor(current, key);
+      const child = descriptor?.value as unknown;
+      if (typeof child === 'object' && child !== null) pending.push(child);
+    }
+    Object.freeze(current);
   }
-  for (const child of Object.values(value as Record<string, unknown>)) {
-    deepFreeze(child);
-  }
-  return Object.freeze(value);
+  return value;
 }
 
 export function createQuestionInstance(
-  value: QuestionInstance,
+  value: unknown,
 ): ValidationResult<QuestionInstance> {
+  if (!isRecord(value)) {
+    return invalid(issue('instance', 'Une instance doit être un objet.'));
+  }
   const question = validateQuestion(value.frozenQuestion);
   const issues: ValidationIssue[] = question.ok ? [] : [...question.issues];
   if (
@@ -623,12 +646,11 @@ export function createQuestionInstance(
     !isNonEmptyString(value.sessionId) ||
     !isNonEmptyString(value.seed) ||
     !Number.isInteger(value.questionVersion) ||
-    value.questionVersion < 1 ||
+    (value.questionVersion as number) < 1 ||
     !Number.isInteger(value.ordinal) ||
-    value.ordinal < 0 ||
+    (value.ordinal as number) < 0 ||
     !isIsoDate(value.createdAt) ||
-    !isRecord(value.parameterValues) ||
-    !Object.values(value.parameterValues).every(isPrimitive)
+    !isPlainPrimitiveRecord(value.parameterValues)
   ) {
     issues.push(issue('instance', 'Structure d’instance invalide.'));
   }
@@ -645,5 +667,28 @@ export function createQuestionInstance(
     );
   }
   if (issues.length) return invalid(...issues);
-  return valid(deepFreeze(structuredClone(value)) as QuestionInstance);
+  const snapshot = {
+    id: value.id,
+    questionId: value.questionId,
+    questionVersion: value.questionVersion,
+    sessionId: value.sessionId,
+    ordinal: value.ordinal,
+    frozenQuestion: value.frozenQuestion,
+    parameterValues: Object.fromEntries(
+      Object.entries(
+        value.parameterValues as Record<string, ParameterPrimitive>,
+      ),
+    ),
+    seed: value.seed,
+    createdAt: value.createdAt,
+  };
+  try {
+    return valid(
+      deepFreeze(structuredClone(snapshot)) as unknown as QuestionInstance,
+    );
+  } catch {
+    return invalid(
+      issue('instance.snapshot', 'Impossible de figer cette instance.'),
+    );
+  }
 }

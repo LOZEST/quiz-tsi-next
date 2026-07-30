@@ -434,7 +434,7 @@ describe('content and questions', () => {
 
   it('creates an immutable coherent QuestionInstance snapshot', () => {
     const frozenQuestion = question();
-    const result = createQuestionInstance({
+    const source = {
       id: 'instance-1',
       questionId: frozenQuestion.id,
       questionVersion: frozenQuestion.version,
@@ -444,11 +444,28 @@ describe('content and questions', () => {
       parameterValues: {},
       seed: 'seed-1',
       createdAt: now,
-    });
+    };
+    const result = createQuestionInstance(source);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(Object.isFrozen(result.value)).toBe(true);
     expect(Object.isFrozen(result.value.frozenQuestion.prompt)).toBe(true);
+    expect(
+      Object.isFrozen(result.value.frozenQuestion.correction[0]?.content),
+    ).toBe(true);
+    expect(Object.isFrozen(result.value.parameterValues)).toBe(true);
+    expect(Object.keys(result.value)).toEqual([
+      'id',
+      'questionId',
+      'questionVersion',
+      'sessionId',
+      'ordinal',
+      'frozenQuestion',
+      'parameterValues',
+      'seed',
+      'createdAt',
+    ]);
+    expect(Object.isFrozen(source)).toBe(false);
     expect(Object.isFrozen(frozenQuestion)).toBe(false);
     expect(Object.isFrozen(frozenQuestion.prompt)).toBe(false);
     expect(frozenQuestion).toEqual(question());
@@ -478,6 +495,72 @@ describe('content and questions', () => {
           createdAt: now,
         }).ok,
       ).toBe(false);
+    }
+  });
+
+  it('rejects malformed instance roots and exotic parameter records without throwing', () => {
+    const frozenQuestion = question();
+    const base = {
+      id: 'instance-1',
+      questionId: frozenQuestion.id,
+      questionVersion: frozenQuestion.version,
+      sessionId: 'session-1',
+      ordinal: 0,
+      frozenQuestion,
+      parameterValues: {},
+      seed: 'seed-1',
+      createdAt: now,
+    };
+    for (const malformed of [
+      null,
+      undefined,
+      'instance',
+      42,
+      [],
+      {},
+      { ...base, parameterValues: new Date() },
+      { ...base, parameterValues: new Map() },
+      { ...base, parameterValues: new Set() },
+    ]) {
+      expect(() => createQuestionInstance(malformed)).not.toThrow();
+      expect(createQuestionInstance(malformed).ok).toBe(false);
+    }
+
+    class ParameterBag {
+      value = 1;
+    }
+    expect(
+      createQuestionInstance({
+        ...base,
+        parameterValues: new ParameterBag(),
+      }).ok,
+    ).toBe(false);
+
+    const withSymbol = { value: 1, [Symbol('hidden')]: true };
+    expect(
+      createQuestionInstance({ ...base, parameterValues: withSymbol }).ok,
+    ).toBe(false);
+
+    const nullPrototypeValues = Object.assign(Object.create(null) as object, {
+      text: 'x',
+      checked: true,
+      count: 2,
+    });
+    expect(
+      createQuestionInstance({
+        ...base,
+        parameterValues: nullPrototypeValues,
+      }).ok,
+    ).toBe(true);
+
+    const cyclic = { ...base } as typeof base & { self?: unknown };
+    cyclic.self = cyclic;
+    expect(() => createQuestionInstance(cyclic)).not.toThrow();
+    const cyclicResult = createQuestionInstance(cyclic);
+    expect(cyclicResult.ok).toBe(true);
+    if (cyclicResult.ok) {
+      expect('self' in cyclicResult.value).toBe(false);
+      expect(Object.isFrozen(cyclic)).toBe(false);
     }
   });
 });
