@@ -76,7 +76,7 @@ interface ParameterizedQuestionSpec {
 }
 ```
 
-`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides.
+`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides. Sa validation est bornée à une profondeur de 32, 256 nœuds et 32 arguments ou opérandes par liste. `abs`, `sqrt`, `round`, `floor` et `ceil` acceptent exactement un argument ; `min` et `max` en acceptent au moins deux ; `and` et `or` ont au moins deux opérandes.
 
 ### Question et instance
 
@@ -100,6 +100,16 @@ interface QuestionInstance {
 }
 interface FrozenQuestionInstance extends QuestionInstance { contentHash: string; }
 ```
+
+Invariant de propriété selon `source` :
+
+- `static` : `ownerId === null` ;
+- `private` : `ownerId` est l'identifiant non vide de son auteur ;
+- `shared` : `ownerId` est l'identifiant non vide de son auteur. Le partage
+  modifie la visibilité de la question, pas son attribution.
+
+Une question privée ou partagée sans auteur connu n'est pas complétée avec une
+valeur inventée : elle est invalide.
 
 Le contenu distant est constitué de segments, jamais de HTML arbitraire. `MathSource` est la seule source persistée d'une formule. Le langage mathématique simplifié est analysé de façon contrôlée ; le LaTeX éventuellement généré pour KaTeX reste un résultat temporaire de l'adapter, et ni ce LaTeX ni le HTML KaTeX ne sont persistés comme source de vérité. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
 
@@ -130,9 +140,52 @@ interface WeakPointItem {
   successCount: number; partialCount: number; failedCount: number;
   recurringErrors: string[];
 }
+type DailyPlanState =
+  | { kind: "ready"; items: DailyPlanItem[] }
+  | { kind: "none-scheduled" }
+  | { kind: "completed"; items: DailyPlanItem[] }
+  | { kind: "unavailable"; message: string };
+interface CalibrationEvidence {
+  observedEvidence: number;
+  requiredEvidence: number;
+  coveredNotions: number | null;
+  requiredCoveredNotions: number | null;
+}
+type WeakPointsState =
+  | { kind: "ready"; items: WeakPointItem[] }
+  | { kind: "calibrating"; evidence: CalibrationEvidence | null; message: string }
+  | { kind: "unavailable"; message: string };
+type ChapterTestPreparation =
+  | {
+      kind: "available";
+      chapterId: string;
+      questionCount: 20 | 40;
+      compatibleQuestionCount: number;
+    }
+  | {
+      kind: "insufficient-stock";
+      chapterId: string;
+      questionCount: 20 | 40;
+      compatibleQuestionCount: number;
+    }
+  | { kind: "unavailable"; message: string };
 ```
 
-Une configuration `reflex` impose `difficulty: null` et 60 secondes. Un blueprint conserve seed, ordre, `parameterValues` et versions de chaque instance.
+Une `Question` de type `reflex` impose `difficulty: null` et une séance Réflexe utilise 60 secondes. Un blueprint conserve seed, ordre, `parameterValues` et versions de chaque instance.
+
+`DailyPlanState` et `WeakPointsState` sont fournis à PR4 par des ports ou repositories fiables. PR4 ne calcule pas les algorithmes pédagogiques qui produisent ces états. Hors `ready`, aucune `QuestionInstance` n'est créée et aucune ancienne question ne reste active. Une jauge de calibration déterminée utilise uniquement des valeurs cohérentes de `CalibrationEvidence`; sinon elle reste indéterminée et sans pourcentage.
+
+`ChapterTestPreparation` est discriminé exclusivement par `kind`. L'ancienne
+forme avec `status` est invalide. Son état `unavailable` représente honnêtement
+l'absence de données exploitables sans fabriquer de stock. Il est le seul
+contrat de test utilisé en production par PR4. `ChapterTestBlueprint` est un
+contrat cible de PR5 : PR4 ne le crée, ne le persiste et ne l'utilise pas. Le
+démarrage et toute la passation appartiennent à PR5.
+
+À ce stade, les références `variable` des contraintes d'une question publiée
+doivent correspondre à une variable déclarée. L'analyse des références `@nom`
+dans `MathSource` ou les segments textuels dépend des blocs C et D et n'est pas
+réalisée par le validateur structurel du bloc A.
 
 ## Tableau
 
@@ -311,6 +364,8 @@ Commandes et symboles sont versionnés et constituent la source unique de l'anal
 
 Les options générales de `FreeRevisionFilters` ne dépendent pas de leur traduction et ne sont pas des entrées du programme. Réflexe emploie `not-applicable`; une difficulté précise l'exclut. Un parent changé réinitialise ses enfants incompatibles à `{ kind: "all" }`.
 
+`DifficultyFilterSelection` décrit le filtre de Révision libre : Réflexe utilise exclusivement `{ kind: "not-applicable" }`, jamais `null`. Ce contrat est distinct de `Question.difficulty`, qui vaut `null` pour une question `reflex`.
+
 ## Contrats finalisés de PR0.2
 
 ### Analyse mathématique
@@ -338,5 +393,7 @@ Chaque question importée peut conserver sa provenance propre. Le bundle peut fo
 `QuestionBankEntry.provenance` décrit la provenance d'entrée. Après application de `default`, `extend` ou `replace`, `Question.provenance` contient la provenance résolue persistée. Une question créée manuellement peut conserver `null`. Pour une question importée, la provenance reste présente après synchronisation, export, réimport et modification ; une modification du contenu ne la supprime jamais silencieusement.
 
 Dès PR4, l'import initial est versionné, validé, idempotent et traçable. Il conserve toutes les entrées valides, met les invalides en quarantaine et produit un `QuestionImportReport`. Le rapport avancé de PR7 indique pour chaque question si elle est acceptée, rejetée, mise à jour, ignorée ou mise en quarantaine.
+
+La banque historique auditée n'est pas un bundle de production validé. Elle reste bloquée tant que licence, droits de modification et redistribution, provenance, rattachement au programme, qualité, types, difficultés, paramètres et conversions sûres du LaTeX et du HTML ne sont pas validés. La source originale est conservée ; toute conversion ambiguë ou invalide est mise en quarantaine. En l'absence de banque validée, aucune question ni `QuestionInstance` n'est fabriquée.
 
 Dans chaque `QuestionImportReportEntry`, `entryIndex` identifie toujours la position de l'entrée dans le bundle, même sans identifiant externe. `questionId` contient l'identifiant interne lorsqu'une question a été créée ou retrouvée et `sourceLocator` reprend le localisateur fourni lorsqu'il existe. Deux entrées du rapport ne peuvent jamais être impossibles à distinguer. `accepted` signifie qu'une nouvelle question valide est créée ; `updated`, qu'une question existante est mise à jour ; `ignored`, qu'une entrée valide ne demande aucun changement ; `rejected`, qu'elle est refusée sans conservation ; `quarantined`, qu'une entrée invalide est conservée pour diagnostic ou correction ultérieure.

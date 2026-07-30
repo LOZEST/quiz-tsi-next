@@ -7,16 +7,16 @@
 
 ## Traçabilité de l'audit
 
-Audit tenté le 2026-07-29 depuis le checkout de PR0. Commandes : recherche locale de `quizz-prepa` et `course-map.js`, puis tentative d'accès en lecture à `https://github.com/LOZEST/quizz-prepa`. Aucun checkout historique n'était présent dans `/workspace` ou ailleurs dans le conteneur ; l'accès GitHub a été refusé par le proxy (`CONNECT tunnel failed, response 403`). Par conséquent, l’audit local complet reste impossible et aucun chemin supplémentaire ne peut être déclaré trouvé. La preuve externe fournie dans cette correction établit uniquement `LEGACY-PROGRAM-001` au commit documenté ci-dessous ; aucune autre décision n’est inventée.
-
-Ce constat bloque la clôture de l'audit, pas les décisions produit de PR0. Avant toute PR qui migre l'historique, un checkout lisible et son SHA doivent être fournis ; cette page doit alors être modifiée et validée dans une PR documentaire dédiée conformément à la hiérarchie normative.
+Audit initial tenté le 2026-07-29 depuis le checkout de PR0 sans accès au dépôt historique. Audit PR4 repris le 2026-07-30 depuis un checkout temporaire en lecture de `LOZEST/quizz-prepa` au SHA `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`. Les chemins PR4 ci-dessous ont été constatés ; aucun code historique n'est copié dans le nouveau dépôt.
 
 ## Résultat de l'audit PR0
 
-Aucun élément source n’a pu être caractérisé depuis ce checkout. Il serait faux d’affirmer l’existence, les dépendances ou l’état de fichiers seulement suggérés par le cahier des charges. Une preuve d’audit externe permet toutefois la décision provisoire unique ci-dessous ; toutes les autres classifications restent à zéro.
+Le programme historique contient 6 parties, 16 chapitres et 71 notions. Les banques constatées exposent 426 questions de cours et 433 questions fixes agrégées. Elles utilisent des contrats JavaScript historiques, des niveaux numériques, du LaTeX persistant et des fragments HTML convertis par compatibilité. Les générateurs utilisent notamment `Math.random`. La licence, les droits de modification et redistribution et la provenance par question ne sont pas suffisamment établis.
+
+La banque historique est donc `BLOCKED` pour toute importation en production. Elle reste une source de caractérisation en lecture. PR4 peut construire et tester l'importer générique avec des fixtures minimales exclusivement dans les tests.
 
 
-## Éléments vérifiés par audit externe
+## Programme vérifié
 
 - **Source auditée :** `LOZEST/quizz-prepa`.
 - **Commit de référence :** `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`.
@@ -34,26 +34,29 @@ Aucun élément source n’a pu être caractérisé depuis ce checkout. Il serai
 | Dépendance au DOM | Non |
 | Dépendance au stockage | Non |
 | Dépendance à Supabase | Non |
-| Décision provisoire | PORT-WITH-ADAPTER |
+| Décision provisoire | PORT-WITH-ADAPTER pour le programme uniquement |
 | PR cible | PR4 |
 | Stratégie de caractérisation | Créer un schéma TypeScript validé, convertir les données, vérifier l'unicité des identifiants et écrire des tests de couverture du programme. Ne pas copier directement le module JavaScript dans le nouveau domaine. |
-| Statut | Vérifié extérieurement, caractérisation détaillée à compléter |
+| Statut | Constaté au SHA indiqué ; validation pédagogique et provenance encore requises avant conversion de production |
 
-Cette décision provisoire ne vaut pas caractérisation complète : PR4 doit relire le chemin au commit indiqué, relever ses imports et tests réels, puis joindre les preuves exigées par la politique de migration.
+Cette décision ne permet pas d'importer automatiquement le programme ou la banque : toute donnée produite doit encore passer par un convertisseur versionné, une validation et un rapport de provenance.
 
-## Pistes à vérifier
+## Éléments PR4 constatés le 2026-07-30
 
-À l’exception de `LEGACY-PROGRAM-001`, ces lignes sont des **pistes non constatées**, restent explicitement **À auditer** et ne reçoivent aucune décision.
+| Identifiant | Chemin historique | Constat | Décision | Statut |
+|---|---|---|---|---|
+| `LEGACY-QUESTIONS-001` | `scripts/fixed-questions.js`, `scripts/course-question-bank.js` | 426 questions de cours et 433 questions fixes agrégées ; LaTeX et compatibilité HTML ; provenance et licence insuffisantes | REFERENCE-ONLY jusqu'à validation complète, puis décision documentaire dédiée | BLOCKED pour la production |
+| `LEGACY-GENERATORS-001` | `scripts/generator-utils.js`, `scripts/generators/` | neuf familles constatées ; hasard implicite et contrats incompatibles avec les seeds PR4 | REWRITE depuis règles et tests de caractérisation | BLOCKED comme source de production |
+| `LEGACY-MATH-001` | `scripts/math/`, `scripts/question-bank/domain-parser.js`, `scripts/question-bank/expression-engine.js` | rendu KaTeX sûr partiel et AST historique, mais langage différent de la grammaire normative PR4 | REFERENCE-ONLY | Constaté |
+| `LEGACY-ENGINE-001` | `scripts/quiz-engine.js` | sélection historique couplée aux niveaux et banques anciennes | REWRITE | Constaté |
+| `LEGACY-DATA-001` | `data/course-concepts.json`, `data/trap-taxonomy.json`, `data/trap-sources.json` | structure réelle ; aucune source externe enregistrée pour les pièges ; provenance incomplète | REFERENCE-ONLY | BLOCKED pour la production |
+
+## Pistes restantes à vérifier
+
+Les éléments PR4 constatés ci-dessus ne sont plus des pistes. Les lignes restantes sont des **pistes non constatées**, restent explicitement **À auditer** et ne reçoivent aucune décision.
 
 | Catégorie à auditer | Chemin indicatif à vérifier | Informations obligatoires lors du constat | PR probable |
 |---|---|---|---|
-| programme | `scripts/course-map.js` | responsabilité, imports, tests, DOM/stockage/Supabase | PR4 |
-| concepts | `data/course-concepts.json` | schéma, couverture, validité, provenance | PR4/PR9 |
-| taxonomie des pièges | `data/trap-taxonomy.json` | schéma et usages réels | PR4/PR9 |
-| banque statique | `scripts/fixed-questions.js`, `scripts/course-question-bank.js` | contrats, contenu, duplication | PR4 |
-| générateurs | `scripts/generators/` | déterminisme, exécution dynamique, tests | PR4 |
-| rendu mathématique | `scripts/math/` | parseurs, assainissement, KaTeX/DOM | PR4 |
-| moteur de questions | `scripts/quiz-engine.js` | sélection, état, couplages | PR4 |
 | planification | `scripts/scheduler.js` | temps, hasard, stockage | PR6 |
 | maîtrise | `scripts/mastery/` | événements, agrégats, scores | PR6 |
 | répétition espacée | `scripts/repetition/` | algorithme, dates, fuseau | PR6 |
@@ -77,6 +80,6 @@ Lorsqu'un chemin est constaté, ajouter une ligne d'inventaire avec : chemin exa
 |---|---:|
 | PORT | 0 |
 | PORT-WITH-ADAPTER | 1 |
-| REWRITE | 0 |
-| REFERENCE-ONLY | 0 |
+| REWRITE | 2 |
+| REFERENCE-ONLY | 3 |
 | DISCARD | 0 |
