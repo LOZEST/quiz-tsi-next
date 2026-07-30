@@ -95,6 +95,8 @@ Sélectionner Réflexe fixe `difficulty` à `{ kind: "not-applicable" }` et masq
 
 La configuration persistée d'une Révision libre utilise exclusivement `FreeRevisionFilters`, avec `FilterSelection<T>` et `DifficultyFilterSelection`. `null` ne représente jamais simultanément Tout, une absence ou une valeur non applicable : Réflexe emploie `{ kind: "not-applicable" }` et **Toutes les difficultés** emploie `{ kind: "all" }`.
 
+Cette valeur concerne exclusivement l'état du filtre. Dans le modèle d'une question, `Question.difficulty` reste `null` lorsque `Question.type` vaut `reflex`. Le filtre non applicable et la difficulté métier absente sont deux contrats distincts.
+
 Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. Types : `formula` Formules, `course` Cours, `calculation` Calcul, `reflex` Réflexe. Difficultés : `fundamental` Fondamental, `standard` Standard, `trap` Piège. Réflexe est un type, jamais une difficulté : difficulté masquée et explicitement non applicable, 60 secondes, dépassement non bloquant et réussite tardive `partial`.
 
 ### Changement de configuration
@@ -103,13 +105,33 @@ Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. 
 **Cas B, commencée** (au moins un trait, forme, indice ou correction) : contrôle interne « Changer de question effacera le travail en cours. » avec actions exactes **Changer maintenant** et **Annuler**. Changer maintenant confirme, puis seulement efface, applique et charge. Annuler conserve question/brouillon et restaure les filtres actifs. Aucune configuration cachée « en attente ».
 
 ### Révision du jour
-Vue compacte, par exemple `Suites géométriques 2/4`, affichant notion, réussites complètes, quantité prévue, état courant. Détails fermés par défaut : raison, chapitre, dernier test, partiels, échecs, difficulté recommandée, échéance pertinente.
+PR4 consomme un `DailyPlanState` réel fourni par un port ou un repository fiable ; il ne calcule aucun plan. `ready` contient des éléments réellement fournis, `none-scheduled` signifie qu'aucune révision n'est prévue aujourd'hui, `completed` que tous les éléments prévus sont terminés et `unavailable` que les données sont absentes ou inexploitables.
+
+En état `ready`, la vue compacte peut afficher, par exemple, `Suites géométriques 2/4`, avec notion, réussites complètes, quantité prévue et état courant. Les détails restent fermés par défaut : raison, chapitre, dernier test, partiels, échecs, difficulté recommandée et échéance pertinente, uniquement lorsqu'ils proviennent des données fournies.
+
+`none-scheduled` affiche exactement « Aucune révision n’est prévue aujourd’hui. Tu es à jour. ». `completed` affiche exactement « Révision du jour terminée. Toutes les notions prévues ont été révisées. ». `unavailable` affiche un message compréhensible fourni par le domaine ou l'adapter, sans erreur technique interne.
+
+Dans ces trois états, aucune `QuestionInstance` n'est créée, aucune question aléatoire ou précédente ne reste active et les actions propres à une question sont absentes. Le Canvas peut rester accessible sans question associée. Les algorithmes définitifs de planification, maîtrise, confiance, échéance et répétition espacée appartiennent à PR6.
 
 ### Points faibles
-Vue compacte, par exemple `1 Dérivée d’un quotient — Fondamental`, montrant priorité, notion, difficulté recommandée. Détails volontaires : maîtrise, justification, dernière activité, succès/partiels/échecs, erreurs récurrentes.
+PR4 consomme un `WeakPointsState` réel ; il ne calcule ni classement, ni maîtrise, ni difficulté recommandée. `ready` contient des points faibles fournis par une source fiable, `calibrating` indique des preuves insuffisantes et `unavailable` une source absente, invalide ou inaccessible.
+
+En état `ready`, la vue compacte peut afficher, par exemple, `1 Dérivée d’un quotient — Fondamental`, avec priorité, notion et difficulté recommandée réellement fournies. Les détails volontaires — justification, dernière activité, succès, partiels, échecs et erreurs récurrentes — restent fermés par défaut et ne sont affichés que s'ils proviennent des données réelles.
+
+`calibrating` ne classe aucune notion, ne crée aucune `QuestionInstance` et affiche exactement « L’application apprend encore ton niveau. Réponds à davantage de questions pour obtenir une sélection personnalisée. », ainsi qu'une action réelle vers Révision libre. La jauge utilise uniquement un `CalibrationEvidence` cohérent ; elle est indéterminée et sans pourcentage en l'absence de valeurs fiables. `unavailable` ne réutilise aucun classement ancien présenté comme actuel, ne crée aucune question et propose Révision libre lorsqu'elle est utilisable.
+
+Le calcul de maîtrise, la confiance, la répétition espacée, les échéances, le plan du jour, le classement des points faibles, l'agrégation des erreurs et la difficulté recommandée dérivée appartiennent à PR6.
 
 ### Test de chapitres
-Choisir chapitre, 20 ou 40 questions, puis **Commencer le test** ; valeurs réellement transmises. Après démarrage : configuration figée, ordre reproductible, brouillon par question, précédent/suivant, soumission et abandon par dialogues internes, reprise locale, résultats sur versions figées.
+PR4 fournit uniquement la configuration : choisir un chapitre réel, choisir 20 ou 40 questions, compter les questions validées et compatibles, conserver le choix si nécessaire et expliquer un stock insuffisant sans relâcher les critères, dupliquer ou fabriquer du contenu. Le comptage retient seulement les questions valides, publiées ou explicitement autorisées, appartenant au chapitre et dont la paramétrisation peut produire une variante valide.
+
+PR4 ne démarre aucune passation, ne crée ni séance active, ni `ChapterTestBlueprint`, ni seed, ordre, instance ou brouillon de test. Elle n'affiche donc aucun bouton **Commencer le test**. La configuration peut indiquer sobrement « La passation des tests sera disponible à l’étape suivante. ». En cas de stock insuffisant : « Ce chapitre ne contient pas encore assez de questions validées pour préparer un test de 20 questions. », en adaptant 20 ou 40 au choix réel.
+
+PR5 fournit intégralement le démarrage, le blueprint figé, la seed et l'ordre reproductibles, les versions et instances, la navigation, les brouillons indépendants, la reprise, la correction, l'autoévaluation, la soumission, l'abandon et les résultats.
+
+### Contenu indisponible
+
+Tant qu'aucune banque validée n'est disponible, afficher exactement « Aucune banque de questions validée n’est disponible pour le moment. ». Aucune question ou `QuestionInstance` n'est fabriquée, les filtres restent consultables, le Canvas et les réglages Pencil restent disponibles et aucun parcours personnalisé n'est présenté comme opérationnel.
 
 ## Correction et autoévaluation
 

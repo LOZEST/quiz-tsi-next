@@ -114,23 +114,43 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 
 ### FLOW-SESSION-003 — Révision du jour
 
-- **Préconditions :** plan local disponible.
-- **Étapes :** ouvrir parcours puis détail.
-- **États :** compact → disclosure.
-- **Résultat attendu :** notion, succès/objectif/état puis détails.
-- **Erreurs :** plan absent/obsolète.
-- **Reprise :** copie locale puis sync.
+- **Préconditions :** un port ou repository fiable fournit l'état du plan.
+- **Étapes :** ouvrir le parcours puis, en état `ready`, un détail.
+- **États :** `ready`, `none-scheduled`, `completed` ou `unavailable`.
+- **Résultat attendu :** `ready` affiche uniquement les éléments réellement fournis. `none-scheduled` affiche « Aucune révision n’est prévue aujourd’hui. Tu es à jour. ». `completed` affiche « Révision du jour terminée. Toutes les notions prévues ont été révisées. ». `unavailable` affiche le message compréhensible du domaine ou de l'adapter.
+- **Erreurs :** une donnée absente, invalide ou inexploitable produit `unavailable`, sans détail technique.
+- **Reprise :** dans tout état autre que `ready`, aucune instance n'est créée, aucune question précédente ne reste active et le Canvas demeure disponible sans question associée.
 
 ### FLOW-SESSION-004 — Points faibles
 
-- **Préconditions :** classement disponible.
-- **Étapes :** ouvrir parcours/détail.
-- **États :** compact, détails fermés.
-- **Résultat attendu :** priorité, notion, difficulté puis justification.
-- **Erreurs :** données insuffisantes.
-- **Reprise :** proposer libre/recalcul après sync.
+- **Préconditions :** une source fiable fournit un `WeakPointsState`.
+- **Étapes :** ouvrir le parcours et, en état `ready`, un détail.
+- **États :** `ready`, `calibrating` ou `unavailable`.
+- **Résultat attendu :** `ready` affiche uniquement priorité, notion, difficulté recommandée et détails réellement fournis. `calibrating` affiche « L’application apprend encore ton niveau. Réponds à davantage de questions pour obtenir une sélection personnalisée. », une jauge fondée sur des preuves réelles ou indéterminée, et une action vers Révision libre. `unavailable` affiche un message compréhensible.
+- **Erreurs :** aucune preuve insuffisante ne produit de classement, maîtrise, priorité ou difficulté fictive.
+- **Reprise :** `calibrating` et `unavailable` retirent toute ancienne question active, ne créent aucune instance et proposent Révision libre lorsqu'elle est utilisable.
+
+### FLOW-SESSION-005 — Configurer un futur test de chapitres en PR4
+
+- **Préconditions :** programme et repository de questions disponibles.
+- **Étapes :** choisir un chapitre réel puis 20 ou 40.
+- **États :** configuration compatible ou stock insuffisant.
+- **Résultat attendu :** le choix réel est conservé et le stock compatible est compté sans duplication, changement de chapitre ni relâchement. Aucun test, blueprint, ordre, seed, instance ou brouillon n'est créé.
+- **Erreurs :** un stock insuffisant indique « Ce chapitre ne contient pas encore assez de questions validées pour préparer un test de 20 questions. », avec la quantité réellement choisie.
+- **Reprise :** modifier le chapitre ou la quantité ; aucun bouton ne prétend démarrer la passation avant PR5.
+
+### FLOW-SESSION-006 — Banque validée indisponible
+
+- **Préconditions :** aucun `QuestionBankBundle` validé n'est disponible.
+- **Étapes :** ouvrir le tableau blanc ou un parcours.
+- **États :** contenu indisponible.
+- **Résultat attendu :** afficher « Aucune banque de questions validée n’est disponible pour le moment. » ; aucune question ou instance n'est créée ; filtres, Canvas, réglages Pencil et navigation restent accessibles.
+- **Erreurs :** aucune fixture, question historique bloquée ou question fabriquée n'est chargée.
+- **Reprise :** réessayer après mise à disposition d'un bundle validé, sans rechargement de contenu non autorisé.
 
 ## TEST
+
+Les flux de cette section appartiennent à PR5. PR4 ne fournit que `FLOW-SESSION-005`, la configuration et la validation du stock.
 
 ### FLOW-TEST-001 — Démarrer un test de 20 questions
 

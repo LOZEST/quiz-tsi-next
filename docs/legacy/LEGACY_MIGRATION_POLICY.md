@@ -44,6 +44,8 @@ Caractériser d'abord avec entrées/sorties représentatives, limites, erreurs, 
 
 Un convertisseur lit une version explicite, valide sans exécution dynamique, normalise vers les contrats du domaine, produit un rapport et met les rejets en quarantaine. Deux exécutions donnent le même résultat. Une migration interrompue reprend sans doublon. Les schémas futurs ne réinterprètent jamais silencieusement une ancienne valeur.
 
+Une banque historique n'est importable en production qu'après validation documentée de sa licence ou de son droit d'utilisation, de ses droits de modification et redistribution, de sa provenance, de son rattachement au programme et de sa qualité pédagogique. Le LaTeX et le HTML historiques passent par des convertisseurs versionnés et validés vers `MathSource` et `ContentSegment`; ils ne sont jamais rendus directement. La source originale est conservée avec le rapport et toute ambiguïté est mise en quarantaine. Tant que ces preuves manquent, la banque porte le statut `BLOCKED` et seules des fixtures minimales réservées aux tests peuvent exercer l'importer générique.
+
 ## Validation
 
 La PR responsable dans la roadmap doit être fusionnée au préalable. Revue obligatoire : provenance, licence, test de caractérisation, absence DOM/global, isolation de compte, données invalides, idempotence, comparaison ancien/nouveau et mise à jour de `LEGACY_INVENTORY.md`. Aucun remote, sous-module, archive ou code historique complet n'est commité.

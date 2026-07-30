@@ -104,17 +104,17 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 
 ## PR4 — Programme, questions et parcours
 
-- **Objectif :** programme, options Tout et filtres dépendants, moteur de sélection, registre du langage mathématique, parser sécurisé, rendu des questions, variables déjà instanciées, types/difficultés, quatre parcours et Réflexe ; import initial des banques validées lorsqu’elles seront disponibles.
+- **Objectif :** programme, options Tout et filtres dépendants, moteur de sélection, registre du langage mathématique, parser sécurisé, rendu des questions, variables déjà instanciées, types/difficultés, quatre parcours et Réflexe ; import initial des banques validées lorsqu’elles seront disponibles. Pour `daily` et `weak-points`, PR4 consomme uniquement des états réels fournis et affiche honnêtement absence, fin, calibration ou indisponibilité ; les algorithmes pédagogiques restent en PR6. Pour `chapter-test`, PR4 configure chapitre et quantité et valide le stock sans démarrer de passation ni créer de blueprint.
 - **Dépendances :** PR3 fusionnée.
 - **Entrées :** inventaire caractérisé et moteur Canvas.
-- **Sorties :** question compatible affichée pour chaque parcours.
+- **Sorties :** question compatible affichée uniquement lorsqu'un parcours possède un état `ready` et des données validées ; sinon état explicite sans ancienne question ni instance. Configuration de test validée sans démarrage.
 - **Fichiers probables :** domain/questions, features/session, import adapters.
-- **Historique concerné :** programme/concepts/pièges/générateurs/math/engine.
+- **Historique concerné :** programme/concepts/pièges/générateurs/math/engine, uniquement après caractérisation. La banque historique auditée reste bloquée pour la production jusqu'à validation complète de licence, droits, provenance et conversions.
 - **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication, AST en liste blanche, XSS ; import initial versionné, validé, idempotent, traçable, avec rapport, quarantaine et conservation des entrées valides.
 - **Tests manuels :** filtres et protection brouillon.
 - **Risques :** qualité données/contenu.
 - **Critères de fusion :** SESSION et whiteboard concernés validés.
-- **Hors périmètre :** correction/tests.
+- **Hors périmètre :** correction et passation de tests ; `ChapterTestBlueprint`, seed, ordre, instances, navigation et brouillons de test ; algorithmes définitifs de maîtrise, confiance, répétition, planification et classement des points faibles ; import en production de la banque historique non validée.
 
 ## PR5 — Correction et tests
 
@@ -130,9 +130,12 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Critères de fusion :** EVALUATION/TEST validés.
 - **Hors périmètre :** progression agrégée.
 
+PR5 commence la passation de `chapter-test` à partir de la configuration validée par PR4. Elle seule crée et persiste `ChapterTestBlueprint`, seed, ordre, versions, instances et brouillons, puis fournit navigation, reprise, correction, autoévaluation, soumission, abandon et résultats.
+
 ## PR6 — Advanced Whiteboard Tools et Mon parcours
 
 - **Objectif :** formes géométriques, lignes, rectangles, cercles, flèches et autres objets vectoriels ; sélection, déplacement et redimensionnement d'objets ; maîtrise, répétition, plan du jour, faibles, calendrier, progression et activité.
+- **Précision parcours :** PR6 implémente les algorithmes définitifs qui produisent `DailyPlanState` et `WeakPointsState` : maîtrise, confiance, répétition espacée, échéances, planification du jour, classement, erreurs récurrentes et difficulté recommandée dérivée.
 - **Dépendances :** PR5 fusionnée.
 - **Entrées :** moteur manuscrit et scènes versionnées de PR3 ; MasteryEvent fiable.
 - **Sorties :** outils vectoriels avancés compatibles avec les scènes PR3 ; synthèse et détails local-first.
