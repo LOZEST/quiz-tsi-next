@@ -10,7 +10,7 @@
 | `SESSION-009` — points faibles en calibration | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Union et preuves de calibration implémentées ; UI hors bloc A |
 | `SESSION-010` — configuration du futur test | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Configuration et cohérence du stock implémentées ; passation réservée à PR5 |
 | `IMPORT-007` — aucune banque validée | À créer | À créer | À réaliser | partiel | Message et comportement documentaire définis |
-| Programme versionné et validé | `src/domain/program/Program.ts` | `tests/unit/domain/contracts.test.ts` | Revue des données au bloc B | partiel | Contrats et validation structurelle implémentés ; validation complète au bloc B |
+| Programme versionné et validé | `src/domain/program/Program.ts` | `tests/unit/domain/program.test.ts` | Revue de la fixture locale et des frontières | implémenté | Validation complète depuis `unknown`, identifiants techniques stricts déjà normalisés, libellés visibles trimés, erreurs cumulées et précisément localisées, copie normalisée profondément figée, source intacte, entrées exotiques protégées et index déterministe `order` puis `id` |
 | Parser mathématique v1 sécurisé | À créer | À créer | À réaliser | partiel | Grammaire normative existante, aucun parser PR4 |
 | Génération déterministe par seed | `src/domain/questions/Question.ts` pour les contrats | `tests/unit/domain/contracts.test.ts` | À réaliser au bloc D | partiel | Instance et seed contractuelles ; aucun générateur avant le bloc D |
 | Propriété des questions selon leur source | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue des trois variantes `static`, `private`, `shared` | implémenté | `static` impose `null` ; `private` et `shared` imposent un identifiant d'auteur non vide |
@@ -35,3 +35,39 @@ Le fichier attendu est un bundle conforme à `QuestionBankBundle`, avec version 
 ## Portes de validation
 
 Après chaque bloc : `npm run format:check`, `npm run lint`, `npm run typecheck` et tests unitaires concernés. L'interface ne commence qu'après validation du programme, des questions, de la sélection, du parser et de la reproductibilité des instances.
+
+## Bloc B — Programme complet et validation
+
+- Périmètre : validation et normalisation du seul `Program`, puis abstraction de lecture `ProgramIndex`.
+- Données : fixture minimale locale aux tests ; aucun programme ou contenu historique ajouté au bundle de production.
+- Frontières : aucune option générale de filtre dans le programme ; aucune dépendance React, DOM, IndexedDB ou Supabase ; blocs C et suivants non commencés.
+- Normalisation : les identifiants `id`, `partId` et `chapterId` sont stricts et doivent être déjà normalisés ; tout espace extérieur est refusé sur le chemin exact. Les libellés visibles sont trimés et leur source reste intacte.
+- Preuves automatiques : `tests/unit/domain/program.test.ts` couvre les identifiants et références parentes avec espaces extérieurs, les libellés trimés, les relations Partie → Chapitre → Notion, les doublons, les champs et ordres invalides, les erreurs multiples, les entrées exotiques/cycliques, la suppression des propriétés étrangères, l'immuabilité profonde et le tri stable de l'index.
+- Vérification manuelle : revue du diff et de la fixture ; aucune interface n'est concernée par ce bloc de domaine pur.
+
+### Résultats du 30 juillet 2026
+
+| Vérification | Résultat |
+|---|---|
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 143 tests réussis ; instructions 90,33 %, branches 86,43 %, fonctions 87,77 %, lignes 93,67 % |
+| `npm run build` | réussi |
+| `npm run build:pages` | réussi |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| `git diff --check` | réussi |
+
+### Durcissement de la normalisation — 2 août 2026
+
+| Vérification | Résultat |
+|---|---|
+| `npm test -- tests/unit/domain/program.test.ts` | 31 tests ciblés réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 152 tests réussis ; instructions 90,46 %, branches 86,39 %, fonctions 88 %, lignes 93,59 % |
+| `npm run build` | réussi |
+| `npm run build:pages` | réussi |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage après autorisation du serveur local |
+| `git diff --check` | réussi |
