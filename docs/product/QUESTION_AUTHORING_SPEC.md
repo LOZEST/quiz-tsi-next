@@ -45,11 +45,13 @@ Cette grammaire est suffisamment précise pour que deux implémentations indépe
 
 ### 5.2 Identifiants ordinaires
 
-Un identifiant commence par une lettre latine ou grecque supportée par le registre ; les caractères suivants peuvent aussi être des chiffres ou `_`. Les commandes réservées sont `sqrt`, `abs`, `vec`, `sin`, `cos`, `tan`, `ln` et `exp`. Elles sont obligatoirement écrites en minuscules ; une autre casse est refusée.
+Un identifiant ordinaire commence par une lettre latine ou grecque supportée par le registre ; les caractères suivants peuvent être des lettres latines ou grecques supportées ou des chiffres. Il ne peut pas contenir `_` : ce caractère est toujours réservé à l'opérateur d'indice dans les expressions mathématiques ordinaires. Le tokenizer termine donc un identifiant ordinaire avant `_`. Aucun mécanisme d'échappement ou de délimitation permettant d'inclure littéralement `_` dans un identifiant ordinaire n'existe en version 1 ; un tel identifiant est hors syntaxe.
+
+Les commandes réservées sont `sqrt`, `abs`, `vec`, `sin`, `cos`, `tan`, `ln` et `exp`. Elles sont obligatoirement écrites en minuscules ; une autre casse est refusée.
 
 ### 5.3 Variables paramétrées
 
-Le format est `@nom`. Le premier caractère est une lettre latine ; les suivants sont des lettres latines, chiffres ou `_`, sans espace ni ponctuation. Un nom de commande réservé est interdit. `@a`, `@n` et `@coefficient_1` sont valides ; `@1a`, `@a b` et `@sqrt` sont invalides. Une variable paramétrée est distincte d'une lettre mathématique ordinaire.
+Le format est `@nom`. Le premier caractère est une lettre latine ; les suivants sont des lettres latines, chiffres ou `_`, sans espace ni autre ponctuation. Cette règle est propre aux variables paramétrées et ne permet pas `_` dans un identifiant ordinaire. Un nom de commande réservé est interdit. `@a`, `@n` et `@coefficient_1` sont valides ; `@1a`, `@a b` et `@sqrt` sont invalides. Une variable paramétrée reste distincte d'un identifiant mathématique ordinaire.
 
 ### 5.4 Espaces
 
@@ -65,7 +67,7 @@ L'ordre exact est : (1) parenthèses et appels de fonctions ; (2) indices et pui
 
 ### 5.7 Puissances et indices
 
-`x^2`, `x_n`, `x_(n+1)`, `x_n^2` et `x_(n+1)^2` sont valides. L'indice se rattache à la base avant la puissance. Les parenthèses sont obligatoires pour un indice composé.
+`x^2`, `x_n`, `x_(n+1)`, `x_n^2` et `x_(n+1)^2` sont valides. `_` est toujours l'opérateur d'indice : `x_n` est nécessairement analysé avec l'identifiant `x` comme base et l'identifiant `n` comme indice, jamais comme un identifiant unique. `x_(n+1)` produit un indice composé. L'indice se rattache à la base avant la puissance. Les parenthèses sont obligatoires pour un indice composé.
 
 ### 5.8 Division et fractions
 
