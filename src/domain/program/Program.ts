@@ -48,6 +48,8 @@ type ProgramNode = Readonly<{
   order: number;
 }>;
 
+type ProgramIssue = ReturnType<typeof issue>;
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return false;
@@ -56,93 +58,126 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return prototype === Object.prototype || prototype === null;
 }
 
-function validateNode(
+function validateIdentifier(
   value: unknown,
   path: string,
-): ValidationResult<ProgramNode> {
-  if (!isRecord(value)) {
-    return invalid(issue(path, 'Une entrée de programme doit être un objet.'));
-  }
-  if (
-    typeof value.id !== 'string' ||
-    value.id.trim() === '' ||
-    typeof value.label !== 'string' ||
-    value.label.trim() === '' ||
-    !Number.isInteger(value.order) ||
-    (value.order as number) < 0
-  ) {
-    return invalid(
-      issue(path, 'Identifiant, libellé et ordre de programme invalides.'),
-    );
-  }
-  return valid({
-    id: value.id,
-    label: value.label,
-    order: value.order as number,
-  });
-}
-
-export function validateProgramPart(
-  value: unknown,
-): ValidationResult<ProgramPart> {
-  return validateNode(value, 'part');
-}
-
-export function validateProgramChapter(
-  value: unknown,
-): ValidationResult<ProgramChapter> {
-  const node = validateNode(value, 'chapter');
-  if (!node.ok) return node;
-  if (!isRecord(value) || typeof value.partId !== 'string' || !value.partId) {
-    return invalid(issue('chapter.partId', 'La partie parente est requise.'));
-  }
-  return valid({ ...node.value, partId: value.partId });
-}
-
-export function validateProgramNotion(
-  value: unknown,
-): ValidationResult<ProgramNotion> {
-  const node = validateNode(value, 'notion');
-  if (!node.ok) return node;
-  if (
-    !isRecord(value) ||
-    typeof value.chapterId !== 'string' ||
-    !value.chapterId
-  ) {
-    return invalid(issue('notion.chapterId', 'Le chapitre parent est requis.'));
-  }
-  return valid({ ...node.value, chapterId: value.chapterId });
-}
-
-function validateString(
-  value: unknown,
-  path: string,
-  issues: ReturnType<typeof issue>[],
+  issues: ProgramIssue[],
 ): string | null {
   if (typeof value !== 'string' || value.trim() === '') {
-    issues.push(issue(path, 'Une chaîne non vide est requise.'));
+    issues.push(issue(path, 'Un identifiant non vide est requis.'));
+    return null;
+  }
+  if (value !== value.trim()) {
+    issues.push(
+      issue(
+        path,
+        "L'identifiant ne doit pas contenir d'espace au début ou à la fin.",
+      ),
+    );
     return null;
   }
   return value;
 }
 
+function validateLabel(
+  value: unknown,
+  path: string,
+  issues: ProgramIssue[],
+): string | null {
+  if (typeof value !== 'string') {
+    issues.push(issue(path, 'Un libellé non vide est requis.'));
+    return null;
+  }
+  const normalized = value.trim();
+  if (normalized === '') {
+    issues.push(issue(path, 'Un libellé non vide est requis.'));
+    return null;
+  }
+  return normalized;
+}
+
 function validateOrder(
   value: unknown,
   path: string,
-  issues: ReturnType<typeof issue>[],
+  issues: ProgramIssue[],
 ): number | null {
-  if (!Number.isInteger(value) || (value as number) < 0) {
+  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
     issues.push(issue(path, 'Un entier supérieur ou égal à zéro est requis.'));
     return null;
   }
-  return value as number;
+  return value;
 }
 
-function validateCollection<T>(
+function validateNode(
   value: unknown,
   path: string,
-  parentKey: 'partId' | 'chapterId' | null,
-  issues: ReturnType<typeof issue>[],
+  issues: ProgramIssue[],
+): ProgramNode | null {
+  if (!isRecord(value)) {
+    issues.push(issue(path, 'Une entrée de programme doit être un objet.'));
+    return null;
+  }
+  const id = validateIdentifier(value.id, `${path}.id`, issues);
+  return validateNodeFields(value, path, issues, id);
+}
+
+function validateNodeFields(
+  value: Record<string, unknown>,
+  path: string,
+  issues: ProgramIssue[],
+  id: string | null,
+): ProgramNode | null {
+  const label = validateLabel(value.label, `${path}.label`, issues);
+  const order = validateOrder(value.order, `${path}.order`, issues);
+  return id === null || label === null || order === null
+    ? null
+    : { id, label, order };
+}
+
+export function validateProgramPart(
+  value: unknown,
+): ValidationResult<ProgramPart> {
+  const issues: ProgramIssue[] = [];
+  const node = validateNode(value, 'part', issues);
+  return node === null ? invalid(...issues) : valid(node);
+}
+
+export function validateProgramChapter(
+  value: unknown,
+): ValidationResult<ProgramChapter> {
+  const issues: ProgramIssue[] = [];
+  const node = validateNode(value, 'chapter', issues);
+  const partId = isRecord(value)
+    ? validateIdentifier(value.partId, 'chapter.partId', issues)
+    : null;
+  return node === null || partId === null
+    ? invalid(...issues)
+    : valid({ ...node, partId });
+}
+
+export function validateProgramNotion(
+  value: unknown,
+): ValidationResult<ProgramNotion> {
+  const issues: ProgramIssue[] = [];
+  const node = validateNode(value, 'notion', issues);
+  const chapterId = isRecord(value)
+    ? validateIdentifier(value.chapterId, 'notion.chapterId', issues)
+    : null;
+  return node === null || chapterId === null
+    ? invalid(...issues)
+    : valid({ ...node, chapterId });
+}
+
+function validateCollection<T extends ProgramNode>(
+  value: unknown,
+  path: string,
+  issues: ProgramIssue[],
+  validateEntry: (
+    entry: Record<string, unknown>,
+    entryPath: string,
+    issues: ProgramIssue[],
+    id: string | null,
+  ) => T | null,
 ): T[] {
   if (!Array.isArray(value)) {
     issues.push(issue(path, 'Un tableau est requis.'));
@@ -160,13 +195,8 @@ function validateCollection<T>(
       return;
     }
 
-    const id = validateString(entry.id, `${entryPath}.id`, issues);
-    const label = validateString(entry.label, `${entryPath}.label`, issues);
-    const order = validateOrder(entry.order, `${entryPath}.order`, issues);
-    const parentId =
-      parentKey === null
-        ? null
-        : validateString(entry[parentKey], `${entryPath}.${parentKey}`, issues);
+    const id = validateIdentifier(entry.id, `${entryPath}.id`, issues);
+    const normalizedEntry = validateEntry(entry, entryPath, issues, id);
 
     if (id !== null) {
       if (ids.has(id)) {
@@ -178,20 +208,44 @@ function validateCollection<T>(
       }
     }
 
-    if (
-      id !== null &&
-      label !== null &&
-      order !== null &&
-      (parentKey === null || parentId !== null)
-    ) {
-      normalized.push(
-        (parentKey === null
-          ? { id, label, order }
-          : { id, [parentKey]: parentId, label, order }) as T,
-      );
-    }
+    if (normalizedEntry !== null) normalized.push(normalizedEntry);
   });
   return normalized;
+}
+
+function validatePartEntry(
+  entry: Record<string, unknown>,
+  path: string,
+  issues: ProgramIssue[],
+  id: string | null,
+): ProgramPart | null {
+  return validateNodeFields(entry, path, issues, id);
+}
+
+function validateChapterEntry(
+  entry: Record<string, unknown>,
+  path: string,
+  issues: ProgramIssue[],
+  id: string | null,
+): ProgramChapter | null {
+  const node = validateNodeFields(entry, path, issues, id);
+  const partId = validateIdentifier(entry.partId, `${path}.partId`, issues);
+  return node === null || partId === null ? null : { ...node, partId };
+}
+
+function validateNotionEntry(
+  entry: Record<string, unknown>,
+  path: string,
+  issues: ProgramIssue[],
+  id: string | null,
+): ProgramNotion | null {
+  const node = validateNodeFields(entry, path, issues, id);
+  const chapterId = validateIdentifier(
+    entry.chapterId,
+    `${path}.chapterId`,
+    issues,
+  );
+  return node === null || chapterId === null ? null : { ...node, chapterId };
 }
 
 function freezeProgram(program: Program): Program {
@@ -210,7 +264,7 @@ export function validateProgram(value: unknown): ValidationResult<Program> {
       return invalid(issue('program', 'Le programme doit être un objet.'));
     }
 
-    const issues: ReturnType<typeof issue>[] = [];
+    const issues: ProgramIssue[] = [];
     if (value.schemaVersion !== PROGRAM_SCHEMA_VERSION) {
       issues.push(
         issue(
@@ -223,20 +277,20 @@ export function validateProgram(value: unknown): ValidationResult<Program> {
     const parts = validateCollection<ProgramPart>(
       value.parts,
       'program.parts',
-      null,
       issues,
+      validatePartEntry,
     );
     const chapters = validateCollection<ProgramChapter>(
       value.chapters,
       'program.chapters',
-      'partId',
       issues,
+      validateChapterEntry,
     );
     const notions = validateCollection<ProgramNotion>(
       value.notions,
       'program.notions',
-      'chapterId',
       issues,
+      validateNotionEntry,
     );
 
     const partIds = new Set(parts.map(({ id }) => id));
@@ -246,6 +300,7 @@ export function validateProgram(value: unknown): ValidationResult<Program> {
           isRecord(chapter) &&
           typeof chapter.partId === 'string' &&
           chapter.partId.trim() !== '' &&
+          chapter.partId === chapter.partId.trim() &&
           !partIds.has(chapter.partId)
         ) {
           issues.push(
@@ -265,6 +320,7 @@ export function validateProgram(value: unknown): ValidationResult<Program> {
           isRecord(notion) &&
           typeof notion.chapterId === 'string' &&
           notion.chapterId.trim() !== '' &&
+          notion.chapterId === notion.chapterId.trim() &&
           !chapterIds.has(notion.chapterId)
         ) {
           issues.push(

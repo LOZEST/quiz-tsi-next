@@ -54,6 +54,12 @@ function issuePaths(value: unknown): string[] {
   return result.ok ? [] : result.issues.map(({ path }) => path);
 }
 
+function validationIssues(value: unknown) {
+  const result = validateProgram(value);
+  expect(result.ok).toBe(false);
+  return result.ok ? [] : result.issues;
+}
+
 describe('validateProgram', () => {
   it('normalizes a complete program and strips foreign properties', () => {
     const source = {
@@ -134,6 +140,119 @@ describe('validateProgram', () => {
     );
   });
 
+  it.each([
+    ['part identifier', 'parts', 0, 'id', ' part-b ', 'program.parts.0.id'],
+    [
+      'chapter identifier',
+      'chapters',
+      0,
+      'id',
+      'chapter-c ',
+      'program.chapters.0.id',
+    ],
+    [
+      'notion identifier',
+      'notions',
+      0,
+      'id',
+      ' notion-c',
+      'program.notions.0.id',
+    ],
+    [
+      'part reference',
+      'chapters',
+      0,
+      'partId',
+      ' part-a ',
+      'program.chapters.0.partId',
+    ],
+    [
+      'chapter reference',
+      'notions',
+      0,
+      'chapterId',
+      ' chapter-a ',
+      'program.notions.0.chapterId',
+    ],
+  ] as const)(
+    'rejects a non-normalized %s',
+    (_description, collection, index, field, value, expectedPath) => {
+      const fixture = programFixture();
+      const entries = fixture[collection].map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: value } : entry,
+      );
+      const issues = validationIssues({ ...fixture, [collection]: entries });
+      const matchingIssue = issues.find(({ path }) => path === expectedPath);
+
+      expect(matchingIssue?.message).toContain('début ou à la fin');
+    },
+  );
+
+  it('reports malformed parent references without a misleading orphan error', () => {
+    const fixture = programFixture();
+    const issues = validationIssues({
+      ...fixture,
+      chapters: fixture.chapters.map((chapter, index) =>
+        index === 0 ? { ...chapter, partId: ' part-a ' } : chapter,
+      ),
+      notions: fixture.notions.map((notion, index) =>
+        index === 0 ? { ...notion, chapterId: ' chapter-a ' } : notion,
+      ),
+    });
+
+    expect(issues).toEqual([
+      expect.objectContaining({ path: 'program.chapters.0.partId' }),
+      expect.objectContaining({ path: 'program.notions.0.chapterId' }),
+    ]);
+    expect(issues.map(({ message }) => message).join(' ')).not.toContain(
+      "n'existe pas",
+    );
+  });
+
+  it('trims visible labels while preserving the source and frozen result', () => {
+    const fixture = programFixture();
+    const source = {
+      ...fixture,
+      parts: fixture.parts.map((part, index) =>
+        index === 0 ? { ...part, label: '  Partie B  ' } : part,
+      ),
+      chapters: fixture.chapters.map((chapter, index) =>
+        index === 0 ? { ...chapter, label: '  Chapitre C  ' } : chapter,
+      ),
+      notions: fixture.notions.map((notion, index) =>
+        index === 0 ? { ...notion, label: '  Notion C  ' } : notion,
+      ),
+    };
+    const result = validateProgram(source);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.parts[0]?.label).toBe('Partie B');
+    expect(result.value.chapters[0]?.label).toBe('Chapitre C');
+    expect(result.value.notions[0]?.label).toBe('Notion C');
+    expect(source.parts[0]?.label).toBe('  Partie B  ');
+    expect(source.chapters[0]?.label).toBe('  Chapitre C  ');
+    expect(source.notions[0]?.label).toBe('  Notion C  ');
+    expect(Object.isFrozen(source)).toBe(false);
+    expect(Object.isFrozen(result.value)).toBe(true);
+    expect(Object.isFrozen(result.value.parts[0])).toBe(true);
+
+    const index = createProgramIndex(result.value);
+    expect(index.getPart('part-b')?.label).toBe('Partie B');
+    expect(index.getChapter('chapter-c')?.label).toBe('Chapitre C');
+    expect(index.getNotion('notion-c')?.label).toBe('Notion C');
+  });
+
+  it('rejects a label containing only spaces', () => {
+    const fixture = programFixture();
+    expect(
+      issuePaths({
+        ...fixture,
+        notions: [{ ...fixture.notions[0], label: '   ' }],
+      }),
+    ).toContain('program.notions.0.label');
+  });
+
   it('reports duplicate identifiers in every collection', () => {
     const fixture = programFixture();
     expect(
@@ -149,6 +268,18 @@ describe('validateProgram', () => {
         'program.chapters.1.id',
         'program.notions.1.id',
       ]),
+    );
+  });
+
+  it('still reports a duplicate identifier when another field is invalid', () => {
+    const fixture = programFixture();
+    expect(
+      issuePaths({
+        ...fixture,
+        parts: [fixture.parts[0], { ...fixture.parts[0], label: '   ' }],
+      }),
+    ).toEqual(
+      expect.arrayContaining(['program.parts.1.id', 'program.parts.1.label']),
     );
   });
 
