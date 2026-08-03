@@ -11,13 +11,13 @@
 | `SESSION-010` — configuration du futur test | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Configuration et cohérence du stock implémentées ; passation réservée à PR5 |
 | `IMPORT-007` — aucune banque validée | À créer | À créer | À réaliser | partiel | Message et comportement documentaire définis |
 | Programme versionné et validé | `src/domain/program/Program.ts` | `tests/unit/domain/program.test.ts` | Revue de la fixture locale et des frontières | implémenté | Validation complète depuis `unknown`, identifiants techniques stricts déjà normalisés, libellés visibles trimés, erreurs cumulées et précisément localisées, copie normalisée profondément figée, source intacte, entrées exotiques protégées et index déterministe `order` puis `id` |
-| Parser mathématique v1 sécurisé | À créer | À créer | À réaliser | partiel | Grammaire normative existante, aucun parser PR4 |
+| Parser mathématique v1 sécurisé | `src/domain/math/MathAst.ts`, `MathSyntaxRegistry.ts`, `MathTokenizer.ts`, `MathParser.ts`, `MathParseError.ts` | `tests/unit/domain/math-registry.test.ts`, `math-tokenizer.test.ts`, `math-parser.test.ts` | Revue du domaine pur et des messages ; aucun rendu concerné | implémenté | Registre V1, tokenizer et parser déterministes bornés, AST distinct, erreurs pédagogiques et références `@nom` extraites ; aucun rendu ni contrôle croisé du bloc D |
 | Génération déterministe par seed | `src/domain/questions/Question.ts` pour les contrats | `tests/unit/domain/contracts.test.ts` | À réaliser au bloc D | partiel | Instance et seed contractuelles ; aucun générateur avant le bloc D |
 | Propriété des questions selon leur source | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue des trois variantes `static`, `private`, `shared` | implémenté | `static` impose `null` ; `private` et `shared` imposent un identifiant d'auteur non vide |
 | Provenance structurelle des questions | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue d'une provenance valide et de formes rejetées | implémenté | Bundle, timestamp UTC, tableau et références sont validés sans compléter les données absentes |
 | Valeurs primitives d'une instance figée | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue de l'absence de mutation de la source | implémenté | L'entrée racine inconnue est gardée ; `parameterValues` est un record plat à prototype standard ou nul contenant seulement chaîne, booléen ou nombre fini ; le snapshot exact est copié puis gelé profondément sans modifier la source |
 | AST structurel sûr et borné | `src/domain/questions/Question.ts` | `tests/unit/domain/contracts.test.ts` | Revue des limites exportées et des arités | implémenté | Parcours itératif limité à 32 niveaux, 256 nœuds et 32 éléments par liste ; références de contraintes publiées contrôlées |
-| Références `@nom` dans le contenu | À créer aux blocs C et D | À créer aux blocs C et D | À réaliser | partiel | Dépend du parser mathématique et de l'instanciation ; explicitement exclu du correctif A |
+| Références `@nom` dans le contenu | Extraction de formule dans `src/domain/math/MathParser.ts` ; contrôle croisé à créer au bloc D | Extraction et déduplication dans `tests/unit/domain/math-parser.test.ts` ; validation globale à créer au bloc D | À réaliser avec l'instanciation | partiel | Bloc C extrait les références de chaque formule ; le contrôle sur tous les segments et les définitions reste explicitement au bloc D |
 | Import versionné, idempotent et traçable | À créer | À créer | À réaliser | partiel | Contrats définis ; fixtures de test uniquement |
 | Banque historique de production | Aucun | Sans objet avant validation | Revue licence/provenance requise | bloqué | Licence, droits, provenance et conversions non validés |
 | Sélection et filtres dépendants | À créer | À créer | À réaliser | partiel | Contrats documentaires existants |
@@ -57,6 +57,57 @@ Après chaque bloc : `npm run format:check`, `npm run lint`, `npm run typecheck`
 | `npm run build:pages` | réussi |
 | `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
 | `git diff --check` | réussi |
+
+## Bloc C — Registre et analyseur MathSource V1
+
+- Périmètre : registre versionné des commandes et symboles, tokenizer, parser V1, AST mathématique contrôlé, erreurs structurées et extraction dédupliquée des références paramétrées.
+- Fichiers de domaine : `MathAst.ts`, `MathParseError.ts`, `MathParser.ts`, `MathSyntaxRegistry.ts` et `MathTokenizer.ts`. `MathSource.ts` reste l'unique contrat persistant et n'est pas remplacé.
+- Séparation des arbres : `MathAstNode` représente exclusivement les formules affichées ; `SafeExpressionNode` reste réservé aux contraintes logiques et n'est ni réutilisé ni modifié.
+- Registre : version exacte 1, identifiants stables, huit commandes réservées (`sqrt`, `abs`, `vec`, `sin`, `cos`, `tan`, `ln`, `exp`) et symboles Unicode normatifs. Le tokenizer lit les ensembles de symboles depuis ce registre et le parser ne reconnaît aucune fonction absente du registre.
+- Grammaire couverte : nombres entiers et décimaux point/virgule ; identifiants latins/grecs sans `_` ; variables `@nom` avec `_` ; multiplication explicite ; priorités ; fractions non ambiguës ; indices avant puissances ; huit fonctions ; six comparaisons et leurs équivalents Unicode ; relations et appartenance ; constante `π` distincte de `pi` ; intervalles ; sommes, produits et intégrales bornés.
+- Erreurs : résultat discriminé sans exception utilisateur, source originale conservée, code et offsets stables, message pédagogique et exemple correctif lorsque pertinent. Sont notamment couverts la multiplication implicite, la division ambiguë, les parenthèses de fonction, la casse des commandes, les intervalles invalides, les caractères inconnus et les limites dépassées.
+- Limites de sécurité exportées : 2 048 caractères, 512 tokens, profondeur 32 et 256 nœuds. La limite de liste de 32 est réservée aux constructions V1 à liste ; aucune construction multiargument non normative n'est acceptée.
+- Dépendances : domaine pur sans React, DOM, KaTeX, Supabase, IndexedDB ni réseau ; aucune exécution dynamique, interprétation HTML ou persistance de rendu.
+- Tests ciblés : 96 tests réussis dans `math-registry.test.ts`, `math-tokenizer.test.ts` et `math-parser.test.ts`, couvrant notamment la règle définitive `_` (`x_n` est un indice, `@coefficient_1` est une variable paramétrée).
+- Hors périmètre confirmé : aucun adapter KaTeX, rendu React, éditeur, contrôle des références contre les définitions, génération de variables, import, filtre, parcours, bloc D ou travail PR5.
+
+### Résultats du 3 août 2026
+
+| Vérification | Résultat |
+|---|---|
+| Tests Vitest mathématiques ciblés | 96 tests réussis |
+| `npm run format:check` | réussi après application du formatage |
+| `npm run lint` | réussi |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 248 tests réussis ; instructions 91,29 %, branches 86,49 %, fonctions 89,75 %, lignes 94,28 % ; domaine math : instructions 94,98 %, branches 87,43 %, fonctions 100 %, lignes 97,29 % |
+| `npm run build` | réussi |
+| `npm run build:pages` | réussi |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage après autorisation du serveur local |
+| `git diff --check` | réussi après mise à jour documentaire finale |
+
+La prévisualisation technique est prouvée par les deux builds et le serveur Playwright. Aucune interface mathématique ou validation manuelle de rendu n'est déclarée : elles sont hors bloc C.
+
+### Durcissement de la frontière publique — 3 août 2026
+
+- `parseMathSource(value: unknown)` valide désormais toute la racine sous `try/catch` avant de lire ou conserver une propriété externe.
+- Seuls les objets simples à prototype standard ou nul, possédant exactement `syntaxVersion: number` et `source: string`, produisent une copie sûre. Les valeurs nulles, tableaux, objets exotiques, racines cycliques, propriétés manquantes, mauvais types, getters et Proxy hostiles retournent `invalid-math-source` sans exception ni détail interne.
+- Le contrat d'échec porte `source: MathSourceSnapshot | null` : une paire numérique/textuelle sûre conserve exactement la source, notamment pour une version non prise en charge ou une syntaxe invalide ; une racine non fiable produit `null`. Aucun objet externe hostile n'est conservé.
+- `parseMathSourceText` reste le helper textuel et n'utilise plus de cast vers `MathSource`.
+- `tokenizeMathSource(value: unknown)`, API exportée du domaine, refuse aussi toute entrée non textuelle avec `invalid-tokenizer-source`.
+- Tests ajoutés : neuf racines invalides usuelles, quatre objets hostiles, objet à prototype nul valide, racine cyclique, immutabilité, conservation exacte de source, absence de stack ou message interne, helper textuel et entrées tokenizer non-string.
+- Hors périmètre inchangé : aucun travail du bloc D, rendu, interface, import, parcours ou PR5.
+
+| Vérification | Résultat |
+|---|---|
+| Tests Vitest mathématiques ciblés | 115 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 267 tests réussis ; instructions 91,43 %, branches 86,75 %, fonctions 89,81 %, lignes 94,37 % ; domaine math : instructions 95,36 %, branches 88,64 %, fonctions 100 %, lignes 97,50 % |
+| `npm run build` | réussi |
+| `npm run build:pages` | réussi |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage après autorisation du serveur local |
+| `git diff --check` | réussi après la mise à jour documentaire finale |
 
 ### Durcissement de la normalisation — 2 août 2026
 
