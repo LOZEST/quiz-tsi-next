@@ -14,6 +14,136 @@ const ast = (source: string) => {
 
 describe('MathParser V1', () => {
   it.each([
+    null,
+    undefined,
+    [],
+    {},
+    new Date(),
+    { syntaxVersion: 1 },
+    { source: 'x' },
+    { syntaxVersion: '1', source: 'x' },
+    { syntaxVersion: 1, source: 12 },
+  ])('rejects the invalid MathSource root %# without throwing', (value) => {
+    expect(() => parseMathSource(value)).not.toThrow();
+    expect(parseMathSource(value)).toEqual({
+      ok: false,
+      source: null,
+      errors: [
+        {
+          code: 'invalid-math-source',
+          message:
+            'La formule reçue n’est pas dans un format MathSource valide.',
+          sourceStart: null,
+          sourceEnd: null,
+          correctionExample: null,
+        },
+      ],
+    });
+  });
+
+  it('contains hostile root object behavior at the public boundary', () => {
+    const hostilePrototype = new Proxy(
+      {},
+      {
+        getPrototypeOf: () => {
+          throw new Error('hostile getPrototypeOf detail');
+        },
+      },
+    );
+    const hostileGet = new Proxy(
+      { syntaxVersion: 1, source: 'x' },
+      {
+        get: () => {
+          throw new Error('hostile get detail');
+        },
+      },
+    );
+    const hostileVersionGetter = Object.defineProperty({}, 'syntaxVersion', {
+      get: () => {
+        throw new Error('hostile syntaxVersion getter detail');
+      },
+    });
+    Object.defineProperty(hostileVersionGetter, 'source', { value: 'x' });
+    const hostileSourceGetter = Object.defineProperties(
+      {},
+      {
+        syntaxVersion: { value: 1 },
+        source: {
+          get: () => {
+            throw new Error('hostile source getter detail');
+          },
+        },
+      },
+    );
+
+    for (const value of [
+      hostilePrototype,
+      hostileGet,
+      hostileVersionGetter,
+      hostileSourceGetter,
+    ]) {
+      expect(() => parseMathSource(value)).not.toThrow();
+      const result = parseMathSource(value);
+      expect(result).toMatchObject({
+        ok: false,
+        source: null,
+        errors: [{ code: 'invalid-math-source' }],
+      });
+      if (!result.ok) {
+        expect(result.errors[0]?.message).not.toContain('hostile');
+        expect(result.errors[0]?.message).not.toContain('Error');
+        expect(result.errors[0]).not.toHaveProperty('stack');
+      }
+    }
+  });
+
+  it('rejects a cyclic root without traversing or retaining it', () => {
+    const cyclic: Record<string, unknown> = {
+      syntaxVersion: 1,
+      source: 'x',
+    };
+    cyclic.self = cyclic;
+    expect(() => parseMathSource(cyclic)).not.toThrow();
+    expect(parseMathSource(cyclic)).toMatchObject({
+      ok: false,
+      source: null,
+      errors: [{ code: 'invalid-math-source' }],
+    });
+  });
+
+  it('accepts a valid null-prototype MathSource without mutating it', () => {
+    const value = Object.assign(Object.create(null) as object, {
+      syntaxVersion: 1,
+      source: 'x+1',
+    });
+    const before = { ...value };
+    expect(parseMathSource(value)).toMatchObject({
+      ok: true,
+      source: { syntaxVersion: 1, source: 'x+1' },
+    });
+    expect({ ...value }).toEqual(before);
+  });
+
+  it('preserves safe source snapshots for unsupported versions and invalid syntax', () => {
+    const unsupported = { syntaxVersion: 2, source: '  x+1  ' };
+    expect(parseMathSource(unsupported)).toMatchObject({
+      ok: false,
+      source: unsupported,
+      errors: [{ code: 'unsupported-version' }],
+    });
+    const invalid = { syntaxVersion: 1, source: '  2x  ' };
+    expect(parseMathSource(invalid)).toMatchObject({
+      ok: false,
+      source: invalid,
+      errors: [{ code: 'implicit-multiplication' }],
+    });
+  });
+
+  it('keeps parseMathSourceText working through the hardened boundary', () => {
+    expect(parseMathSourceText('x+1')).toMatchObject({ ok: true });
+  });
+
+  it.each([
     ['12', { kind: 'number', value: '12' }],
     ['-12', { kind: 'unary', operator: 'negative' }],
     ['1.5', { kind: 'number', value: '1.5' }],

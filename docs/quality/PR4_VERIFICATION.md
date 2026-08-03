@@ -87,6 +87,28 @@ Après chaque bloc : `npm run format:check`, `npm run lint`, `npm run typecheck`
 
 La prévisualisation technique est prouvée par les deux builds et le serveur Playwright. Aucune interface mathématique ou validation manuelle de rendu n'est déclarée : elles sont hors bloc C.
 
+### Durcissement de la frontière publique — 3 août 2026
+
+- `parseMathSource(value: unknown)` valide désormais toute la racine sous `try/catch` avant de lire ou conserver une propriété externe.
+- Seuls les objets simples à prototype standard ou nul, possédant exactement `syntaxVersion: number` et `source: string`, produisent une copie sûre. Les valeurs nulles, tableaux, objets exotiques, racines cycliques, propriétés manquantes, mauvais types, getters et Proxy hostiles retournent `invalid-math-source` sans exception ni détail interne.
+- Le contrat d'échec porte `source: MathSourceSnapshot | null` : une paire numérique/textuelle sûre conserve exactement la source, notamment pour une version non prise en charge ou une syntaxe invalide ; une racine non fiable produit `null`. Aucun objet externe hostile n'est conservé.
+- `parseMathSourceText` reste le helper textuel et n'utilise plus de cast vers `MathSource`.
+- `tokenizeMathSource(value: unknown)`, API exportée du domaine, refuse aussi toute entrée non textuelle avec `invalid-tokenizer-source`.
+- Tests ajoutés : neuf racines invalides usuelles, quatre objets hostiles, objet à prototype nul valide, racine cyclique, immutabilité, conservation exacte de source, absence de stack ou message interne, helper textuel et entrées tokenizer non-string.
+- Hors périmètre inchangé : aucun travail du bloc D, rendu, interface, import, parcours ou PR5.
+
+| Vérification | Résultat |
+|---|---|
+| Tests Vitest mathématiques ciblés | 115 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 267 tests réussis ; instructions 91,43 %, branches 86,75 %, fonctions 89,81 %, lignes 94,37 % ; domaine math : instructions 95,36 %, branches 88,64 %, fonctions 100 %, lignes 97,50 % |
+| `npm run build` | réussi |
+| `npm run build:pages` | réussi |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage après autorisation du serveur local |
+| `git diff --check` | réussi après la mise à jour documentaire finale |
+
 ### Durcissement de la normalisation — 2 août 2026
 
 | Vérification | Résultat |

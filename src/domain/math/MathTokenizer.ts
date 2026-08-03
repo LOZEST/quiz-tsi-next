@@ -32,7 +32,21 @@ const isGreek = (value: string): boolean =>
   MATH_GREEK_IDENTIFIER_SYMBOLS.has(value);
 const isDigit = (value: string): boolean => /[0-9]/u.test(value);
 
-export function tokenizeMathSource(source: string): MathTokenizeResult {
+export function tokenizeMathSource(value: unknown): MathTokenizeResult {
+  if (typeof value !== 'string') {
+    return {
+      ok: false,
+      errors: [
+        mathParseError(
+          'invalid-tokenizer-source',
+          'Le tokenizer mathématique attend une source textuelle.',
+          null,
+          null,
+        ),
+      ],
+    };
+  }
+  const source = value;
   if (source.length > MAX_MATH_SOURCE_LENGTH)
     return {
       ok: false,

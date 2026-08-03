@@ -22,9 +22,14 @@ export type MathParseResult =
     }>
   | Readonly<{
       ok: false;
-      source: MathSource;
+      source: MathSourceSnapshot | null;
       errors: readonly MathParseError[];
     }>;
+
+export type MathSourceSnapshot = Readonly<{
+  syntaxVersion: number;
+  source: string;
+}>;
 
 class ControlledParseFailure extends Error {
   constructor(readonly parseError: MathParseError) {
@@ -446,34 +451,80 @@ class Parser {
   }
 }
 
-export function parseMathSource(mathSource: MathSource): MathParseResult {
-  const preservedSource: MathSource = {
-    syntaxVersion: mathSource.syntaxVersion,
-    source: mathSource.source,
+function invalidMathSourceResult(): MathParseResult {
+  return {
+    ok: false,
+    source: null,
+    errors: [
+      mathParseError(
+        'invalid-math-source',
+        'La formule reçue n’est pas dans un format MathSource valide.',
+        null,
+        null,
+      ),
+    ],
   };
-  if (mathSource.syntaxVersion !== MATH_SYNTAX_VERSION) {
+}
+
+function readMathSource(value: unknown): MathSourceSnapshot | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return null;
+  }
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  if (prototype !== Object.prototype && prototype !== null) return null;
+  const keys = Reflect.ownKeys(value);
+  if (
+    keys.length !== 2 ||
+    !keys.includes('syntaxVersion') ||
+    !keys.includes('source')
+  ) {
+    return null;
+  }
+  const syntaxVersion = Reflect.get(value, 'syntaxVersion') as unknown;
+  const source = Reflect.get(value, 'source') as unknown;
+  if (typeof syntaxVersion !== 'number' || typeof source !== 'string') {
+    return null;
+  }
+  return { syntaxVersion, source };
+}
+
+export function parseMathSource(value: unknown): MathParseResult {
+  let preservedSource: MathSourceSnapshot;
+  try {
+    const candidate = readMathSource(value);
+    if (candidate === null) return invalidMathSourceResult();
+    preservedSource = candidate;
+  } catch {
+    return invalidMathSourceResult();
+  }
+
+  if (preservedSource.syntaxVersion !== MATH_SYNTAX_VERSION) {
     return {
       ok: false,
       source: preservedSource,
       errors: [
         mathParseError(
           'unsupported-version',
-          `La version ${String(mathSource.syntaxVersion)} du langage mathématique n’est pas prise en charge.`,
+          `La version ${String(preservedSource.syntaxVersion)} du langage mathématique n’est pas prise en charge.`,
           null,
           null,
         ),
       ],
     };
   }
-  const tokenized = tokenizeMathSource(mathSource.source);
+  const tokenized = tokenizeMathSource(preservedSource.source);
   if (!tokenized.ok)
     return { ok: false, source: preservedSource, errors: tokenized.errors };
   try {
     const parser = new Parser(tokenized.tokens);
     const ast = parser.parse();
+    const validatedSource: MathSource = {
+      syntaxVersion: MATH_SYNTAX_VERSION,
+      source: preservedSource.source,
+    };
     return {
       ok: true,
-      source: preservedSource,
+      source: validatedSource,
       ast,
       parameterReferences: [...parser.references],
     };
@@ -500,5 +551,5 @@ export function parseMathSourceText(
   source: string,
   syntaxVersion: number = MATH_SYNTAX_VERSION,
 ): MathParseResult {
-  return parseMathSource({ syntaxVersion, source } as MathSource);
+  return parseMathSource({ syntaxVersion, source });
 }

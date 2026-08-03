@@ -5,6 +5,17 @@ import {
 } from '@domain/math/MathTokenizer';
 
 describe('MathTokenizer V1', () => {
+  it.each([null, undefined, {}, [], 12])(
+    'rejects the non-string public input %# without throwing',
+    (value) => {
+      expect(() => tokenizeMathSource(value)).not.toThrow();
+      expect(tokenizeMathSource(value)).toMatchObject({
+        ok: false,
+        errors: [{ code: 'invalid-tokenizer-source' }],
+      });
+    },
+  );
+
   it('normalizes decimal commas without changing offsets', () => {
     const result = tokenizeMathSource('1,5 + 1.5');
     expect(result).toMatchObject({ ok: true });
