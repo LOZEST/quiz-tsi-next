@@ -230,6 +230,7 @@ function validateParameterization(
   }
   if (
     !Array.isArray(value.variables) ||
+    value.variables.length === 0 ||
     !Array.isArray(value.constraints) ||
     !Number.isInteger(value.validationVariantCount) ||
     (value.validationVariantCount as number) < (published ? 10 : 0)

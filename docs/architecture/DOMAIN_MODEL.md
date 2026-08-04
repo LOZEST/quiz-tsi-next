@@ -117,6 +117,8 @@ Une migration convertit tout ancien contenu persistant du LaTeX vers un `MathSou
 
 `parameterization` vaut `null` pour une question non paramétrée. Avant publication d'une question paramétrée, `validationVariantCount` vaut au minimum 10 et autant de variantes valides sont contrôlées. Toutes les valeurs générées satisfont leur domaine et toutes les contraintes. Une seed identique produit les mêmes valeurs et le même contenu. Une combinaison impossible produit une erreur explicite ; aucune variante invalide n'est publiée silencieusement.
 
+Pour le bloc D de PR4, le hasard déterministe est versionné `xmur3-mulberry32` v1 : la seed textuelle est condensée par xmur3, puis la séquence est produite par Mulberry32 en arithmétique entière 32 bits. Les limites V1 sont 32 variables, 10 000 valeurs matérialisées par domaine, 8 décimales, 100 000 combinaisons pour une conclusion exhaustive, 20 000 tentatives déterministes hors seuil et 1 000 variantes demandées. Une recherche non exhaustive qui n'atteint pas la quantité demandée retourne `search-limit-exceeded` et ne conclut jamais à l'impossibilité. Une paramétrisation sans variable est invalide ; une question sans paramétrisation reste statique et utilise une table de paramètres vide.
+
 ## Sessions
 
 ```ts

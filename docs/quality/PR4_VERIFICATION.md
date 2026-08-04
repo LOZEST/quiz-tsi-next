@@ -87,6 +87,38 @@ Après chaque bloc : `npm run format:check`, `npm run lint`, `npm run typecheck`
 
 La prévisualisation technique est prouvée par les deux builds et le serveur Playwright. Aucune interface mathématique ou validation manuelle de rendu n'est déclarée : elles sont hors bloc C.
 
+## Bloc D — Génération paramétrée et instanciation
+
+- Périmètre : PRNG pur, domaines finis, évaluation de `SafeExpressionNode`, recherche exhaustive ou bornée, variantes distinctes, références et instanciation des textes et AST mathématiques. Aucun travail du bloc E, de PR5, de rendu ou d'interface.
+- Modules : `SeededRandom.ts`, `VariableDomain.ts`, `SafeExpressionEvaluator.ts`, `ParameterizedQuestionGenerator.ts`, `ParameterReferenceScanner.ts`, `QuestionInstantiation.ts` et `QuestionParameterValidation.ts`.
+- PRNG : `xmur3-mulberry32` v1, seed textuelle obligatoire, xmur3 pour l'état initial puis Mulberry32 en entiers 32 bits. Aucun temps, environnement ou hasard système.
+- Domaines : entier inclusif par `step` et exclusions ; décimal matérialisé sur la grille entière `10 ** decimals`, quantifié aux bornes et normalisé pour `-0` ; choix conservé dans son ordre avec déduplication stricte typée. Les sources ne sont pas modifiées.
+- Évaluateur : liste blanche exacte du contrat, nombres finis sans coercition, égalité stricte typée, booléens stricts, division/modulo zéro et résultats non réels ou non finis contrôlés. Chaque contrainte racine doit valoir exactement `true`.
+- Limites exportées : 32 variables, 10 000 valeurs par domaine, 8 décimales, 100 000 combinaisons exhaustives, 20 000 tentatives bornées et 1 000 variantes demandées.
+- États : `ready`, `invalid-question`, `impossible`, `insufficient-distinct-variants`, `search-limit-exceeded` et `invalid-evaluation`. Seule l'exploration complète autorise `impossible` ou l'insuffisance démontrée ; une recherche bornée inconclusive retourne `search-limit-exceeded`.
+- Références : scanner textuel avec offsets et grammaire `@nom`, parser du bloc C pour les formules, chemins de segments précis, références de contraintes incluses, inconnues bloquantes et définitions inutilisées en avertissement.
+- Instanciation : remplacement des seuls spans reconnus dans les textes ; remplacement des nœuds `parameter` dans une copie de l'AST par des nœuds `resolved-parameter` conservant nom et primitive. `MathSource` originale reste intacte ; aucun HTML, LaTeX ou JavaScript n'est produit ou interprété. Les sorties valides sont des copies profondément figées sans geler la source.
+- Tests ciblés : sept fichiers et 50 tests réussis.
+- Dépendances : domaine pur ; aucun import React, React DOM, KaTeX, Supabase, IndexedDB, DOM ou réseau.
+- Hors périmètre : bloc E, sélection/parcours, import, banque de production, interface d'édition et PR5 non commencés.
+
+### Résultats du 4 août 2026
+
+| Vérification | Résultat |
+|---|---|
+| Tests Vitest ciblés du bloc D | 7 fichiers, 50 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi ; avertissement informatif ESLint sur les projets TypeScript multiples |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 26 fichiers, 317 tests réussis ; instructions 89,91 %, branches 83,84 %, fonctions 90,10 %, lignes 92,55 % ; nouveaux modules de questions : instructions 86,92 %, branches 82,01 %, fonctions 91,46 %, lignes 88,53 % |
+| `npm run build` | réussi ; 141 modules transformés |
+| `npm run build:pages` | réussi ; 141 modules transformés et fallback Pages généré |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| Recherche des dépendances interdites dans les nouveaux modules | aucune occurrence |
+| `git diff --check` | réussi |
+
+Les deux messages jsdom relatifs à `HTMLCanvasElement.getContext()` pendant la couverture sont attendus dans les tests existants et n'ont provoqué aucun échec. La prévisualisation est prouvée par les deux builds et le serveur Playwright ; aucune nouvelle interface ni recette visuelle du bloc D n'est concernée.
+
 ### Durcissement de la frontière publique — 3 août 2026
 
 - `parseMathSource(value: unknown)` valide désormais toute la racine sous `try/catch` avant de lire ou conserver une propriété externe.
