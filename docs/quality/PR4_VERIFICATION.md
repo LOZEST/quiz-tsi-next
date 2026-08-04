@@ -2,6 +2,62 @@
 
 > **Statut initial :** table créée avant toute implémentation. Aucun état n'est marqué implémenté sans code et preuve.
 
+## Lot accéléré — banque et sélection déterministe (4 août 2026)
+
+- **Périmètre :** frontière `unknown` de `QuestionBankBundle`, import initial pur,
+  quarantaine bornée, ports de repositories, adapter mémoire, index, filtres
+  dépendants, sélection de Révision libre et préparation des variantes. Aucune UI,
+  passation PR5 ou logique pédagogique PR6 n'est incluse.
+- **Bundle :** schéma V1, `bundleId` normalisé, date UTC, provenance résolue,
+  questions structurellement et sémantiquement validées, cohérence complète avec
+  `ProgramIndex`, limite de 10 000 entrées, copie indépendante profondément figée.
+  Getters, Proxy, cycles, prototypes exotiques, symboles et valeurs non finies
+  produisent un diagnostic contrôlé.
+- **Import :** statuts normatifs `accepted`, `updated`, `ignored`, `rejected` et
+  `quarantined`. Même id/version/contenu est ignoré idempotemment ; une version
+  supérieure remplace ; une version inférieure est rejetée ; un conflit de contenu
+  à version égale est mis en quarantaine. La quarantaine conserve uniquement une
+  chaîne JSON sûre limitée à 2 048 caractères. L'état final est validé intégralement
+  avant tout remplacement du repository.
+- **Repository et index :** le port ne dépend d'aucune infrastructure. L'adapter
+  mémoire copie ses entrées et sorties, expose des snapshots figés, remplace la
+  banque en une seule affectation et ordonne par id/version. L'index déduplique et
+  filtre partie, chapitre, notion, type, difficulté, source et statut ;
+  `not-applicable` sélectionne exclusivement Réflexe.
+- **Filtres :** aucune sentinelle `all` n'entre dans le programme. Les sélections
+  discriminées existantes sont normalisées et les enfants incompatibles reviennent
+  à `{ kind: "all" }`. `ProgramIndex` expose désormais les chapitres et notions
+  canoniques nécessaires aux listes globales.
+- **Sélection et préparation :** uniquement les dernières versions publiées et
+  validées, ordre canonique puis mélange `xmur3-mulberry32` V1, sans temps système
+  ni `Math.random`, quantité maximale exportée de 1 000 et exclusions sans doublon.
+  Une seed d'instance combine seed de séance, id, version et position. Une question
+  statique reçoit `{}` ; une paramétrée réutilise le générateur et l'instanciation du
+  bloc D. Aucun `QuestionInstance` ou `FrozenQuestionInstance` n'est créé.
+- **États explicites :** `no-bank` emploie le message normatif, puis
+  `invalid-config`, `no-match`, `insufficient-stock`, `repository-error` et
+  `question-preparation-error` couvrent les autres sorties sans stack trace.
+- **Données :** seules des fixtures entièrement nouvelles existent dans les tests.
+  Aucune banque historique ou question de production n'est ajoutée.
+- **Hors périmètre :** UI React, IndexedDB/Supabase, import avancé PR7, rendu KaTeX,
+  session/test PR5, progression et algorithmes PR6.
+
+### Résultats du lot banque et sélection — 4 août 2026
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés banque/sélection | 1 fichier, 14 tests réussis |
+| Tests ciblés avec Programme | 2 fichiers, 45 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi ; avertissement informatif ESLint sur les projets TypeScript multiples |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 27 fichiers, 364 tests réussis ; instructions 89,00 %, branches 81,33 %, fonctions 89,66 %, lignes 91,63 % |
+| `npm run build` | réussi ; 141 modules transformés |
+| `npm run build:pages` | réussi ; 141 modules transformés et fallback Pages généré |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| Validation YAML des workflows | `ci.yml` et `deploy-pages.yml` valides |
+| `git diff --check` | réussi |
+
 | Exigence | Implémentation | Test automatique | Vérification manuelle | État réel | Justification |
 |---|---|---|---|---|---|
 | `SESSION-005` — filtre Réflexe non applicable | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Contrat et validation structurelle implémentés ; interface hors bloc A |
