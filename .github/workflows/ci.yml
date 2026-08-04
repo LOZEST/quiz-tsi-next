@@ -36,8 +36,11 @@ jobs:
         run: npm run test:coverage
       - name: Standard build
         run: npm run build
-      - name: Pages build
+     - name: Pages build
         run: npm run build:pages
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Browser tests
