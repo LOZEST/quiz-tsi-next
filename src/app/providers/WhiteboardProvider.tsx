@@ -20,6 +20,9 @@ export interface WhiteboardUiState {
   undo: () => void;
   redo: () => void;
   bindHistory: (actions: { undo(): void; redo(): void } | null) => void;
+  hasDraft: boolean;
+  clearDraft: () => void;
+  bindDraft: (actions: { hasDraft(): boolean; clear(): void } | null) => void;
 }
 
 const WhiteboardContext = createContext<WhiteboardUiState | null>(null);
@@ -33,8 +36,20 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
     undo(): void;
     redo(): void;
   } | null>(null);
+  const [draft, setDraft] = useState<{
+    hasDraft(): boolean;
+    clear(): void;
+  } | null>(null);
+  const [hasDraft, setHasDraft] = useState(false);
   const bindHistory = useCallback(
     (actions: { undo(): void; redo(): void } | null) => setHistory(actions),
+    [],
+  );
+  const bindDraft = useCallback(
+    (actions: { hasDraft(): boolean; clear(): void } | null) => {
+      setDraft(actions);
+      setHasDraft(actions?.hasDraft() ?? false);
+    },
     [],
   );
   const value = useMemo(
@@ -50,8 +65,24 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       undo: () => history?.undo(),
       redo: () => history?.redo(),
       bindHistory,
+      hasDraft,
+      clearDraft: () => {
+        draft?.clear();
+        setHasDraft(false);
+      },
+      bindDraft,
     }),
-    [activeTool, bindHistory, gridEnabled, handedness, history, penWidth],
+    [
+      activeTool,
+      bindDraft,
+      bindHistory,
+      draft,
+      gridEnabled,
+      handedness,
+      hasDraft,
+      history,
+      penWidth,
+    ],
   );
   return (
     <WhiteboardContext.Provider value={value}>

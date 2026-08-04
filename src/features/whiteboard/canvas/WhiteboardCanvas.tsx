@@ -15,7 +15,7 @@ export function WhiteboardCanvas() {
   const { workspaceRepository } = useAppServices();
   const { state } = useAuth();
   const settings = useWhiteboard();
-  const { bindHistory } = settings;
+  const { bindHistory, bindDraft } = settings;
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,6 +40,15 @@ export function WhiteboardCanvas() {
             user.id,
           );
           void persistence?.catch(() => setStorageError(true));
+          bindDraft({
+            hasDraft: () => next.objects.length > 0,
+            clear: () =>
+              activeController?.replaceScene(createEmptyScene('main')),
+          });
+        });
+        bindDraft({
+          hasDraft: () => activeController?.getScene().objects.length !== 0,
+          clear: () => activeController?.replaceScene(createEmptyScene('main')),
         });
         setController(activeController);
       })
@@ -47,9 +56,10 @@ export function WhiteboardCanvas() {
     return () => {
       disposed = true;
       activeController?.destroy();
+      bindDraft(null);
       setController(null);
     };
-  }, [state, workspaceRepository]);
+  }, [bindDraft, state, workspaceRepository]);
 
   usePointerInput(canvasRef, controller);
 

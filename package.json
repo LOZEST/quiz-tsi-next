@@ -29,6 +29,7 @@
   "dependencies": {
     "@supabase/supabase-js": "2.111.0",
     "idb": "8.0.3",
+    "katex": "0.16.22",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-router-dom": "7.18.2"
