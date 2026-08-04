@@ -92,13 +92,14 @@ La prévisualisation technique est prouvée par les deux builds et le serveur Pl
 - Périmètre : PRNG pur, domaines finis, évaluation de `SafeExpressionNode`, recherche exhaustive ou bornée, variantes distinctes, références et instanciation des textes et AST mathématiques. Aucun travail du bloc E, de PR5, de rendu ou d'interface.
 - Modules : `SeededRandom.ts`, `VariableDomain.ts`, `SafeExpressionEvaluator.ts`, `ParameterizedQuestionGenerator.ts`, `ParameterReferenceScanner.ts`, `QuestionInstantiation.ts` et `QuestionParameterValidation.ts`.
 - PRNG : `xmur3-mulberry32` v1, seed textuelle obligatoire, xmur3 pour l'état initial puis Mulberry32 en entiers 32 bits. Aucun temps, environnement ou hasard système.
-- Domaines : entier inclusif par `step` et exclusions ; décimal matérialisé sur la grille entière `10 ** decimals`, quantifié aux bornes et normalisé pour `-0` ; choix conservé dans son ordre avec déduplication stricte typée. Les sources ne sont pas modifiées.
-- Évaluateur : liste blanche exacte du contrat, nombres finis sans coercition, égalité stricte typée, booléens stricts, division/modulo zéro et résultats non réels ou non finis contrôlés. Chaque contrainte racine doit valoir exactement `true`.
+- Domaines : entier inclusif par `step` et exclusions ; choix conservé dans son ordre avec déduplication stricte typée. Pour un décimal, `Number.prototype.toString()` fournit la représentation canonique, y compris exponentielle ; elle est convertie en fraction décimale `BigInt`, puis mise à l'échelle exactement. Les minimums utilisent le plafond rationnel, les maximums le plancher rationnel et les exclusions l'arrondi au plus proche avec égalité vers `+∞`, comme `Math.round`. Aucun `ceil(value * scale)`, `floor(value * scale)` ni epsilon arbitraire n'est utilisé. Tout entier mis à l'échelle hors `[-Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER]` est refusé. `-0` est normalisé. Les sources ne sont pas modifiées.
+- Évaluateur : `validateSafeExpression` valide d'abord sous `try/catch` chaque nœud, opérateur, fonction, arité et limite. L'évaluation utilise ensuite des `switch` en liste blanche dont chaque défaut produit une erreur contrôlée, sans repli vers un opérateur existant. La table de paramètres doit être un objet simple à prototype standard ou nul, sans symbole ni accesseur, contenant uniquement des primitives finies ; elle est copiée et figée avant évaluation. Les nombres ne subissent aucune coercition, l'égalité reste stricte et chaque contrainte racine doit valoir exactement `true`.
 - Limites exportées : 32 variables, 10 000 valeurs par domaine, 8 décimales, 100 000 combinaisons exhaustives, 20 000 tentatives bornées et 1 000 variantes demandées.
-- États : `ready`, `invalid-question`, `impossible`, `insufficient-distinct-variants`, `search-limit-exceeded` et `invalid-evaluation`. Seule l'exploration complète autorise `impossible` ou l'insuffisance démontrée ; une recherche bornée inconclusive retourne `search-limit-exceeded`.
+- États : `ready`, `invalid-question`, `impossible`, `insufficient-distinct-variants`, `search-limit-exceeded` et `invalid-evaluation`. La frontière `unknown` réutilise `validateParameterizedQuestionSpec` avant toute génération. Seule l'exploration complète autorise `impossible` ou l'insuffisance démontrée ; une recherche bornée inconclusive retourne `search-limit-exceeded`.
 - Références : scanner textuel avec offsets et grammaire `@nom`, parser du bloc C pour les formules, chemins de segments précis, références de contraintes incluses, inconnues bloquantes et définitions inutilisées en avertissement.
-- Instanciation : remplacement des seuls spans reconnus dans les textes ; remplacement des nœuds `parameter` dans une copie de l'AST par des nœuds `resolved-parameter` conservant nom et primitive. `MathSource` originale reste intacte ; aucun HTML, LaTeX ou JavaScript n'est produit ou interprété. Les sorties valides sont des copies profondément figées sans geler la source.
-- Tests ciblés : sept fichiers et 50 tests réussis.
+- Statistiques : `searchMode` indique si l'espace est `exhaustive-capable` ou impose une recherche `bounded`. `searchCompleted` et son alias de compatibilité `exhaustive` valent `true` uniquement lorsque toutes les combinaisons ont réellement été examinées. `validCombinations` compte seulement les combinaisons valides effectivement examinées et n'est donc jamais présenté comme un total après arrêt anticipé.
+- Instanciation : remplacement des seuls spans reconnus dans les textes ; remplacement des nœuds `parameter` dans une copie de l'AST par des nœuds `resolved-parameter` conservant nom et primitive. `MathSource` originale reste intacte ; aucun HTML, LaTeX ou JavaScript n'est produit ou interprété. Chaque résultat `ready`, statique ou paramétré, est profondément figé jusqu'aux diagnostics, variants, objets variants, paramètres, contenus, références et statistiques, sans modifier ni geler la question source.
+- Tests ciblés après durcissement : sept fichiers et 83 tests réussis.
 - Dépendances : domaine pur ; aucun import React, React DOM, KaTeX, Supabase, IndexedDB, DOM ou réseau.
 - Hors périmètre : bloc E, sélection/parcours, import, banque de production, interface d'édition et PR5 non commencés.
 
@@ -106,11 +107,11 @@ La prévisualisation technique est prouvée par les deux builds et le serveur Pl
 
 | Vérification | Résultat |
 |---|---|
-| Tests Vitest ciblés du bloc D | 7 fichiers, 50 tests réussis |
+| Tests Vitest ciblés du bloc D | 7 fichiers, 83 tests réussis |
 | `npm run format:check` | réussi |
 | `npm run lint` | réussi ; avertissement informatif ESLint sur les projets TypeScript multiples |
 | `npm run typecheck` | réussi |
-| `npm run test:coverage` | 26 fichiers, 317 tests réussis ; instructions 89,91 %, branches 83,84 %, fonctions 90,10 %, lignes 92,55 % ; nouveaux modules de questions : instructions 86,92 %, branches 82,01 %, fonctions 91,46 %, lignes 88,53 % |
+| `npm run test:coverage` | 26 fichiers, 350 tests réussis ; instructions 89,84 %, branches 83,87 %, fonctions 90,12 %, lignes 92,71 % ; domaine questions : instructions 87,19 %, branches 82,24 %, fonctions 91,39 %, lignes 89,57 % |
 | `npm run build` | réussi ; 141 modules transformés |
 | `npm run build:pages` | réussi ; 141 modules transformés et fallback Pages généré |
 | `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCanonicalVariableDomain,
   MAX_MATERIALIZED_DOMAIN_SIZE,
+  MAX_SAFE_SCALED_INTEGER,
 } from '../../../src/domain/questions/VariableDomain';
 
 describe('buildCanonicalVariableDomain', () => {
@@ -67,6 +68,61 @@ describe('buildCanonicalVariableDomain', () => {
         },
       }),
     ).toEqual({ ok: true, values: [0, 0.2] }));
+  it.each([
+    [0.14, 0.14, [0.14]],
+    [0.07, 0.07, [0.07]],
+    [0.14, 0.16, [0.14, 0.15, 0.16]],
+    [-0.14, -0.12, [-0.14, -0.13, -0.12]],
+  ] as const)(
+    'quantifie exactement [%s ; %s]',
+    (minimum, maximum, expected) => {
+      const variable = {
+        domain: {
+          kind: 'decimal',
+          minimum,
+          maximum,
+          decimals: 2,
+          excludedValues: [],
+        },
+      };
+      expect(buildCanonicalVariableDomain(variable)).toEqual({
+        ok: true,
+        values: expected,
+      });
+      expect(buildCanonicalVariableDomain(variable)).toEqual(
+        buildCanonicalVariableDomain(variable),
+      );
+    },
+  );
+  it('quantifie exactement les exclusions et normalise -0', () => {
+    const result = buildCanonicalVariableDomain({
+      domain: {
+        kind: 'decimal',
+        minimum: -0,
+        maximum: 0.14,
+        decimals: 2,
+        excludedValues: [0.14],
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.values).not.toContain(0.14);
+      expect(result.values[0]).toBe(0);
+      expect(Object.is(result.values[0], -0)).toBe(false);
+    }
+  });
+  it('refuse un entier mis à l’échelle hors plage sûre', () =>
+    expect(
+      buildCanonicalVariableDomain({
+        domain: {
+          kind: 'decimal',
+          minimum: MAX_SAFE_SCALED_INTEGER,
+          maximum: MAX_SAFE_SCALED_INTEGER,
+          decimals: 1,
+          excludedValues: [],
+        },
+      }),
+    ).toMatchObject({ ok: false, code: 'domain-limit-exceeded' }));
   it('signale une grille décimale trop grande', () =>
     expect(
       buildCanonicalVariableDomain({

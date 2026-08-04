@@ -30,6 +30,24 @@ export type ParameterizedQuestionValidation = Readonly<{
   statistics: ParameterGenerationResult['statistics'];
 }>;
 
+function deepFreezeOwned<T>(value: T): Readonly<T> {
+  if (typeof value !== 'object' || value === null) return value;
+  const pending: object[] = [value];
+  const visited = new WeakSet<object>();
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+    for (const key of Reflect.ownKeys(current)) {
+      const descriptor = Object.getOwnPropertyDescriptor(current, key);
+      const child = descriptor?.value as unknown;
+      if (typeof child === 'object' && child !== null) pending.push(child);
+    }
+    if (!Object.isFrozen(current)) Object.freeze(current);
+  }
+  return value;
+}
+
 export function validateParameterizedQuestion(
   value: unknown,
   validationSeed: unknown,
@@ -39,6 +57,8 @@ export function validateParameterizedQuestion(
     totalCombinations: 0,
     examinedCombinations: 0,
     validCombinations: 0,
+    searchMode: 'bounded' as const,
+    searchCompleted: false,
     exhaustive: false,
   };
   if (!structural.ok)
@@ -83,7 +103,7 @@ export function validateParameterizedQuestion(
     };
   if (question.parameterization === null) {
     const instantiated = instantiateQuestionVariant(question, {});
-    return {
+    const staticResult: ParameterizedQuestionValidation = {
       kind: instantiated.ok ? 'ready' : 'invalid-reference',
       errors: instantiated.ok
         ? []
@@ -98,9 +118,12 @@ export function validateParameterizedQuestion(
         totalCombinations: 1,
         examinedCombinations: 1,
         validCombinations: 1,
+        searchMode: 'exhaustive-capable',
+        searchCompleted: true,
         exhaustive: true,
       },
     };
+    return instantiated.ok ? deepFreezeOwned(staticResult) : staticResult;
   }
   const requested =
     question.status === 'published'
@@ -145,18 +168,16 @@ export function validateParameterizedQuestion(
       };
     variants.push({ parameterValues, content: content.value });
   }
-  return Object.freeze({
+  return deepFreezeOwned({
     kind: 'ready',
-    errors: Object.freeze([]),
-    warnings: Object.freeze(
-      references.unusedVariables.map((name) => ({
-        path: 'parameterization.variables',
-        message: `Variable inutilisée : ${name}.`,
-      })),
-    ),
-    variants: Object.freeze(variants),
-    usedReferences: references.usedReferences,
-    unusedVariables: references.unusedVariables,
+    errors: [],
+    warnings: references.unusedVariables.map((name) => ({
+      path: 'parameterization.variables',
+      message: `Variable inutilisée : ${name}.`,
+    })),
+    variants,
+    usedReferences: [...references.usedReferences],
+    unusedVariables: [...references.unusedVariables],
     statistics: generated.statistics,
-  });
+  } satisfies ParameterizedQuestionValidation);
 }

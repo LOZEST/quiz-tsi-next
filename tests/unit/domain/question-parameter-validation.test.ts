@@ -104,4 +104,59 @@ describe('validateParameterizedQuestion', () => {
       validateParameterizedQuestion(unused, 'validation').warnings[0]?.message,
     ).toContain('inutilisée');
   });
+  it('fige profondément un résultat paramétré sans geler la source', () => {
+    const base = question();
+    const value: Question = {
+      ...base,
+      parameterization: {
+        ...base.parameterization!,
+        variables: [
+          ...base.parameterization!.variables,
+          {
+            id: 'unused',
+            label: 'Unused',
+            domain: { kind: 'choice', values: [true] },
+          },
+        ],
+      },
+    };
+    const result = validateParameterizedQuestion(value, 'validation');
+    expect(result.kind).toBe('ready');
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.errors)).toBe(true);
+    expect(Object.isFrozen(result.warnings)).toBe(true);
+    expect(Object.isFrozen(result.warnings[0])).toBe(true);
+    expect(Object.isFrozen(result.variants)).toBe(true);
+    expect(Object.isFrozen(result.variants[0])).toBe(true);
+    expect(Object.isFrozen(result.variants[0]?.parameterValues)).toBe(true);
+    expect(Object.isFrozen(result.variants[0]?.content)).toBe(true);
+    expect(Object.isFrozen(result.usedReferences)).toBe(true);
+    expect(Object.isFrozen(result.unusedVariables)).toBe(true);
+    expect(Object.isFrozen(result.statistics)).toBe(true);
+    expect(Object.isFrozen(value)).toBe(false);
+  });
+  it('fige profondément un résultat statique', () => {
+    const base = question();
+    const value: Question = {
+      ...base,
+      parameterization: null,
+      prompt: [{ kind: 'text', value: 'Statique' }],
+      correction: [
+        {
+          ...base.correction[0]!,
+          content: [{ kind: 'text', value: 'Réponse' }],
+        },
+      ],
+    };
+    const result = validateParameterizedQuestion(value, 'validation');
+    expect(result.kind).toBe('ready');
+    expect(Object.isFrozen(result)).toBe(true);
+    expect(Object.isFrozen(result.variants)).toBe(true);
+    expect(Object.isFrozen(result.variants[0])).toBe(true);
+    expect(Object.isFrozen(result.variants[0]?.parameterValues)).toBe(true);
+    expect(Object.isFrozen(result.variants[0]?.content)).toBe(true);
+    expect(Object.isFrozen(result.warnings)).toBe(true);
+    expect(Object.isFrozen(result.statistics)).toBe(true);
+    expect(Object.isFrozen(value)).toBe(false);
+  });
 });

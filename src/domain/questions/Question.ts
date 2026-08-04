@@ -223,6 +223,7 @@ function validateSegments(
 function validateParameterization(
   value: unknown,
   published: boolean,
+  requireDefinedConstraintVariables = published,
 ): ValidationIssue[] {
   if (value === null) return [];
   if (!isRecord(value) || value.schemaVersion !== 1) {
@@ -247,6 +248,7 @@ function validateParameterization(
     if (
       !isRecord(variable) ||
       !isNonEmptyString(variable.id) ||
+      variable.id !== variable.id.trim() ||
       !isNonEmptyString(variable.label) ||
       !isRecord(variable.domain) ||
       ids.has(variable.id)
@@ -271,7 +273,7 @@ function validateParameterization(
   for (const [index, constraint] of value.constraints.entries()) {
     const result = validateSafeExpression(
       constraint,
-      published ? ids : undefined,
+      requireDefinedConstraintVariables ? ids : undefined,
     );
     if (!result.ok) {
       return result.issues.map((entry) => ({
@@ -281,6 +283,19 @@ function validateParameterization(
     }
   }
   return [];
+}
+
+export function validateParameterizedQuestionSpec(
+  value: unknown,
+): ValidationResult<ParameterizedQuestionSpec> {
+  try {
+    const issues = validateParameterization(value, false, true);
+    return issues.length
+      ? invalid(...issues)
+      : valid(value as ParameterizedQuestionSpec);
+  } catch {
+    return invalid(issue('parameterization', 'Paramétrisation inaccessible.'));
+  }
 }
 
 function isPrimitive(value: unknown): value is ParameterPrimitive {

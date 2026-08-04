@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateSafeExpression } from '../../../src/domain/questions/SafeExpressionEvaluator';
-import type { SafeExpressionNode } from '../../../src/domain/questions/Question';
+import {
+  SAFE_EXPRESSION_MAX_DEPTH,
+  SAFE_EXPRESSION_MAX_NODES,
+  type SafeExpressionNode,
+} from '../../../src/domain/questions/Question';
 const literal = (value: string | number | boolean): SafeExpressionNode => ({
   kind: 'literal',
   value,
@@ -137,5 +141,97 @@ describe('evaluateSafeExpression', () => {
       },
     );
     expect(() => evaluateSafeExpression(hostile, {})).not.toThrow();
+  });
+  it.each([{}, null, [], Number.NaN, Number.POSITIVE_INFINITY])(
+    'refuse le littéral hostile %j',
+    (value) =>
+      expect(
+        evaluateSafeExpression({ kind: 'literal', value }, {}),
+      ).toMatchObject({ ok: false, code: 'invalid-expression' }),
+  );
+  it.each([
+    { kind: 'unary', operator: 'future', operand: literal(1) },
+    { kind: 'binary', operator: 'future', left: literal(1), right: literal(2) },
+    {
+      kind: 'comparison',
+      operator: 'future',
+      left: literal(1),
+      right: literal(2),
+    },
+    { kind: 'math-function', function: 'future', arguments: [literal(1)] },
+    {
+      kind: 'logical',
+      operator: 'future',
+      operands: [literal(true), literal(false)],
+    },
+  ])('refuse opérateur ou fonction inconnu', (node) =>
+    expect(evaluateSafeExpression(node, {})).toMatchObject({
+      ok: false,
+      code: 'invalid-expression',
+    }),
+  );
+  it.each([
+    ['abs', []],
+    ['sqrt', [literal(1), literal(2)]],
+    ['round', []],
+    ['floor', []],
+    ['ceil', []],
+    ['min', [literal(1)]],
+    ['max', [literal(1)]],
+  ])('refuse arité invalide pour %s', (fn, arguments_) =>
+    expect(
+      evaluateSafeExpression(
+        { kind: 'math-function', function: fn, arguments: arguments_ },
+        {},
+      ),
+    ).toMatchObject({ ok: false, code: 'invalid-expression' }),
+  );
+  it('applique les limites de profondeur et de nœuds', () => {
+    let deep: unknown = literal(true);
+    for (let index = 0; index <= SAFE_EXPRESSION_MAX_DEPTH; index += 1)
+      deep = { kind: 'logical-not', operand: deep };
+    expect(evaluateSafeExpression(deep, {})).toMatchObject({ ok: false });
+    const balanced = (depth: number): unknown =>
+      depth === 0
+        ? literal(1)
+        : {
+            kind: 'binary',
+            operator: 'add',
+            left: balanced(depth - 1),
+            right: balanced(depth - 1),
+          };
+    expect(
+      evaluateSafeExpression(
+        balanced(Math.ceil(Math.log2(SAFE_EXPRESSION_MAX_NODES))),
+        {},
+      ),
+    ).toMatchObject({ ok: false });
+  });
+  it('refuse les tables non simples, symboliques, non primitives et hostiles', () => {
+    const expression = { kind: 'variable', variableId: 'a' };
+    expect(evaluateSafeExpression(expression, { a: {} })).toMatchObject({
+      ok: false,
+    });
+    expect(
+      evaluateSafeExpression(expression, Object.create({ a: 1 })),
+    ).toMatchObject({ ok: false });
+    expect(
+      evaluateSafeExpression(expression, { [Symbol('a')]: 1 }),
+    ).toMatchObject({ ok: false });
+    const getter = Object.defineProperty({}, 'a', {
+      get() {
+        throw new Error('secret');
+      },
+    });
+    expect(() => evaluateSafeExpression(expression, getter)).not.toThrow();
+    const proxy = new Proxy(
+      {},
+      {
+        getPrototypeOf() {
+          throw new Error('secret');
+        },
+      },
+    );
+    expect(() => evaluateSafeExpression(expression, proxy)).not.toThrow();
   });
 });

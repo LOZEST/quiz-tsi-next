@@ -1,4 +1,8 @@
-import type { ParameterPrimitive, SafeExpressionNode } from './Question';
+import {
+  validateSafeExpression,
+  type ParameterPrimitive,
+  type SafeExpressionNode,
+} from './Question';
 
 export type SafeExpressionEvaluation =
   | Readonly<{ ok: true; value: ParameterPrimitive }>
@@ -11,6 +15,7 @@ export type SafeExpressionEvaluation =
         | 'invalid-operation';
       message: string;
     }>;
+
 const error = (
   code:
     | 'invalid-expression'
@@ -19,173 +24,249 @@ const error = (
     | 'invalid-operation',
   message: string,
 ): SafeExpressionEvaluation => ({ ok: false, code, message });
+
+const isPrimitive = (value: unknown): value is ParameterPrimitive =>
+  typeof value === 'string' ||
+  typeof value === 'boolean' ||
+  (typeof value === 'number' && Number.isFinite(value));
+
 const finite = (value: ParameterPrimitive): value is number =>
   typeof value === 'number' && Number.isFinite(value);
+
+function copyParameterValues(
+  value: unknown,
+): Readonly<Record<string, ParameterPrimitive>> | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value))
+    return null;
+  const prototype = Object.getPrototypeOf(value) as unknown;
+  if (prototype !== Object.prototype && prototype !== null) return null;
+  if (Object.getOwnPropertySymbols(value).length > 0) return null;
+  const copy: Record<string, ParameterPrimitive> = {};
+  for (const key of Object.getOwnPropertyNames(value)) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, key);
+    if (
+      !descriptor ||
+      !('value' in descriptor) ||
+      !isPrimitive(descriptor.value)
+    )
+      return null;
+    copy[key] = descriptor.value;
+  }
+  return Object.freeze(copy);
+}
+
+function evaluateValidated(
+  candidate: SafeExpressionNode,
+  values: Readonly<Record<string, ParameterPrimitive>>,
+): SafeExpressionEvaluation {
+  switch (candidate.kind) {
+    case 'literal':
+      return isPrimitive(candidate.value)
+        ? { ok: true, value: candidate.value }
+        : error('invalid-expression', 'Littéral invalide.');
+    case 'variable':
+      return Object.hasOwn(values, candidate.variableId)
+        ? {
+            ok: true,
+            value: values[candidate.variableId] as ParameterPrimitive,
+          }
+        : error(
+            'missing-variable',
+            `Variable absente : ${candidate.variableId}.`,
+          );
+    case 'unary': {
+      const operand = evaluateValidated(candidate.operand, values);
+      if (!operand.ok) return operand;
+      if (!finite(operand.value))
+        return error('invalid-type', 'Un nombre fini est requis.');
+      let result: number;
+      switch (candidate.operator) {
+        case 'negate':
+          result = -operand.value;
+          break;
+        case 'absolute':
+          result = Math.abs(operand.value);
+          break;
+        default:
+          return error('invalid-expression', 'Opérateur unaire inconnu.');
+      }
+      return Number.isFinite(result)
+        ? { ok: true, value: Object.is(result, -0) ? 0 : result }
+        : error('invalid-operation', 'Résultat numérique invalide.');
+    }
+    case 'binary': {
+      const left = evaluateValidated(candidate.left, values);
+      if (!left.ok) return left;
+      const right = evaluateValidated(candidate.right, values);
+      if (!right.ok) return right;
+      if (!finite(left.value) || !finite(right.value))
+        return error('invalid-type', 'Deux nombres finis sont requis.');
+      let result: number;
+      switch (candidate.operator) {
+        case 'add':
+          result = left.value + right.value;
+          break;
+        case 'subtract':
+          result = left.value - right.value;
+          break;
+        case 'multiply':
+          result = left.value * right.value;
+          break;
+        case 'divide':
+          if (right.value === 0)
+            return error('invalid-operation', 'Division par zéro.');
+          result = left.value / right.value;
+          break;
+        case 'modulo':
+          if (right.value === 0)
+            return error('invalid-operation', 'Modulo par zéro.');
+          result = left.value % right.value;
+          break;
+        case 'power':
+          result = left.value ** right.value;
+          break;
+        default:
+          return error('invalid-expression', 'Opérateur binaire inconnu.');
+      }
+      return Number.isFinite(result)
+        ? { ok: true, value: Object.is(result, -0) ? 0 : result }
+        : error(
+            'invalid-operation',
+            'Résultat numérique non réel ou non fini.',
+          );
+    }
+    case 'comparison': {
+      const left = evaluateValidated(candidate.left, values);
+      if (!left.ok) return left;
+      const right = evaluateValidated(candidate.right, values);
+      if (!right.ok) return right;
+      switch (candidate.operator) {
+        case 'equal':
+          return {
+            ok: true,
+            value:
+              typeof left.value === typeof right.value &&
+              left.value === right.value,
+          };
+        case 'not-equal':
+          return {
+            ok: true,
+            value:
+              typeof left.value !== typeof right.value ||
+              left.value !== right.value,
+          };
+        case 'less-than':
+        case 'less-than-or-equal':
+        case 'greater-than':
+        case 'greater-than-or-equal':
+          if (!finite(left.value) || !finite(right.value))
+            return error(
+              'invalid-type',
+              'Une comparaison ordonnée exige deux nombres finis.',
+            );
+          if (candidate.operator === 'less-than')
+            return { ok: true, value: left.value < right.value };
+          if (candidate.operator === 'less-than-or-equal')
+            return { ok: true, value: left.value <= right.value };
+          if (candidate.operator === 'greater-than')
+            return { ok: true, value: left.value > right.value };
+          return { ok: true, value: left.value >= right.value };
+        default:
+          return error(
+            'invalid-expression',
+            'Opérateur de comparaison inconnu.',
+          );
+      }
+    }
+    case 'math-function': {
+      const results = candidate.arguments.map((entry) =>
+        evaluateValidated(entry, values),
+      );
+      const failed = results.find((entry) => !entry.ok);
+      if (failed && !failed.ok) return failed;
+      const numbers = results.map((entry) => (entry.ok ? entry.value : false));
+      if (!numbers.every(finite))
+        return error('invalid-type', 'La fonction exige des nombres finis.');
+      let result: number;
+      switch (candidate.function) {
+        case 'abs':
+          result = Math.abs(numbers[0] as number);
+          break;
+        case 'sqrt':
+          if ((numbers[0] as number) < 0)
+            return error(
+              'invalid-operation',
+              'La racine carrée exige un nombre positif ou nul.',
+            );
+          result = Math.sqrt(numbers[0] as number);
+          break;
+        case 'round':
+          result = Math.round(numbers[0] as number);
+          break;
+        case 'floor':
+          result = Math.floor(numbers[0] as number);
+          break;
+        case 'ceil':
+          result = Math.ceil(numbers[0] as number);
+          break;
+        case 'min':
+          result = Math.min(...numbers);
+          break;
+        case 'max':
+          result = Math.max(...numbers);
+          break;
+        default:
+          return error('invalid-expression', 'Fonction mathématique inconnue.');
+      }
+      return Number.isFinite(result)
+        ? { ok: true, value: Object.is(result, -0) ? 0 : result }
+        : error('invalid-operation', 'Résultat de fonction invalide.');
+    }
+    case 'logical': {
+      const results = candidate.operands.map((entry) =>
+        evaluateValidated(entry, values),
+      );
+      const failed = results.find((entry) => !entry.ok);
+      if (failed && !failed.ok) return failed;
+      const booleans = results.map((entry) => (entry.ok ? entry.value : 0));
+      if (!booleans.every((entry) => typeof entry === 'boolean'))
+        return error('invalid-type', 'La logique exige des booléens.');
+      switch (candidate.operator) {
+        case 'and':
+          return { ok: true, value: booleans.every((entry) => entry === true) };
+        case 'or':
+          return { ok: true, value: booleans.some((entry) => entry === true) };
+        default:
+          return error('invalid-expression', 'Opérateur logique inconnu.');
+      }
+    }
+    case 'logical-not': {
+      const operand = evaluateValidated(candidate.operand, values);
+      if (!operand.ok) return operand;
+      return typeof operand.value === 'boolean'
+        ? { ok: true, value: !operand.value }
+        : error('invalid-type', 'La négation logique exige un booléen.');
+    }
+    default:
+      return error('invalid-expression', 'Type de nœud inconnu.');
+  }
+}
 
 export function evaluateSafeExpression(
   node: unknown,
   parameterValues: unknown,
 ): SafeExpressionEvaluation {
   try {
-    if (
-      typeof parameterValues !== 'object' ||
-      parameterValues === null ||
-      Array.isArray(parameterValues)
-    )
+    const values = copyParameterValues(parameterValues);
+    if (!values)
       return error('invalid-expression', 'Table de paramètres invalide.');
-    const values = parameterValues as Record<string, ParameterPrimitive>;
-    const evaluate = (
-      candidate: SafeExpressionNode,
-    ): SafeExpressionEvaluation => {
-      if (candidate.kind === 'literal')
-        return { ok: true, value: candidate.value };
-      if (candidate.kind === 'variable')
-        return Object.hasOwn(values, candidate.variableId)
-          ? {
-              ok: true,
-              value: values[candidate.variableId] as ParameterPrimitive,
-            }
-          : error(
-              'missing-variable',
-              `Variable absente : ${candidate.variableId}.`,
-            );
-      if (candidate.kind === 'unary') {
-        const operand = evaluate(candidate.operand);
-        if (!operand.ok) return operand;
-        if (!finite(operand.value))
-          return error('invalid-type', 'Un nombre fini est requis.');
-        const result =
-          candidate.operator === 'negate'
-            ? -operand.value
-            : Math.abs(operand.value);
-        return Number.isFinite(result)
-          ? { ok: true, value: Object.is(result, -0) ? 0 : result }
-          : error('invalid-operation', 'Résultat numérique invalide.');
-      }
-      if (candidate.kind === 'binary' || candidate.kind === 'comparison') {
-        const left = evaluate(candidate.left);
-        if (!left.ok) return left;
-        const right = evaluate(candidate.right);
-        if (!right.ok) return right;
-        if (candidate.kind === 'comparison') {
-          if (candidate.operator === 'equal')
-            return {
-              ok: true,
-              value:
-                typeof left.value === typeof right.value &&
-                left.value === right.value,
-            };
-          if (candidate.operator === 'not-equal')
-            return {
-              ok: true,
-              value:
-                typeof left.value !== typeof right.value ||
-                left.value !== right.value,
-            };
-          if (!finite(left.value) || !finite(right.value))
-            return error(
-              'invalid-type',
-              'Une comparaison ordonnée exige deux nombres finis.',
-            );
-          const compared =
-            candidate.operator === 'less-than'
-              ? left.value < right.value
-              : candidate.operator === 'less-than-or-equal'
-                ? left.value <= right.value
-                : candidate.operator === 'greater-than'
-                  ? left.value > right.value
-                  : left.value >= right.value;
-          return { ok: true, value: compared };
-        }
-        if (!finite(left.value) || !finite(right.value))
-          return error('invalid-type', 'Deux nombres finis sont requis.');
-        if (
-          (candidate.operator === 'divide' ||
-            candidate.operator === 'modulo') &&
-          right.value === 0
-        )
-          return error('invalid-operation', 'Division ou modulo par zéro.');
-        const result =
-          candidate.operator === 'add'
-            ? left.value + right.value
-            : candidate.operator === 'subtract'
-              ? left.value - right.value
-              : candidate.operator === 'multiply'
-                ? left.value * right.value
-                : candidate.operator === 'divide'
-                  ? left.value / right.value
-                  : candidate.operator === 'modulo'
-                    ? left.value % right.value
-                    : left.value ** right.value;
-        return Number.isFinite(result)
-          ? { ok: true, value: Object.is(result, -0) ? 0 : result }
-          : error(
-              'invalid-operation',
-              'Résultat numérique non réel ou non fini.',
-            );
-      }
-      if (candidate.kind === 'math-function') {
-        const results = candidate.arguments.map(evaluate);
-        const failed = results.find((entry) => !entry.ok);
-        if (failed && !failed.ok) return failed;
-        const numbers = results.map((entry) => (entry.ok ? entry.value : 0));
-        const numericValues = numbers.filter(finite);
-        if (numericValues.length !== numbers.length)
-          return error('invalid-type', 'La fonction exige des nombres finis.');
-        if (candidate.function === 'sqrt' && (numbers[0] as number) < 0)
-          return error(
-            'invalid-operation',
-            'La racine carrée exige un nombre positif ou nul.',
-          );
-        const fn =
-          candidate.function === 'abs'
-            ? Math.abs
-            : candidate.function === 'sqrt'
-              ? Math.sqrt
-              : candidate.function === 'round'
-                ? Math.round
-                : candidate.function === 'floor'
-                  ? Math.floor
-                  : candidate.function === 'ceil'
-                    ? Math.ceil
-                    : candidate.function === 'min'
-                      ? Math.min
-                      : Math.max;
-        const result = fn(...numericValues);
-        return Number.isFinite(result)
-          ? { ok: true, value: Object.is(result, -0) ? 0 : result }
-          : error('invalid-operation', 'Résultat de fonction invalide.');
-      }
-      if (candidate.kind === 'logical') {
-        const results = candidate.operands.map(evaluate);
-        const failed = results.find((entry) => !entry.ok);
-        if (failed && !failed.ok) return failed;
-        const booleans = results.map((entry) =>
-          entry.ok ? entry.value : false,
-        );
-        if (!booleans.every((entry) => typeof entry === 'boolean'))
-          return error('invalid-type', 'La logique exige des booléens.');
-        return {
-          ok: true,
-          value:
-            candidate.operator === 'and'
-              ? booleans.every(Boolean)
-              : booleans.some(Boolean),
-        };
-      }
-      if (candidate.kind === 'logical-not') {
-        const operand = evaluate(candidate.operand);
-        return !operand.ok
-          ? operand
-          : typeof operand.value === 'boolean'
-            ? { ok: true, value: !operand.value }
-            : error('invalid-type', 'La négation logique exige un booléen.');
-      }
-      return error('invalid-expression', 'Type de nœud inconnu.');
-    };
-    if (typeof node !== 'object' || node === null)
-      return error('invalid-expression', 'Expression invalide.');
-    return evaluate(node as SafeExpressionNode);
+    const validation = validateSafeExpression(node);
+    if (!validation.ok)
+      return error(
+        'invalid-expression',
+        validation.issues[0]?.message ?? 'Expression invalide.',
+      );
+    return evaluateValidated(validation.value, values);
   } catch {
     return error('invalid-expression', 'Expression inaccessible.');
   }

@@ -45,6 +45,24 @@ describe('generateParameterVariants', () => {
         new Set(result.variants.map((entry) => JSON.stringify(entry))).size,
       ).toBe(10);
   });
+  it('distingue capacité exhaustive et exploration réellement terminée', () => {
+    const early = generateParameterVariants(spec(), 'seed', 1);
+    expect(early.statistics).toMatchObject({
+      searchMode: 'exhaustive-capable',
+      searchCompleted: false,
+      exhaustive: false,
+      examinedCombinations: 1,
+      validCombinations: 1,
+    });
+    const completed = generateParameterVariants(spec(), 'seed', 10);
+    expect(completed.statistics).toMatchObject({
+      searchMode: 'exhaustive-capable',
+      searchCompleted: true,
+      exhaustive: true,
+      examinedCombinations: 10,
+      validCombinations: 10,
+    });
+  });
   it('distingue impossible et insuffisant après exploration exhaustive', () => {
     const base = spec(2);
     const impossible: ParameterizedQuestionSpec = {
@@ -114,4 +132,15 @@ describe('generateParameterVariants', () => {
     );
     expect(() => generateParameterVariants(hostile, 's', 1)).not.toThrow();
   });
+  it.each([
+    { ...spec(), schemaVersion: 2 },
+    { ...spec(), validationVariantCount: -1 },
+    { ...spec(), variables: [{ ...spec().variables[0], id: ' a' }] },
+    { ...spec(), variables: [{ id: 'a', label: '', domain: {} }] },
+    { ...spec(), constraints: [{ kind: 'binary', operator: 'future' }] },
+  ])('refuse un spec structurellement invalide', (value) =>
+    expect(generateParameterVariants(value, 's', 1).kind).toBe(
+      'invalid-question',
+    ),
+  );
 });

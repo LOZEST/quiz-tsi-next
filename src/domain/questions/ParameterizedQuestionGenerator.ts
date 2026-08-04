@@ -1,8 +1,5 @@
-import type {
-  ParameterPrimitive,
-  ParameterizedQuestionSpec,
-  VariableDefinition,
-} from './Question';
+import type { ParameterPrimitive, ParameterizedQuestionSpec } from './Question';
+import { validateParameterizedQuestionSpec } from './Question';
 import { evaluateSafeExpression } from './SafeExpressionEvaluator';
 import { createSeededRandom } from './SeededRandom';
 import {
@@ -19,6 +16,8 @@ export type SearchStatistics = Readonly<{
   totalCombinations: number;
   examinedCombinations: number;
   validCombinations: number;
+  searchMode: 'exhaustive-capable' | 'bounded';
+  searchCompleted: boolean;
   exhaustive: boolean;
 }>;
 export type ParameterGenerationResult =
@@ -69,6 +68,8 @@ export function generateParameterVariants(
     totalCombinations: 0,
     examinedCombinations: 0,
     validCombinations: 0,
+    searchMode: 'bounded' as const,
+    searchCompleted: false,
     exhaustive: false,
   };
   try {
@@ -88,20 +89,23 @@ export function generateParameterVariants(
         statistics: zero,
         diagnostics: ['Paramétrisation, seed ou quantité invalide.'],
       };
-    const typed: ParameterizedQuestionSpec = spec as ParameterizedQuestionSpec;
-    if (
-      !Array.isArray(typed.variables) ||
-      typed.variables.length === 0 ||
-      typed.variables.length > MAX_PARAMETER_VARIABLES ||
-      !Array.isArray(typed.constraints)
-    )
+    const validatedSpec = validateParameterizedQuestionSpec(spec);
+    if (!validatedSpec.ok)
       return {
         kind: 'invalid-question',
         variants: [],
         statistics: zero,
-        diagnostics: ['Nombre de variables invalide.'],
+        diagnostics: validatedSpec.issues.map((entry) => entry.message),
       };
-    const variables = typed.variables as readonly VariableDefinition[];
+    const typed: ParameterizedQuestionSpec = validatedSpec.value;
+    if (typed.variables.length > MAX_PARAMETER_VARIABLES)
+      return {
+        kind: 'invalid-question',
+        variants: [],
+        statistics: zero,
+        diagnostics: ['Le nombre de variables dépasse la limite technique.'],
+      };
+    const variables = typed.variables;
     const ids: string[] = [];
     for (const entry of variables) {
       if (typeof entry.id !== 'string' || entry.id.length === 0)
@@ -143,11 +147,11 @@ export function generateParameterVariants(
         statistics: zero,
         diagnostics: ['Seed invalide.'],
       };
-    const exhaustive = total <= MAX_EXHAUSTIVE_COMBINATIONS;
-    const attempts = exhaustive
+    const exhaustiveCapable = total <= MAX_EXHAUSTIVE_COMBINATIONS;
+    const attempts = exhaustiveCapable
       ? total
       : Math.min(MAX_DETERMINISTIC_SEARCH_ATTEMPTS, total);
-    const order = exhaustive
+    const order = exhaustiveCapable
       ? Array.from({ length: total }, (_, index) => index)
       : [];
     for (let index = order.length - 1; index > 0; index -= 1) {
@@ -165,14 +169,14 @@ export function generateParameterVariants(
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       examinedCombinations += 1;
       const values: Record<string, ParameterPrimitive> = {};
-      let cursor = exhaustive ? (order[attempt] as number) : 0;
+      let cursor = exhaustiveCapable ? (order[attempt] as number) : 0;
       for (let index = 0; index < ids.length; index += 1) {
         const domain = domains[index] as readonly ParameterPrimitive[];
-        const selected = exhaustive
+        const selected = exhaustiveCapable
           ? cursor % domain.length
           : random.nextInteger(domain.length);
         values[ids[index] as string] = domain[selected] as ParameterPrimitive;
-        if (exhaustive) cursor = Math.floor(cursor / domain.length);
+        if (exhaustiveCapable) cursor = Math.floor(cursor / domain.length);
       }
       let valid = true;
       for (let index = 0; index < typed.constraints.length; index += 1) {
@@ -195,11 +199,14 @@ export function generateParameterVariants(
         if (variants.length === requestedCount) break;
       }
     }
+    const searchCompleted = examinedCombinations === total;
     const statistics = Object.freeze({
       totalCombinations: total,
       examinedCombinations,
       validCombinations,
-      exhaustive,
+      searchMode: exhaustiveCapable ? 'exhaustive-capable' : 'bounded',
+      searchCompleted,
+      exhaustive: searchCompleted,
     });
     if (variants.length === requestedCount)
       return Object.freeze({
@@ -210,7 +217,7 @@ export function generateParameterVariants(
           ...new Set(evaluationDiagnostics),
         ]),
       });
-    if (!exhaustive)
+    if (!exhaustiveCapable)
       return {
         kind: 'search-limit-exceeded',
         variants: Object.freeze(variants),
