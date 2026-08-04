@@ -15,7 +15,9 @@ test('shows a centered writable canvas and accessible controls', async ({
   const canvas = page.getByTestId('whiteboard-canvas');
   await expect(canvas).toBeVisible();
   await expect(
-    page.getByText('La prochaine question apparaîtra ici.'),
+    page.getByText(
+      'Aucune banque de questions validée n’est disponible pour le moment.',
+    ),
   ).toBeVisible();
   const canvasBeforeMenu = await canvas.boundingBox();
   await page.getByRole('button', { name: 'Ouvrir le menu' }).click();

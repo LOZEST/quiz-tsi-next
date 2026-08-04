@@ -1,0 +1,30 @@
+.card {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: calc(var(--qtsi-safe-top) + var(--qtsi-space-3));
+  inset-inline-start: 50%;
+  inline-size: min(calc(100% - 9rem), 36rem);
+  padding: var(--qtsi-space-3);
+  background: rgb(255 255 255 / 94%);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-3);
+  box-shadow: var(--qtsi-shadow-subtle);
+  transform: translateX(-50%);
+}
+.card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qtsi-space-2);
+}
+.card button {
+  min-block-size: var(--qtsi-touch-target);
+}
+.prompt {
+  margin-block: var(--qtsi-space-2);
+}
+@media (max-width: 40rem) {
+  .card {
+    inline-size: min(calc(100% - 8rem), 28rem);
+  }
+}

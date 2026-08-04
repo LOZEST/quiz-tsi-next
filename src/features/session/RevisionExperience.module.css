@@ -1,0 +1,19 @@
+.panel,
+.panel form,
+.panel fieldset {
+  display: grid;
+  gap: var(--qtsi-space-2);
+}
+.panel fieldset {
+  border: 0;
+  padding: 0;
+}
+.panel label {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  min-block-size: var(--qtsi-touch-target);
+}
+.panel select,
+.panel button {
+  min-block-size: var(--qtsi-touch-target);
+}

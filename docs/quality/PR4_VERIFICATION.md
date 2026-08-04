@@ -2,6 +2,47 @@
 
 > **Statut initial :** table créée avant toute implémentation. Aucun état n'est marqué implémenté sans code et preuve.
 
+## Lot accéléré — expérience applicative (4 août 2026)
+
+- **Composition :** `AppServicesProvider` injecte `ProgramIndex`, `QuestionRepository`,
+  repositories Daily/Weak points, `RevisionSeedSource` et `Clock`. La production
+  utilise une banque vide et des états pédagogiques indisponibles ; aucune fixture
+  n'entre dans le bundle.
+- **Math :** le renderer reçoit uniquement l'AST produit par le parser et
+  l'instanciation, le convertit par un switch exhaustif et borné, puis appelle
+  KaTeX 0.16.22 avec `trust: false`, `strict: "error"`, macros vides et
+  `throwOnError: true`. Le seul `dangerouslySetInnerHTML` applicatif est confiné
+  dans cet adapter. Texte, `MathSource`, LaTeX et HTML rendu ne sont pas persistés.
+- **Interface :** quatre parcours exacts, filtres libres dépendants, comportement
+  Réflexe, carte réductible, question suivante, états sans banque/programme,
+  consommation des unions Daily/Weak points et configuration 20/40 sans démarrage.
+- **Brouillon :** les commandes du contrôleur Canvas exposent la présence et
+  l'effacement de la scène. Un candidat est entièrement préparé avant l'effacement ;
+  Annuler restaure les filtres actifs.
+- **Réflexe :** échéance de 60 secondes fondée sur une `Clock` injectable,
+  stable aux rerenders et non bloquante après zéro.
+- **Limites :** aucun calcul pédagogique, événement d'évaluation, correction,
+  passation, blueprint, banque de production, cache de questions ou fonctionnalité
+  PR5/PR6/PR7.
+
+| Vérification | Résultat du lot applicatif |
+|---|---|
+| Tests ciblés renderer/timer/panneaux | 3 fichiers, 20 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi ; avertissement informatif sur les projets TypeScript multiples |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 31 fichiers, 426 tests ; instructions 87,06 %, branches 80,24 %, fonctions 85,20 %, lignes 89,56 % |
+| `npm run build` | réussi ; 180 modules transformés |
+| `npm run build:pages` | réussi ; 180 modules transformés et fallback Pages généré |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| `git diff --check` | réussi |
+
+La validation navigateur couvre l'état de production sans banque, le tiroir,
+la géométrie du Canvas, la persistance d'un trait et l'audit axe existant. Les
+adapters de banques/programmes injectés sont couverts au niveau composant ; les
+scénarios Playwright avec banque injectée restent à ajouter avant de déclarer la
+recette applicative PR4 exhaustive.
+
 ## Lot accéléré — banque et sélection déterministe (4 août 2026)
 
 - **Périmètre :** frontière `unknown` de `QuestionBankBundle`, import initial pur,

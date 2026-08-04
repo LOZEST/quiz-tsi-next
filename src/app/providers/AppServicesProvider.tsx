@@ -8,13 +8,53 @@ import { createSupabaseBrowserClient } from '@infrastructure/supabase/createSupa
 import { readSupabaseEnvironment } from '@infrastructure/supabase/environment';
 import { AuthError } from '@domain/auth/AuthError';
 import { ControlledAuthGateway } from '@infrastructure/auth/ControlledAuthGateway';
+import type { ProgramIndex } from '@domain/program/Program';
+import type { QuestionRepository } from '@domain/repositories/QuestionRepository';
+import type {
+  Clock,
+  DailyPlanStateRepository,
+  RevisionSeedSource,
+  WeakPointsStateRepository,
+} from '@domain/repositories/RevisionStateRepositories';
+import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQuestionRepository';
+import { BrowserRevisionSeedSource } from '@infrastructure/session/BrowserRevisionSeedSource';
+import { SystemClock } from '@infrastructure/session/SystemClock';
+import {
+  UnavailableDailyPlanStateRepository,
+  UnavailableWeakPointsStateRepository,
+} from '@infrastructure/session/UnavailableRevisionStateRepositories';
 
 export interface AppServices {
   authGateway: AuthGateway;
   workspaceRepository: WorkspaceRepository;
+  programIndex?: ProgramIndex | null;
+  questionRepository?: QuestionRepository;
+  dailyPlanStateRepository?: DailyPlanStateRepository;
+  weakPointsStateRepository?: WeakPointsStateRepository;
+  revisionSeedSource?: RevisionSeedSource;
+  clock?: Clock;
 }
 
-const AppServicesContext = createContext<AppServices | null>(null);
+export type ResolvedAppServices = Required<AppServices>;
+const AppServicesContext = createContext<ResolvedAppServices | null>(null);
+
+function withRevisionDefaults(services: AppServices): ResolvedAppServices {
+  return {
+    ...services,
+    programIndex: services.programIndex ?? null,
+    questionRepository:
+      services.questionRepository ?? new InMemoryQuestionRepository(),
+    dailyPlanStateRepository:
+      services.dailyPlanStateRepository ??
+      new UnavailableDailyPlanStateRepository(),
+    weakPointsStateRepository:
+      services.weakPointsStateRepository ??
+      new UnavailableWeakPointsStateRepository(),
+    revisionSeedSource:
+      services.revisionSeedSource ?? new BrowserRevisionSeedSource(),
+    clock: services.clock ?? new SystemClock(),
+  };
+}
 
 class ConfigurationMissingGateway implements AuthGateway {
   private error(): AuthError {
@@ -68,7 +108,10 @@ export function AppServicesProvider({
   children: ReactNode;
   services?: AppServices;
 }) {
-  const value = useMemo(() => services ?? createDefaultServices(), [services]);
+  const value = useMemo(
+    () => withRevisionDefaults(services ?? createDefaultServices()),
+    [services],
+  );
   return (
     <AppServicesContext.Provider value={value}>
       {children}
@@ -76,7 +119,7 @@ export function AppServicesProvider({
   );
 }
 
-export function useAppServices(): AppServices {
+export function useAppServices(): ResolvedAppServices {
   const services = useContext(AppServicesContext);
   if (!services) throw new Error('AppServicesProvider is missing.');
   return services;

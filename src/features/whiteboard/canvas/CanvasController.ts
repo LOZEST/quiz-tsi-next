@@ -18,6 +18,10 @@ export class CanvasController {
   });
   private undoStack: WhiteboardScene[] = [];
   private redoStack: WhiteboardScene[] = [];
+
+  getScene(): WhiteboardScene {
+    return this.scene;
+  }
   private activePointerId: number | null = null;
   private activePointerType: string | null = null;
   private resizeObserver: ResizeObserver | null = null;

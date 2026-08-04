@@ -14,6 +14,9 @@ import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
 import { SettingsPage } from '@pages/SettingsPage/SettingsPage';
 import { WhiteboardPage } from '@pages/WhiteboardPage/WhiteboardPage';
 import { AccessDeniedPage } from '@pages/AccessDeniedPage/AccessDeniedPage';
+import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
+import { RevisionExperienceProvider } from '@features/session/RevisionExperienceProvider';
+import { RevisionDrawerPanel } from '@features/session/RevisionDrawerPanel';
 
 export function AppRoutes() {
   const { state } = useAuth();
@@ -32,7 +35,15 @@ export function AppRoutes() {
         <Route path="/login" element={<LoginPage />} />
       </Route>
       <Route element={<ProtectedRoute />}>
-        <Route element={<AppShell />}>
+        <Route
+          element={
+            <WhiteboardProvider>
+              <RevisionExperienceProvider>
+                <AppShell whiteboardOptions={<RevisionDrawerPanel />} />
+              </RevisionExperienceProvider>
+            </WhiteboardProvider>
+          }
+        >
           <Route path="/whiteboard" element={<WhiteboardPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/questions" element={<QuestionsPage />} />
