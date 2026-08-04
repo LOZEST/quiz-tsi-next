@@ -20,13 +20,19 @@
   l'effacement de la scène. Un candidat est entièrement préparé avant l'effacement ;
   Annuler restaure les filtres actifs.
 - **Réflexe :** échéance de 60 secondes fondée sur une `Clock` injectable,
-  stable aux rerenders, à la réduction de la carte et aux ouvertures du tiroir ;
-  seule l'activation d'une nouvelle question ou seed la réinitialise.
+  créée dans l'état `ready` lors de l'activation. Elle survit aux rerenders, à
+  la réduction, au tiroir et à la navigation entre routes protégées ; une nouvelle
+  question, version ou seed la remplace, et une question non Réflexe n'en a pas.
 - **Correction de recette :** l'état actif reste visible après `no-match`, erreur de
   repository ou erreur de préparation. Les changements de mode protègent aussi un
   brouillon Canvas. Le dialogue associe titre et description, piège le focus,
   gère Échap et restitue le focus au déclencheur. Le renderer LaTeX conserve la
   sémantique des AST imbriqués selon la priorité et l'associativité des opérateurs.
+- **Finalisation d'état :** l'absence de banque est vérifiée avant l'absence de
+  programme et retire toute question obsolète avec le message normatif. Après une
+  confirmation sans candidat préparable, le dialogue et `pendingChange` sont
+  fermés, le focus est restitué, tandis que question, filtres et brouillon restent
+  inchangés ; le message non destructif est visible dans une région `aria-live`.
 - **Harness navigateur :** Vite substitue la composition contrôlée uniquement en
   mode d'authentification Playwright. Le build de production a été inspecté et ne
   contient aucun identifiant ni énoncé des fixtures contrôlées.
@@ -36,11 +42,11 @@
 
 | Vérification | Résultat du lot applicatif |
 |---|---|
-| Tests ciblés provider/renderer/timer/panneaux | 4 fichiers, 43 tests réussis |
+| Tests ciblés provider/renderer/timer/panneaux | 4 fichiers, 49 tests réussis |
 | `npm run format:check` | réussi |
 | `npm run lint` | réussi ; avertissement informatif sur les projets TypeScript multiples |
 | `npm run typecheck` | réussi |
-| `npm run test:coverage` | 32 fichiers, 449 tests ; instructions 87,96 %, branches 81,43 %, fonctions 85,92 %, lignes 90,57 % |
+| `npm run test:coverage` | 32 fichiers, 455 tests ; instructions 87,91 %, branches 81,35 %, fonctions 86,12 %, lignes 90,50 % |
 | `npm run build` | réussi ; 181 modules transformés ; fixtures contrôlées absentes de `dist` |
 | `npm run build:pages` | réussi ; 181 modules transformés et fallback Pages généré |
 | `npm run test:browser` | 66 tests réussis sur desktop, iPad portrait et iPad paysage |
@@ -48,9 +54,11 @@
 
 La validation navigateur utilise des données injectées et contrôlées pour prouver
 les filtres libres, la protection atomique du brouillon, l'unique question
-compatible, le minuteur Réflexe, les états Daily et Weak points, la configuration
-20/40 et les audits axe sur les trois profils. Elle conserve aussi les preuves de
-géométrie et de persistance Canvas de la PR3.
+compatible avec échec confirmé, le minuteur Réflexe au travers de `/settings`, les
+états Daily et Weak points, la configuration 20/40 et les audits axe sur les trois
+profils. Elle conserve aussi les preuves de géométrie et de persistance Canvas de
+la PR3. Un test de composition sans adapter contrôlé prouve directement l'état
+`no-bank` de production.
 
 ## Lot accéléré — banque et sélection déterministe (4 août 2026)
 

@@ -16,6 +16,7 @@ export function WhiteboardContainer() {
         <QuestionCard
           prepared={experience.state.prepared}
           question={experience.state.question}
+          reflexDeadline={experience.state.reflexDeadline}
           onNext={(trigger) => experience.nextQuestion(trigger)}
         />
       ) : (

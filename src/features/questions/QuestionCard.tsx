@@ -15,10 +15,12 @@ const typeLabels = {
 export function QuestionCard({
   prepared,
   question,
+  reflexDeadline,
   onNext,
 }: {
   prepared: PreparedQuestion;
   question: Readonly<Question>;
+  reflexDeadline: number | null;
   onNext: (trigger?: HTMLElement) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -44,9 +46,10 @@ export function QuestionCard({
       {question.type === 'reflex' ? (
         <div hidden={collapsed}>
           <ReflexTimer
-            key={`${prepared.questionId}:${prepared.seed}`}
-            activationKey={`${prepared.questionId}:${prepared.seed}`}
+            key={`${prepared.questionId}:${prepared.questionVersion}:${prepared.seed}`}
+            activationKey={`${prepared.questionId}:${prepared.questionVersion}:${prepared.seed}`}
             clock={clock}
+            deadline={reflexDeadline}
           />
         </div>
       ) : null}

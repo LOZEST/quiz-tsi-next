@@ -28,11 +28,15 @@ class ControlledClock implements Clock {
 describe('ReflexTimer', () => {
   it('starts at 60, keeps its deadline on rerender and remains non blocking after zero', () => {
     const clock = new ControlledClock();
-    const view = render(<ReflexTimer activationKey="q1" clock={clock} />);
+    const view = render(
+      <ReflexTimer activationKey="q1" clock={clock} deadline={61_000} />,
+    );
     expect(screen.getByText('60 s restantes')).toBeInTheDocument();
     act(() => clock.advance(1_100));
     expect(screen.getByText('59 s restantes')).toBeInTheDocument();
-    view.rerender(<ReflexTimer activationKey="q1" clock={clock} />);
+    view.rerender(
+      <ReflexTimer activationKey="q1" clock={clock} deadline={61_000} />,
+    );
     expect(screen.getByText('59 s restantes')).toBeInTheDocument();
     act(() => clock.advance(60_000));
     expect(
@@ -100,6 +104,7 @@ describe('ReflexTimer', () => {
         <QuestionCard
           prepared={prepared('seed-1')}
           question={reflexQuestion}
+          reflexDeadline={61_000}
           onNext={vi.fn()}
         />
       </AppServicesProvider>,
@@ -117,6 +122,7 @@ describe('ReflexTimer', () => {
         <QuestionCard
           prepared={prepared('seed-1')}
           question={reflexQuestion}
+          reflexDeadline={61_000}
           onNext={vi.fn()}
         />
       </AppServicesProvider>,
@@ -127,6 +133,7 @@ describe('ReflexTimer', () => {
         <QuestionCard
           prepared={prepared('seed-2')}
           question={reflexQuestion}
+          reflexDeadline={clock.now() + 60_000}
           onNext={vi.fn()}
         />
       </AppServicesProvider>,

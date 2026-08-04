@@ -1,24 +1,30 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Clock } from '@domain/repositories/RevisionStateRepositories';
 
 export function ReflexTimer({
+  activationKey,
   clock,
+  deadline,
 }: {
   activationKey: string;
   clock: Clock;
+  deadline: number | null;
 }) {
-  const deadline = useRef(clock.now() + 60_000);
-  const [remaining, setRemaining] = useState(60);
+  const calculateRemaining = useCallback(
+    () =>
+      deadline === null
+        ? 0
+        : Math.max(0, Math.ceil((deadline - clock.now()) / 1000)),
+    [clock, deadline],
+  );
+  const [remaining, setRemaining] = useState(calculateRemaining);
   useEffect(() => {
     const handle = clock.setInterval(
-      () =>
-        setRemaining(
-          Math.max(0, Math.ceil((deadline.current - clock.now()) / 1000)),
-        ),
+      () => setRemaining(calculateRemaining()),
       250,
     );
     return () => clock.clearInterval(handle);
-  }, [clock]);
+  }, [activationKey, calculateRemaining, clock]);
   return (
     <p aria-live={remaining === 0 ? 'polite' : 'off'}>
       {remaining > 0

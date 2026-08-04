@@ -171,7 +171,18 @@ function Probe() {
         {value.state.kind === 'ready' ? value.state.question.id : 'none'}
       </output>
       <output data-testid="notice">{value.notice}</output>
+      <output data-testid="state-message">
+        {'message' in value.state ? value.state.message : ''}
+      </output>
       <output data-testid="pending">{String(value.pendingChange)}</output>
+      <output data-testid="seed">
+        {value.state.kind === 'ready' ? value.state.prepared.seed : 'none'}
+      </output>
+      <output data-testid="reflex-deadline">
+        {value.state.kind === 'ready'
+          ? String(value.state.reflexDeadline)
+          : 'none'}
+      </output>
       <button onClick={(event) => value.nextQuestion(event.currentTarget)}>
         Suivante
       </button>
@@ -223,14 +234,73 @@ function Harness({
 }
 
 describe('RevisionExperienceProvider integration', () => {
-  it('removes any active question in honest no-bank and no-program states', async () => {
-    const empty = baseServices([]);
-    empty.questionRepository = new InMemoryQuestionRepository();
-    render(<Harness services={empty} />);
+  it.each([
+    ['absent', null],
+    ['present', programIndex],
+  ] as const)(
+    'prioritizes no-bank when the program is %s',
+    async (_label, selectedProgram) => {
+      const empty = baseServices([], { programIndex: selectedProgram });
+      empty.questionRepository = new InMemoryQuestionRepository();
+      render(<Harness services={empty} />);
+      await waitFor(() =>
+        expect(screen.getByTestId('kind')).toHaveTextContent('no-bank'),
+      );
+      expect(screen.getByTestId('question')).toHaveTextContent('none');
+      expect(screen.getByTestId('notice')).toHaveTextContent('');
+    },
+  );
+
+  it('returns no-program only when a bank exists and removes stale questions', async () => {
+    const readyServices = baseServices([question('q1')]);
+    const view = render(<Harness services={readyServices} />);
+    await screen.findByText('q1');
+    view.rerender(
+      <Harness services={{ ...readyServices, programIndex: null }} />,
+    );
+    await userEvent.click(screen.getByText('Appliquer'));
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('no-program'),
+    );
+    expect(screen.getByTestId('question')).toHaveTextContent('none');
+  });
+
+  it('removes a stale question when its repository no longer has a bank', async () => {
+    const readyServices = baseServices([question('q1')]);
+    const view = render(<Harness services={readyServices} />);
+    await screen.findByText('q1');
+    view.rerender(
+      <Harness
+        services={{
+          ...readyServices,
+          questionRepository: new InMemoryQuestionRepository(),
+        }}
+      />,
+    );
+    await userEvent.click(screen.getByText('Appliquer'));
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('no-bank'),
     );
     expect(screen.getByTestId('question')).toHaveTextContent('none');
+  });
+
+  it('uses the real production composition as no-bank without controlled fixtures', async () => {
+    render(
+      <AppServicesProvider>
+        <WhiteboardProvider>
+          <RevisionExperienceProvider>
+            <Probe />
+          </RevisionExperienceProvider>
+        </WhiteboardProvider>
+      </AppServicesProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('no-bank'),
+    );
+    expect(screen.getByTestId('question')).toHaveTextContent('none');
+    expect(screen.getByTestId('state-message')).toHaveTextContent(
+      'Aucune banque de questions validée n’est disponible pour le moment.',
+    );
   });
   it('loads an initial static question with active filters', async () => {
     render(<Harness services={baseServices([question('q1')])} />);
@@ -243,6 +313,45 @@ describe('RevisionExperienceProvider integration', () => {
     expect(await screen.findByText('param')).toBeInTheDocument();
   });
 
+  it('creates a reflex deadline on activation and replaces it for a new seed', async () => {
+    let now = 1_000;
+    const clock = {
+      now: vi.fn(() => now),
+      setInterval: vi.fn(),
+      clearInterval: vi.fn(),
+    };
+    const seeds = ['seed-one', 'seed-two'];
+    const services = baseServices(
+      [
+        question('r1', { type: 'reflex', difficulty: null }),
+        question('r2', { type: 'reflex', difficulty: null }),
+      ],
+      {
+        clock,
+        revisionSeedSource: {
+          nextSeed: vi.fn(() => seeds.shift() ?? 'seed-extra'),
+        },
+      },
+    );
+    render(<Harness services={services} />);
+    await waitFor(() =>
+      expect(screen.getByTestId('reflex-deadline')).toHaveTextContent('61000'),
+    );
+    expect(screen.getByTestId('seed')).toHaveTextContent('seed-one');
+    now = 6_000;
+    await userEvent.click(screen.getByText('Suivante'));
+    await waitFor(() =>
+      expect(screen.getByTestId('reflex-deadline')).toHaveTextContent('66000'),
+    );
+    expect(screen.getByTestId('seed')).toHaveTextContent('seed-two');
+  });
+
+  it('does not create a timer deadline for a non-reflex question', async () => {
+    render(<Harness services={baseServices([question('q1')])} />);
+    await screen.findByText('q1');
+    expect(screen.getByTestId('reflex-deadline')).toHaveTextContent('null');
+  });
+
   it('keeps question and draft when next has no compatible candidate', async () => {
     const clear = vi.fn();
     const user = userEvent.setup();
@@ -250,14 +359,21 @@ describe('RevisionExperienceProvider integration', () => {
       <Harness services={baseServices([question('q1')])} draft clear={clear} />,
     );
     await screen.findByText('q1');
-    await user.click(screen.getByText('Suivante'));
-    await user.click(screen.getByText('Confirmer'));
+    const trigger = screen.getByText('Suivante');
+    await user.click(trigger);
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Changer maintenant',
+      }),
+    );
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger).toHaveFocus();
     expect(screen.getByTestId('question')).toHaveTextContent('q1');
     expect(screen.getByTestId('notice')).toHaveTextContent(
       'Aucune autre question compatible n’est disponible.',
     );
     expect(clear).not.toHaveBeenCalled();
-    expect(screen.getByTestId('pending')).toHaveTextContent('true');
+    expect(screen.getByTestId('pending')).toHaveTextContent('false');
   });
 
   it('keeps the active question when candidate preparation fails', async () => {
@@ -282,7 +398,9 @@ describe('RevisionExperienceProvider integration', () => {
         draft
       />,
     );
-    await screen.findByText(/q[12]/);
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
+    );
     const initial = screen.getByTestId('question').textContent;
     await user.click(screen.getByText('Suivante'));
     await user.click(
@@ -302,7 +420,9 @@ describe('RevisionExperienceProvider integration', () => {
         draft
       />,
     );
-    await screen.findByText(/q[12]/);
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
+    );
     const trigger = screen.getByText('Suivante');
     await user.click(trigger);
     const dialog = screen.getByRole('dialog', { name: 'Changer de question' });
@@ -327,7 +447,9 @@ describe('RevisionExperienceProvider integration', () => {
         clear={clear}
       />,
     );
-    await screen.findByText(/q[12]/);
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
+    );
     const initial = screen.getByTestId('question').textContent;
     await user.click(screen.getByText('Suivante'));
     expect(clear).not.toHaveBeenCalled();

@@ -32,6 +32,7 @@ export const initialFreeRevisionFilters: FreeRevisionFilters = Object.freeze({
 export type ActivePreparedQuestion = Readonly<{
   prepared: PreparedQuestion;
   question: Readonly<Question>;
+  reflexDeadline: number | null;
 }>;
 
 export type RevisionExperienceState =
@@ -39,7 +40,12 @@ export type RevisionExperienceState =
   | { kind: 'loading' }
   | { kind: 'no-program'; message: string }
   | { kind: 'no-bank'; message: string }
-  | { kind: 'ready'; prepared: PreparedQuestion; question: Readonly<Question> }
+  | {
+      kind: 'ready';
+      prepared: PreparedQuestion;
+      question: Readonly<Question>;
+      reflexDeadline: number | null;
+    }
   | { kind: 'no-match'; message: string }
   | { kind: 'daily'; state: DailyPlanState }
   | { kind: 'weak-points'; state: WeakPointsState }
@@ -116,15 +122,36 @@ export function RevisionExperienceProvider({
       excludeCurrent = false,
       clearDraft = false,
     ) => {
-      const program = services.programIndex;
-      if (!program) {
+      let bankMetadata;
+      try {
+        bankMetadata = services.questionRepository.getBankMetadata();
+      } catch {
         showAttemptFailure(
           {
-            kind: 'no-program',
-            message: 'Le programme est indisponible pour le moment.',
+            kind: 'error',
+            code: 'repository-error',
+            message: 'La banque de questions est indisponible pour le moment.',
           },
-          'Le programme est indisponible pour le moment.',
+          'La banque de questions est indisponible pour le moment.',
         );
+        return false;
+      }
+      if (!bankMetadata) {
+        setNotice(null);
+        setState({
+          kind: 'no-bank',
+          message:
+            'Aucune banque de questions validée n’est disponible pour le moment.',
+        });
+        return false;
+      }
+      const program = services.programIndex;
+      if (!program) {
+        setNotice(null);
+        setState({
+          kind: 'no-program',
+          message: 'Le programme est indisponible pour le moment.',
+        });
         return false;
       }
       const current = state.kind === 'ready' ? state : null;
@@ -178,7 +205,13 @@ export function RevisionExperienceProvider({
       setActiveFilters(filters);
       setVisibleFilters(filters);
       setNotice(null);
-      setState({ kind: 'ready', prepared, question });
+      setState({
+        kind: 'ready',
+        prepared,
+        question,
+        reflexDeadline:
+          question.type === 'reflex' ? services.clock.now() + 60_000 : null,
+      });
       return true;
     },
     [board, services, showAttemptFailure, state],
@@ -271,9 +304,11 @@ export function RevisionExperienceProvider({
       enterMode(pending.mode, true);
       return;
     }
-    if (attemptFree(pending.filters, pending.excludeCurrent, true))
-      setPending(null);
-  }, [attemptFree, enterMode, pending]);
+    const change = pending;
+    setPending(null);
+    if (!attemptFree(change.filters, change.excludeCurrent, true))
+      setVisibleFilters(activeFilters);
+  }, [activeFilters, attemptFree, enterMode, pending]);
 
   const value = useMemo<RevisionExperienceValue>(
     () => ({

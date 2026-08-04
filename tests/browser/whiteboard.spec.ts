@@ -145,18 +145,40 @@ test('protects a drawn draft and atomically changes the question', async ({
   await expect(card).not.toHaveText(initial ?? '');
 });
 
-test('keeps the reflex deadline while reducing the card', async ({ page }) => {
+test('keeps the reflex deadline while reducing the card and navigating', async ({
+  page,
+}) => {
   await login(page);
+  await page.evaluate(() => {
+    globalThis.__QTSI_TEST_NOW__ = 1_000;
+  });
   await openRevisionOptions(page);
   await page.getByLabel('Type de question').selectOption('reflex');
   await page.getByRole('button', { name: 'Appliquer' }).click();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
-  await expect(card.getByText(/60 s restantes|59 s restantes/)).toBeVisible();
+  await expect(card.getByText('60 s restantes')).toBeVisible();
   await card.getByRole('button', { name: 'Réduire' }).click();
-  await page.waitForTimeout(1100);
+  await page.evaluate(() => {
+    globalThis.__QTSI_TEST_NOW__! += 2_000;
+  });
+  await page.waitForTimeout(300);
   await card.getByRole('button', { name: 'Afficher la question' }).click();
-  await expect(card.getByText(/5[78] s restantes/)).toBeVisible();
+  await expect(card.getByText('58 s restantes')).toBeVisible();
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.getByRole('link', { name: 'Réglages' }).click();
+  await expect(page).toHaveURL(/\/settings$/);
+  await page.evaluate(() => {
+    globalThis.__QTSI_TEST_NOW__! += 5_000;
+  });
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.getByRole('link', { name: 'Tableau blanc' }).click();
+  await expect(page).toHaveURL(/\/whiteboard$/);
+  await expect(
+    page
+      .getByRole('article', { name: 'Question active' })
+      .getByText('53 s restantes'),
+  ).toBeVisible();
 });
 
 test('keeps the only compatible question active', async ({ page }) => {
@@ -171,8 +193,20 @@ test('keeps the only compatible question active', async ({ page }) => {
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
   const current = await card.textContent();
-  await card.getByRole('button', { name: 'Question suivante' }).click();
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  await page.mouse.move(box!.x + 90, box!.y + 170);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 190, box!.y + 210, { steps: 5 });
+  await page.mouse.up();
+  const next = card.getByRole('button', { name: 'Question suivante' });
+  await next.click();
+  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
+  await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
+  await expect(dialog).toHaveCount(0);
+  await expect(next).toBeFocused();
   await expect(card).toHaveText(current ?? '');
+  await expect(page.getByRole('button', { name: 'Annuler' })).toBeEnabled();
   await expect(
     page.getByText('Aucune autre question compatible n’est disponible.'),
   ).toBeVisible();
