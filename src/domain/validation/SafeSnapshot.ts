@@ -1,5 +1,8 @@
 export const MAX_SAFE_SNAPSHOT_DEPTH = 64;
 export const MAX_SAFE_SNAPSHOT_NODES = 50_000;
+export const MAX_SAFE_SNAPSHOT_ARRAY_LENGTH = 10_000;
+export const MAX_SAFE_SNAPSHOT_STRING_LENGTH = 10_000;
+export const MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS = 100_000;
 
 export type SafeSnapshotResult =
   | Readonly<{ ok: true; value: unknown }>
@@ -8,14 +11,18 @@ export type SafeSnapshotResult =
 export function createSafeSnapshot(value: unknown): SafeSnapshotResult {
   try {
     let nodes = 0;
+    let totalCharacters = 0;
     const active = new WeakSet<object>();
     const copy = (input: unknown, depth: number): unknown => {
-      if (
-        input === null ||
-        typeof input === 'string' ||
-        typeof input === 'boolean'
-      )
+      if (input === null || typeof input === 'boolean') return input;
+      if (typeof input === 'string') {
+        if (input.length > MAX_SAFE_SNAPSHOT_STRING_LENGTH)
+          throw new Error('string-length');
+        totalCharacters += input.length;
+        if (totalCharacters > MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS)
+          throw new Error('character-budget');
         return input;
+      }
       if (typeof input === 'number') {
         if (!Number.isFinite(input)) throw new Error('non-finite');
         return input;
@@ -25,26 +32,56 @@ export function createSafeSnapshot(value: unknown): SafeSnapshotResult {
       nodes += 1;
       if (nodes > MAX_SAFE_SNAPSHOT_NODES) throw new Error('size');
       if (active.has(input)) throw new Error('cycle');
+      const isArray = Array.isArray(input);
       const prototype: unknown = Object.getPrototypeOf(input);
       if (
-        !Array.isArray(input) &&
-        prototype !== Object.prototype &&
-        prototype !== null
+        isArray
+          ? prototype !== Array.prototype
+          : prototype !== Object.prototype && prototype !== null
       )
         throw new Error('prototype');
       if (Object.getOwnPropertySymbols(input).length > 0)
         throw new Error('symbol');
       active.add(input);
-      const output: unknown[] | Record<string, unknown> = Array.isArray(input)
-        ? []
-        : {};
+      if (isArray) {
+        const lengthDescriptor = Object.getOwnPropertyDescriptor(
+          input,
+          'length',
+        );
+        if (
+          !lengthDescriptor ||
+          !('value' in lengthDescriptor) ||
+          typeof lengthDescriptor.value !== 'number'
+        )
+          throw new Error('array-length');
+        const length = lengthDescriptor.value;
+        if (
+          !Number.isInteger(length) ||
+          length < 0 ||
+          length > MAX_SAFE_SNAPSHOT_ARRAY_LENGTH
+        )
+          throw new Error('array-length');
+        const names = Object.getOwnPropertyNames(input);
+        if (names.length !== length + 1)
+          throw new Error('sparse-or-custom-array');
+        const output = new Array<unknown>(length);
+        for (let index = 0; index < length; index += 1) {
+          const key = String(index);
+          if (names[index] !== key) throw new Error('sparse-or-custom-array');
+          const descriptor = Object.getOwnPropertyDescriptor(input, key);
+          if (!descriptor || !('value' in descriptor))
+            throw new Error('accessor');
+          output[index] = copy(descriptor.value, depth + 1);
+        }
+        active.delete(input);
+        return output;
+      }
+      const output: Record<string, unknown> = {};
       for (const key of Object.keys(input)) {
         const descriptor = Object.getOwnPropertyDescriptor(input, key);
         if (!descriptor || !('value' in descriptor))
           throw new Error('accessor');
-        const child = copy(descriptor.value, depth + 1);
-        if (Array.isArray(output)) output.push(child);
-        else output[key] = child;
+        output[key] = copy(descriptor.value, depth + 1);
       }
       active.delete(input);
       return output;

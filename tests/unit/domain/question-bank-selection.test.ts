@@ -78,6 +78,22 @@ const allFilters = {
   questionType: { kind: 'all' as const },
   difficulty: { kind: 'all' as const },
 };
+const parameterizedQuestion = (): Question =>
+  question('parameterized', {
+    parameterization: {
+      schemaVersion: 1,
+      variables: [
+        {
+          id: 'x',
+          label: 'x',
+          domain: { kind: 'choice', values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+        },
+      ],
+      constraints: [],
+      validationVariantCount: 10,
+    },
+    prompt: [{ kind: 'text', value: 'Valeur @x' }],
+  });
 
 describe('QuestionBankBundle', () => {
   it('normalise une copie profondément immuable sans modifier la source', () => {
@@ -146,6 +162,74 @@ describe('QuestionBankBundle', () => {
 });
 
 describe('import et repository', () => {
+  it.each([
+    ['même id/version', [question('duplicate'), question('duplicate')]],
+    [
+      'même id avec versions différentes',
+      [question('duplicate'), question('duplicate', { version: 2 })],
+    ],
+    [
+      'trois occurrences',
+      [
+        question('duplicate'),
+        question('duplicate', { version: 2 }),
+        question('duplicate', { version: 3 }),
+      ],
+    ],
+    [
+      'doublons non adjacents',
+      [
+        question('duplicate'),
+        question('other'),
+        question('duplicate', { version: 2 }),
+      ],
+    ],
+  ])('rejette un bundle ambigu : %s', (_label, questions) => {
+    const result = importQuestionBankBundle(bundle(questions), [], program);
+    expect(result.kind).toBe('rejected');
+    expect(result.report.diagnostics.join(' ')).toContain(
+      'questions.0.question.id',
+    );
+    expect(result.report.diagnostics.join(' ')).toContain(
+      `questions.${questions.length - 1}.question.id`,
+    );
+  });
+
+  it('met en quarantaine les seules entrées hostiles', () => {
+    const getter = Object.defineProperty({}, 'question', {
+      enumerable: true,
+      get: () => {
+        throw new Error('hostile');
+      },
+    });
+    const proxy = new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          throw new Error('hostile');
+        },
+      },
+    );
+    const source = bundle([question('valid-1'), question('valid-2')]);
+    const mixed = {
+      ...source,
+      questions: [source.questions[0], getter, source.questions[1], proxy],
+    };
+    const result = importQuestionBankBundle(mixed, [], program);
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.report.entries.map((entry) => entry.status)).toEqual([
+      'accepted',
+      'quarantined',
+      'accepted',
+      'quarantined',
+    ]);
+    expect(result.quarantine.map((entry) => entry.entryIndex)).toEqual([1, 3]);
+    expect(result.bundle.questions.map((entry) => entry.question.id)).toEqual([
+      'valid-1',
+      'valid-2',
+    ]);
+  });
   it('importe, ignore le second passage et met un conflit en quarantaine', () => {
     const first = importQuestionBankBundle(
       bundle([question('q1')]),
@@ -225,6 +309,91 @@ describe('import et repository', () => {
     expect(rejected.kind).toBe('rejected');
     expect(repository.listPublished()).toEqual(before);
   });
+
+  it('laisse le repository intact après rejet de doublons', () => {
+    const initial = validateQuestionBankBundle(
+      bundle([question('installed')]),
+      program,
+    );
+    expect(initial.ok).toBe(true);
+    if (!initial.ok) return;
+    const repository = new InMemoryQuestionRepository(initial.value);
+    const before = repository.listPublished();
+    const result = repository.importAndReplace(
+      bundle([question('duplicate'), question('duplicate', { version: 2 })]),
+      program,
+    );
+    expect(result.kind).toBe('rejected');
+    expect(repository.listPublished()).toEqual(before);
+  });
+
+  it('laisse le repository intact après une erreur de validation finale', () => {
+    const initial = validateQuestionBankBundle(
+      bundle([question('installed')]),
+      program,
+    );
+    expect(initial.ok).toBe(true);
+    if (!initial.ok) return;
+    const repository = new InMemoryQuestionRepository(initial.value);
+    const restrictedProgramResult = validateProgram({
+      schemaVersion: 1,
+      parts: [{ id: 'p2', label: 'Partie 2', order: 0 }],
+      chapters: [{ id: 'c2', partId: 'p2', label: 'Chapitre 2', order: 0 }],
+      notions: [{ id: 'n2', chapterId: 'c2', label: 'Notion 2', order: 0 }],
+    });
+    expect(restrictedProgramResult.ok).toBe(true);
+    if (!restrictedProgramResult.ok) return;
+    const before = repository.listPublished();
+    const result = repository.importAndReplace(
+      bundle([
+        question('incoming', { partId: 'p2', chapterId: 'c2', notionId: 'n2' }),
+      ]),
+      createProgramIndex(restrictedProgramResult.value),
+    );
+    expect(result.kind).toBe('rejected');
+    expect(repository.listPublished()).toEqual(before);
+  });
+
+  it('rapporte ensemble accepted, rejected et quarantined', () => {
+    const initial = importQuestionBankBundle(
+      bundle([question('existing', { version: 2 })]),
+      [],
+      program,
+    );
+    expect(initial.kind).toBe('ready');
+    if (initial.kind !== 'ready') return;
+    const invalid = question('invalid', { validated: false });
+    const result = importQuestionBankBundle(
+      bundle([question('accepted'), question('existing'), invalid]),
+      initial.bundle.questions.map((entry) => entry.question),
+      program,
+    );
+    expect(result.kind).toBe('ready');
+    if (result.kind !== 'ready') return;
+    expect(result.report.entries.map((entry) => entry.status)).toEqual([
+      'accepted',
+      'rejected',
+      'quarantined',
+    ]);
+    expect(Object.isFrozen(result.report.entries)).toBe(true);
+    expect(Object.isFrozen(result.quarantine)).toBe(true);
+  });
+
+  it('couvre query sans exposer les structures internes', () => {
+    const validated = validateQuestionBankBundle(
+      bundle([
+        question('p1'),
+        question('p2', { partId: 'p2', chapterId: 'c2', notionId: 'n2' }),
+      ]),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const repository = new InMemoryQuestionRepository(validated.value);
+    const result = repository.query({ partId: 'p2', source: 'static' });
+    expect(result.map((entry) => entry.id)).toEqual(['p2']);
+    expect(Object.isFrozen(result[0]?.prompt)).toBe(true);
+  });
 });
 
 describe('index, filtres et sélection', () => {
@@ -237,6 +406,76 @@ describe('index, filtres et sélection', () => {
     ]);
     expect(index.query({ difficulty: 'standard' }).ok).toBe(true);
     expect(index.query({ type: 'inconnu' }).ok).toBe(false);
+  });
+
+  it('copie les questions avant de figer et reste indépendant de la source', () => {
+    const source = question('mutable');
+    const index = new QuestionBankIndex([source]);
+    expect(Object.isFrozen(source)).toBe(false);
+    expect(Object.isFrozen(source.prompt)).toBe(false);
+    (source.prompt as Array<{ kind: 'text'; value: string }>)[0]!.value =
+      'Mutation';
+    const result = index.query({});
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.questions[0]?.prompt[0]).toEqual({
+      kind: 'text',
+      value: 'Question mutable',
+    });
+    expect(Object.isFrozen(result.questions[0]?.prompt)).toBe(true);
+  });
+
+  it.each([
+    new Date(),
+    new (class Filter {})(),
+    Object.create({ type: 'course' }),
+    Object.defineProperty({}, 'type', {
+      get: () => 'course',
+      enumerable: true,
+    }),
+    new Proxy(
+      {},
+      {
+        ownKeys: () => {
+          throw new Error('hostile');
+        },
+      },
+    ),
+    { [Symbol('hostile')]: true },
+    { unknown: true },
+  ])('refuse un filtre hostile ou étranger', (filter) => {
+    expect(new QuestionBankIndex([question('q')]).query(filter).ok).toBe(false);
+  });
+
+  it('accepte un filtre à prototype nul', () => {
+    const filter = Object.assign(
+      Object.create(null) as Record<string, unknown>,
+      { type: 'course' },
+    );
+    expect(new QuestionBankIndex([question('q')]).query(filter).ok).toBe(true);
+  });
+
+  it('combine tous les axes de l’index et distingue all de not-applicable', () => {
+    const reflex = question('reflex', { type: 'reflex', difficulty: null });
+    const index = new QuestionBankIndex([question('course'), reflex]);
+    const combined = index.query({
+      partId: 'p1',
+      chapterId: 'c1',
+      notionId: 'n1',
+      type: 'course',
+      difficulty: 'standard',
+      source: 'static',
+      status: 'published',
+    });
+    expect(combined.ok && combined.questions.map((entry) => entry.id)).toEqual([
+      'course',
+    ]);
+    const all = index.query({ difficulty: 'all' });
+    const notApplicable = index.query({ difficulty: 'not-applicable' });
+    expect(all.ok && all.questions).toHaveLength(2);
+    expect(
+      notApplicable.ok && notApplicable.questions.map((entry) => entry.id),
+    ).toEqual(['reflex']);
   });
 
   it('dérive les listes et retire les enfants incompatibles', () => {
@@ -298,6 +537,39 @@ describe('index, filtres et sélection', () => {
       selectFreeRevisionQuestions(repository, allFilters, 'seed', 10).kind,
     ).toBe('insufficient-stock');
   });
+
+  it('applique exclusions, no-match et ne modifie pas les filtres', () => {
+    const validated = validateQuestionBankBundle(
+      bundle([question('a'), question('b')]),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const repository = new InMemoryQuestionRepository(validated.value);
+    const filters = structuredClone(allFilters);
+    const selected = selectFreeRevisionQuestions(
+      repository,
+      filters,
+      'seed',
+      1,
+      ['a'],
+    );
+    expect(selected.kind === 'ready' && selected.items[0]?.questionId).toBe(
+      'b',
+    );
+    expect(filters).toEqual(allFilters);
+    expect(
+      selectFreeRevisionQuestions(repository, filters, 'seed', 1, ['a', 'b'])
+        .kind,
+    ).toBe('no-match');
+    const unmatched = {
+      ...filters,
+      part: { kind: 'one' as const, value: 'p2' },
+    };
+    expect(
+      selectFreeRevisionQuestions(repository, unmatched, 'seed', 1).kind,
+    ).toBe('no-match');
+  });
 });
 
 describe('préparation', () => {
@@ -308,5 +580,27 @@ describe('préparation', () => {
     expect(prepared.value.parameterValues).toEqual({});
     expect(prepared.value.content.questionId).toBe('q1');
     expect(Object.isFrozen(prepared.value)).toBe(true);
+  });
+
+  it('prépare une question paramétrée de façon reproductible', () => {
+    const source = parameterizedQuestion();
+    const first = prepareQuestion(source, 'session-a', 0);
+    const repeated = prepareQuestion(source, 'session-a', 0);
+    const other = prepareQuestion(source, 'session-b', 0);
+    expect(first).toEqual(repeated);
+    expect(first.kind).toBe('ready');
+    expect(other.kind).toBe('ready');
+    if (first.kind !== 'ready' || other.kind !== 'ready') return;
+    expect(first.value.seed).not.toBe(other.value.seed);
+    expect(first.value.parameterValues).not.toEqual(
+      other.value.parameterValues,
+    );
+    expect(first.value.content.prompt[0]).toEqual({
+      kind: 'text',
+      value: `Valeur ${String(first.value.parameterValues.x)}`,
+    });
+    expect(Object.isFrozen(first.value.content.prompt)).toBe(true);
+    expect(Object.isFrozen(source)).toBe(false);
+    expect(source.prompt[0]).toEqual({ kind: 'text', value: 'Valeur @x' });
   });
 });

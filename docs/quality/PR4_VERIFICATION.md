@@ -58,6 +58,40 @@
 | Validation YAML des workflows | `ci.yml` et `deploy-pages.yml` valides |
 | `git diff --check` | réussi |
 
+### Durcissement des frontières d’import — 4 août 2026
+
+- **Doublons avant import :** l’enveloppe et la longueur réelle de `questions`
+  sont contrôlées avant toute comparaison avec la banque installée. Toutes les
+  occurrences sûres sont inspectées ; deux entrées partageant `question.id`, y
+  compris avec des versions différentes, rendent le bundle ambigu. Le résultat
+  global est `rejected`, les diagnostics citent les deux chemins et le repository
+  reste intact. Aucune `Map` ne réduit silencieusement les entrées du bundle.
+- **Quarantaine ciblée :** l’enveloppe et le tableau sont lus sans évaluer les
+  entrées. Chaque entrée reçoit ensuite son propre snapshot. Un getter ou Proxy
+  hostile devient un résultat `quarantined` portant son `entryIndex`, tandis que
+  les autres entrées continuent d’être validées et importées. Aucune référence
+  hostile n’est conservée.
+- **SafeSnapshot borné :** limites exportées de 10 000 éléments par tableau,
+  10 000 caractères par chaîne, 100 000 caractères cumulés, 50 000 nœuds et 64
+  niveaux. Les tableaux creux, propriétés personnalisées, accesseurs d’indices,
+  symboles, longueurs excessives et prototypes exotiques sont refusés. Les indices
+  d’un tableau dense sont copiés sans réindexation.
+- **Index indépendant :** chaque question est snapshotée puis validée avant gel.
+  Le constructeur ne gèle jamais la question ni les contenus sources. Les
+  mutations ultérieures de la source n’affectent pas l’index. `query(unknown)`
+  accepte uniquement un objet simple, à prototype standard ou nul, et refuse les
+  propriétés étrangères, classes, dates, getters, Proxy et symboles.
+- **Preuves complémentaires :** préparation paramétrée reproductible, changement
+  de seed, exclusions, `no-match`, combinaison complète des axes d’index,
+  distinction `all`/`not-applicable`, `repository.query`, rapport mixte, erreur de
+  validation finale atomique, absence de mutation des sources et immuabilité
+  profonde des résultats.
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés du durcissement | 2 fichiers, 45 tests réussis |
+| `npm run test:coverage` | 28 fichiers, 395 tests réussis ; instructions 89,61 %, branches 82,29 %, fonctions 90,92 %, lignes 92,52 % |
+
 | Exigence | Implémentation | Test automatique | Vérification manuelle | État réel | Justification |
 |---|---|---|---|---|---|
 | `SESSION-005` — filtre Réflexe non applicable | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Contrat et validation structurelle implémentés ; interface hors bloc A |

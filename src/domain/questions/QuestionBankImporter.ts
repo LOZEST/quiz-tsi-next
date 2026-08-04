@@ -1,5 +1,6 @@
 import type { ProgramIndex } from '../program/Program';
 import {
+  MAX_SAFE_SNAPSHOT_ARRAY_LENGTH,
   createSafeSnapshot,
   deepFreezeOwned,
 } from '../validation/SafeSnapshot';
@@ -66,12 +67,90 @@ const safeText = (value: unknown): string => {
 };
 const canonical = (value: unknown): string => JSON.stringify(value);
 
+type EnvelopeEntry =
+  | Readonly<{ readable: true; value: unknown }>
+  | Readonly<{ readable: false }>;
+type ImportEnvelope = Readonly<{
+  schemaVersion: unknown;
+  bundleId: unknown;
+  generatedAt: unknown;
+  defaultProvenance: unknown;
+  entries: readonly EnvelopeEntry[];
+}>;
+
+function readImportEnvelope(input: unknown): ImportEnvelope | null {
+  try {
+    if (typeof input !== 'object' || input === null || Array.isArray(input))
+      return null;
+    const prototype: unknown = Object.getPrototypeOf(input);
+    if (prototype !== Object.prototype && prototype !== null) return null;
+    if (Object.getOwnPropertySymbols(input).length > 0) return null;
+    const root = input;
+    const allowed = new Set([
+      'schemaVersion',
+      'bundleId',
+      'generatedAt',
+      'defaultProvenance',
+      'questions',
+    ]);
+    if (Object.keys(root).some((key) => !allowed.has(key))) return null;
+    const read = (key: string): unknown => {
+      const descriptor = Object.getOwnPropertyDescriptor(root, key);
+      if (!descriptor || !('value' in descriptor)) throw new Error();
+      return descriptor.value;
+    };
+    const questions = read('questions');
+    if (
+      !Array.isArray(questions) ||
+      Object.getPrototypeOf(questions) !== Array.prototype
+    )
+      return null;
+    if (Object.getOwnPropertySymbols(questions).length > 0) return null;
+    const lengthDescriptor = Object.getOwnPropertyDescriptor(
+      questions,
+      'length',
+    );
+    if (!lengthDescriptor || !('value' in lengthDescriptor)) return null;
+    const length: unknown = lengthDescriptor.value;
+    if (
+      typeof length !== 'number' ||
+      !Number.isInteger(length) ||
+      length < 0 ||
+      length > MAX_SAFE_SNAPSHOT_ARRAY_LENGTH
+    )
+      return null;
+    const names = Object.getOwnPropertyNames(questions);
+    if (names.length !== length + 1) return null;
+    const entries: EnvelopeEntry[] = [];
+    for (let index = 0; index < length; index += 1) {
+      if (names[index] !== String(index)) return null;
+      const descriptor = Object.getOwnPropertyDescriptor(
+        questions,
+        String(index),
+      );
+      entries.push(
+        descriptor && 'value' in descriptor
+          ? { readable: true, value: descriptor.value }
+          : { readable: false },
+      );
+    }
+    return {
+      schemaVersion: read('schemaVersion'),
+      bundleId: read('bundleId'),
+      generatedAt: read('generatedAt'),
+      defaultProvenance: read('defaultProvenance'),
+      entries,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function importQuestionBankBundle(
   input: unknown,
   currentQuestions: readonly Question[] = [],
   program?: ProgramIndex,
 ): QuestionBankImportResult {
-  const safe = createSafeSnapshot(input);
   const emptyReport = (diagnostic: string): QuestionImportReport => ({
     bundleId: '',
     schemaVersion: 0,
@@ -85,31 +164,135 @@ export function importQuestionBankBundle(
     diagnostics: [diagnostic],
     entries: [],
   });
-  if (
-    !safe.ok ||
-    typeof safe.value !== 'object' ||
-    safe.value === null ||
-    Array.isArray(safe.value)
-  )
+  const envelope = readImportEnvelope(input);
+  if (!envelope)
+    return deepFreezeOwned({
+      kind: 'rejected',
+      report: emptyReport('Enveloppe de bundle invalide ou inaccessible.'),
+      quarantine: [],
+    });
+  const header = validateQuestionBankBundle(
+    {
+      schemaVersion: envelope.schemaVersion,
+      bundleId: envelope.bundleId,
+      generatedAt: envelope.generatedAt,
+      defaultProvenance: envelope.defaultProvenance,
+      questions: [],
+    },
+    program,
+  );
+  if (!header.ok)
     return deepFreezeOwned({
       kind: 'rejected',
       report: emptyReport(
-        safe.ok ? 'Enveloppe de bundle invalide.' : safe.message,
+        header.issues[0]?.message ?? 'Enveloppe de bundle incomplète.',
       ),
       quarantine: [],
     });
-  const root = safe.value as Record<string, unknown>;
-  if (
-    typeof root.bundleId !== 'string' ||
-    typeof root.schemaVersion !== 'number' ||
-    typeof root.generatedAt !== 'string' ||
-    !Array.isArray(root.questions)
-  )
+  const root = header.value;
+  const snapshots: Array<
+    Readonly<{
+      readable: boolean;
+      value: unknown;
+      id: string | null;
+      version: number | null;
+    }>
+  > = [];
+  const duplicatePaths: string[] = [];
+  const firstById = new Map<string, number>();
+  const firstByPair = new Map<string, number>();
+  for (let index = 0; index < envelope.entries.length; index += 1) {
+    const envelopeEntry = envelope.entries[index] as EnvelopeEntry;
+    const snapshot = envelopeEntry.readable
+      ? createSafeSnapshot(envelopeEntry.value)
+      : { ok: false as const };
+    if (!snapshot.ok) {
+      snapshots.push({ readable: false, value: null, id: null, version: null });
+      continue;
+    }
+    const value = snapshot.value;
+    const entryRecord =
+      typeof value === 'object' && value !== null && !Array.isArray(value)
+        ? (value as Record<string, unknown>)
+        : null;
+    const rawQuestion = entryRecord?.question;
+    const questionRecord =
+      typeof rawQuestion === 'object' &&
+      rawQuestion !== null &&
+      !Array.isArray(rawQuestion)
+        ? (rawQuestion as Record<string, unknown>)
+        : null;
+    const id =
+      typeof questionRecord?.id === 'string' ? questionRecord.id : null;
+    const version = Number.isInteger(questionRecord?.version)
+      ? (questionRecord?.version as number)
+      : null;
+    snapshots.push({ readable: true, value, id, version });
+    if (id !== null) {
+      const firstId = firstById.get(id);
+      if (firstId !== undefined)
+        duplicatePaths.push(
+          `questions.${firstId}.question.id et questions.${index}.question.id`,
+        );
+      else firstById.set(id, index);
+      if (version !== null) {
+        const pair = `${id}\u0000${version}`;
+        const firstPair = firstByPair.get(pair);
+        if (firstPair !== undefined)
+          duplicatePaths.push(
+            `questions.${firstPair}.question.version et questions.${index}.question.version`,
+          );
+        else firstByPair.set(pair, index);
+      }
+    }
+  }
+  if (duplicatePaths.length > 0) {
+    const entries: QuestionImportReportEntry[] = snapshots.map(
+      (snapshot, index) => ({
+        entryIndex: index,
+        questionExternalId: snapshot.id,
+        questionId: null,
+        questionVersion: snapshot.version,
+        sourceLocator: null,
+        status: snapshot.readable ? 'rejected' : 'quarantined',
+        path: `questions.${index}`,
+        code: snapshot.readable ? 'ambiguous-bundle' : 'hostile-entry',
+        message: snapshot.readable
+          ? 'Le bundle contient un identifiant de question dupliqué.'
+          : 'Entrée inaccessible mise en quarantaine.',
+      }),
+    );
+    const quarantine = snapshots.flatMap((snapshot, index) =>
+      snapshot.readable
+        ? []
+        : [
+            {
+              entryIndex: index,
+              snapshot: '[donnée inaccessible]',
+              code: 'hostile-entry',
+            },
+          ],
+    );
     return deepFreezeOwned({
       kind: 'rejected',
-      report: emptyReport('Enveloppe de bundle incomplète.'),
-      quarantine: [],
+      report: {
+        bundleId: root.bundleId,
+        schemaVersion: root.schemaVersion,
+        importedAt: root.generatedAt,
+        totalReceived: snapshots.length,
+        totalAccepted: 0,
+        totalIgnored: 0,
+        totalUpdated: 0,
+        totalQuarantined: quarantine.length,
+        totalRejected: entries.length - quarantine.length,
+        diagnostics: duplicatePaths.map(
+          (paths) => `Identifiant dupliqué : ${paths}.`,
+        ),
+        entries,
+      },
+      quarantine,
     });
+  }
   const byId = new Map<string, Question>();
   for (const question of currentQuestions) {
     const current = byId.get(question.id);
@@ -118,13 +301,33 @@ export function importQuestionBankBundle(
   }
   const entries: QuestionImportReportEntry[] = [];
   const quarantine: QuarantinedQuestionEntry[] = [];
-  for (let index = 0; index < root.questions.length; index += 1) {
-    const raw: unknown = root.questions[index];
+  for (let index = 0; index < snapshots.length; index += 1) {
+    const snapshot = snapshots[index] as (typeof snapshots)[number];
+    if (!snapshot.readable) {
+      quarantine.push({
+        entryIndex: index,
+        snapshot: '[donnée inaccessible]',
+        code: 'hostile-entry',
+      });
+      entries.push({
+        entryIndex: index,
+        questionExternalId: null,
+        questionId: null,
+        questionVersion: null,
+        sourceLocator: null,
+        status: 'quarantined',
+        path: `questions.${index}`,
+        code: 'hostile-entry',
+        message: 'Entrée inaccessible mise en quarantaine.',
+      });
+      continue;
+    }
+    const raw = snapshot.value;
     const singleton = {
       schemaVersion: root.schemaVersion,
       bundleId: root.bundleId,
       generatedAt: root.generatedAt,
-      defaultProvenance: root.defaultProvenance ?? null,
+      defaultProvenance: root.defaultProvenance,
       questions: [raw],
     };
     const checked = validateQuestionBankBundle(singleton, program);
@@ -218,7 +421,7 @@ export function importQuestionBankBundle(
     schemaVersion: root.schemaVersion,
     bundleId: root.bundleId,
     generatedAt: root.generatedAt,
-    defaultProvenance: root.defaultProvenance ?? null,
+    defaultProvenance: root.defaultProvenance,
     questions: finalQuestions.map((question) => ({
       question,
       provenance: {
@@ -240,7 +443,7 @@ export function importQuestionBankBundle(
     bundleId: root.bundleId,
     schemaVersion: root.schemaVersion,
     importedAt: root.generatedAt,
-    totalReceived: root.questions.length,
+    totalReceived: snapshots.length,
     totalAccepted: count('accepted'),
     totalIgnored: count('ignored'),
     totalUpdated: count('updated'),
