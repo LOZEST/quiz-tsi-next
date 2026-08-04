@@ -2,6 +2,122 @@
 
 > **Statut initial :** table créée avant toute implémentation. Aucun état n'est marqué implémenté sans code et preuve.
 
+## Lot accéléré — banque et sélection déterministe (4 août 2026)
+
+- **Périmètre :** frontière `unknown` de `QuestionBankBundle`, import initial pur,
+  quarantaine bornée, ports de repositories, adapter mémoire, index, filtres
+  dépendants, sélection de Révision libre et préparation des variantes. Aucune UI,
+  passation PR5 ou logique pédagogique PR6 n'est incluse.
+- **Bundle :** schéma V1, `bundleId` normalisé, date UTC, provenance résolue,
+  questions structurellement et sémantiquement validées, cohérence complète avec
+  `ProgramIndex`, limite de 10 000 entrées, copie indépendante profondément figée.
+  Getters, Proxy, cycles, prototypes exotiques, symboles et valeurs non finies
+  produisent un diagnostic contrôlé.
+- **Import :** statuts normatifs `accepted`, `updated`, `ignored`, `rejected` et
+  `quarantined`. Même id/version/contenu est ignoré idempotemment ; une version
+  supérieure remplace ; une version inférieure est rejetée ; un conflit de contenu
+  à version égale est mis en quarantaine. La quarantaine conserve uniquement une
+  chaîne JSON sûre limitée à 2 048 caractères. L'état final est validé intégralement
+  avant tout remplacement du repository.
+- **Repository et index :** le port ne dépend d'aucune infrastructure. L'adapter
+  mémoire copie ses entrées et sorties, expose des snapshots figés, remplace la
+  banque en une seule affectation et ordonne par id/version. L'index déduplique et
+  filtre partie, chapitre, notion, type, difficulté, source et statut ;
+  `not-applicable` sélectionne exclusivement Réflexe.
+- **Filtres :** aucune sentinelle `all` n'entre dans le programme. Les sélections
+  discriminées existantes sont normalisées et les enfants incompatibles reviennent
+  à `{ kind: "all" }`. `ProgramIndex` expose désormais les chapitres et notions
+  canoniques nécessaires aux listes globales.
+- **Sélection et préparation :** uniquement les dernières versions publiées et
+  validées, ordre canonique puis mélange `xmur3-mulberry32` V1, sans temps système
+  ni `Math.random`, quantité maximale exportée de 1 000 et exclusions sans doublon.
+  Une seed d'instance combine seed de séance, id, version et position. Une question
+  statique reçoit `{}` ; une paramétrée réutilise le générateur et l'instanciation du
+  bloc D. Aucun `QuestionInstance` ou `FrozenQuestionInstance` n'est créé.
+- **États explicites :** `no-bank` emploie le message normatif, puis
+  `invalid-config`, `no-match`, `insufficient-stock`, `repository-error` et
+  `question-preparation-error` couvrent les autres sorties sans stack trace.
+- **Données :** seules des fixtures entièrement nouvelles existent dans les tests.
+  Aucune banque historique ou question de production n'est ajoutée.
+- **Hors périmètre :** UI React, IndexedDB/Supabase, import avancé PR7, rendu KaTeX,
+  session/test PR5, progression et algorithmes PR6.
+
+### Résultats du lot banque et sélection — 4 août 2026
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés banque/sélection | 1 fichier, 14 tests réussis |
+| Tests ciblés avec Programme | 2 fichiers, 45 tests réussis |
+| `npm run format:check` | réussi |
+| `npm run lint` | réussi ; avertissement informatif ESLint sur les projets TypeScript multiples |
+| `npm run typecheck` | réussi |
+| `npm run test:coverage` | 27 fichiers, 364 tests réussis ; instructions 89,00 %, branches 81,33 %, fonctions 89,66 %, lignes 91,63 % |
+| `npm run build` | réussi ; 141 modules transformés |
+| `npm run build:pages` | réussi ; 141 modules transformés et fallback Pages généré |
+| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| Validation YAML des workflows | `ci.yml` et `deploy-pages.yml` valides |
+| `git diff --check` | réussi |
+
+### Durcissement des frontières d’import — 4 août 2026
+
+- **Doublons avant import :** l’enveloppe et la longueur réelle de `questions`
+  sont contrôlées avant toute comparaison avec la banque installée. Toutes les
+  occurrences sûres sont inspectées ; deux entrées partageant `question.id`, y
+  compris avec des versions différentes, rendent le bundle ambigu. Le résultat
+  global est `rejected`, les diagnostics citent les deux chemins et le repository
+  reste intact. Aucune `Map` ne réduit silencieusement les entrées du bundle.
+- **Quarantaine ciblée :** l’enveloppe et le tableau sont lus sans évaluer les
+  entrées. Chaque entrée reçoit ensuite son propre snapshot. Un getter ou Proxy
+  hostile devient un résultat `quarantined` portant son `entryIndex`, tandis que
+  les autres entrées continuent d’être validées et importées. Aucune référence
+  hostile n’est conservée.
+- **SafeSnapshot borné :** limites exportées de 10 000 éléments par tableau,
+  10 000 caractères par chaîne, 100 000 caractères cumulés, 50 000 nœuds et 64
+  niveaux. Les tableaux creux, propriétés personnalisées, accesseurs d’indices,
+  symboles, longueurs excessives et prototypes exotiques sont refusés. Les indices
+  d’un tableau dense sont copiés sans réindexation.
+- **Index indépendant :** chaque question est snapshotée puis validée avant gel.
+  Le constructeur ne gèle jamais la question ni les contenus sources. Les
+  mutations ultérieures de la source n’affectent pas l’index. `query(unknown)`
+  accepte uniquement un objet simple, à prototype standard ou nul, et refuse les
+  propriétés étrangères, classes, dates, getters, Proxy et symboles.
+- **Preuves complémentaires :** préparation paramétrée reproductible, changement
+  de seed, exclusions, `no-match`, combinaison complète des axes d’index,
+  distinction `all`/`not-applicable`, `repository.query`, rapport mixte, erreur de
+  validation finale atomique, absence de mutation des sources et immuabilité
+  profonde des résultats.
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés du durcissement | 2 fichiers, 45 tests réussis |
+| `npm run test:coverage` | 28 fichiers, 395 tests réussis ; instructions 89,61 %, branches 82,29 %, fonctions 90,92 %, lignes 92,52 % |
+
+### Bornage final de SafeSnapshot — 4 août 2026
+
+- **Définition d’un nœud :** chaque valeur visitée compte exactement un nœud,
+  qu’il s’agisse d’un objet, tableau, texte, nombre fini, booléen ou `null`. Le
+  compteur est incrémenté avant tout retour de primitive et refuse la 50 001e
+  valeur.
+- **Propriétés d’objet :** maximum 10 000 propriétés propres par objet et 20 000
+  propriétés d’objet cumulées. Un nom mesure au plus 512 caractères. Les noms sont
+  vérifiés et comptabilisés avant la copie de leur valeur.
+- **Budget textuel :** les 100 000 caractères cumulés couvrent les valeurs `string`
+  et tous les noms de propriétés d’objet copiés. Les indices de tableaux sont
+  bornés séparément par la longueur maximale de 10 000 et chaque élément compte
+  dans le budget de nœuds.
+- **Inspection exhaustive :** `Object.getOwnPropertyNames` inspecte chaque propriété
+  propre ; symboles, accesseurs et propriétés non énumérables sont refusés. Seuls
+  les prototypes objet standard ou nul et le prototype tableau standard sont
+  admis.
+- **Quarantaine :** `safeSnapshotText` appelle `JSON.stringify` uniquement avec le
+  snapshot individuel déjà borné. Une entrée externe hostile ne lui est jamais
+  transmise.
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés SafeSnapshot et banque | 2 fichiers, 56 tests réussis |
+| `npm run test:coverage` | 28 fichiers, 406 tests réussis ; instructions 89,64 %, branches 82,33 %, fonctions 90,94 %, lignes 92,48 % |
+
 | Exigence | Implémentation | Test automatique | Vérification manuelle | État réel | Justification |
 |---|---|---|---|---|---|
 | `SESSION-005` — filtre Réflexe non applicable | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Contrat et validation structurelle implémentés ; interface hors bloc A |

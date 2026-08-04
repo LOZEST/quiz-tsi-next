@@ -40,6 +40,8 @@ export interface ProgramIndex {
   getNotion(id: string): ProgramNotion | null;
   getChaptersForPart(partId: string): readonly ProgramChapter[];
   getNotionsForChapter(chapterId: string): readonly ProgramNotion[];
+  getAllChapters(): readonly ProgramChapter[];
+  getAllNotions(): readonly ProgramNotion[];
 }
 
 type ProgramNode = Readonly<{
@@ -415,5 +417,8 @@ export function createProgramIndex(program: Program): ProgramIndex {
       chaptersByPart.get(partId) ?? Object.freeze([]),
     getNotionsForChapter: (chapterId: string) =>
       notionsByChapter.get(chapterId) ?? Object.freeze([]),
+    getAllChapters: () =>
+      Object.freeze([...chapters].sort(compareProgramNodes)),
+    getAllNotions: () => Object.freeze([...notions].sort(compareProgramNodes)),
   });
 }
