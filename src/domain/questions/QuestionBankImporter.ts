@@ -58,9 +58,9 @@ export type QuestionBankImportResult =
       quarantine: readonly QuarantinedQuestionEntry[];
     }>;
 
-const safeText = (value: unknown): string => {
+const safeSnapshotText = (boundedSnapshot: unknown): string => {
   try {
-    return JSON.stringify(value).slice(0, 2_048);
+    return JSON.stringify(boundedSnapshot).slice(0, 2_048);
   } catch {
     return '[donnée inaccessible]';
   }
@@ -352,7 +352,7 @@ export function importQuestionBankBundle(
     if (!checked.ok) {
       quarantine.push({
         entryIndex: index,
-        snapshot: safeText(raw),
+        snapshot: safeSnapshotText(raw),
         code: 'invalid-entry',
       });
       entries.push({
@@ -388,7 +388,11 @@ export function importQuestionBankBundle(
           status = 'quarantined';
           code = 'same-version-conflict';
           message = 'Même version avec un contenu différent.';
-          quarantine.push({ entryIndex: index, snapshot: safeText(raw), code });
+          quarantine.push({
+            entryIndex: index,
+            snapshot: safeSnapshotText(raw),
+            code,
+          });
         }
       } else {
         status = 'updated';

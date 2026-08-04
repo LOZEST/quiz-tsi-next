@@ -92,6 +92,32 @@
 | Tests ciblés du durcissement | 2 fichiers, 45 tests réussis |
 | `npm run test:coverage` | 28 fichiers, 395 tests réussis ; instructions 89,61 %, branches 82,29 %, fonctions 90,92 %, lignes 92,52 % |
 
+### Bornage final de SafeSnapshot — 4 août 2026
+
+- **Définition d’un nœud :** chaque valeur visitée compte exactement un nœud,
+  qu’il s’agisse d’un objet, tableau, texte, nombre fini, booléen ou `null`. Le
+  compteur est incrémenté avant tout retour de primitive et refuse la 50 001e
+  valeur.
+- **Propriétés d’objet :** maximum 10 000 propriétés propres par objet et 20 000
+  propriétés d’objet cumulées. Un nom mesure au plus 512 caractères. Les noms sont
+  vérifiés et comptabilisés avant la copie de leur valeur.
+- **Budget textuel :** les 100 000 caractères cumulés couvrent les valeurs `string`
+  et tous les noms de propriétés d’objet copiés. Les indices de tableaux sont
+  bornés séparément par la longueur maximale de 10 000 et chaque élément compte
+  dans le budget de nœuds.
+- **Inspection exhaustive :** `Object.getOwnPropertyNames` inspecte chaque propriété
+  propre ; symboles, accesseurs et propriétés non énumérables sont refusés. Seuls
+  les prototypes objet standard ou nul et le prototype tableau standard sont
+  admis.
+- **Quarantaine :** `safeSnapshotText` appelle `JSON.stringify` uniquement avec le
+  snapshot individuel déjà borné. Une entrée externe hostile ne lui est jamais
+  transmise.
+
+| Vérification | Résultat |
+|---|---|
+| Tests ciblés SafeSnapshot et banque | 2 fichiers, 56 tests réussis |
+| `npm run test:coverage` | 28 fichiers, 406 tests réussis ; instructions 89,64 %, branches 82,33 %, fonctions 90,94 %, lignes 92,48 % |
+
 | Exigence | Implémentation | Test automatique | Vérification manuelle | État réel | Justification |
 |---|---|---|---|---|---|
 | `SESSION-005` — filtre Réflexe non applicable | `src/domain/session/Session.ts` | `tests/unit/domain/contracts.test.ts` | À réaliser avec l'interface | partiel | Contrat et validation structurelle implémentés ; interface hors bloc A |
