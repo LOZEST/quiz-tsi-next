@@ -19,14 +19,20 @@ export function QuestionCard({
 }: {
   prepared: PreparedQuestion;
   question: Readonly<Question>;
-  onNext: () => void;
+  onNext: (trigger?: HTMLElement) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
-  const { clock } = useAppServices();
+  const { clock, programIndex } = useAppServices();
+  const notion = programIndex?.getNotion(question.notionId);
+  const chapter = programIndex?.getChapter(question.chapterId);
+  const contextLabel = notion?.label ?? chapter?.label ?? null;
   return (
     <article className={styles.card} aria-label="Question active">
       <header>
-        <span>{typeLabels[question.type]}</span>
+        <span>
+          {contextLabel ? `${contextLabel} · ` : ''}
+          {typeLabels[question.type]}
+        </span>
         <button
           type="button"
           aria-expanded={!collapsed}
@@ -35,19 +41,24 @@ export function QuestionCard({
           {collapsed ? 'Afficher la question' : 'Réduire'}
         </button>
       </header>
+      {question.type === 'reflex' ? (
+        <div hidden={collapsed}>
+          <ReflexTimer
+            key={`${prepared.questionId}:${prepared.seed}`}
+            activationKey={`${prepared.questionId}:${prepared.seed}`}
+            clock={clock}
+          />
+        </div>
+      ) : null}
       {!collapsed ? (
         <>
           <div className={styles.prompt}>
             <QuestionContentRenderer segments={prepared.content.prompt} />
           </div>
-          {question.type === 'reflex' ? (
-            <ReflexTimer
-              key={`${prepared.questionId}:${prepared.seed}`}
-              activationKey={`${prepared.questionId}:${prepared.seed}`}
-              clock={clock}
-            />
-          ) : null}
-          <button type="button" onClick={() => onNext()}>
+          <button
+            type="button"
+            onClick={(event) => onNext(event.currentTarget)}
+          >
             Question suivante
           </button>
         </>

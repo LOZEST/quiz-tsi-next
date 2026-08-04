@@ -23,6 +23,7 @@ import {
   UnavailableDailyPlanStateRepository,
   UnavailableWeakPointsStateRepository,
 } from '@infrastructure/session/UnavailableRevisionStateRepositories';
+import { createRevisionTestServices } from '@infrastructure/session/RevisionServicesComposition';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -83,6 +84,7 @@ function createDefaultServices(): AppServices {
     return {
       authGateway: new ControlledAuthGateway(),
       workspaceRepository: new IndexedDbWorkspaceRepository(),
+      ...createRevisionTestServices(),
     };
   }
   try {

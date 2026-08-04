@@ -50,6 +50,27 @@ function safeIdentifier(value: unknown): string {
     .join('');
 }
 
+function precedence(raw: unknown): number {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return 0;
+  switch ((raw as Record<string, unknown>).kind) {
+    case 'comparison':
+    case 'relation':
+      return 1;
+    case 'binary': {
+      const operator = (raw as Record<string, unknown>).operator;
+      return operator === 'add' || operator === 'subtract' ? 2 : 3;
+    }
+    case 'unary':
+      return 4;
+    case 'power':
+      return 5;
+    case 'subscript':
+      return 6;
+    default:
+      return 7;
+  }
+}
+
 export function mathAstToLatex(root: ResolvedMathAstNode): string {
   let count = 0;
   const visit = (raw: unknown, depth: number): string => {
@@ -59,7 +80,18 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
     if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
       throw new Error('Arbre mathématique invalide.');
     const node = raw as Record<string, unknown>;
-    const child = (value: unknown) => visit(value, depth + 1);
+    const child = (
+      value: unknown,
+      parentPrecedence = 0,
+      groupEqual = false,
+    ) => {
+      const rendered = visit(value, depth + 1);
+      const childPrecedence = precedence(value);
+      return childPrecedence < parentPrecedence ||
+        (groupEqual && childPrecedence === parentPrecedence)
+        ? `\\left(${rendered}\\right)`
+        : rendered;
+    };
     switch (node.kind) {
       case 'number':
         if (
@@ -101,27 +133,25 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
               : (() => {
                   throw new Error('Opérateur inconnu.');
                 })()
-        }${child(node.operand)}`;
+        }${child(node.operand, 4)}`;
       case 'binary': {
-        const left = child(node.left);
-        const right = child(node.right);
         switch (node.operator) {
           case 'add':
-            return `{${left}}+{${right}}`;
+            return `${child(node.left, 2)}+${child(node.right, 2, true)}`;
           case 'subtract':
-            return `{${left}}-{${right}}`;
+            return `${child(node.left, 2)}-${child(node.right, 2, true)}`;
           case 'multiply':
-            return `{${left}}\\,{${right}}`;
+            return `${child(node.left, 3, true)}\\,${child(node.right, 3, true)}`;
           case 'divide':
-            return `\\frac{${left}}{${right}}`;
+            return `\\frac{${child(node.left, 3, true)}}{${child(node.right, 3, true)}}`;
           default:
             throw new Error('Opérateur binaire inconnu.');
         }
       }
       case 'power':
-        return `{${child(node.base)}}^{${child(node.exponent)}}`;
+        return `{${child(node.base, 5, true)}}^{${child(node.exponent, 5, true)}}`;
       case 'subscript':
-        return `{${child(node.base)}}_{${child(node.subscript)}}`;
+        return `{${child(node.base, 6, true)}}_{${child(node.subscript, 7)}}`;
       case 'function': {
         const argument = child(node.argument);
         switch (node.name) {

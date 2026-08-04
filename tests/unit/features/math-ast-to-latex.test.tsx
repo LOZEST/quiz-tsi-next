@@ -150,6 +150,164 @@ describe('safe math rendering', () => {
     for (const ast of cases) expect(mathAstToLatex(node(ast))).not.toBe('');
   });
 
+  it.each([
+    [
+      {
+        kind: 'unary',
+        operator: 'negative',
+        operand: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'a' },
+          right: { kind: 'identifier', name: 'b' },
+        },
+      },
+      '-\\left(a+b\\right)',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'subtract',
+        left: { kind: 'identifier', name: 'a' },
+        right: {
+          kind: 'binary',
+          operator: 'subtract',
+          left: { kind: 'identifier', name: 'b' },
+          right: { kind: 'identifier', name: 'c' },
+        },
+      },
+      'a-\\left(b-c\\right)',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'multiply',
+        left: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'a' },
+          right: { kind: 'identifier', name: 'b' },
+        },
+        right: { kind: 'identifier', name: 'c' },
+      },
+      '\\left(a+b\\right)\\,c',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'multiply',
+        left: { kind: 'identifier', name: 'a' },
+        right: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'b' },
+          right: { kind: 'identifier', name: 'c' },
+        },
+      },
+      'a\\,\\left(b+c\\right)',
+    ],
+    [
+      {
+        kind: 'power',
+        base: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'a' },
+          right: { kind: 'identifier', name: 'b' },
+        },
+        exponent: { kind: 'number', value: '2' },
+      },
+      '{\\left(a+b\\right)}^{2}',
+    ],
+    [
+      {
+        kind: 'power',
+        base: {
+          kind: 'power',
+          base: { kind: 'identifier', name: 'a' },
+          exponent: { kind: 'identifier', name: 'b' },
+        },
+        exponent: { kind: 'identifier', name: 'c' },
+      },
+      '{\\left({a}^{b}\\right)}^{c}',
+    ],
+    [
+      {
+        kind: 'power',
+        base: { kind: 'identifier', name: 'a' },
+        exponent: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'b' },
+          right: { kind: 'identifier', name: 'c' },
+        },
+      },
+      '{a}^{\\left(b+c\\right)}',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'divide',
+        left: {
+          kind: 'binary',
+          operator: 'divide',
+          left: { kind: 'identifier', name: 'a' },
+          right: { kind: 'identifier', name: 'b' },
+        },
+        right: { kind: 'identifier', name: 'c' },
+      },
+      '\\frac{\\left(\\frac{a}{b}\\right)}{c}',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'divide',
+        left: { kind: 'identifier', name: 'a' },
+        right: {
+          kind: 'binary',
+          operator: 'divide',
+          left: { kind: 'identifier', name: 'b' },
+          right: { kind: 'identifier', name: 'c' },
+        },
+      },
+      '\\frac{a}{\\left(\\frac{b}{c}\\right)}',
+    ],
+    [
+      {
+        kind: 'subscript',
+        base: { kind: 'identifier', name: 'x' },
+        subscript: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'n' },
+          right: { kind: 'number', value: '1' },
+        },
+      },
+      '{x}_{\\left(n+1\\right)}',
+    ],
+    [
+      {
+        kind: 'comparison',
+        operator: 'less-than',
+        left: {
+          kind: 'binary',
+          operator: 'add',
+          left: { kind: 'identifier', name: 'a' },
+          right: { kind: 'identifier', name: 'b' },
+        },
+        right: {
+          kind: 'binary',
+          operator: 'multiply',
+          left: { kind: 'identifier', name: 'c' },
+          right: { kind: 'identifier', name: 'd' },
+        },
+      },
+      '{a+b}<{c\\,d}',
+    ],
+  ])('preserves AST precedence and associativity', (ast, expected) => {
+    expect(mathAstToLatex(node(ast))).toBe(expected);
+  });
+
   it('rejects malformed values without fallback conversion', () => {
     for (const ast of [
       { kind: 'number', value: '2<script>' },

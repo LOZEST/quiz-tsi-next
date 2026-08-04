@@ -6,6 +6,7 @@ import {
   normalizeFreeRevisionFilters,
 } from '@domain/session/FreeRevisionFilters';
 import type { Difficulty, QuestionType } from '@domain/questions/Question';
+import type { ProgramIndex } from '@domain/program/Program';
 import type {
   DailyPlanState,
   FilterSelection,
@@ -33,6 +34,11 @@ const difficulties: readonly { value: Difficulty; label: string }[] = [
   { value: 'standard', label: 'Standard' },
   { value: 'trap', label: 'Piège' },
 ];
+const difficultyLabels: Readonly<Record<Difficulty, string>> = {
+  fundamental: 'Fondamental',
+  standard: 'Standard',
+  trap: 'Piège',
+};
 const selection = (value: string): FilterSelection<string> =>
   value === '' ? { kind: 'all' } : { kind: 'one', value };
 const selected = (value: FilterSelection<string>) =>
@@ -66,7 +72,9 @@ export function RevisionDrawerPanel() {
               type="radio"
               name="revision-path"
               checked={experience.mode === path.id}
-              onChange={() => experience.setMode(path.id)}
+              onChange={(event) =>
+                experience.setMode(path.id, event.currentTarget)
+              }
             />
             {path.label}
           </label>
@@ -76,7 +84,10 @@ export function RevisionDrawerPanel() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            experience.applyFilters();
+            const trigger = event.nativeEvent.submitter;
+            experience.applyFilters(
+              trigger instanceof HTMLElement ? trigger : undefined,
+            );
           }}
         >
           <label>
@@ -207,12 +218,13 @@ export function RevisionDrawerPanel() {
         </form>
       ) : null}
       {experience.mode === 'daily' && experience.state.kind === 'daily' ? (
-        <Daily state={experience.state.state} />
+        <Daily state={experience.state.state} program={programIndex} />
       ) : null}
       {experience.mode === 'weak-points' &&
       experience.state.kind === 'weak-points' ? (
         <Weak
           state={experience.state.state}
+          program={programIndex}
           onFree={() => experience.setMode('free')}
         />
       ) : null}
@@ -221,7 +233,13 @@ export function RevisionDrawerPanel() {
   );
 }
 
-function Daily({ state }: { state: DailyPlanState }) {
+function Daily({
+  state,
+  program,
+}: {
+  state: DailyPlanState;
+  program: ProgramIndex | null;
+}) {
   if (state.kind === 'none-scheduled')
     return <p>Aucune révision n’est prévue aujourd’hui. Tu es à jour.</p>;
   if (state.kind === 'completed')
@@ -235,7 +253,29 @@ function Daily({ state }: { state: DailyPlanState }) {
     <ul>
       {state.items.map((item) => (
         <li key={item.notionId}>
-          {item.notionId} — {item.successCount}/{item.plannedCount}
+          <strong>
+            {program?.getNotion(item.notionId)?.label ?? 'Notion indisponible'}
+          </strong>{' '}
+          — {item.successCount}/{item.plannedCount}
+          <details>
+            <summary>Détails</summary>
+            <dl>
+              <dt>Raison</dt>
+              <dd>{item.reason}</dd>
+              <dt>Réussites partielles</dt>
+              <dd>{item.partialCount}</dd>
+              <dt>Échecs</dt>
+              <dd>{item.failedCount}</dd>
+              <dt>Difficulté recommandée</dt>
+              <dd>{difficultyLabels[item.recommendedDifficulty]}</dd>
+              {item.dueAt ? (
+                <>
+                  <dt>Échéance</dt>
+                  <dd>{item.dueAt}</dd>
+                </>
+              ) : null}
+            </dl>
+          </details>
         </li>
       ))}
     </ul>
@@ -243,9 +283,11 @@ function Daily({ state }: { state: DailyPlanState }) {
 }
 function Weak({
   state,
+  program,
   onFree,
 }: {
   state: WeakPointsState;
+  program: ProgramIndex | null;
   onFree: () => void;
 }) {
   if (state.kind === 'calibrating')
@@ -277,7 +319,48 @@ function Weak({
     <ul>
       {state.items.map((item) => (
         <li key={item.notionId}>
-          {item.notionId} — priorité {item.priority}
+          <strong>
+            {program?.getNotion(item.notionId)?.label ?? 'Notion indisponible'}
+          </strong>{' '}
+          — priorité {item.priority} ·{' '}
+          {difficultyLabels[item.recommendedDifficulty]}
+          <details>
+            <summary>Détails</summary>
+            <dl>
+              <dt>Raison</dt>
+              <dd>{item.rationale}</dd>
+              {item.lastActivityAt ? (
+                <>
+                  <dt>Dernière activité</dt>
+                  <dd>{item.lastActivityAt}</dd>
+                </>
+              ) : null}
+              <dt>Réussites</dt>
+              <dd>{item.successCount}</dd>
+              <dt>Réussites partielles</dt>
+              <dd>{item.partialCount}</dd>
+              <dt>Échecs</dt>
+              <dd>{item.failedCount}</dd>
+              {item.masteryEstimate !== null ? (
+                <>
+                  <dt>Maîtrise observée</dt>
+                  <dd>{item.masteryEstimate}</dd>
+                </>
+              ) : null}
+              {item.recurringErrors.length > 0 ? (
+                <>
+                  <dt>Erreurs récurrentes</dt>
+                  <dd>
+                    <ul>
+                      {item.recurringErrors.map((error) => (
+                        <li key={error}>{error}</li>
+                      ))}
+                    </ul>
+                  </dd>
+                </>
+              ) : null}
+            </dl>
+          </details>
         </li>
       ))}
     </ul>

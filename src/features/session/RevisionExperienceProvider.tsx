@@ -3,6 +3,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -28,6 +29,11 @@ export const initialFreeRevisionFilters: FreeRevisionFilters = Object.freeze({
   difficulty: { kind: 'all' as const },
 });
 
+export type ActivePreparedQuestion = Readonly<{
+  prepared: PreparedQuestion;
+  question: Readonly<Question>;
+}>;
+
 export type RevisionExperienceState =
   | { kind: 'idle' }
   | { kind: 'loading' }
@@ -40,16 +46,26 @@ export type RevisionExperienceState =
   | { kind: 'chapter-test' }
   | { kind: 'error'; code: string; message: string };
 
+type PendingChange =
+  | Readonly<{
+      kind: 'free';
+      filters: FreeRevisionFilters;
+      excludeCurrent: boolean;
+    }>
+  | Readonly<{ kind: 'mode'; mode: SessionMode }>;
+
 interface RevisionExperienceValue {
   mode: SessionMode;
-  setMode(mode: SessionMode): void;
+  setMode(mode: SessionMode, trigger?: HTMLElement): void;
   state: RevisionExperienceState;
+  notice: string | null;
   activeFilters: FreeRevisionFilters;
   visibleFilters: FreeRevisionFilters;
   setVisibleFilters(filters: FreeRevisionFilters): void;
-  applyFilters(): void;
-  nextQuestion(): void;
+  applyFilters(trigger?: HTMLElement): void;
+  nextQuestion(trigger?: HTMLElement): void;
   pendingChange: boolean;
+  dialogTrigger: HTMLElement | null;
   cancelChange(): void;
   confirmChange(): void;
 }
@@ -64,33 +80,37 @@ export function RevisionExperienceProvider({
   const services = useAppServices();
   const board = useWhiteboard();
   const [mode, setModeState] = useState<SessionMode>('free');
-  const [state, setState] = useState<RevisionExperienceState>(() =>
-    services.questionRepository.getBankMetadata()
-      ? services.programIndex
-        ? { kind: 'idle' }
-        : {
-            kind: 'no-program',
-            message: 'Le programme est indisponible pour le moment.',
-          }
-      : {
-          kind: 'no-bank',
-          message:
-            'Aucune banque de questions validée n’est disponible pour le moment.',
-        },
-  );
+  const [state, setState] = useState<RevisionExperienceState>({ kind: 'idle' });
+  const [notice, setNotice] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState(
     initialFreeRevisionFilters,
   );
   const [visibleFilters, setVisibleFilters] = useState(
     initialFreeRevisionFilters,
   );
-  const [pending, setPending] = useState<null | {
-    filters: FreeRevisionFilters;
-    excludeCurrent: boolean;
-  }>(null);
+  const [pending, setPending] = useState<PendingChange | null>(null);
+  const [dialogTrigger, setDialogTrigger] = useState<HTMLElement | null>(null);
   const request = useRef(0);
+  const initialLoaded = useRef(false);
+  const mounted = useRef(true);
 
-  const loadFree = useCallback(
+  useEffect(
+    () => () => {
+      mounted.current = false;
+      request.current += 1;
+    },
+    [],
+  );
+
+  const showAttemptFailure = useCallback(
+    (next: RevisionExperienceState, message: string) => {
+      if (state.kind === 'ready') setNotice(message);
+      else setState(next);
+    },
+    [state],
+  );
+
+  const attemptFree = useCallback(
     (
       filters: FreeRevisionFilters,
       excludeCurrent = false,
@@ -98,77 +118,88 @@ export function RevisionExperienceProvider({
     ) => {
       const program = services.programIndex;
       if (!program) {
-        setState({
-          kind: 'no-program',
-          message: 'Le programme est indisponible pour le moment.',
-        });
+        showAttemptFailure(
+          {
+            kind: 'no-program',
+            message: 'Le programme est indisponible pour le moment.',
+          },
+          'Le programme est indisponible pour le moment.',
+        );
         return false;
       }
-      const currentId = state.kind === 'ready' ? state.question.id : null;
+      const current = state.kind === 'ready' ? state : null;
       const result = selectFreeRevisionQuestions(
         services.questionRepository,
         filters,
         services.revisionSeedSource.nextSeed(),
         1,
-        excludeCurrent && currentId ? [currentId] : [],
+        excludeCurrent && current ? [current.question.id] : [],
       );
-      if (result.kind === 'ready') {
-        const prepared = result.items[0];
-        const question =
-          prepared &&
-          services.questionRepository.getByIdAndVersion(
-            prepared.questionId,
-            prepared.questionVersion,
+      if (result.kind !== 'ready') {
+        const message =
+          excludeCurrent &&
+          (result.kind === 'no-match' || result.kind === 'insufficient-stock')
+            ? 'Aucune autre question compatible n’est disponible.'
+            : result.message;
+        if (result.kind === 'no-bank')
+          showAttemptFailure({ kind: 'no-bank', message }, message);
+        else if (
+          result.kind === 'no-match' ||
+          result.kind === 'insufficient-stock'
+        )
+          showAttemptFailure({ kind: 'no-match', message }, message);
+        else
+          showAttemptFailure(
+            { kind: 'error', code: result.code, message },
+            message,
           );
-        if (!prepared || !question) {
-          setState({
+        return false;
+      }
+      const prepared = result.items[0];
+      const question =
+        prepared &&
+        services.questionRepository.getByIdAndVersion(
+          prepared.questionId,
+          prepared.questionVersion,
+        );
+      if (!prepared || !question) {
+        showAttemptFailure(
+          {
             kind: 'error',
             code: 'question-missing',
             message: 'La question préparée est indisponible.',
-          });
-          return false;
-        }
-        if (clearDraft) board.clearDraft();
-        setActiveFilters(filters);
-        setVisibleFilters(filters);
-        setState({ kind: 'ready', prepared, question });
-        return true;
+          },
+          'La question préparée est indisponible.',
+        );
+        return false;
       }
-      if (result.kind === 'no-bank')
-        setState({ kind: 'no-bank', message: result.message });
-      else if (
-        result.kind === 'no-match' ||
-        result.kind === 'insufficient-stock'
-      )
-        setState({
-          kind: 'no-match',
-          message:
-            excludeCurrent && result.kind === 'no-match'
-              ? 'Aucune autre question compatible n’est disponible.'
-              : result.message,
-        });
-      else
-        setState({ kind: 'error', code: result.code, message: result.message });
-      return false;
+      if (clearDraft) board.clearDraft();
+      setModeState('free');
+      setActiveFilters(filters);
+      setVisibleFilters(filters);
+      setNotice(null);
+      setState({ kind: 'ready', prepared, question });
+      return true;
     },
-    [board, services, state],
+    [board, services, showAttemptFailure, state],
   );
 
-  const requestChange = useCallback(
-    (filters: FreeRevisionFilters, excludeCurrent = false) => {
-      if (board.hasDraft) setPending({ filters, excludeCurrent });
-      else loadFree(filters, excludeCurrent);
-    },
-    [board.hasDraft, loadFree],
-  );
+  useEffect(() => {
+    if (initialLoaded.current) return;
+    initialLoaded.current = true;
+    queueMicrotask(() => {
+      if (mounted.current) attemptFree(initialFreeRevisionFilters);
+    });
+  }, [attemptFree]);
 
-  const setMode = useCallback(
-    (next: SessionMode) => {
-      setModeState(next);
-      setPending(null);
+  const enterMode = useCallback(
+    (next: SessionMode, clearDraft = false) => {
       const id = ++request.current;
+      if (clearDraft) board.clearDraft();
+      setModeState(next);
+      setNotice(null);
       if (next === 'free') {
-        loadFree(activeFilters);
+        attemptFree(activeFilters);
         return;
       }
       if (next === 'chapter-test') {
@@ -182,7 +213,7 @@ export function RevisionExperienceProvider({
           : services.weakPointsStateRepository.getState();
       void source
         .then((value) => {
-          if (id !== request.current) return;
+          if (!mounted.current || id !== request.current) return;
           setState(
             next === 'daily'
               ? { kind: 'daily', state: value as DailyPlanState }
@@ -190,7 +221,7 @@ export function RevisionExperienceProvider({
           );
         })
         .catch(() => {
-          if (id === request.current)
+          if (mounted.current && id === request.current)
             setState({
               kind: 'error',
               code: 'state-unavailable',
@@ -198,35 +229,77 @@ export function RevisionExperienceProvider({
             });
         });
     },
-    [activeFilters, loadFree, services],
+    [activeFilters, attemptFree, board, services],
   );
+
+  const requestFree = useCallback(
+    (
+      filters: FreeRevisionFilters,
+      excludeCurrent: boolean,
+      trigger?: HTMLElement,
+    ) => {
+      if (board.hasDraft) {
+        setDialogTrigger(trigger ?? null);
+        setPending({ kind: 'free', filters, excludeCurrent });
+      } else attemptFree(filters, excludeCurrent);
+    },
+    [attemptFree, board.hasDraft],
+  );
+
+  const setMode = useCallback(
+    (next: SessionMode, trigger?: HTMLElement) => {
+      if (next === mode) return;
+      if (board.hasDraft && state.kind === 'ready') {
+        setDialogTrigger(trigger ?? null);
+        setPending({ kind: 'mode', mode: next });
+        return;
+      }
+      enterMode(next);
+    },
+    [board.hasDraft, enterMode, mode, state],
+  );
+
+  const cancelChange = useCallback(() => {
+    setPending(null);
+    setVisibleFilters(activeFilters);
+  }, [activeFilters]);
+
+  const confirmChange = useCallback(() => {
+    if (!pending) return;
+    if (pending.kind === 'mode') {
+      setPending(null);
+      enterMode(pending.mode, true);
+      return;
+    }
+    if (attemptFree(pending.filters, pending.excludeCurrent, true))
+      setPending(null);
+  }, [attemptFree, enterMode, pending]);
 
   const value = useMemo<RevisionExperienceValue>(
     () => ({
       mode,
       setMode,
       state,
+      notice,
       activeFilters,
       visibleFilters,
       setVisibleFilters,
-      applyFilters: () => requestChange(visibleFilters),
-      nextQuestion: () => requestChange(activeFilters, true),
+      applyFilters: (trigger) => requestFree(visibleFilters, false, trigger),
+      nextQuestion: (trigger) => requestFree(activeFilters, true, trigger),
       pendingChange: pending !== null,
-      cancelChange: () => {
-        setPending(null);
-        setVisibleFilters(activeFilters);
-      },
-      confirmChange: () => {
-        if (pending && loadFree(pending.filters, pending.excludeCurrent, true))
-          setPending(null);
-      },
+      dialogTrigger,
+      cancelChange,
+      confirmChange,
     }),
     [
       activeFilters,
-      loadFree,
+      cancelChange,
+      confirmChange,
+      dialogTrigger,
       mode,
+      notice,
       pending,
-      requestChange,
+      requestFree,
       setMode,
       state,
       visibleFilters,

@@ -20,28 +20,37 @@
   l'effacement de la scène. Un candidat est entièrement préparé avant l'effacement ;
   Annuler restaure les filtres actifs.
 - **Réflexe :** échéance de 60 secondes fondée sur une `Clock` injectable,
-  stable aux rerenders et non bloquante après zéro.
+  stable aux rerenders, à la réduction de la carte et aux ouvertures du tiroir ;
+  seule l'activation d'une nouvelle question ou seed la réinitialise.
+- **Correction de recette :** l'état actif reste visible après `no-match`, erreur de
+  repository ou erreur de préparation. Les changements de mode protègent aussi un
+  brouillon Canvas. Le dialogue associe titre et description, piège le focus,
+  gère Échap et restitue le focus au déclencheur. Le renderer LaTeX conserve la
+  sémantique des AST imbriqués selon la priorité et l'associativité des opérateurs.
+- **Harness navigateur :** Vite substitue la composition contrôlée uniquement en
+  mode d'authentification Playwright. Le build de production a été inspecté et ne
+  contient aucun identifiant ni énoncé des fixtures contrôlées.
 - **Limites :** aucun calcul pédagogique, événement d'évaluation, correction,
   passation, blueprint, banque de production, cache de questions ou fonctionnalité
   PR5/PR6/PR7.
 
 | Vérification | Résultat du lot applicatif |
 |---|---|
-| Tests ciblés renderer/timer/panneaux | 3 fichiers, 20 tests réussis |
+| Tests ciblés provider/renderer/timer/panneaux | 4 fichiers, 43 tests réussis |
 | `npm run format:check` | réussi |
 | `npm run lint` | réussi ; avertissement informatif sur les projets TypeScript multiples |
 | `npm run typecheck` | réussi |
-| `npm run test:coverage` | 31 fichiers, 426 tests ; instructions 87,06 %, branches 80,24 %, fonctions 85,20 %, lignes 89,56 % |
-| `npm run build` | réussi ; 180 modules transformés |
-| `npm run build:pages` | réussi ; 180 modules transformés et fallback Pages généré |
-| `npm run test:browser` | 48 tests réussis sur desktop, iPad portrait et iPad paysage |
+| `npm run test:coverage` | 32 fichiers, 449 tests ; instructions 87,96 %, branches 81,43 %, fonctions 85,92 %, lignes 90,57 % |
+| `npm run build` | réussi ; 181 modules transformés ; fixtures contrôlées absentes de `dist` |
+| `npm run build:pages` | réussi ; 181 modules transformés et fallback Pages généré |
+| `npm run test:browser` | 66 tests réussis sur desktop, iPad portrait et iPad paysage |
 | `git diff --check` | réussi |
 
-La validation navigateur couvre l'état de production sans banque, le tiroir,
-la géométrie du Canvas, la persistance d'un trait et l'audit axe existant. Les
-adapters de banques/programmes injectés sont couverts au niveau composant ; les
-scénarios Playwright avec banque injectée restent à ajouter avant de déclarer la
-recette applicative PR4 exhaustive.
+La validation navigateur utilise des données injectées et contrôlées pour prouver
+les filtres libres, la protection atomique du brouillon, l'unique question
+compatible, le minuteur Réflexe, les états Daily et Weak points, la configuration
+20/40 et les audits axe sur les trois profils. Elle conserve aussi les preuves de
+géométrie et de persistance Canvas de la PR3.
 
 ## Lot accéléré — banque et sélection déterministe (4 août 2026)
 

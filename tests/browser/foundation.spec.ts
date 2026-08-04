@@ -63,7 +63,12 @@ test('navigates through exactly four primary destinations', async ({
     await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
     await page.getByRole('link', { name: label }).click();
     await expect(page).toHaveURL(new RegExp(`/${route}$`));
-    await expect(page.getByRole('heading', { name: heading })).toBeVisible();
+    if (route === 'whiteboard')
+      await expect(
+        page.getByRole('article', { name: 'Question active' }),
+      ).toBeVisible();
+    else
+      await expect(page.getByRole('heading', { name: heading })).toBeVisible();
   }
 });
 
@@ -135,7 +140,7 @@ test('restores the authenticated session after reload', async ({ page }) => {
   await login(page, 'owner');
   await page.reload();
   await expect(
-    page.getByRole('heading', { name: 'Tableau blanc' }),
+    page.getByRole('article', { name: 'Question active' }),
   ).toBeVisible();
   await page.goto('login');
   await expect(page).toHaveURL(/\/whiteboard$/);

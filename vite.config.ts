@@ -20,11 +20,30 @@ const aliases = {
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const revisionComposition = fileURLToPath(
+    new URL(
+      env.VITE_AUTH_ADAPTER === 'controlled'
+        ? './src/infrastructure/session/ControlledRevisionServices.ts'
+        : './src/infrastructure/session/RevisionServicesComposition.ts',
+      import.meta.url,
+    ),
+  );
 
   return {
     base: normalizeBasePath(env.VITE_BASE_PATH || '/'),
     plugins: [react()],
-    resolve: { alias: aliases },
+    resolve: {
+      alias: [
+        {
+          find: '@infrastructure/session/RevisionServicesComposition',
+          replacement: revisionComposition,
+        },
+        ...Object.entries(aliases).map(([find, replacement]) => ({
+          find,
+          replacement,
+        })),
+      ],
+    },
     build: { outDir: 'dist', sourcemap: false },
   };
 });
