@@ -47,13 +47,13 @@ const selected = (value: FilterSelection<string>) =>
 export function RevisionDrawerPanel() {
   const experience = useRevisionExperience();
   const { programIndex } = useAppServices();
-  const update = (next: FreeRevisionFilters) => {
+  const update = (next: FreeRevisionFilters, trigger: HTMLSelectElement) => {
     if (!programIndex) {
-      experience.setVisibleFilters(next);
+      experience.setVisibleFilters(next, trigger);
       return;
     }
     const normalized = normalizeFreeRevisionFilters(next, programIndex);
-    if (normalized.ok) experience.setVisibleFilters(normalized.value);
+    if (normalized.ok) experience.setVisibleFilters(normalized.value, trigger);
   };
   const filters = experience.visibleFilters;
   const chapters = programIndex
@@ -64,22 +64,24 @@ export function RevisionDrawerPanel() {
     : [];
   return (
     <div className={styles.panel}>
-      <fieldset>
-        <legend>Parcours actif</legend>
-        {paths.map((path) => (
-          <label key={path.id}>
-            <input
-              type="radio"
-              name="revision-path"
-              checked={experience.mode === path.id}
-              onChange={(event) =>
-                experience.setMode(path.id, event.currentTarget)
-              }
-            />
-            {path.label}
-          </label>
-        ))}
-      </fieldset>
+      <label className={styles.sessionType}>
+        Type de séance
+        <select
+          value={experience.mode}
+          onChange={(event) =>
+            experience.setMode(
+              event.currentTarget.value as SessionMode,
+              event.currentTarget,
+            )
+          }
+        >
+          {paths.map((path) => (
+            <option key={path.id} value={path.id}>
+              {path.label}
+            </option>
+          ))}
+        </select>
+      </label>
       {experience.mode === 'free' ? (
         <div className={styles.filters} aria-label="Options de révision libre">
           <label>
@@ -87,7 +89,10 @@ export function RevisionDrawerPanel() {
             <select
               value={selected(filters.part)}
               onChange={(event) =>
-                update({ ...filters, part: selection(event.target.value) })
+                update(
+                  { ...filters, part: selection(event.target.value) },
+                  event.currentTarget,
+                )
               }
             >
               <option value="">Toutes les parties</option>
@@ -103,7 +108,10 @@ export function RevisionDrawerPanel() {
             <select
               value={selected(filters.chapter)}
               onChange={(event) =>
-                update({ ...filters, chapter: selection(event.target.value) })
+                update(
+                  { ...filters, chapter: selection(event.target.value) },
+                  event.currentTarget,
+                )
               }
             >
               <option value="">Tous les chapitres</option>
@@ -120,7 +128,10 @@ export function RevisionDrawerPanel() {
             <select
               value={selected(filters.notion)}
               onChange={(event) =>
-                update({ ...filters, notion: selection(event.target.value) })
+                update(
+                  { ...filters, notion: selection(event.target.value) },
+                  event.currentTarget,
+                )
               }
             >
               <option value="">Toutes les notions</option>
@@ -153,17 +164,20 @@ export function RevisionDrawerPanel() {
                         kind: 'one' as const,
                         value: event.target.value as QuestionType,
                       };
-                update({
-                  ...filters,
-                  questionType,
-                  difficulty:
-                    event.target.value === 'reflex'
-                      ? { kind: 'not-applicable' }
-                      : filters.questionType.kind === 'one' &&
-                          filters.questionType.value === 'reflex'
-                        ? { kind: 'all' }
-                        : filters.difficulty,
-                });
+                update(
+                  {
+                    ...filters,
+                    questionType,
+                    difficulty:
+                      event.target.value === 'reflex'
+                        ? { kind: 'not-applicable' }
+                        : filters.questionType.kind === 'one' &&
+                            filters.questionType.value === 'reflex'
+                          ? { kind: 'all' }
+                          : filters.difficulty,
+                  },
+                  event.currentTarget,
+                );
               }}
             >
               <option value="">Tous les types</option>
@@ -185,16 +199,19 @@ export function RevisionDrawerPanel() {
                     : ''
                 }
                 onChange={(event) =>
-                  update({
-                    ...filters,
-                    difficulty:
-                      event.target.value === ''
-                        ? { kind: 'all' }
-                        : {
-                            kind: 'one',
-                            value: event.target.value as Difficulty,
-                          },
-                  })
+                  update(
+                    {
+                      ...filters,
+                      difficulty:
+                        event.target.value === ''
+                          ? { kind: 'all' }
+                          : {
+                              kind: 'one',
+                              value: event.target.value as Difficulty,
+                            },
+                    },
+                    event.currentTarget,
+                  )
                 }
               >
                 <option value="">Toutes les difficultés</option>

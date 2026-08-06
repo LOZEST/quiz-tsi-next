@@ -16,12 +16,10 @@ export function QuestionCard({
   prepared,
   question,
   reflexDeadline,
-  onNext,
 }: {
   prepared: PreparedQuestion;
   question: Readonly<Question>;
   reflexDeadline: number | null;
-  onNext: (trigger?: HTMLElement) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { clock, programIndex } = useAppServices();
@@ -54,17 +52,9 @@ export function QuestionCard({
         </div>
       ) : null}
       {!collapsed ? (
-        <>
-          <div className={styles.prompt}>
-            <QuestionContentRenderer segments={prepared.content.prompt} />
-          </div>
-          <button
-            type="button"
-            onClick={(event) => onNext(event.currentTarget)}
-          >
-            Question suivante
-          </button>
-        </>
+        <div className={styles.prompt}>
+          <QuestionContentRenderer segments={prepared.content.prompt} />
+        </div>
       ) : null}
     </article>
   );

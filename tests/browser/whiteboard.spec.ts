@@ -88,12 +88,21 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   const toolbar = await page
     .getByRole('toolbar', { name: 'Outils du tableau blanc' })
     .boundingBox();
+  const questionActions = await page
+    .getByRole('group', { name: 'Actions de la question' })
+    .boundingBox();
   expect(canvas).not.toBeNull();
   expect(toolbar).not.toBeNull();
   expect(canvas!.x).toBeGreaterThanOrEqual(0);
   expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(viewport!.height);
   expect(toolbar!.x).toBeGreaterThanOrEqual(0);
   expect(toolbar!.x + toolbar!.width).toBeLessThanOrEqual(viewport!.width);
+  expect(toolbar!.x).toBeGreaterThan(viewport!.width * 0.7);
+  expect(questionActions).not.toBeNull();
+  expect(questionActions!.y).toBeGreaterThan(viewport!.height * 0.7);
+  await expect(page.getByRole('button', { name: 'Indice' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Correction' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Suivante' })).toBeEnabled();
 });
 
 async function openRevisionOptions(page: Page) {
@@ -133,14 +142,34 @@ test('protects a drawn draft and atomically changes the question', async ({
   await page.mouse.down();
   await page.mouse.move(box!.x + 180, box!.y + 220, { steps: 5 });
   await page.mouse.up();
-  await card.getByRole('button', { name: 'Question suivante' }).click();
+  await page.getByRole('button', { name: 'Suivante' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changer de question' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Annuler' }).click();
   await expect(card).toHaveText(initial ?? '');
-  await card.getByRole('button', { name: 'Question suivante' }).click();
+  await page.getByRole('button', { name: 'Suivante' }).click();
   await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
   await expect(card).not.toHaveText(initial ?? '');
+});
+
+test('restores focus to the filter that cancels a draft change', async ({
+  page,
+}) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  await page.mouse.move(box!.x + 80, box!.y + 180);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 180, box!.y + 220, { steps: 5 });
+  await page.mouse.up();
+  await openRevisionOptions(page);
+  const filter = page.getByLabel('Type de question');
+  await filter.selectOption('calculation');
+  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Annuler' }).click();
+  await expect(filter).toHaveValue('');
+  await expect(filter).toBeFocused();
 });
 
 test('keeps the reflex deadline while reducing the card and navigating', async ({
@@ -195,7 +224,7 @@ test('keeps the only compatible question active', async ({ page }) => {
   await page.mouse.down();
   await page.mouse.move(box!.x + 190, box!.y + 210, { steps: 5 });
   await page.mouse.up();
-  const next = card.getByRole('button', { name: 'Question suivante' });
+  const next = page.getByRole('button', { name: 'Suivante' });
   await next.click();
   const dialog = page.getByRole('dialog', { name: 'Changer de question' });
   await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
@@ -213,17 +242,17 @@ test('renders Daily empty states and Weak points calibration', async ({
 }) => {
   await login(page);
   await openRevisionOptions(page);
-  await page.getByLabel('Révision du jour').check();
+  await page.getByLabel('Type de séance').selectOption('daily');
   await expect(
     page.getByText('Aucune révision n’est prévue aujourd’hui. Tu es à jour.'),
   ).toBeVisible();
-  await page.getByLabel('Consolidation des points faibles').check();
+  await page.getByLabel('Type de séance').selectOption('weak-points');
   await expect(
     page.getByText(/L’application apprend encore ton niveau/),
   ).toBeVisible();
   await page.goto('whiteboard?daily=completed');
   await openRevisionOptions(page);
-  await page.getByLabel('Révision du jour').check();
+  await page.getByLabel('Type de séance').selectOption('daily');
   await expect(
     page.getByText(
       'Révision du jour terminée. Toutes les notions prévues ont été révisées.',
@@ -237,12 +266,12 @@ test('renders controlled Daily, Weak points and chapter-test states', async ({
   await login(page);
   await page.goto('whiteboard?daily=ready&weak=ready');
   await openRevisionOptions(page);
-  await page.getByLabel('Révision du jour').check();
+  await page.getByLabel('Type de séance').selectOption('daily');
   await expect(page.getByText('Suites géométriques')).toBeVisible();
   await expect(page.getByText('2/4')).toBeVisible();
-  await page.getByLabel('Consolidation des points faibles').check();
+  await page.getByLabel('Type de séance').selectOption('weak-points');
   await expect(page.getByText(/Produit matriciel/)).toBeVisible();
-  await page.getByLabel('Test de chapitres').check();
+  await page.getByLabel('Type de séance').selectOption('chapter-test');
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
     .selectOption('sequences');

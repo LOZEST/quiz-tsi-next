@@ -4,6 +4,7 @@ import styles from './Whiteboard.module.css';
 import { useRevisionExperience } from '@features/session/RevisionExperienceProvider';
 import { QuestionCard } from '@features/questions/QuestionCard';
 import { QuestionChangeDialog } from '@features/session/QuestionChangeDialog';
+import { QuestionActions } from './QuestionActions';
 
 export function WhiteboardContainer() {
   const experience = useRevisionExperience();
@@ -17,7 +18,6 @@ export function WhiteboardContainer() {
           prepared={experience.state.prepared}
           question={experience.state.question}
           reflexDeadline={experience.state.reflexDeadline}
-          onNext={(trigger) => experience.nextQuestion(trigger)}
         />
       ) : (
         <div className={styles.futureQuestion} role="status" aria-live="polite">
@@ -40,6 +40,11 @@ export function WhiteboardContainer() {
       ) : null}
       <WhiteboardCanvas />
       <WhiteboardToolbar />
+      {experience.state.kind === 'ready' ? (
+        <QuestionActions
+          onNext={(trigger) => experience.nextQuestion(trigger)}
+        />
+      ) : null}
       <QuestionChangeDialog />
     </section>
   );
