@@ -67,8 +67,7 @@ interface RevisionExperienceValue {
   notice: string | null;
   activeFilters: FreeRevisionFilters;
   visibleFilters: FreeRevisionFilters;
-  setVisibleFilters(filters: FreeRevisionFilters): void;
-  applyFilters(trigger?: HTMLElement): void;
+  setVisibleFilters(filters: FreeRevisionFilters, trigger?: HTMLElement): void;
   nextQuestion(trigger?: HTMLElement): void;
   pendingChange: boolean;
   dialogTrigger: HTMLElement | null;
@@ -279,6 +278,14 @@ export function RevisionExperienceProvider({
     [attemptFree, board.hasDraft],
   );
 
+  const setFreeFilters = useCallback(
+    (filters: FreeRevisionFilters, trigger?: HTMLElement) => {
+      setVisibleFilters(filters);
+      requestFree(filters, false, trigger);
+    },
+    [requestFree],
+  );
+
   const setMode = useCallback(
     (next: SessionMode, trigger?: HTMLElement) => {
       if (next === mode) return;
@@ -318,8 +325,7 @@ export function RevisionExperienceProvider({
       notice,
       activeFilters,
       visibleFilters,
-      setVisibleFilters,
-      applyFilters: (trigger) => requestFree(visibleFilters, false, trigger),
+      setVisibleFilters: setFreeFilters,
       nextQuestion: (trigger) => requestFree(activeFilters, true, trigger),
       pendingChange: pending !== null,
       dialogTrigger,
@@ -336,6 +342,7 @@ export function RevisionExperienceProvider({
       pending,
       requestFree,
       setMode,
+      setFreeFilters,
       state,
       visibleFilters,
     ],

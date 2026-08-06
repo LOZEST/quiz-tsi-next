@@ -1,19 +1,78 @@
 .panel,
-.panel form,
+.filters,
 .panel fieldset {
   display: grid;
-  gap: var(--qtsi-space-2);
+  gap: var(--qtsi-space-3);
 }
+
+.panel {
+  padding-block: var(--qtsi-space-1);
+}
+
+.sessionType {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  min-block-size: var(--qtsi-touch-target);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.sessionType select {
+  min-block-size: var(--qtsi-touch-target);
+  padding-inline: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-1);
+  font: inherit;
+  font-weight: 400;
+}
+
 .panel fieldset {
   border: 0;
   padding: 0;
 }
+
+.panel legend {
+  margin-block-end: var(--qtsi-space-2);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.panel > fieldset label {
+  display: flex;
+  align-items: center;
+  gap: var(--qtsi-space-2);
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  border-radius: var(--qtsi-radius-2);
+}
+
+.filters {
+  padding: var(--qtsi-space-4);
+  background: var(--qtsi-surface-muted);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-3);
+}
+
+.filters label,
 .panel label {
   display: grid;
   gap: var(--qtsi-space-1);
   min-block-size: var(--qtsi-touch-target);
 }
-.panel select,
+
+.filters select,
 .panel button {
   min-block-size: var(--qtsi-touch-target);
+}
+
+.filters select {
+  padding-inline: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-1);
+  font: inherit;
 }

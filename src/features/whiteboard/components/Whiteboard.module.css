@@ -84,6 +84,47 @@
 .toolbar {
   position: absolute;
   z-index: 3;
+  inset: 0;
+  pointer-events: none;
+}
+
+.toolPalette,
+.historyControls {
+  display: flex;
+  gap: var(--qtsi-space-1);
+  padding: var(--qtsi-space-1);
+  background: rgb(255 255 255 / 94%);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-full);
+  box-shadow: var(--qtsi-shadow-subtle);
+  pointer-events: auto;
+}
+
+.toolbar[data-handedness='left'] .toolPalette {
+  inset-inline: calc(var(--qtsi-space-4) + var(--qtsi-safe-left)) auto;
+}
+
+.toolbar[data-handedness='left'] .historyControls {
+  inset-inline: auto calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
+}
+
+.toolPalette {
+  position: absolute;
+  inset-inline-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
+  inset-block-start: 50%;
+  flex-direction: column;
+  transform: translateY(-50%);
+}
+
+.historyControls {
+  position: absolute;
+  inset-inline-start: calc(var(--qtsi-space-4) + var(--qtsi-safe-left));
+  inset-block-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-bottom));
+}
+
+.questionActions {
+  position: absolute;
+  z-index: 3;
   inset-inline-start: 50%;
   inset-block-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-bottom));
   display: flex;
@@ -94,6 +135,26 @@
   border-radius: var(--qtsi-radius-full);
   box-shadow: var(--qtsi-shadow-subtle);
   transform: translateX(-50%);
+}
+
+.questionActions button {
+  min-inline-size: var(--qtsi-touch-target);
+  min-block-size: var(--qtsi-touch-target);
+  padding-inline: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  background: transparent;
+  border: 0;
+  border-radius: var(--qtsi-radius-full);
+}
+
+.questionActions button:not(:disabled) {
+  color: var(--qtsi-surface);
+  background: var(--qtsi-accent);
+}
+
+.questionActions button:disabled {
+  color: var(--qtsi-text-tertiary);
+  cursor: not-allowed;
 }
 
 .toolbar button {
@@ -109,6 +170,16 @@
 .toolbar button[aria-pressed='true'] {
   color: var(--qtsi-accent);
   background: var(--qtsi-accent-soft);
+}
+
+.toolbar svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .settings {
@@ -133,15 +204,29 @@
     inline-size: min(calc(100% - 8rem), 22rem);
   }
   .toolbar {
-    inset-inline-start: auto;
-    inset-inline-end: calc(var(--qtsi-space-3) + var(--qtsi-safe-right));
-    flex-direction: column;
-    transform: none;
+    inset: 0;
   }
-  .toolbarLeft {
-    inset-inline: calc(var(--qtsi-space-3) + var(--qtsi-safe-left)) auto;
+  .toolPalette {
+    inset-inline-end: calc(var(--qtsi-space-2) + var(--qtsi-safe-right));
+  }
+  .historyControls {
+    inset-inline-start: calc(var(--qtsi-space-2) + var(--qtsi-safe-left));
+  }
+  .toolbar[data-handedness='left'] .toolPalette {
+    inset-inline: calc(var(--qtsi-space-2) + var(--qtsi-safe-left)) auto;
+  }
+  .toolbar[data-handedness='left'] .historyControls {
+    inset-inline: auto calc(var(--qtsi-space-2) + var(--qtsi-safe-right));
   }
   .toolbar button {
+    padding-inline: var(--qtsi-space-1);
+  }
+  .questionActions {
+    max-inline-size: calc(100% - var(--qtsi-space-4));
+  }
+  .questionActions button {
+    min-inline-size: 0;
     padding-inline: var(--qtsi-space-2);
+    font-size: 0.8125rem;
   }
 }

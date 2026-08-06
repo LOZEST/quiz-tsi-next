@@ -175,6 +175,11 @@ function Probe() {
         {'message' in value.state ? value.state.message : ''}
       </output>
       <output data-testid="pending">{String(value.pendingChange)}</output>
+      <output data-testid="visible-question-type">
+        {value.visibleFilters.questionType.kind === 'one'
+          ? value.visibleFilters.questionType.value
+          : 'all'}
+      </output>
       <output data-testid="seed">
         {value.state.kind === 'ready' ? value.state.prepared.seed : 'none'}
       </output>
@@ -185,9 +190,6 @@ function Probe() {
       </output>
       <button onClick={(event) => value.nextQuestion(event.currentTarget)}>
         Suivante
-      </button>
-      <button onClick={(event) => value.applyFilters(event.currentTarget)}>
-        Appliquer
       </button>
       <button
         onClick={() =>
@@ -258,7 +260,7 @@ describe('RevisionExperienceProvider integration', () => {
     view.rerender(
       <Harness services={{ ...readyServices, programIndex: null }} />,
     );
-    await userEvent.click(screen.getByText('Appliquer'));
+    await userEvent.click(screen.getByText('Choisir Calcul'));
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('no-program'),
     );
@@ -277,7 +279,7 @@ describe('RevisionExperienceProvider integration', () => {
         }}
       />,
     );
-    await userEvent.click(screen.getByText('Appliquer'));
+    await userEvent.click(screen.getByText('Choisir Calcul'));
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('no-bank'),
     );
@@ -383,7 +385,6 @@ describe('RevisionExperienceProvider integration', () => {
     render(<Harness services={services} />);
     await screen.findByText('q1');
     await user.click(screen.getByText('Choisir Calcul'));
-    await user.click(screen.getByText('Appliquer'));
     expect(screen.getByTestId('question')).toHaveTextContent('q1');
     expect(screen.getByTestId('notice')).toHaveTextContent(
       'Impossible de préparer une variante valide de cette question.',
@@ -410,6 +411,34 @@ describe('RevisionExperienceProvider integration', () => {
     );
     expect(screen.getByTestId('question')).toHaveTextContent(initial ?? '');
     expect(screen.getByTestId('pending')).toHaveTextContent('false');
+  });
+
+  it('confirms free-filter changes immediately and restores them on draft cancellation', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness
+        services={baseServices([question('q1'), question('q2')])}
+        draft
+      />,
+    );
+    await screen.findByText('q1');
+    const initial = screen.getByTestId('question').textContent;
+    await user.click(screen.getByText('Choisir Calcul'));
+    expect(
+      screen.getByRole('dialog', { name: 'Changer de question' }),
+    ).toBeVisible();
+    expect(screen.getByTestId('visible-question-type')).toHaveTextContent(
+      'calculation',
+    );
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'Annuler',
+      }),
+    );
+    expect(screen.getByTestId('question')).toHaveTextContent(initial ?? '');
+    expect(screen.getByTestId('visible-question-type')).toHaveTextContent(
+      'all',
+    );
   });
 
   it('traps keyboard focus, cancels with Escape and restores the trigger', async () => {

@@ -31,10 +31,12 @@ let filters: FreeRevisionFilters = initialFreeRevisionFilters;
 const setMode = vi.fn((value: SessionMode) => {
   mode = value;
 });
-const setVisibleFilters = vi.fn((value: FreeRevisionFilters) => {
-  filters = value;
-});
-const applyFilters = vi.fn();
+const setVisibleFilters = vi.fn(
+  (value: FreeRevisionFilters, trigger?: HTMLElement) => {
+    void trigger;
+    filters = value;
+  },
+);
 
 vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
@@ -53,7 +55,6 @@ vi.mock('@features/session/RevisionExperienceProvider', async (original) => {
       visibleFilters: filters,
       setMode,
       setVisibleFilters,
-      applyFilters,
       nextQuestion: vi.fn(),
       pendingChange: false,
       cancelChange: vi.fn(),
@@ -74,7 +75,9 @@ describe('RevisionDrawerPanel', () => {
   it('shows the exact four paths and ordered dependent filters', async () => {
     const user = userEvent.setup();
     const view = render(<RevisionDrawerPanel />);
-    expect(screen.getAllByRole('radio')).toHaveLength(4);
+    const sessionType = screen.getByLabelText('Type de séance');
+    expect(sessionType).toHaveValue('free');
+    expect(screen.queryByRole('radio')).toBeNull();
     expect(
       screen
         .getAllByRole('combobox')
@@ -82,12 +85,16 @@ describe('RevisionDrawerPanel', () => {
           (item) => item.parentElement?.textContent?.split(/Toutes|Tous/)[0],
         ),
     ).toEqual([
+      'Type de séanceRévision du jourConsolidation des points faiblesRévision libreTest de chapitres',
       'Partie',
       'Chapitre',
       'Notion',
       'Type de question',
       'Difficulté',
     ]);
+    await user.selectOptions(sessionType, 'daily');
+    expect(setMode).toHaveBeenCalledWith('daily', sessionType);
+    mode = 'free';
     await user.selectOptions(screen.getByLabelText('Partie'), 'p1');
     expect(setVisibleFilters).toHaveBeenCalled();
     filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
@@ -106,8 +113,11 @@ describe('RevisionDrawerPanel', () => {
     await user.selectOptions(screen.getByLabelText('Type de question'), '');
     filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
     expect(filters.difficulty.kind).toBe('all');
-    await user.click(screen.getByRole('button', { name: 'Appliquer' }));
-    expect(applyFilters).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Appliquer' })).toBeNull();
+    expect(setVisibleFilters).toHaveBeenCalledTimes(3);
+    expect(setVisibleFilters.mock.calls[0]?.[1]).toBe(
+      screen.getByLabelText('Partie'),
+    );
   });
 
   it.each([

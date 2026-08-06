@@ -105,7 +105,6 @@ describe('ReflexTimer', () => {
           prepared={prepared('seed-1')}
           question={reflexQuestion}
           reflexDeadline={61_000}
-          onNext={vi.fn()}
         />
       </AppServicesProvider>,
     );
@@ -123,7 +122,6 @@ describe('ReflexTimer', () => {
           prepared={prepared('seed-1')}
           question={reflexQuestion}
           reflexDeadline={61_000}
-          onNext={vi.fn()}
         />
       </AppServicesProvider>,
     );
@@ -134,7 +132,6 @@ describe('ReflexTimer', () => {
           prepared={prepared('seed-2')}
           question={reflexQuestion}
           reflexDeadline={clock.now() + 60_000}
-          onNext={vi.fn()}
         />
       </AppServicesProvider>,
     );
