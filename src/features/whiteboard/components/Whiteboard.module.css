@@ -111,6 +111,16 @@
   background: var(--qtsi-accent-soft);
 }
 
+.toolbar svg {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
 .settings {
   display: grid;
   gap: var(--qtsi-space-3);
@@ -133,15 +143,12 @@
     inline-size: min(calc(100% - 8rem), 22rem);
   }
   .toolbar {
-    inset-inline-start: auto;
-    inset-inline-end: calc(var(--qtsi-space-3) + var(--qtsi-safe-right));
-    flex-direction: column;
-    transform: none;
-  }
-  .toolbarLeft {
-    inset-inline: calc(var(--qtsi-space-3) + var(--qtsi-safe-left)) auto;
+    max-inline-size: calc(100% - var(--qtsi-space-4));
+    gap: 0;
   }
   .toolbar button {
+    min-inline-size: 0;
     padding-inline: var(--qtsi-space-2);
+    font-size: 0.8125rem;
   }
 }

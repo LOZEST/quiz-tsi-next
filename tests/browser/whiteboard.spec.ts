@@ -34,7 +34,6 @@ test('shows a centered writable canvas and accessible controls', async ({
     'true',
   );
   await page.getByRole('button', { name: 'Stylo' }).click();
-  await page.getByRole('button', { name: 'Grille' }).click();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
     'aria-pressed',
     'true',
@@ -117,7 +116,6 @@ test('uses the controlled PR4 bank and dependent free revision filters', async (
   await page.getByLabel('Notion').selectOption('geometric-sequences');
   await page.getByLabel('Type de question').selectOption('reflex');
   await expect(page.getByLabel('Difficulté')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Appliquer' }).click();
   await expect(card).toContainText('Réflexe');
   await page.getByLabel('Type de question').selectOption('');
   await expect(page.getByLabel('Difficulté')).toHaveValue('');
@@ -154,7 +152,6 @@ test('keeps the reflex deadline while reducing the card and navigating', async (
   });
   await openRevisionOptions(page);
   await page.getByLabel('Type de question').selectOption('reflex');
-  await page.getByRole('button', { name: 'Appliquer' }).click();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
   await expect(card.getByText('60 s restantes')).toBeVisible();
@@ -189,7 +186,6 @@ test('keeps the only compatible question active', async ({ page }) => {
     .getByRole('combobox', { name: 'Chapitre', exact: true })
     .selectOption('matrices');
   await page.getByLabel('Notion').selectOption('matrix-products');
-  await page.getByRole('button', { name: 'Appliquer' }).click();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
   const current = await card.textContent();

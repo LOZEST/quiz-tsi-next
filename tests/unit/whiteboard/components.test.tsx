@@ -16,10 +16,11 @@ describe('WhiteboardToolbar', () => {
     const eraser = screen.getByRole('button', { name: 'Gomme' });
     const grid = screen.getByRole('button', { name: 'Grille' });
     expect(pen).toHaveAttribute('aria-pressed', 'true');
+    expect(grid).toHaveAttribute('aria-pressed', 'true');
     await user.click(eraser);
     expect(eraser).toHaveAttribute('aria-pressed', 'true');
     await user.click(grid);
-    expect(grid).toHaveAttribute('aria-pressed', 'true');
+    expect(grid).toHaveAttribute('aria-pressed', 'false');
     expect(
       screen.queryByRole('button', { name: /forme|rectangle|cercle/i }),
     ).toBeNull();

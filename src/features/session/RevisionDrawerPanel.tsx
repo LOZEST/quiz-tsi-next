@@ -81,15 +81,7 @@ export function RevisionDrawerPanel() {
         ))}
       </fieldset>
       {experience.mode === 'free' ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            const trigger = event.nativeEvent.submitter;
-            experience.applyFilters(
-              trigger instanceof HTMLElement ? trigger : undefined,
-            );
-          }}
-        >
+        <div className={styles.filters} aria-label="Options de révision libre">
           <label>
             Partie
             <select
@@ -214,8 +206,7 @@ export function RevisionDrawerPanel() {
               </select>
             </label>
           ) : null}
-          <button type="submit">Appliquer</button>
-        </form>
+        </div>
       ) : null}
       {experience.mode === 'daily' && experience.state.kind === 'daily' ? (
         <Daily state={experience.state.state} program={programIndex} />

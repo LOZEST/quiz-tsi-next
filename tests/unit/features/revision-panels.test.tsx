@@ -34,7 +34,6 @@ const setMode = vi.fn((value: SessionMode) => {
 const setVisibleFilters = vi.fn((value: FreeRevisionFilters) => {
   filters = value;
 });
-const applyFilters = vi.fn();
 
 vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
@@ -53,7 +52,6 @@ vi.mock('@features/session/RevisionExperienceProvider', async (original) => {
       visibleFilters: filters,
       setMode,
       setVisibleFilters,
-      applyFilters,
       nextQuestion: vi.fn(),
       pendingChange: false,
       cancelChange: vi.fn(),
@@ -106,8 +104,8 @@ describe('RevisionDrawerPanel', () => {
     await user.selectOptions(screen.getByLabelText('Type de question'), '');
     filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
     expect(filters.difficulty.kind).toBe('all');
-    await user.click(screen.getByRole('button', { name: 'Appliquer' }));
-    expect(applyFilters).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Appliquer' })).toBeNull();
+    expect(setVisibleFilters).toHaveBeenCalledTimes(3);
   });
 
   it.each([

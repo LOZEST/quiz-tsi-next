@@ -30,7 +30,7 @@ const WhiteboardContext = createContext<WhiteboardUiState | null>(null);
 export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [activeTool, setActiveTool] = useState<'pen' | 'eraser'>('pen');
   const [penWidth, setPenWidth] = useState(3);
-  const [gridEnabled, setGridEnabled] = useState(false);
+  const [gridEnabled, setGridEnabled] = useState(true);
   const [handedness, setHandedness] = useState<'left' | 'right'>('right');
   const [history, setHistory] = useState<{
     undo(): void;
