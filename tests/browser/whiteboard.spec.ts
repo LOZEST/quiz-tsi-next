@@ -27,6 +27,22 @@ test('shows a centered writable canvas and accessible controls', async ({
   await expect(page.getByLabel('Gaucher')).toBeChecked();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   expect(await canvas.boundingBox()).toEqual(canvasBeforeMenu);
+  const leftTools = await page
+    .getByRole('group', { name: 'Outils d’écriture' })
+    .boundingBox();
+  const rightHistory = await page
+    .getByRole('group', { name: 'Historique' })
+    .boundingBox();
+  expect(leftTools!.x).toBeLessThan(page.viewportSize()!.width * 0.3);
+  expect(rightHistory!.x).toBeGreaterThan(page.viewportSize()!.width * 0.7);
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.getByRole('button', { name: 'Réglages Apple Pencil' }).click();
+  await page.getByLabel('Droitier').check();
+  await page.getByRole('button', { name: 'Fermer le menu' }).click();
+  const rightTools = await page
+    .getByRole('group', { name: 'Outils d’écriture' })
+    .boundingBox();
+  expect(rightTools!.x).toBeGreaterThan(page.viewportSize()!.width * 0.7);
 
   await page.getByRole('button', { name: 'Gomme' }).click();
   await expect(page.getByRole('button', { name: 'Gomme' })).toHaveAttribute(

@@ -8,6 +8,7 @@ export function WhiteboardToolbar() {
       className={styles.toolbar}
       role="toolbar"
       aria-label="Outils du tableau blanc"
+      data-handedness={board.handedness}
     >
       <div
         className={styles.toolPalette}

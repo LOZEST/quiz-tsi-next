@@ -100,6 +100,14 @@
   pointer-events: auto;
 }
 
+.toolbar[data-handedness='left'] .toolPalette {
+  inset-inline: calc(var(--qtsi-space-4) + var(--qtsi-safe-left)) auto;
+}
+
+.toolbar[data-handedness='left'] .historyControls {
+  inset-inline: auto calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
+}
+
 .toolPalette {
   position: absolute;
   inset-inline-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
@@ -203,6 +211,12 @@
   }
   .historyControls {
     inset-inline-start: calc(var(--qtsi-space-2) + var(--qtsi-safe-left));
+  }
+  .toolbar[data-handedness='left'] .toolPalette {
+    inset-inline: calc(var(--qtsi-space-2) + var(--qtsi-safe-left)) auto;
+  }
+  .toolbar[data-handedness='left'] .historyControls {
+    inset-inline: auto calc(var(--qtsi-space-2) + var(--qtsi-safe-right));
   }
   .toolbar button {
     padding-inline: var(--qtsi-space-1);
