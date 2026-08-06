@@ -84,17 +84,34 @@
 .toolbar {
   position: absolute;
   z-index: 3;
-  inset-inline-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
-  inset-block-start: 50%;
+  inset: 0;
+  pointer-events: none;
+}
+
+.toolPalette,
+.historyControls {
   display: flex;
-  flex-direction: column;
   gap: var(--qtsi-space-1);
   padding: var(--qtsi-space-1);
   background: rgb(255 255 255 / 94%);
   border: 1px solid var(--qtsi-border);
   border-radius: var(--qtsi-radius-full);
   box-shadow: var(--qtsi-shadow-subtle);
+  pointer-events: auto;
+}
+
+.toolPalette {
+  position: absolute;
+  inset-inline-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-right));
+  inset-block-start: 50%;
+  flex-direction: column;
   transform: translateY(-50%);
+}
+
+.historyControls {
+  position: absolute;
+  inset-inline-start: calc(var(--qtsi-space-4) + var(--qtsi-safe-left));
+  inset-block-end: calc(var(--qtsi-space-4) + var(--qtsi-safe-bottom));
 }
 
 .questionActions {
@@ -179,7 +196,13 @@
     inline-size: min(calc(100% - 8rem), 22rem);
   }
   .toolbar {
+    inset: 0;
+  }
+  .toolPalette {
     inset-inline-end: calc(var(--qtsi-space-2) + var(--qtsi-safe-right));
+  }
+  .historyControls {
+    inset-inline-start: calc(var(--qtsi-space-2) + var(--qtsi-safe-left));
   }
   .toolbar button {
     padding-inline: var(--qtsi-space-1);

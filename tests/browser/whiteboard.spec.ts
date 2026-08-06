@@ -85,24 +85,37 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   await login(page);
   const viewport = page.viewportSize();
   const canvas = await page.getByTestId('whiteboard-canvas').boundingBox();
-  const toolbar = await page
-    .getByRole('toolbar', { name: 'Outils du tableau blanc' })
+  const writingTools = await page
+    .getByRole('group', { name: 'Outils d’écriture' })
+    .boundingBox();
+  const history = await page
+    .getByRole('group', { name: 'Historique' })
     .boundingBox();
   const questionActions = await page
     .getByRole('group', { name: 'Actions de la question' })
     .boundingBox();
   expect(canvas).not.toBeNull();
-  expect(toolbar).not.toBeNull();
+  expect(writingTools).not.toBeNull();
+  expect(history).not.toBeNull();
   expect(canvas!.x).toBeGreaterThanOrEqual(0);
   expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(viewport!.height);
-  expect(toolbar!.x).toBeGreaterThanOrEqual(0);
-  expect(toolbar!.x + toolbar!.width).toBeLessThanOrEqual(viewport!.width);
-  expect(toolbar!.x).toBeGreaterThan(viewport!.width * 0.7);
+  expect(writingTools!.x).toBeGreaterThan(viewport!.width * 0.7);
+  expect(writingTools!.x + writingTools!.width).toBeLessThanOrEqual(
+    viewport!.width,
+  );
+  expect(history!.x).toBeLessThan(viewport!.width * 0.3);
+  expect(history!.y).toBeGreaterThan(viewport!.height * 0.7);
   expect(questionActions).not.toBeNull();
   expect(questionActions!.y).toBeGreaterThan(viewport!.height * 0.7);
   await expect(page.getByRole('button', { name: 'Indice' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Correction' })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Suivante' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
 });
 
 async function openRevisionOptions(page: Page) {

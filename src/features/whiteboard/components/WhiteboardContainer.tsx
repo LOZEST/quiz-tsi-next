@@ -40,11 +40,10 @@ export function WhiteboardContainer() {
       ) : null}
       <WhiteboardCanvas />
       <WhiteboardToolbar />
-      {experience.state.kind === 'ready' ? (
-        <QuestionActions
-          onNext={(trigger) => experience.nextQuestion(trigger)}
-        />
-      ) : null}
+      <QuestionActions
+        active={experience.state.kind === 'ready'}
+        onNext={(trigger) => experience.nextQuestion(trigger)}
+      />
       <QuestionChangeDialog />
     </section>
   );
