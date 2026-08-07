@@ -39,12 +39,13 @@ export function WhiteboardToolbar() {
         </button>
         <button
           type="button"
-          aria-label="Grille"
-          aria-pressed={board.gridEnabled}
-          onClick={() => board.setGridEnabled(!board.gridEnabled)}
+          aria-label="Formes — bientôt disponible"
+          title="Formes — bientôt disponible"
+          disabled
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 4h16v16H4zM4 10h16M10 4v16" />
+            <path d="M4 5h7v7H4zM16 5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" />
+            <path d="m8 12 4 7H4l4-7ZM16 12h4v7h-7l3-7Z" />
           </svg>
         </button>
       </div>

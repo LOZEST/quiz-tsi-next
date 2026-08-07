@@ -13,7 +13,7 @@ vi.mock('@features/whiteboard/canvas/WhiteboardCanvas', () => ({
 }));
 
 describe('WhiteboardToolbar', () => {
-  it('exposes only the handwritten PR3 tools and changes selection', async () => {
+  it('exposes the current handwritten tools and a disabled future shapes control', async () => {
     const user = userEvent.setup();
     render(
       <WhiteboardProvider>
@@ -22,16 +22,14 @@ describe('WhiteboardToolbar', () => {
     );
     const pen = screen.getByRole('button', { name: 'Stylo' });
     const eraser = screen.getByRole('button', { name: 'Gomme' });
-    const grid = screen.getByRole('button', { name: 'Grille' });
+    const shapes = screen.getByRole('button', {
+      name: 'Formes — bientôt disponible',
+    });
     expect(pen).toHaveAttribute('aria-pressed', 'true');
-    expect(grid).toHaveAttribute('aria-pressed', 'true');
+    expect(shapes).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'Grille' })).toBeNull();
     await user.click(eraser);
     expect(eraser).toHaveAttribute('aria-pressed', 'true');
-    await user.click(grid);
-    expect(grid).toHaveAttribute('aria-pressed', 'false');
-    expect(
-      screen.queryByRole('button', { name: /forme|rectangle|cercle/i }),
-    ).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     await user.click(screen.getByRole('button', { name: 'Rétablir' }));
   });

@@ -23,6 +23,10 @@ test('shows a centered writable canvas and accessible controls', async ({
   expect(await canvas.boundingBox()).toEqual(canvasBeforeMenu);
   await page.getByRole('button', { name: 'Réglages Apple Pencil' }).click();
   await expect(page.getByLabel('Épaisseur du stylo')).toBeVisible();
+  await expect(page.getByLabel('Afficher la grille')).toBeChecked();
+  await page.getByLabel('Afficher la grille').uncheck();
+  await expect(page.getByLabel('Afficher la grille')).not.toBeChecked();
+  await page.getByLabel('Afficher la grille').check();
   await page.getByLabel('Gaucher').check();
   await expect(page.getByLabel('Gaucher')).toBeChecked();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
@@ -50,10 +54,10 @@ test('shows a centered writable canvas and accessible controls', async ({
     'true',
   );
   await page.getByRole('button', { name: 'Stylo' }).click();
-  await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Formes — bientôt disponible' }),
+  ).toBeDisabled();
 });
 
 test('draws with pointer events and restores the local scene after reload', async ({
@@ -128,10 +132,10 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Suivante' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: 'Formes — bientôt disponible' }),
+  ).toBeDisabled();
 });
 
 async function openRevisionOptions(page: Page) {
