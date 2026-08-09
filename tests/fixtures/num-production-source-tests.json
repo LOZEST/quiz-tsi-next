@@ -1,0 +1,780 @@
+[
+  {
+    "calculId": "NUM-F01-F01",
+    "test": 1,
+    "parameters": { "a": 18, "b": 7 },
+    "expected": { "value": 11, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-F01",
+    "test": 2,
+    "parameters": { "a": -4, "b": 9 },
+    "expected": { "value": -13, "set": "Z" }
+  },
+  {
+    "calculId": "NUM-F01-F02",
+    "test": 1,
+    "parameters": { "a": 12, "b": -5 },
+    "expected": { "value": 12, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-F02",
+    "test": 2,
+    "parameters": { "a": -7, "b": 3 },
+    "expected": { "value": -7, "set": "Z" }
+  },
+  {
+    "calculId": "NUM-F01-F03",
+    "test": 1,
+    "parameters": { "a": 37, "k": 2 },
+    "expected": { "value": "37/100", "set": "D" }
+  },
+  {
+    "calculId": "NUM-F01-F03",
+    "test": 2,
+    "parameters": { "a": -7, "k": 1 },
+    "expected": { "value": "-7/10", "set": "D" }
+  },
+  {
+    "calculId": "NUM-F01-F04",
+    "test": 1,
+    "parameters": { "a": -13 },
+    "expected": { "value": 13, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-F04",
+    "test": 2,
+    "parameters": { "a": 8 },
+    "expected": { "value": 8, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-F05",
+    "test": 1,
+    "parameters": { "a": 2, "n": 3 },
+    "expected": { "value": "1/8", "set": "D" }
+  },
+  {
+    "calculId": "NUM-F01-F05",
+    "test": 2,
+    "parameters": { "a": 3, "n": 2 },
+    "expected": { "value": "1/9", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-N01",
+    "test": 1,
+    "parameters": { "a": 1, "b": 4, "c": 3, "k": 1 },
+    "expected": { "value": "11/20", "set": "D" }
+  },
+  {
+    "calculId": "NUM-F01-N01",
+    "test": 2,
+    "parameters": { "a": 1, "b": 3, "c": 2, "k": 1 },
+    "expected": { "value": "8/15", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-N02",
+    "test": 1,
+    "parameters": { "a": 3, "b": 4, "c": 9, "d": 8 },
+    "expected": { "value": "2/3", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-N02",
+    "test": 2,
+    "parameters": { "a": 5, "b": 2, "c": 1, "d": 4 },
+    "expected": { "value": 10, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-N03",
+    "test": 1,
+    "parameters": { "p": 5, "q": 2, "r": 2 },
+    "expected": { "valeur_exacte": "3√2", "ensemble": "R\\Q" }
+  },
+  {
+    "calculId": "NUM-F01-N03",
+    "test": 2,
+    "parameters": { "p": 1, "q": 4, "r": 3 },
+    "expected": { "valeur_exacte": "-3√3", "ensemble": "R\\Q" }
+  },
+  {
+    "calculId": "NUM-F01-N04",
+    "test": 1,
+    "parameters": { "a": 2, "b": 3, "m": 4, "n": 2 },
+    "expected": { "value": "4/9", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-N04",
+    "test": 2,
+    "parameters": { "a": 6, "b": 3, "m": 1, "n": 3 },
+    "expected": { "value": "1/4", "set": "D" }
+  },
+  {
+    "calculId": "NUM-F01-N05",
+    "test": 1,
+    "parameters": { "a": -5, "b": 7, "c": 4 },
+    "expected": { "value": 3, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-N05",
+    "test": 2,
+    "parameters": { "a": 9, "b": 2, "c": 7 },
+    "expected": { "value": 1, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-P01",
+    "test": 1,
+    "parameters": { "a": 1, "b": 3 },
+    "expected": { "value": "1/3", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-P01",
+    "test": 2,
+    "parameters": { "a": 5, "b": 6 },
+    "expected": { "value": "5/6", "set": "Q" }
+  },
+  {
+    "calculId": "NUM-F01-P02",
+    "test": 1,
+    "parameters": { "a": 8, "b": 3, "r": 2 },
+    "expected": { "value": 5, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-P02",
+    "test": 2,
+    "parameters": { "a": -2, "b": 5, "r": 7 },
+    "expected": { "value": -7, "set": "Z" }
+  },
+  {
+    "calculId": "NUM-F01-P03",
+    "test": 1,
+    "parameters": { "p": 2, "q": 3 },
+    "expected": { "valeur_exacte": "√6/3", "ensemble": "R\\Q" }
+  },
+  {
+    "calculId": "NUM-F01-P03",
+    "test": 2,
+    "parameters": { "p": 5, "q": 4 },
+    "expected": { "valeur_exacte": "√5/2", "ensemble": "R\\Q" }
+  },
+  {
+    "calculId": "NUM-F01-P04",
+    "test": 1,
+    "parameters": { "r": 7, "a": 2 },
+    "expected": { "value": 3, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-P04",
+    "test": 2,
+    "parameters": { "r": 5, "a": 4 },
+    "expected": { "value": -11, "set": "Z" }
+  },
+  {
+    "calculId": "NUM-F01-P05",
+    "test": 1,
+    "parameters": { "a": 7, "b": -2 },
+    "expected": { "value": 0, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F01-P05",
+    "test": 2,
+    "parameters": { "a": -9, "b": 4 },
+    "expected": { "value": 0, "set": "N" }
+  },
+  {
+    "calculId": "NUM-F02-F01",
+    "test": 1,
+    "parameters": { "N": 47, "d": 6 },
+    "expected": 5
+  },
+  {
+    "calculId": "NUM-F02-F01",
+    "test": 2,
+    "parameters": { "N": -17, "d": 5 },
+    "expected": 3
+  },
+  {
+    "calculId": "NUM-F02-F02",
+    "test": 1,
+    "parameters": { "a": 3, "b": 7 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-F02",
+    "test": 2,
+    "parameters": { "a": -4, "b": 2 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-F03",
+    "test": 1,
+    "parameters": { "d": 4, "L": 3, "U": 21 },
+    "expected": 5
+  },
+  {
+    "calculId": "NUM-F02-F03",
+    "test": 2,
+    "parameters": { "d": 5, "L": -12, "U": 8 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F02-F04",
+    "test": 1,
+    "parameters": { "a": 3, "b": 2, "c": 1 },
+    "expected": { "N": 360, "decomposition": "2^3·3^2·5" }
+  },
+  {
+    "calculId": "NUM-F02-F04",
+    "test": 2,
+    "parameters": { "a": 0, "b": 3, "c": 2 },
+    "expected": { "N": 675, "decomposition": "3^3·5^2" }
+  },
+  {
+    "calculId": "NUM-F02-F05",
+    "test": 1,
+    "parameters": { "n": 17 },
+    "expected": { "est_premier": "OUI" }
+  },
+  {
+    "calculId": "NUM-F02-F05",
+    "test": 2,
+    "parameters": { "n": 21 },
+    "expected": { "est_premier": "NON", "diviseur_non_trivial": 3 }
+  },
+  {
+    "calculId": "NUM-F02-N01",
+    "test": 1,
+    "parameters": { "a": 7, "b": 2, "k": -1, "d": 3 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-N01",
+    "test": 2,
+    "parameters": { "a": -4, "b": 6, "k": 5, "d": 9 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-N02",
+    "test": 1,
+    "parameters": { "a": 4, "b": 2, "c": 1, "d": 2, "e": 3, "f": 0 },
+    "expected": 36
+  },
+  {
+    "calculId": "NUM-F02-N02",
+    "test": 2,
+    "parameters": { "a": 1, "b": 4, "c": 2, "d": 3, "e": 1, "f": 3 },
+    "expected": 150
+  },
+  {
+    "calculId": "NUM-F02-N03",
+    "test": 1,
+    "parameters": { "a": 3, "b": 1, "c": 0, "d": 1, "e": 2, "f": 1 },
+    "expected": 360
+  },
+  {
+    "calculId": "NUM-F02-N03",
+    "test": 2,
+    "parameters": { "a": 0, "b": 3, "c": 2, "d": 4, "e": 1, "f": 0 },
+    "expected": 10800
+  },
+  {
+    "calculId": "NUM-F02-N04",
+    "test": 1,
+    "parameters": { "a": 3, "b": 2, "c": 1 },
+    "expected": 24
+  },
+  {
+    "calculId": "NUM-F02-N04",
+    "test": 2,
+    "parameters": { "a": 0, "b": 4, "c": 2 },
+    "expected": 15
+  },
+  {
+    "calculId": "NUM-F02-N05",
+    "test": 1,
+    "parameters": { "d": 7, "q": 8, "r": 3 },
+    "expected": 59
+  },
+  {
+    "calculId": "NUM-F02-N05",
+    "test": 2,
+    "parameters": { "d": 5, "q": -4, "r": 2 },
+    "expected": -18
+  },
+  {
+    "calculId": "NUM-F02-P01",
+    "test": 1,
+    "parameters": { "d": 6, "N": 40 },
+    "expected": 6
+  },
+  {
+    "calculId": "NUM-F02-P01",
+    "test": 2,
+    "parameters": { "d": 9, "N": 8 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-P02",
+    "test": 1,
+    "parameters": { "a": 3, "b": 4 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-P02",
+    "test": 2,
+    "parameters": { "a": -2, "b": 7 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F02-P03",
+    "test": 1,
+    "parameters": { "p": 5, "x": 35 },
+    "expected": { "x_mod_p": 0, "x2_mod_p": 0, "p_divise_x": "OUI" }
+  },
+  {
+    "calculId": "NUM-F02-P03",
+    "test": 2,
+    "parameters": { "p": 11, "x": -33 },
+    "expected": { "x_mod_p": 0, "x2_mod_p": 0, "p_divise_x": "OUI" }
+  },
+  {
+    "calculId": "NUM-F02-P04",
+    "test": 1,
+    "parameters": { "a": 2 },
+    "expected": 143
+  },
+  {
+    "calculId": "NUM-F02-P04",
+    "test": 2,
+    "parameters": { "a": 5 },
+    "expected": 899
+  },
+  {
+    "calculId": "NUM-F02-P05",
+    "test": 1,
+    "parameters": { "N": 17, "d": 5 },
+    "expected": { "q": -4, "r": 3 }
+  },
+  {
+    "calculId": "NUM-F02-P05",
+    "test": 2,
+    "parameters": { "N": 28, "d": 6 },
+    "expected": { "q": -5, "r": 2 }
+  },
+  {
+    "calculId": "NUM-F03-F01",
+    "test": 1,
+    "parameters": { "a": 2, "m": 3, "n": 4 },
+    "expected": 128
+  },
+  {
+    "calculId": "NUM-F03-F01",
+    "test": 2,
+    "parameters": { "a": -2, "m": 2, "n": 3 },
+    "expected": -32
+  },
+  {
+    "calculId": "NUM-F03-F02",
+    "test": 1,
+    "parameters": { "a": 2, "m": 7, "n": 3 },
+    "expected": 16
+  },
+  {
+    "calculId": "NUM-F03-F02",
+    "test": 2,
+    "parameters": { "a": -3, "m": 4, "n": 2 },
+    "expected": 9
+  },
+  {
+    "calculId": "NUM-F03-F03",
+    "test": 1,
+    "parameters": { "a": 2, "m": 3, "n": 2 },
+    "expected": 64
+  },
+  {
+    "calculId": "NUM-F03-F03",
+    "test": 2,
+    "parameters": { "a": -2, "m": 2, "n": 3 },
+    "expected": 64
+  },
+  {
+    "calculId": "NUM-F03-F04",
+    "test": 1,
+    "parameters": { "a": 2, "b": 3, "n": 2 },
+    "expected": 36
+  },
+  {
+    "calculId": "NUM-F03-F04",
+    "test": 2,
+    "parameters": { "a": -2, "b": 3, "n": 3 },
+    "expected": -216
+  },
+  {
+    "calculId": "NUM-F03-F05",
+    "test": 1,
+    "parameters": { "a": 6, "b": 2, "n": 3 },
+    "expected": 27
+  },
+  {
+    "calculId": "NUM-F03-F05",
+    "test": 2,
+    "parameters": { "a": -4, "b": 2, "n": 2 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F03-N01",
+    "test": 1,
+    "parameters": { "a": 2, "m": 5, "n": 3, "p": 4 },
+    "expected": 16
+  },
+  {
+    "calculId": "NUM-F03-N01",
+    "test": 2,
+    "parameters": { "a": -2, "m": 4, "n": 3, "p": 2 },
+    "expected": -32
+  },
+  {
+    "calculId": "NUM-F03-N02",
+    "test": 1,
+    "parameters": { "a": 2, "m": 5, "n": 2, "p": 3 },
+    "expected": 512
+  },
+  {
+    "calculId": "NUM-F03-N02",
+    "test": 2,
+    "parameters": { "a": -2, "m": 4, "n": 2, "p": 2 },
+    "expected": 16
+  },
+  {
+    "calculId": "NUM-F03-N03",
+    "test": 1,
+    "parameters": { "a": 2, "t": 4 },
+    "expected": 64
+  },
+  {
+    "calculId": "NUM-F03-N03",
+    "test": 2,
+    "parameters": { "a": 3, "t": -1 },
+    "expected": 729
+  },
+  {
+    "calculId": "NUM-F03-N04",
+    "test": 1,
+    "parameters": { "a": 2, "m": 3, "n": 2 },
+    "expected": -32
+  },
+  {
+    "calculId": "NUM-F03-N04",
+    "test": 2,
+    "parameters": { "a": 3, "m": 4, "n": -1 },
+    "expected": 27
+  },
+  {
+    "calculId": "NUM-F03-N05",
+    "test": 1,
+    "parameters": { "a": 2, "c": 3, "d": 4, "e": 6, "m": 3, "n": 2, "p": 4 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F03-N05",
+    "test": 2,
+    "parameters": { "a": -2, "c": -3, "d": 5, "e": 15, "m": 2, "n": 3, "p": 1 },
+    "expected": -16
+  },
+  {
+    "calculId": "NUM-F03-P01",
+    "test": 1,
+    "parameters": { "a": 2, "m": 3, "r": 4 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F03-P01",
+    "test": 2,
+    "parameters": { "a": -3, "m": 2, "r": 3 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F03-P02",
+    "test": 1,
+    "parameters": { "a": 2, "m": 3, "n": 5 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F03-P02",
+    "test": 2,
+    "parameters": { "a": -2, "m": 4, "n": 1 },
+    "expected": "-1/8"
+  },
+  {
+    "calculId": "NUM-F03-P03",
+    "test": 1,
+    "parameters": { "a": 2, "n": 3 },
+    "expected": -1
+  },
+  {
+    "calculId": "NUM-F03-P03",
+    "test": 2,
+    "parameters": { "a": -3, "n": 2 },
+    "expected": -1
+  },
+  {
+    "calculId": "NUM-F03-P04",
+    "test": 1,
+    "parameters": { "a": 2, "b": 3, "m": 2, "n": 1, "p": 2 },
+    "expected": "9/16"
+  },
+  {
+    "calculId": "NUM-F03-P04",
+    "test": 2,
+    "parameters": { "a": -2, "b": 4, "m": 1, "n": 2, "p": 3 },
+    "expected": -512
+  },
+  {
+    "calculId": "NUM-F03-P05",
+    "test": 1,
+    "parameters": { "b": 2, "m": 3, "n": 2, "p": 2 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F03-P05",
+    "test": 2,
+    "parameters": { "b": -2, "m": 2, "n": 3, "p": 1 },
+    "expected": 16
+  },
+  {
+    "calculId": "NUM-F04-F01",
+    "test": 1,
+    "parameters": {
+      "a": 3,
+      "b": -2,
+      "m": 2,
+      "n": 1,
+      "p": 3,
+      "q": 2,
+      "x": 2,
+      "y": -1
+    },
+    "expected": 192
+  },
+  {
+    "calculId": "NUM-F04-F01",
+    "test": 2,
+    "parameters": {
+      "a": -1,
+      "b": 5,
+      "m": 0,
+      "n": 4,
+      "p": 2,
+      "q": 1,
+      "x": -2,
+      "y": 3
+    },
+    "expected": -4860
+  },
+  {
+    "calculId": "NUM-F04-F02",
+    "test": 1,
+    "parameters": {
+      "a": 6,
+      "b": 3,
+      "m": 4,
+      "n": 1,
+      "p": 2,
+      "q": 3,
+      "x": 2,
+      "y": -1
+    },
+    "expected": 8
+  },
+  {
+    "calculId": "NUM-F04-F02",
+    "test": 2,
+    "parameters": {
+      "a": -4,
+      "b": 2,
+      "m": 1,
+      "n": 5,
+      "p": 3,
+      "q": 2,
+      "x": -2,
+      "y": 2
+    },
+    "expected": -4
+  },
+  {
+    "calculId": "NUM-F04-F03",
+    "test": 1,
+    "parameters": { "x": 3, "m": 2 },
+    "expected": 9
+  },
+  {
+    "calculId": "NUM-F04-F03",
+    "test": 2,
+    "parameters": { "x": 0, "m": 4 },
+    "expected": 0
+  },
+  {
+    "calculId": "NUM-F04-F04",
+    "test": 1,
+    "parameters": { "a": 2, "b": -3, "m": 2, "n": 1, "x": 2 },
+    "expected": -384
+  },
+  {
+    "calculId": "NUM-F04-F04",
+    "test": 2,
+    "parameters": { "a": -1, "b": 4, "m": 1, "n": 3, "x": -2 },
+    "expected": -128
+  },
+  {
+    "calculId": "NUM-F04-F05",
+    "test": 1,
+    "parameters": { "k": -5, "r": 2 },
+    "expected": "5√2"
+  },
+  {
+    "calculId": "NUM-F04-F05",
+    "test": 2,
+    "parameters": { "k": 3, "r": 7 },
+    "expected": "3√7"
+  },
+  {
+    "calculId": "NUM-F04-N01",
+    "test": 1,
+    "parameters": {
+      "a": 2,
+      "b": 3,
+      "c": 6,
+      "m": 2,
+      "n": 3,
+      "p": 1,
+      "q": 2,
+      "r": 1,
+      "x": 2,
+      "y": -1
+    },
+    "expected": 2
+  },
+  {
+    "calculId": "NUM-F04-N01",
+    "test": 2,
+    "parameters": {
+      "a": -3,
+      "b": 4,
+      "c": 2,
+      "m": 1,
+      "n": 0,
+      "p": 2,
+      "q": 4,
+      "r": 2,
+      "x": -2,
+      "y": 2
+    },
+    "expected": "3/4"
+  },
+  {
+    "calculId": "NUM-F04-N02",
+    "test": 1,
+    "parameters": { "a": 3, "b": 2, "m": 2, "n": 1, "x": 2 },
+    "expected": 36
+  },
+  {
+    "calculId": "NUM-F04-N02",
+    "test": 2,
+    "parameters": { "a": -2, "b": 4, "m": 1, "n": 3, "x": -2 },
+    "expected": "-1/2"
+  },
+  {
+    "calculId": "NUM-F04-N03",
+    "test": 1,
+    "parameters": { "u": 8, "v": 18 },
+    "expected": "12"
+  },
+  {
+    "calculId": "NUM-F04-N03",
+    "test": 2,
+    "parameters": { "u": 5, "v": 20 },
+    "expected": "10"
+  },
+  {
+    "calculId": "NUM-F04-N04",
+    "test": 1,
+    "parameters": { "x": 4, "p": 1, "m": 2, "q": 1, "n": 2 },
+    "expected": 4
+  },
+  {
+    "calculId": "NUM-F04-N04",
+    "test": 2,
+    "parameters": { "x": 8, "p": 2, "m": 3, "q": -1, "n": 3 },
+    "expected": 2
+  },
+  {
+    "calculId": "NUM-F04-N05",
+    "test": 1,
+    "parameters": { "x": 3, "m": 4 },
+    "expected": 243
+  },
+  {
+    "calculId": "NUM-F04-N05",
+    "test": 2,
+    "parameters": { "x": 2, "m": 0 },
+    "expected": 2
+  },
+  {
+    "calculId": "NUM-F04-P01",
+    "test": 1,
+    "parameters": { "x": 4 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F04-P01",
+    "test": 2,
+    "parameters": { "x": 9 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F04-P02",
+    "test": 1,
+    "parameters": { "x": 2, "y": 3, "m": 2, "n": 1, "p": 1, "q": 2 },
+    "expected": "27/8"
+  },
+  {
+    "calculId": "NUM-F04-P02",
+    "test": 2,
+    "parameters": { "x": -2, "y": 4, "m": 1, "n": 3, "p": 2, "q": 1 },
+    "expected": -32
+  },
+  {
+    "calculId": "NUM-F04-P03",
+    "test": 1,
+    "parameters": { "a": 2, "b": 3, "r": 2, "s": 5 },
+    "expected": "2√2 + 3√5"
+  },
+  {
+    "calculId": "NUM-F04-P03",
+    "test": 2,
+    "parameters": { "a": -1, "b": 4, "r": 3, "s": 7 },
+    "expected": "−√3 + 4√7"
+  },
+  {
+    "calculId": "NUM-F04-P04",
+    "test": 1,
+    "parameters": { "a": 7, "b": 2 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F04-P04",
+    "test": 2,
+    "parameters": { "a": -4, "b": 5 },
+    "expected": 1
+  },
+  {
+    "calculId": "NUM-F04-P05",
+    "test": 1,
+    "parameters": { "x": 5, "a": 2 },
+    "expected": 7
+  },
+  {
+    "calculId": "NUM-F04-P05",
+    "test": 2,
+    "parameters": { "x": -3, "a": 4 },
+    "expected": 1
+  }
+]

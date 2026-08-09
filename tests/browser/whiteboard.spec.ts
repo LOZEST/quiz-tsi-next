@@ -8,6 +8,13 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/\/whiteboard$/);
 }
 
+async function openPencilSettings(page: Page) {
+  const trigger = page.getByRole('button', { name: 'Réglages Apple Pencil' });
+  if ((await trigger.getAttribute('aria-expanded')) !== 'true')
+    await trigger.click();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'true');
+}
+
 test('shows a centered writable canvas and accessible controls', async ({
   page,
 }) => {
@@ -21,7 +28,7 @@ test('shows a centered writable canvas and accessible controls', async ({
   await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await canvas.boundingBox()).toEqual(canvasBeforeMenu);
-  await page.getByRole('button', { name: 'Réglages Apple Pencil' }).click();
+  await openPencilSettings(page);
   await expect(page.getByLabel('Épaisseur du stylo')).toBeVisible();
   await page.getByLabel('Gaucher').check();
   await expect(page.getByLabel('Gaucher')).toBeChecked();
@@ -36,7 +43,7 @@ test('shows a centered writable canvas and accessible controls', async ({
   expect(leftTools!.x).toBeLessThan(page.viewportSize()!.width * 0.3);
   expect(rightHistory!.x).toBeGreaterThan(page.viewportSize()!.width * 0.7);
   await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
-  await page.getByRole('button', { name: 'Réglages Apple Pencil' }).click();
+  await openPencilSettings(page);
   await page.getByLabel('Droitier').check();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const rightTools = await page

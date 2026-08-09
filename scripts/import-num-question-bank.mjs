@@ -4,6 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { XMLParser } from 'fast-xml-parser';
 import prettier from 'prettier';
+import { calculateNumAnswer, parseExpectedAnswer } from './num-bank-audit.mjs';
 
 const EXPECTED_HEADERS = [
   'Calcul_ID',
@@ -47,6 +48,10 @@ const GENERATED_AT =
 const outputPath = resolve(
   process.env.QTSI_BANK_OUTPUT ??
     'src/data/question-banks/num-production-v1.json',
+);
+const auditOutputPath = resolve(
+  process.env.QTSI_BANK_AUDIT_OUTPUT ??
+    'tests/fixtures/num-production-source-tests.json',
 );
 const PUBLICATION_EXCEPTIONS = new Map([
   [
@@ -172,6 +177,75 @@ function relationToAst(relation) {
     right: parseExpression(relation.right),
   };
 }
+function evaluateAuditExpression(node, parameters) {
+  if (node.kind === 'literal') return node.value;
+  if (node.kind === 'variable') return parameters[node.variableId];
+  if (node.kind === 'unary')
+    return -evaluateAuditExpression(node.operand, parameters);
+  if (node.kind === 'binary') {
+    const left = evaluateAuditExpression(node.left, parameters);
+    const right = evaluateAuditExpression(node.right, parameters);
+    return {
+      add: () => left + right,
+      subtract: () => left - right,
+      multiply: () => left * right,
+      divide: () => left / right,
+      modulo: () => ((left % right) + right) % right,
+      power: () => left ** right,
+    }[node.operator]();
+  }
+  if (node.kind === 'comparison') {
+    const left = evaluateAuditExpression(node.left, parameters);
+    const right = evaluateAuditExpression(node.right, parameters);
+    return {
+      equal: () => left === right,
+      'not-equal': () => left !== right,
+      'less-than': () => left < right,
+      'less-than-or-equal': () => left <= right,
+      'greater-than': () => left > right,
+      'greater-than-or-equal': () => left >= right,
+    }[node.operator]();
+  }
+  if (node.kind === 'logical')
+    return node.operator === 'and'
+      ? node.operands.every((entry) =>
+          evaluateAuditExpression(entry, parameters),
+        )
+      : node.operands.some((entry) =>
+          evaluateAuditExpression(entry, parameters),
+        );
+  if (node.kind === 'logical-not')
+    return !evaluateAuditExpression(node.operand, parameters);
+  if (node.kind === 'math-function') {
+    const args = node.arguments.map((entry) =>
+      evaluateAuditExpression(entry, parameters),
+    );
+    const gcd = (left, right) => {
+      let a = Math.abs(left);
+      let b = Math.abs(right);
+      while (b !== 0) [a, b] = [b, a % b];
+      return a;
+    };
+    const functions = {
+      abs: Math.abs,
+      gcd,
+      'is-square': (value) => Number.isInteger(Math.sqrt(value)),
+      squarefree: (value) => {
+        for (let factor = 2; factor * factor <= value; factor += 1)
+          if (value % (factor * factor) === 0) return false;
+        return true;
+      },
+      'has-prime-factor-other-than-2-or-5': (value) => {
+        let remainder = Math.abs(value);
+        while (remainder % 2 === 0) remainder /= 2;
+        while (remainder % 5 === 0) remainder /= 5;
+        return remainder !== 1;
+      },
+    };
+    return functions[node.function](...args);
+  }
+  fail(`Nœud d’audit non pris en charge : ${node.kind}`);
+}
 function domain(definition) {
   if (Array.isArray(definition.allowed))
     return { kind: 'choice', values: definition.allowed };
@@ -196,15 +270,106 @@ function domain(definition) {
     excludedValues: [...new Set(excludedValues)].sort((a, b) => a - b),
   };
 }
-function injectParameters(text, ids) {
-  let output = String(text)
-    .replace('{N}', '2^@a*3^@b*5^@c')
-    .replace('{2,3,5,9}', '2, 3, 5 ou 9');
-  for (const id of [...ids].sort((a, b) => b.length - a.length))
-    output = output.replace(
-      new RegExp(`(?<![@\\p{L}\\p{N}_])${id}(?![\\p{L}\\p{N}_])`, 'gu'),
-      `@${id}`,
-    );
+const superscripts = new Set([
+  '²',
+  '³',
+  '⁰',
+  '¹',
+  '⁴',
+  '⁵',
+  '⁶',
+  '⁷',
+  '⁸',
+  '⁹',
+]);
+const explicitImplicitProducts = new Set(['ab', 'cd', 'dq', 'kd', 'mn']);
+const mathPunctuation = new Set([
+  '+',
+  '−',
+  '-',
+  '*',
+  '×',
+  '·',
+  '/',
+  '^',
+  '=',
+  '≠',
+  '<',
+  '>',
+  '≤',
+  '≥',
+  '(',
+  ')',
+  '[',
+  ']',
+  '|',
+  '√',
+  '%',
+  '÷',
+]);
+const asciiLetter = (character) =>
+  character !== undefined &&
+  ((character >= 'A' && character <= 'Z') ||
+    (character >= 'a' && character <= 'z'));
+const digit = (character) =>
+  character !== undefined && character >= '0' && character <= '9';
+
+function splitKnownIdentifiers(token, identifiers) {
+  const output = [];
+  let cursor = 0;
+  const sorted = [...identifiers].sort(
+    (left, right) => right.length - left.length,
+  );
+  while (cursor < token.length) {
+    const identifier = sorted.find((entry) => token.startsWith(entry, cursor));
+    if (!identifier) return null;
+    output.push(identifier);
+    cursor += identifier.length;
+  }
+  return output;
+}
+
+export function compileStructuredSource(sourceValue, identifierValues) {
+  const source = String(sourceValue)
+    .replace('{N}', '2^a*3^b*5^c')
+    .replace('{2,3,5,9}', '{2, 3, 5, 9}');
+  const identifiers = new Set(identifierValues);
+  let output = '';
+  let cursor = 0;
+  let equation = false;
+  while (cursor < source.length) {
+    const character = source[cursor];
+    if (character === '=') equation = true;
+    if (
+      equation &&
+      (character === '.' || character === ';' || character === ':')
+    )
+      equation = false;
+    if (!asciiLetter(character)) {
+      output += character;
+      cursor += 1;
+      continue;
+    }
+    const start = cursor;
+    while (asciiLetter(source[cursor])) cursor += 1;
+    const token = source.slice(start, cursor);
+    const parts = splitKnownIdentifiers(token, identifiers);
+    const before = source[start - 1];
+    const after = source[cursor];
+    const mathematical =
+      parts !== null &&
+      (equation ||
+        explicitImplicitProducts.has(token) ||
+        mathPunctuation.has(before) ||
+        mathPunctuation.has(after) ||
+        superscripts.has(before) ||
+        superscripts.has(after) ||
+        digit(before) ||
+        digit(after));
+    output += mathematical
+      ? `${parts.map((entry) => `@${entry}`).join('')}${digit(after) ? '*' : ''}`
+      : token;
+  }
   return output;
 }
 function sourceLocator(row, id, notion) {
@@ -312,13 +477,6 @@ const perNotion = Object.fromEntries(
     },
   ]),
 );
-const okTests = rows.reduce(
-  (total, { value }) =>
-    total +
-    Number(value.Test1_Statut === 'OK') +
-    Number(value.Test2_Statut === 'OK'),
-  0,
-);
 if (
   rows.length !== 60 ||
   ids.size !== 60 ||
@@ -333,23 +491,58 @@ if (
       entry.Fondamental !== 5 ||
       entry.Normal !== 5 ||
       entry.Piège !== 5,
-  ) ||
-  okTests !== 120
+  )
 )
   fail(
-    `Contrôle bloquant NUM échoué : ${JSON.stringify({ rows: rows.length, ids: ids.size, notions: notions.size, signatures: signatures.size, counts, perNotion, okTests })}`,
+    `Contrôle bloquant NUM échoué : ${JSON.stringify({ rows: rows.length, ids: ids.size, notions: notions.size, signatures: signatures.size, counts, perNotion })}`,
   );
+let recalculatedTests = 0;
+const auditVectors = [];
 const questions = rows.map(({ rowNumber, value }) => {
   const specification = JSON.parse(value.Parametres_JSON);
+  const constraintAsts = specification.relations.map(relationToAst);
   const variableIds = Object.keys(specification.parameters);
   const publicationException = PUBLICATION_EXCEPTIONS.get(value.Calcul_ID);
   for (const test of [1, 2]) {
-    JSON.parse(value[`Test${test}_Parametres_JSON`]);
+    const parameters = JSON.parse(value[`Test${test}_Parametres_JSON`]);
     if (
       !value[`Test${test}_Expression_initiale`] ||
       !value[`Test${test}_Reponse_generale`]
     )
       fail(`Test ${test} incomplet pour ${value.Calcul_ID}`);
+    for (const [id, definition] of Object.entries(specification.parameters)) {
+      const parameter = parameters[id];
+      const allowed = definition.allowed;
+      if (
+        typeof parameter !== 'number' ||
+        !Number.isInteger(parameter) ||
+        parameter < definition.min ||
+        parameter > definition.max ||
+        (parameter - definition.min) % definition.step !== 0 ||
+        definition.exclude.includes(parameter) ||
+        (Array.isArray(allowed) && !allowed.includes(parameter))
+      )
+        fail(`${value.Calcul_ID} test ${test} : paramètre ${id} hors domaine.`);
+    }
+    if (
+      constraintAsts.some(
+        (constraint) => !evaluateAuditExpression(constraint, parameters),
+      )
+    )
+      fail(`${value.Calcul_ID} test ${test} : contrainte non respectée.`);
+    const expected = parseExpectedAnswer(value[`Test${test}_Reponse_generale`]);
+    const recalculated = calculateNumAnswer(value.Calcul_ID, parameters);
+    if (JSON.stringify(recalculated) !== JSON.stringify(expected))
+      fail(
+        `${value.Calcul_ID} test ${test} : attendu ${JSON.stringify(expected)}, recalculé ${JSON.stringify(recalculated)}.`,
+      );
+    auditVectors.push({
+      calculId: value.Calcul_ID,
+      test,
+      parameters,
+      expected,
+    });
+    recalculatedTests += 1;
   }
   const parameterization = {
     schemaVersion: 1,
@@ -360,7 +553,7 @@ const questions = rows.map(({ rowNumber, value }) => {
         domain: domain(definition),
       }),
     ),
-    constraints: specification.relations.map(relationToAst),
+    constraints: constraintAsts,
     validationVariantCount: publicationException?.validationVariantCount ?? 10,
   };
   return {
@@ -380,14 +573,20 @@ const questions = rows.map(({ rowNumber, value }) => {
       prompt: [
         {
           kind: 'text',
-          value: injectParameters(value.Enonce_parametrique, variableIds),
+          value: compileStructuredSource(
+            value.Enonce_parametrique,
+            variableIds,
+          ),
         },
       ],
       hint: value.Methode_decisive
         ? [
             {
               kind: 'text',
-              value: injectParameters(value.Methode_decisive, variableIds),
+              value: compileStructuredSource(
+                value.Methode_decisive,
+                variableIds,
+              ),
             },
           ]
         : [],
@@ -398,7 +597,7 @@ const questions = rows.map(({ rowNumber, value }) => {
           content: [
             {
               kind: 'text',
-              value: injectParameters(value.Correction, variableIds),
+              value: compileStructuredSource(value.Correction, variableIds),
             },
           ],
         },
@@ -430,6 +629,20 @@ const questions = rows.map(({ rowNumber, value }) => {
     },
   };
 });
+for (const { question } of questions) {
+  const visibleSource = [
+    ...question.prompt,
+    ...question.hint,
+    ...question.correction.flatMap((step) => step.content),
+  ]
+    .map((segment) => segment.value ?? segment.math?.source ?? '')
+    .join(' ');
+  for (const { id } of question.parameterization.variables)
+    if (!visibleSource.includes(`@${id}`))
+      fail(`${question.id} : paramètre @${id} absent du contenu visible.`);
+  if (visibleSource.includes('@a une écriture'))
+    fail(`${question.id} : le verbe français « a » a été paramétré.`);
+}
 const bundle = {
   schemaVersion: 1,
   bundleId: 'quiz-tsi-official-num-v1',
@@ -437,7 +650,7 @@ const bundle = {
   defaultProvenance: [
     {
       sourceLabel: 'Base maître Quiz TSI — NUM validé',
-      sourceReference: 'Base_Maitre_Quiz_TSI_Apres_Dunod_Validee.xlsx',
+      sourceReference: `SHA-256 ${sourceSha256}`,
       sourceLocator: 'Feuille NUM',
     },
   ],
@@ -448,6 +661,11 @@ await writeFile(
   outputPath,
   await prettier.format(JSON.stringify(bundle), { parser: 'json' }),
 );
+await mkdir(dirname(auditOutputPath), { recursive: true });
+await writeFile(
+  auditOutputPath,
+  await prettier.format(JSON.stringify(auditVectors), { parser: 'json' }),
+);
 console.log(
   JSON.stringify(
     {
@@ -457,9 +675,10 @@ console.log(
       counts,
       perNotion,
       signatures: signatures.size,
-      tests: okTests,
+      recalculatedTests,
       publicationExceptions: Object.fromEntries(PUBLICATION_EXCEPTIONS),
       output: outputPath,
+      auditOutput: auditOutputPath,
       bytes: Buffer.byteLength(JSON.stringify(bundle)),
     },
     null,

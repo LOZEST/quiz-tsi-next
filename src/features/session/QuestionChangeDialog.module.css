@@ -1,17 +1,14 @@
-.backdrop {
-  position: fixed;
-  z-index: 20;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: var(--qtsi-space-4);
-  background: rgb(0 0 0 / 32%);
-}
 .dialog {
+  inline-size: min(28rem, calc(100% - 2 * var(--qtsi-space-4)));
   max-inline-size: 28rem;
+  margin: auto;
   padding: var(--qtsi-space-5);
   background: var(--qtsi-surface);
+  border: 0;
   border-radius: var(--qtsi-radius-3);
+}
+.dialog::backdrop {
+  background: rgb(0 0 0 / 32%);
 }
 .dialog div {
   display: flex;

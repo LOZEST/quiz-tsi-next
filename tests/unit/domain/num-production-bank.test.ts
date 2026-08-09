@@ -1,14 +1,54 @@
 import { describe, expect, it } from 'vitest';
 import bundle from '../../../src/data/question-banks/num-production-v1.json';
+import sourceTests from '../../fixtures/num-production-source-tests.json';
+import { calculateNumAnswer } from '../../../scripts/num-bank-audit.mjs';
 import { validateQuestionBankBundle } from '@domain/questions/QuestionBank';
 import { evaluateSafeExpression } from '@domain/questions/SafeExpressionEvaluator';
 import { validateParameterizedQuestion } from '@domain/questions/QuestionParameterValidation';
+import { generateParameterAssignment } from '@domain/questions/ParameterizedQuestionGenerator';
+import { instantiateQuestionVariant } from '@domain/questions/QuestionInstantiation';
 import {
   productionProgramIndex,
   productionQuestionRepository,
 } from '@infrastructure/session/ProductionRevisionServices';
 
 describe('banque NUM de production', () => {
+  it('recalcule indépendamment les 120 résultats normatifs du classeur', () => {
+    expect(sourceTests).toHaveLength(120);
+    let concordances = 0;
+    for (const { calculId, test, parameters, expected } of sourceTests) {
+      expect(
+        calculateNumAnswer(calculId, parameters),
+        `${calculId} — test ${test}`,
+      ).toEqual(expected);
+      concordances += 1;
+    }
+    expect(concordances).toBe(120);
+  });
+
+  it('référence les paramètres concaténés sans toucher au verbe français « a »', () => {
+    const source = (id: string) => {
+      const entry = bundle.questions.find(({ question }) => question.id === id);
+      expect(entry).toBeDefined();
+      return [
+        ...(entry?.question.prompt ?? []),
+        ...(entry?.question.correction.flatMap(({ content }) => content) ?? []),
+      ]
+        .map((segment) => ('value' in segment ? segment.value : ''))
+        .join(' ');
+    };
+    expect(source('NUM-F01-F02')).toContain('(@a@b)/@b');
+    expect(source('NUM-F01-F03')).toContain('a une écriture');
+    expect(source('NUM-F01-F03')).not.toContain('@a une écriture');
+    expect(source('NUM-F01-F04')).toContain('√(@a²)');
+    expect(source('NUM-F02-F02')).toContain('2@a+1');
+    expect(source('NUM-F02-N01')).toContain('@k@d');
+    expect(source('NUM-F02-N02')).toContain('2^@a*3^@b*5^@c');
+    expect(source('NUM-F02-P03')).toContain('@x² mod @p');
+    expect(source('NUM-F02-P04')).toContain('(6@a−1)(6@a+1)');
+    expect(source('NUM-F03-N03')).toContain('2@t+1');
+    expect(source('NUM-F04-N04')).toContain('@m@n');
+  });
   it('contient exactement les 60 questions validées et leur répartition', () => {
     expect(bundle.questions).toHaveLength(60);
     expect(
@@ -51,6 +91,39 @@ describe('banque NUM de production', () => {
       expect(question.provenance?.bundleId).toBe('quiz-tsi-official-num-v1');
       expect(question.provenance?.references.length).toBeGreaterThanOrEqual(2);
     }
+  });
+
+  it('instancie trois seeds de chacune des 60 questions et inspecte le prompt', () => {
+    let promptsInspected = 0;
+    for (const question of productionQuestionRepository.listPublished()) {
+      for (const seed of ['audit-a', 'audit-b', 'audit-c']) {
+        const generated = generateParameterAssignment(
+          question.parameterization,
+          `${question.id}:${seed}`,
+        );
+        expect(generated.kind, `${question.id}:${seed}`).toBe('ready');
+        if (generated.kind !== 'ready') continue;
+        const instantiated = instantiateQuestionVariant(
+          question,
+          generated.variants[0],
+        );
+        expect(instantiated.ok, `${question.id}:${seed}`).toBe(true);
+        if (!instantiated.ok) continue;
+        const visiblePrompt = instantiated.value.prompt
+          .map((segment) =>
+            segment.kind === 'text'
+              ? segment.value
+              : segment.kind === 'line-break'
+                ? '\n'
+                : segment.mathSource.source,
+          )
+          .join(' ');
+        expect(visiblePrompt.trim(), `${question.id}:${seed}`).not.toBe('');
+        expect(visiblePrompt, `${question.id}:${seed}`).not.toContain('@');
+        promptsInspected += 1;
+      }
+    }
+    expect(promptsInspected).toBe(180);
   });
 
   it('valide exhaustivement les neuf variantes source de NUM-F02-P04', () => {
