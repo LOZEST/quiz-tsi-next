@@ -5,6 +5,10 @@ import { execFileSync } from 'node:child_process';
 import { XMLParser } from 'fast-xml-parser';
 import prettier from 'prettier';
 import { calculateNumAnswer, parseExpectedAnswer } from './num-bank-audit.mjs';
+import {
+  buildNumPrompt,
+  listNumPromptTemplateIds,
+} from './num-question-templates.mjs';
 
 const EXPECTED_HEADERS = [
   'Calcul_ID',
@@ -270,108 +274,6 @@ function domain(definition) {
     excludedValues: [...new Set(excludedValues)].sort((a, b) => a - b),
   };
 }
-const superscripts = new Set([
-  '²',
-  '³',
-  '⁰',
-  '¹',
-  '⁴',
-  '⁵',
-  '⁶',
-  '⁷',
-  '⁸',
-  '⁹',
-]);
-const explicitImplicitProducts = new Set(['ab', 'cd', 'dq', 'kd', 'mn']);
-const mathPunctuation = new Set([
-  '+',
-  '−',
-  '-',
-  '*',
-  '×',
-  '·',
-  '/',
-  '^',
-  '=',
-  '≠',
-  '<',
-  '>',
-  '≤',
-  '≥',
-  '(',
-  ')',
-  '[',
-  ']',
-  '|',
-  '√',
-  '%',
-  '÷',
-]);
-const asciiLetter = (character) =>
-  character !== undefined &&
-  ((character >= 'A' && character <= 'Z') ||
-    (character >= 'a' && character <= 'z'));
-const digit = (character) =>
-  character !== undefined && character >= '0' && character <= '9';
-
-function splitKnownIdentifiers(token, identifiers) {
-  const output = [];
-  let cursor = 0;
-  const sorted = [...identifiers].sort(
-    (left, right) => right.length - left.length,
-  );
-  while (cursor < token.length) {
-    const identifier = sorted.find((entry) => token.startsWith(entry, cursor));
-    if (!identifier) return null;
-    output.push(identifier);
-    cursor += identifier.length;
-  }
-  return output;
-}
-
-export function compileStructuredSource(sourceValue, identifierValues) {
-  const source = String(sourceValue)
-    .replace('{N}', '2^a*3^b*5^c')
-    .replace('{2,3,5,9}', '{2, 3, 5, 9}');
-  const identifiers = new Set(identifierValues);
-  let output = '';
-  let cursor = 0;
-  let equation = false;
-  while (cursor < source.length) {
-    const character = source[cursor];
-    if (character === '=') equation = true;
-    if (
-      equation &&
-      (character === '.' || character === ';' || character === ':')
-    )
-      equation = false;
-    if (!asciiLetter(character)) {
-      output += character;
-      cursor += 1;
-      continue;
-    }
-    const start = cursor;
-    while (asciiLetter(source[cursor])) cursor += 1;
-    const token = source.slice(start, cursor);
-    const parts = splitKnownIdentifiers(token, identifiers);
-    const before = source[start - 1];
-    const after = source[cursor];
-    const mathematical =
-      parts !== null &&
-      (equation ||
-        explicitImplicitProducts.has(token) ||
-        mathPunctuation.has(before) ||
-        mathPunctuation.has(after) ||
-        superscripts.has(before) ||
-        superscripts.has(after) ||
-        digit(before) ||
-        digit(after));
-    output += mathematical
-      ? `${parts.map((entry) => `@${entry}`).join('')}${digit(after) ? '*' : ''}`
-      : token;
-  }
-  return output;
-}
 function sourceLocator(row, id, notion) {
   return `Feuille NUM, ligne ${row}, Calcul_ID ${id}, Notion_ID ${notion}`;
 }
@@ -448,6 +350,12 @@ const rows = matrix
     ),
   }));
 const ids = new Set(rows.map(({ value }) => value.Calcul_ID));
+const promptTemplateIds = listNumPromptTemplateIds();
+if (
+  promptTemplateIds.length !== rows.length ||
+  promptTemplateIds.some((id) => !ids.has(id))
+)
+  fail('Les gabarits structurés NUM ne correspondent pas aux 60 Calcul_ID.');
 const notions = new Set(rows.map(({ value }) => value.Notion_ID));
 const signatures = new Set(
   rows.map(({ value }) => value.Signature_structurelle),
@@ -501,7 +409,6 @@ const auditVectors = [];
 const questions = rows.map(({ rowNumber, value }) => {
   const specification = JSON.parse(value.Parametres_JSON);
   const constraintAsts = specification.relations.map(relationToAst);
-  const variableIds = Object.keys(specification.parameters);
   const publicationException = PUBLICATION_EXCEPTIONS.get(value.Calcul_ID);
   for (const test of [1, 2]) {
     const parameters = JSON.parse(value[`Test${test}_Parametres_JSON`]);
@@ -530,16 +437,23 @@ const questions = rows.map(({ rowNumber, value }) => {
       )
     )
       fail(`${value.Calcul_ID} test ${test} : contrainte non respectée.`);
+    const sourceExpression = parseExpectedAnswer(
+      value[`Test${test}_Expression_initiale`],
+    );
     const expected = parseExpectedAnswer(value[`Test${test}_Reponse_generale`]);
     const recalculated = calculateNumAnswer(value.Calcul_ID, parameters);
-    if (JSON.stringify(recalculated) !== JSON.stringify(expected))
+    if (
+      JSON.stringify(recalculated) !== JSON.stringify(sourceExpression) ||
+      JSON.stringify(recalculated) !== JSON.stringify(expected)
+    )
       fail(
-        `${value.Calcul_ID} test ${test} : attendu ${JSON.stringify(expected)}, recalculé ${JSON.stringify(recalculated)}.`,
+        `${value.Calcul_ID} test ${test} : expression source ${JSON.stringify(sourceExpression)}, réponse ${JSON.stringify(expected)}, recalcul ${JSON.stringify(recalculated)}.`,
       );
     auditVectors.push({
       calculId: value.Calcul_ID,
       test,
       parameters,
+      sourceExpression,
       expected,
     });
     recalculatedTests += 1;
@@ -570,23 +484,12 @@ const questions = rows.map(({ rowNumber, value }) => {
       type: 'calculation',
       difficulty: DIFFICULTY[value.Niveau],
       parameterization,
-      prompt: [
-        {
-          kind: 'text',
-          value: compileStructuredSource(
-            value.Enonce_parametrique,
-            variableIds,
-          ),
-        },
-      ],
+      prompt: buildNumPrompt(value.Calcul_ID),
       hint: value.Methode_decisive
         ? [
             {
               kind: 'text',
-              value: compileStructuredSource(
-                value.Methode_decisive,
-                variableIds,
-              ),
+              value: value.Methode_decisive,
             },
           ]
         : [],
@@ -597,7 +500,7 @@ const questions = rows.map(({ rowNumber, value }) => {
           content: [
             {
               kind: 'text',
-              value: compileStructuredSource(value.Correction, variableIds),
+              value: value.Correction,
             },
           ],
         },

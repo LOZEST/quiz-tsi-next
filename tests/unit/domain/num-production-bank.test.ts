@@ -7,16 +7,83 @@ import { evaluateSafeExpression } from '@domain/questions/SafeExpressionEvaluato
 import { validateParameterizedQuestion } from '@domain/questions/QuestionParameterValidation';
 import { generateParameterAssignment } from '@domain/questions/ParameterizedQuestionGenerator';
 import { instantiateQuestionVariant } from '@domain/questions/QuestionInstantiation';
+import { mathAstToLatex } from '@features/questions/math/MathAstToLatex';
 import {
   productionProgramIndex,
   productionQuestionRepository,
 } from '@infrastructure/session/ProductionRevisionServices';
 
 describe('banque NUM de production', () => {
-  it('recalcule indépendamment les 120 résultats normatifs du classeur', () => {
+  const question = (id: string) => {
+    const result = productionQuestionRepository.getLatestById(id);
+    expect(result, id).toBeDefined();
+    if (!result) throw new Error(`Question absente : ${id}`);
+    return result;
+  };
+  const instantiate = (id: string, parameters: Record<string, number>) => {
+    const instantiated = instantiateQuestionVariant(question(id), parameters);
+    expect(instantiated.ok, id).toBe(true);
+    if (!instantiated.ok) throw new Error(instantiated.message);
+    return instantiated.value;
+  };
+  const renderedMath = (id: string, parameters: Record<string, number>) =>
+    instantiate(id, parameters).prompt.flatMap((segment) =>
+      segment.kind === 'inline-math' ? [mathAstToLatex(segment.ast)] : [],
+    );
+  const negativeOperandValues = (raw: unknown): number[] => {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw))
+      return [];
+    const node = raw as Record<string, unknown>;
+    const output: number[] = [];
+    if (['binary', 'power', 'unary'].includes(String(node.kind)))
+      for (const child of Object.values(node))
+        if (
+          typeof child === 'object' &&
+          child !== null &&
+          !Array.isArray(child) &&
+          (child as Record<string, unknown>).kind === 'resolved-parameter' &&
+          typeof (child as Record<string, unknown>).value === 'number' &&
+          ((child as Record<string, unknown>).value as number) < 0
+        )
+          output.push((child as Record<string, unknown>).value as number);
+    for (const child of Object.values(node))
+      output.push(...negativeOperandValues(child));
+    return output;
+  };
+
+  it('instancie les 120 prompts officiels et recalcule leurs résultats', () => {
     expect(sourceTests).toHaveLength(120);
     let concordances = 0;
-    for (const { calculId, test, parameters, expected } of sourceTests) {
+    for (const {
+      calculId,
+      test,
+      parameters,
+      sourceExpression,
+      expected,
+    } of sourceTests) {
+      const instantiated = instantiate(calculId, parameters);
+      const formulaSegments = instantiated.prompt.filter(
+        (segment) => segment.kind === 'inline-math',
+      );
+      const formulas = formulaSegments.map((segment) =>
+        segment.kind === 'inline-math' ? mathAstToLatex(segment.ast) : '',
+      );
+      expect(formulas.length, `${calculId} — test ${test}`).toBeGreaterThan(0);
+      expect(formulas.join(' '), `${calculId} — test ${test}`).not.toContain(
+        '@',
+      );
+      for (const segment of formulaSegments) {
+        if (segment.kind !== 'inline-math') continue;
+        const latex = mathAstToLatex(segment.ast);
+        for (const value of negativeOperandValues(segment.ast))
+          expect(latex, `${calculId} — test ${test}`).toContain(
+            `\\left(${value}\\right)`,
+          );
+      }
+      expect(
+        calculateNumAnswer(calculId, parameters),
+        `${calculId} — test ${test}`,
+      ).toEqual(sourceExpression);
       expect(
         calculateNumAnswer(calculId, parameters),
         `${calculId} — test ${test}`,
@@ -26,28 +93,60 @@ describe('banque NUM de production', () => {
     expect(concordances).toBe(120);
   });
 
-  it('référence les paramètres concaténés sans toucher au verbe français « a »', () => {
-    const source = (id: string) => {
-      const entry = bundle.questions.find(({ question }) => question.id === id);
+  it('documente que les champs source expression et réponse sont identiques', () => {
+    expect(sourceTests).toHaveLength(120);
+    for (const { sourceExpression, expected } of sourceTests)
+      expect(sourceExpression).toEqual(expected);
+  });
+
+  it('encode explicitement chaque famille de produit implicite', () => {
+    const sources = (id: string) => {
+      const entry = bundle.questions.find(
+        ({ question: item }) => item.id === id,
+      );
       expect(entry).toBeDefined();
-      return [
-        ...(entry?.question.prompt ?? []),
-        ...(entry?.question.correction.flatMap(({ content }) => content) ?? []),
-      ]
-        .map((segment) => ('value' in segment ? segment.value : ''))
-        .join(' ');
+      return (entry?.question.prompt ?? []).flatMap((segment) =>
+        segment.kind === 'inline-math' && segment.math
+          ? [segment.math.source]
+          : [],
+      );
     };
-    expect(source('NUM-F01-F02')).toContain('(@a@b)/@b');
-    expect(source('NUM-F01-F03')).toContain('a une écriture');
-    expect(source('NUM-F01-F03')).not.toContain('@a une écriture');
-    expect(source('NUM-F01-F04')).toContain('√(@a²)');
-    expect(source('NUM-F02-F02')).toContain('2@a+1');
-    expect(source('NUM-F02-N01')).toContain('@k@d');
-    expect(source('NUM-F02-N02')).toContain('2^@a*3^@b*5^@c');
-    expect(source('NUM-F02-P03')).toContain('@x² mod @p');
-    expect(source('NUM-F02-P04')).toContain('(6@a−1)(6@a+1)');
-    expect(source('NUM-F03-N03')).toContain('2@t+1');
-    expect(source('NUM-F04-N04')).toContain('@m@n');
+    expect(sources('NUM-F01-F02')).toContain('Q=(@a*@b)/@b');
+    expect(sources('NUM-F02-F02')).toContain('E=(2*@a+1)+(2*@b+1)');
+    expect(sources('NUM-F02-N01')).toContain('E=@d*(@a-@b)+@k*@d');
+    expect(sources('NUM-F02-N05')).toContain('N=@d*@q+@r');
+    expect(sources('NUM-F02-P04')).toContain('N=(6*@a-1)*(6*@a+1)');
+    expect(sources('NUM-F04-N04')).toContain('@m*@n');
+    expect(sources('NUM-F04-F02')).toContain('@b*@x*@y!=0');
+    expect(sources('NUM-F01-N03')).toContain(
+      'E=sqrt((@p^2)*@r)-sqrt((@q^2)*@r)',
+    );
+  });
+
+  it('préserve la multiplication et les facteurs négatifs de NUM-F01-F02', () => {
+    const formulas = renderedMath('NUM-F01-F02', { a: 12, b: -5 });
+    expect(formulas.join(' ')).toContain(
+      '\\frac{\\left(12\\times \\left(-5\\right)\\right)}{\\left(-5\\right)}',
+    );
+    expect(formulas.join(' ')).not.toContain('12-5');
+  });
+
+  it('rend sans concaténation 2a, 6a, kd, dq et mn', () => {
+    expect(renderedMath('NUM-F02-F02', { a: 3, b: 7 }).join(' ')).toContain(
+      '2\\times 3+1',
+    );
+    expect(renderedMath('NUM-F02-P04', { a: 3 }).join(' ')).toContain(
+      '\\left(6\\times 3-1\\right)',
+    );
+    expect(
+      renderedMath('NUM-F02-N01', { a: 7, b: 2, k: -1, d: 3 }).join(' '),
+    ).toContain('\\left(-1\\right)\\times 3');
+    expect(
+      renderedMath('NUM-F02-N05', { d: 7, q: -4, r: 2 }).join(' '),
+    ).toContain('7\\times \\left(-4\\right)+2');
+    expect(
+      renderedMath('NUM-F04-N04', { x: 4, p: 1, q: 1, m: 2, n: 2 }).join(' '),
+    ).toContain('2\\times 2');
   });
   it('contient exactement les 60 questions validées et leur répartition', () => {
     expect(bundle.questions).toHaveLength(60);
@@ -67,6 +166,21 @@ describe('banque NUM de production', () => {
         ]),
       ),
     ).toEqual({ fundamental: 20, standard: 20, trap: 20 });
+  });
+
+  it('ne montre aucun langage interne dans les 60 énoncés élèves', () => {
+    for (const { question: item } of bundle.questions) {
+      const prompt = item.prompt
+        .map((segment) =>
+          segment.kind === 'text'
+            ? segment.value
+            : (segment.math?.source ?? ''),
+        )
+        .join(' ');
+      expect(prompt, item.id).not.toMatch(/JSON|générat(?:eur|ion)/i);
+      expect(prompt, item.id).not.toContain('@résultat');
+      expect(prompt, item.id).not.toContain('carré@s');
+    }
   });
 
   it('est validée contre le vrai programme avant son chargement atomique', () => {
@@ -115,7 +229,7 @@ describe('banque NUM de production', () => {
               ? segment.value
               : segment.kind === 'line-break'
                 ? '\n'
-                : segment.mathSource.source,
+                : mathAstToLatex(segment.ast),
           )
           .join(' ');
         expect(visiblePrompt.trim(), `${question.id}:${seed}`).not.toBe('');

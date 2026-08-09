@@ -14,7 +14,16 @@
 - Notions : 4 (`NUM-F01` à `NUM-F04`)
 - Difficultés : 20 Fondamentales, 20 Normales, 20 Pièges
 - Identifiants et signatures canoniques uniques : 60 / 60
-- Tests source présents et marqués OK : 120 / 120
+- Cas source recalculés indépendamment : 120 / 120, avec contrôle des domaines,
+  des contraintes et de la réponse attendue ; le statut `OK` n'est pas utilisé
+  comme preuve.
+
+Les 120 cellules `TestN_Expression_initiale` du classeur sont identiques aux
+120 cellules `TestN_Reponse_generale` et contiennent le résultat attendu, pas
+la formule initiale affichable. L'audit ne prétend donc pas effectuer une
+comparaison textuelle impossible : il instancie le vrai prompt mathématique
+avec les paramètres du cas, vérifie son AST et son rendu, puis compare le
+résultat recalculé indépendamment à chacun des deux champs source.
 
 ## Compatibilité
 
@@ -28,14 +37,23 @@ Fonctions sûres rencontrées : `abs`, `gcd`, `isSquare`, `squarefree`, `hasPrim
 
 Le bundle `quiz-tsi-official-num-v1` utilise le timestamp déterministe `2026-08-07T00:00:00.000Z`. La commande d’import accepte un autre timestamp explicite via `QTSI_BANK_GENERATED_AT`. Une seconde génération avec la même entrée doit produire zéro différence.
 
+Les énoncés sont adaptés par 60 gabarits explicites et déterministes. Le texte
+français reste dans des segments `text`; chaque formule devient un segment
+`inline-math` conforme à `MathSource` V1. Les produits implicites du classeur
+(`ab`, `2a`, `6a`, `kd`, `dq`, `mn`, `xy`, `p²r` et formes équivalentes) sont
+encodés par l'opérateur `*`. Après instanciation, le rendu affiche `×` et
+parenthèse les paramètres négatifs utilisés comme opérandes, bases ou
+dénominateurs. Les formulations internes telles que « conformes au JSON » ne
+sont pas exposées dans les prompts élèves.
+
 ## Validation
 
-- `npm run bank:import:num -- <source>` : succès ; 60 lignes, 4 notions, 60 signatures, 120 statuts de tests OK.
+- `npm run bank:import:num -- <source>` : succès ; 60 lignes, 4 notions, 60 signatures, 120/120 cas recalculés et concordants.
 - Deux générations successives : identiques octet pour octet avant formatage (`cmp` = 0).
 - `npm run format:check` : succès.
 - `npm run lint` : succès.
 - `npm run typecheck` : succès.
-- `npm run test:coverage` : 33 fichiers et 466 tests réussis ; 88,03 % statements, 81,47 % branches, 86,69 % functions, 90,46 % lines.
+- `npm run test:coverage` : 34 fichiers et 479 tests réussis ; 88,38 % statements, 82,16 % branches, 86,55 % functions, 90,85 % lines.
 - `npm run build` : succès.
 - `npm run build:pages` : succès.
 - `npm run test:browser` : premier lancement bloqué par le sandbox (`listen EPERM`) ; relance autorisée réussie, 69 tests sur desktop, iPad portrait et iPad paysage.
