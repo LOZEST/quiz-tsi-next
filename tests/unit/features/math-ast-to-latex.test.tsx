@@ -190,7 +190,7 @@ describe('safe math rendering', () => {
         },
         right: { kind: 'identifier', name: 'c' },
       },
-      '\\left(a+b\\right)\\,c',
+      '\\left(a+b\\right)\\times c',
     ],
     [
       {
@@ -204,7 +204,7 @@ describe('safe math rendering', () => {
           right: { kind: 'identifier', name: 'c' },
         },
       },
-      'a\\,\\left(b+c\\right)',
+      'a\\times \\left(b+c\\right)',
     ],
     [
       {
@@ -302,9 +302,49 @@ describe('safe math rendering', () => {
           right: { kind: 'identifier', name: 'd' },
         },
       },
-      '{a+b}<{c\\,d}',
+      '{a+b}<{c\\times d}',
     ],
   ])('preserves AST precedence and associativity', (ast, expected) => {
+    expect(mathAstToLatex(node(ast))).toBe(expected);
+  });
+
+  it.each([
+    [
+      {
+        kind: 'binary',
+        operator: 'multiply',
+        left: { kind: 'number', value: '2' },
+        right: { kind: 'resolved-parameter', name: 'a', value: -5 },
+      },
+      '2\\times \\left(-5\\right)',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'divide',
+        left: { kind: 'number', value: '12' },
+        right: { kind: 'resolved-parameter', name: 'b', value: -5 },
+      },
+      '\\frac{12}{\\left(-5\\right)}',
+    ],
+    [
+      {
+        kind: 'power',
+        base: { kind: 'resolved-parameter', name: 'a', value: -2 },
+        exponent: { kind: 'number', value: '3' },
+      },
+      '{\\left(-2\\right)}^{3}',
+    ],
+    [
+      {
+        kind: 'binary',
+        operator: 'add',
+        left: { kind: 'number', value: '2' },
+        right: { kind: 'resolved-parameter', name: 'a', value: -5 },
+      },
+      '2+\\left(-5\\right)',
+    ],
+  ])('parenthèse un paramètre négatif selon sa position', (ast, expected) => {
     expect(mathAstToLatex(node(ast))).toBe(expected);
   });
 

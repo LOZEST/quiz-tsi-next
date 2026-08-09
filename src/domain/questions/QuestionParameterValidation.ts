@@ -129,11 +129,69 @@ export function validateParameterizedQuestion(
     question.status === 'published'
       ? Math.max(10, question.parameterization.validationVariantCount)
       : Math.max(1, question.parameterization.validationVariantCount);
-  const generated = generateParameterVariants(
+  let generated = generateParameterVariants(
     question.parameterization,
     validationSeed,
     requested,
   );
+  const officialFiniteExceptionRequested =
+    question.source === 'static' &&
+    question.status === 'published' &&
+    question.validated === true &&
+    question.parameterization.validationVariantCount < 10;
+  if (officialFiniteExceptionRequested) {
+    const statistics = generated.statistics;
+    const provenFiniteOfficialDomain =
+      generated.kind === 'insufficient-distinct-variants' &&
+      statistics.searchCompleted === true &&
+      statistics.exhaustive === true &&
+      statistics.validCombinations > 0 &&
+      statistics.validCombinations < 10 &&
+      question.parameterization.validationVariantCount ===
+        statistics.validCombinations;
+    if (!provenFiniteOfficialDomain)
+      return {
+        kind: generated.kind === 'ready' ? 'invalid-question' : generated.kind,
+        errors: [
+          {
+            path: 'parameterization.validationVariantCount',
+            message:
+              'Une exception officielle exige la preuve exhaustive d’un espace valide fini inférieur à dix.',
+          },
+        ],
+        warnings: [],
+        variants: [],
+        usedReferences: references.usedReferences,
+        unusedVariables: references.unusedVariables,
+        statistics,
+      };
+    generated = generateParameterVariants(
+      question.parameterization,
+      validationSeed,
+      statistics.validCombinations,
+    );
+    if (
+      generated.kind !== 'ready' ||
+      generated.variants.length !== statistics.validCombinations ||
+      generated.statistics.searchCompleted !== true ||
+      generated.statistics.exhaustive !== true
+    )
+      return {
+        kind: generated.kind === 'ready' ? 'invalid-question' : generated.kind,
+        errors: [
+          {
+            path: 'parameterization',
+            message:
+              'La validation exhaustive officielle n’a pas pu être reproduite.',
+          },
+        ],
+        warnings: [],
+        variants: [],
+        usedReferences: references.usedReferences,
+        unusedVariables: references.unusedVariables,
+        statistics: generated.statistics,
+      };
+  }
   if (generated.kind !== 'ready')
     return {
       kind: generated.kind,

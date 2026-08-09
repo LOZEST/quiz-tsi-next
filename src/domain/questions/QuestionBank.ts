@@ -20,6 +20,7 @@ import { validateParameterizedQuestion } from './QuestionParameterValidation';
 export const QUESTION_BANK_SCHEMA_VERSION = 1 as const;
 export const MAX_QUESTION_BANK_ENTRIES = 10_000;
 export const MAX_QUESTION_BANK_BUNDLE_ID_LENGTH = 200;
+export const MAX_QUESTION_BANK_SNAPSHOT_CHARACTERS = 5_000_000;
 
 export type QuestionBankEntryProvenance = Readonly<{
   mode: 'default' | 'extend' | 'replace';
@@ -68,7 +69,9 @@ export function validateQuestionBankBundle(
   input: unknown,
   program?: ProgramIndex,
 ): ValidationResult<QuestionBankBundle> {
-  const snapshot = createSafeSnapshot(input);
+  const snapshot = createSafeSnapshot(input, {
+    maxTotalCharacters: MAX_QUESTION_BANK_SNAPSHOT_CHARACTERS,
+  });
   if (!snapshot.ok) return invalid(issue('bundle', snapshot.message));
   const value = snapshot.value;
   if (!record(value))

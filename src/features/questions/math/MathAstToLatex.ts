@@ -71,6 +71,17 @@ function precedence(raw: unknown): number {
   }
 }
 
+function isNegativeResolvedParameter(raw: unknown): boolean {
+  return (
+    typeof raw === 'object' &&
+    raw !== null &&
+    !Array.isArray(raw) &&
+    (raw as Record<string, unknown>).kind === 'resolved-parameter' &&
+    typeof (raw as Record<string, unknown>).value === 'number' &&
+    ((raw as Record<string, unknown>).value as number) < 0
+  );
+}
+
 export function mathAstToLatex(root: ResolvedMathAstNode): string {
   let count = 0;
   const visit = (raw: unknown, depth: number): string => {
@@ -88,6 +99,7 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
       const rendered = visit(value, depth + 1);
       const childPrecedence = precedence(value);
       return childPrecedence < parentPrecedence ||
+        (parentPrecedence >= 2 && isNegativeResolvedParameter(value)) ||
         (groupEqual && childPrecedence === parentPrecedence)
         ? `\\left(${rendered}\\right)`
         : rendered;
@@ -141,7 +153,7 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
           case 'subtract':
             return `${child(node.left, 2)}-${child(node.right, 2, true)}`;
           case 'multiply':
-            return `${child(node.left, 3, true)}\\,${child(node.right, 3, true)}`;
+            return `${child(node.left, 3, true)}\\times ${child(node.right, 3, true)}`;
           case 'divide':
             return `\\frac{${child(node.left, 3, true)}}{${child(node.right, 3, true)}}`;
           default:

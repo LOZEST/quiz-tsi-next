@@ -5,11 +5,13 @@ import type { Question } from '../../../src/domain/questions/Question';
 const question = (
   maximum = 9,
   status: Question['status'] = 'published',
+  source: Question['source'] = 'static',
+  validationVariantCount = status === 'published' ? 10 : 1,
 ): Question => ({
   id: 'q',
   version: 1,
-  source: 'static',
-  ownerId: null,
+  source,
+  ownerId: source === 'static' ? null : 'owner-1',
   status,
   provenance: null,
   partId: 'p',
@@ -33,7 +35,7 @@ const question = (
       },
     ],
     constraints: [],
-    validationVariantCount: status === 'published' ? 10 : 1,
+    validationVariantCount,
   },
   prompt: [{ kind: 'text', value: '@a' }],
   hint: [],
@@ -57,10 +59,38 @@ describe('validateParameterizedQuestion', () => {
       ).size,
     ).toBe(10);
   });
-  it('bloque lorsque neuf variantes seulement existent', () =>
-    expect(validateParameterizedQuestion(question(8), 'validation').kind).toBe(
-      'insufficient-distinct-variants',
-    ));
+  it('accepte neuf variantes officielles uniquement après preuve exhaustive', () => {
+    const result = validateParameterizedQuestion(
+      question(8, 'published', 'static', 9),
+      'validation',
+    );
+    expect(result.kind).toBe('ready');
+    expect(
+      new Set(result.variants.map(({ parameterValues }) => parameterValues.a)),
+    ).toEqual(new Set([0, 1, 2, 3, 4, 5, 6, 7, 8]));
+    expect(result.statistics).toMatchObject({
+      validCombinations: 9,
+      exhaustive: true,
+      searchCompleted: true,
+    });
+  });
+  it('refuse un compteur officiel de neuf lorsque vingt variantes existent', () =>
+    expect(
+      validateParameterizedQuestion(
+        question(19, 'published', 'static', 9),
+        'validation',
+      ).kind,
+    ).toBe('invalid-question'));
+  it.each(['private', 'shared'] as const)(
+    'refuse neuf variantes pour une question %s publiée',
+    (source) =>
+      expect(
+        validateParameterizedQuestion(
+          question(8, 'published', source, 9),
+          'validation',
+        ).kind,
+      ).toBe('invalid-question'),
+  );
   it('traite un brouillon selon son compteur déclaré', () =>
     expect(
       validateParameterizedQuestion(question(0, 'draft'), 'validation').kind,

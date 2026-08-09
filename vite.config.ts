@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
     new URL(
       env.VITE_AUTH_ADAPTER === 'controlled'
         ? './src/infrastructure/session/ControlledRevisionServices.ts'
-        : './src/infrastructure/session/RevisionServicesComposition.ts',
+        : './src/infrastructure/session/ProductionRevisionServices.ts',
       import.meta.url,
     ),
   );

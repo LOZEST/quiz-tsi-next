@@ -11,7 +11,14 @@ export type SafeSnapshotResult =
   | Readonly<{ ok: true; value: unknown }>
   | Readonly<{ ok: false; message: string }>;
 
-export function createSafeSnapshot(value: unknown): SafeSnapshotResult {
+export interface SafeSnapshotLimits {
+  readonly maxTotalCharacters?: number;
+}
+
+export function createSafeSnapshot(
+  value: unknown,
+  limits: SafeSnapshotLimits = {},
+): SafeSnapshotResult {
   try {
     let nodes = 0;
     let totalCharacters = 0;
@@ -26,7 +33,10 @@ export function createSafeSnapshot(value: unknown): SafeSnapshotResult {
         if (input.length > MAX_SAFE_SNAPSHOT_STRING_LENGTH)
           throw new Error('string-length');
         totalCharacters += input.length;
-        if (totalCharacters > MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS)
+        if (
+          totalCharacters >
+          (limits.maxTotalCharacters ?? MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS)
+        )
           throw new Error('character-budget');
         return input;
       }
@@ -53,7 +63,10 @@ export function createSafeSnapshot(value: unknown): SafeSnapshotResult {
         if (totalProperties > MAX_SAFE_SNAPSHOT_TOTAL_PROPERTIES)
           throw new Error('property-budget');
         totalCharacters += key.length;
-        if (totalCharacters > MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS)
+        if (
+          totalCharacters >
+          (limits.maxTotalCharacters ?? MAX_SAFE_SNAPSHOT_TOTAL_CHARACTERS)
+        )
           throw new Error('character-budget');
       };
       active.add(input);

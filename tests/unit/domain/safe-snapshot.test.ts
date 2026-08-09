@@ -76,6 +76,14 @@ describe('createSafeSnapshot', () => {
     expect(createSafeSnapshot(values).ok).toBe(false);
   });
 
+  it('n’augmente le budget que lorsqu’une limite explicite est fournie', () => {
+    const values = Array.from({ length: 11 }, () => 'x'.repeat(10_000));
+    expect(createSafeSnapshot(values).ok).toBe(false);
+    expect(createSafeSnapshot(values, { maxTotalCharacters: 120_000 }).ok).toBe(
+      true,
+    );
+  });
+
   const primitiveObject = (value: number | boolean | null) =>
     Object.fromEntries(
       Array.from(
