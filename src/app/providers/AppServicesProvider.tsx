@@ -100,6 +100,7 @@ function createDefaultServices(): AppServices {
   return {
     authGateway,
     workspaceRepository: new IndexedDbWorkspaceRepository(),
+    ...createRevisionTestServices(),
   };
 }
 
