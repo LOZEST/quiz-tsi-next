@@ -215,6 +215,51 @@ function evaluateValidated(
         case 'max':
           result = Math.max(...numbers);
           break;
+        case 'gcd': {
+          let left = Math.abs(numbers[0] as number);
+          let right = Math.abs(numbers[1] as number);
+          if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right))
+            return error(
+              'invalid-operation',
+              'Le PGCD exige deux entiers sûrs.',
+            );
+          while (right !== 0) [left, right] = [right, left % right];
+          result = left;
+          break;
+        }
+        case 'is-square': {
+          const value = numbers[0] as number;
+          return {
+            ok: true,
+            value:
+              Number.isSafeInteger(value) &&
+              value >= 0 &&
+              Number.isInteger(Math.sqrt(value)),
+          };
+        }
+        case 'squarefree': {
+          const value = Math.abs(numbers[0] as number);
+          if (!Number.isSafeInteger(value))
+            return error(
+              'invalid-operation',
+              'Le test carré libre exige un entier sûr.',
+            );
+          for (let factor = 2; factor * factor <= value; factor += 1)
+            if (value % (factor * factor) === 0)
+              return { ok: true, value: false };
+          return { ok: true, value: true };
+        }
+        case 'has-prime-factor-other-than-2-or-5': {
+          let value = Math.abs(numbers[0] as number);
+          if (!Number.isSafeInteger(value) || value === 0)
+            return error(
+              'invalid-operation',
+              'Le test de facteurs exige un entier sûr non nul.',
+            );
+          while (value % 2 === 0) value /= 2;
+          while (value % 5 === 0) value /= 5;
+          return { ok: true, value: value !== 1 };
+        }
         default:
           return error('invalid-expression', 'Fonction mathématique inconnue.');
       }

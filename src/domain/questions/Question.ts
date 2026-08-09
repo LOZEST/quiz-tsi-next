@@ -93,7 +93,18 @@ export type SafeExpressionNode =
     }>
   | Readonly<{
       kind: 'math-function';
-      function: 'abs' | 'sqrt' | 'min' | 'max' | 'round' | 'floor' | 'ceil';
+      function:
+        | 'abs'
+        | 'sqrt'
+        | 'min'
+        | 'max'
+        | 'round'
+        | 'floor'
+        | 'ceil'
+        | 'gcd'
+        | 'is-square'
+        | 'squarefree'
+        | 'has-prime-factor-other-than-2-or-5';
       arguments: readonly SafeExpressionNode[];
     }>
   | Readonly<{
@@ -223,6 +234,7 @@ function validateSegments(
 function validateParameterization(
   value: unknown,
   published: boolean,
+  source?: QuestionSource,
   requireDefinedConstraintVariables = published,
 ): ValidationIssue[] {
   if (value === null) return [];
@@ -234,7 +246,8 @@ function validateParameterization(
     value.variables.length === 0 ||
     !Array.isArray(value.constraints) ||
     !Number.isInteger(value.validationVariantCount) ||
-    (value.validationVariantCount as number) < (published ? 10 : 0)
+    (value.validationVariantCount as number) <
+      (published ? (source === 'static' ? 1 : 10) : 0)
   ) {
     return [
       issue(
@@ -289,7 +302,7 @@ export function validateParameterizedQuestionSpec(
   value: unknown,
 ): ValidationResult<ParameterizedQuestionSpec> {
   try {
-    const issues = validateParameterization(value, false, true);
+    const issues = validateParameterization(value, false, undefined, true);
     return issues.length
       ? invalid(...issues)
       : valid(value as ParameterizedQuestionSpec);
@@ -368,6 +381,10 @@ const mathFunctions = new Set([
   'round',
   'floor',
   'ceil',
+  'gcd',
+  'is-square',
+  'squarefree',
+  'has-prime-factor-other-than-2-or-5',
 ]);
 
 export function validateSafeExpression(
@@ -446,7 +463,9 @@ export function validateSafeExpression(
       const arityIsValid =
         node.function === 'min' || node.function === 'max'
           ? node.arguments.length >= 2
-          : node.arguments.length === 1;
+          : node.function === 'gcd'
+            ? node.arguments.length === 2
+            : node.arguments.length === 1;
       if (!arityIsValid) {
         return invalid(issue('expression.function', 'Arité invalide.'));
       }
@@ -611,6 +630,7 @@ export function validateQuestion(value: unknown): ValidationResult<Question> {
     ...validateParameterization(
       value.parameterization,
       value.status === 'published',
+      value.source as QuestionSource,
     ),
   );
   return issues.length
