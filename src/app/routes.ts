@@ -15,4 +15,6 @@ export const appRoutes = [
   '/account',
   '/admin',
   '/access-denied',
+  '/oauth/consent',
+  '/privacy/chatgpt-import',
 ] as const;

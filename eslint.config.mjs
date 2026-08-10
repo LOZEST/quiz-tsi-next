@@ -27,7 +27,9 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['supabase/functions/*/*.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
       globals: {
@@ -123,6 +125,10 @@ export default tseslint.config(
   },
   {
     files: ['**/*.{js,mjs}'],
+    extends: [tseslint.configs.disableTypeChecked],
+  },
+  {
+    files: ['supabase/functions/**/*.ts'],
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
