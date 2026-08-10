@@ -10,10 +10,10 @@
 ## Contrats et règles
 
 - `QuestionInstance` et `createQuestionInstance(...)` sont réutilisés. Le snapshot, la version, la seed et `parameterValues` restent identiques pour le prompt, l’indice et la correction.
-- `QuestionAttemptState` porte l’état transitoire monotone (`hintUsed`, `correctionViewed`, `timeExceeded`).
+- `QuestionAttemptState` porte l’état transitoire monotone (`startedAt`, `hintUsed`, `correctionViewed`, `timeExceeded`). Un draft borné par utilisateur et `QuestionInstance` est persisté dans IndexedDB.
 - `QuestionEvaluation` est un événement terminé immuable. Son outcome est obligatoirement `success`, `partial`, `failed` ou `skipped`.
 - `Réussi` dérive `success`, sauf aide ou dépassement qui dérive `partial`. `Raté` dérive `failed`. `Passer` dérive `skipped`. Aucun bouton partial ou « Presque réussi » n’existe.
-- Une seconde complétion ne réécrit pas le premier événement.
+- Une seconde complétion ne réécrit pas le premier événement. L’unicité append-only est imposée par `userId + questionInstanceId`, y compris si un autre identifiant d’évaluation est présenté.
 - Le port `EvaluationRepository` est indépendant de React, IndexedDB et Supabase. `IndexedDbEvaluationRepository` utilise des clés et index préfixés par utilisateur et refuse les écritures intercompte et les doublons.
 - Les sources `static`, `private` et `shared` sont conservées dans `questionSource` sans hypothèse réservée à la banque officielle.
 
@@ -31,6 +31,8 @@
 - Les tests domaine prouvent exactement 20 et 40 instances distinctes, l’ordre reproductible et les bornes de navigation.
 - `ChapterTestSession` distingue `active`, `submitted` et `abandoned`. Soumission et abandon ne modifient plus un état terminé.
 - `IndexedDbChapterTestRepository` isole les sessions par utilisateur et permet la reprise du blueprint et de la position.
+- `IndexedDbQuestionAttemptRepository` restaure `startedAt`, `hintUsed`, `correctionViewed` et `timeExceeded` pour la même instance après navigation, changement d’écran, rechargement ou réouverture.
+- À la reprise de la question courante, l’évaluation existante est recherchée par session et `questionInstanceId`, restaurée dans la tentative, puis bloque toute nouvelle complétion.
 - Chaque Canvas de test utilise une clé comprenant la session et la `QuestionInstance`; la navigation restaure donc un brouillon indépendant.
 - Les résultats affichent uniquement les comptages factuels success/partial/failed/skipped.
 
@@ -46,11 +48,13 @@
 
 - `EVALUATION-001` : indice, correction, Réussi donne `partial` avec `hintUsed: true`.
 - `EVALUATION-002` : dépassement, Réussi donne `partial` avec `timeExceeded: true`.
-- `EVALUATION-003` : seules les actions Réussi, Raté et Question suivante sont exposées après correction ; aucun bouton partial.
+- `EVALUATION-003` : un test RTL strict vérifie qu’après ouverture de la correction les boutons sont exactement Réussi, Raté et Question suivante. Indice, Voir la correction, Passer, Partiellement réussi et Presque réussi sont absents. Question suivante avant évaluation conserve la question et affiche l’instruction normative.
+- Les tests de reprise prouvent qu’Indice puis navigation ou reload conserve `hintUsed` et transforme Réussi en `partial`; ils couvrent aussi la conservation de `timeExceeded` et `correctionViewed` par navigation.
+- Une question évaluée est reprise avec la même `QuestionEvaluation`; une nouvelle évaluation de la même instance n’est pas ajoutée.
 - `TEST-001` : le filtre de chapitre est transmis à la sélection et toutes les instances portent ce chapitre.
 - `TEST-002` / `TEST-003` : 20 et 40 instances figées exactes.
 - `TEST-004` : la clé de scène contient session et instance ; Playwright vérifie navigation et reprise.
-- Vitest : 37 fichiers et 491 tests ; couverture globale 85,36 % statements, 80,27 % branches, 81,84 % fonctions et 88,04 % lignes.
+- Vitest : 38 fichiers et 496 tests ; couverture globale 86,90 % statements, 81,83 % branches, 83,33 % fonctions et 89,80 % lignes.
 - Playwright : desktop, iPad portrait et iPad paysage ; 72 scénarios lors de la suite complète. Le parcours PR5 utilise une question NUM réelle et couvre aide, correction, Canvas, évaluation, test 40, navigation, rechargement, reprise, soumission et résultat.
 
 ## Limites

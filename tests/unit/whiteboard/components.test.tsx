@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
@@ -72,5 +72,33 @@ describe('QuestionActions', () => {
       screen.getByRole('button', { name: 'Correction indisponible' }),
     ).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Passer' })).toBeEnabled();
+  });
+
+  it('shows exactly the normative actions after correction is opened', () => {
+    render(
+      <QuestionActions
+        active
+        hasHint
+        hasCorrection
+        correctionOpen
+        onNext={() => undefined}
+      />,
+    );
+    const group = screen.getByRole('group', {
+      name: 'Actions de la question',
+    });
+    expect(
+      within(group)
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Réussi', 'Raté', 'Question suivante']);
+    for (const name of [
+      'Indice',
+      'Voir la correction',
+      'Passer',
+      'Partiellement réussi',
+      'Presque réussi',
+    ])
+      expect(within(group).queryByRole('button', { name })).toBeNull();
   });
 });

@@ -29,18 +29,18 @@ export function QuestionActions({
       role="group"
       aria-label="Actions de la question"
     >
-      <button
-        type="button"
-        aria-label={hasHint ? 'Indice' : 'Indice indisponible'}
-        aria-expanded={hintOpen}
-        aria-controls="question-hint-panel"
-        disabled={!active || !hasHint || completed}
-        onClick={(event) => onHint?.(event.currentTarget)}
-      >
-        Indice
-      </button>
       {!correctionOpen && !completed ? (
         <>
+          <button
+            type="button"
+            aria-label={hasHint ? 'Indice' : 'Indice indisponible'}
+            aria-expanded={hintOpen}
+            aria-controls="question-hint-panel"
+            disabled={!active || !hasHint}
+            onClick={(event) => onHint?.(event.currentTarget)}
+          >
+            Indice
+          </button>
           <button
             type="button"
             aria-label={
@@ -69,6 +69,13 @@ export function QuestionActions({
           </button>
           <button type="button" onClick={() => onEvaluate?.('failed')}>
             Raté
+          </button>
+          <button
+            type="button"
+            aria-label="Question suivante"
+            onClick={(event) => onNext?.(event.currentTarget)}
+          >
+            Question suivante
           </button>
         </>
       ) : null}

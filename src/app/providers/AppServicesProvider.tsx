@@ -27,9 +27,11 @@ import { createRevisionTestServices as createControlledRevisionServices } from '
 import { createRevisionTestServices as createProductionRevisionServices } from '@infrastructure/session/ProductionRevisionServices';
 import type { EvaluationRepository } from '@domain/repositories/EvaluationRepository';
 import type { ChapterTestRepository } from '@domain/repositories/ChapterTestRepository';
+import type { QuestionAttemptRepository } from '@domain/repositories/QuestionAttemptRepository';
 import {
   IndexedDbChapterTestRepository,
   IndexedDbEvaluationRepository,
+  IndexedDbQuestionAttemptRepository,
 } from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
 
 export interface AppServices {
@@ -43,6 +45,7 @@ export interface AppServices {
   clock?: Clock;
   evaluationRepository?: EvaluationRepository;
   chapterTestRepository?: ChapterTestRepository;
+  questionAttemptRepository?: QuestionAttemptRepository;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -67,6 +70,9 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
       services.evaluationRepository ?? new IndexedDbEvaluationRepository(),
     chapterTestRepository:
       services.chapterTestRepository ?? new IndexedDbChapterTestRepository(),
+    questionAttemptRepository:
+      services.questionAttemptRepository ??
+      new IndexedDbQuestionAttemptRepository(),
   };
 }
 

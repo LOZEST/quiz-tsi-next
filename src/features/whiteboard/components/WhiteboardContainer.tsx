@@ -82,13 +82,7 @@ export function WhiteboardContainer() {
         onHint={experience.openHint}
         onCorrection={experience.openCorrection}
         onEvaluate={(action) => void experience.evaluate(action)}
-        onNext={(trigger) => {
-          if (experience.mode === 'chapter-test' && experience.chapterTest) {
-            void experience.navigateChapterTest(
-              experience.chapterTest.currentIndex + 1,
-            );
-          } else experience.nextQuestion(trigger);
-        }}
+        onNext={experience.nextQuestion}
       />
       <QuestionChangeDialog />
     </section>

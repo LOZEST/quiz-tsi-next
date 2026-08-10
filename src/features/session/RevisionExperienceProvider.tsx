@@ -24,6 +24,8 @@ import {
   markCorrectionViewed,
   markHintUsed,
   markTimeExceeded,
+  restoreQuestionAttempt,
+  toQuestionAttemptDraft,
   type QuestionAttemptState,
 } from '@domain/evaluation/QuestionEvaluation';
 import type {
@@ -145,6 +147,76 @@ export function RevisionExperienceProvider({
   const request = useRef(0);
   const initialLoaded = useRef(false);
   const mounted = useRef(true);
+
+  const persistAttempt = useCallback(
+    (attempt: QuestionAttemptState) => {
+      if (mode !== 'chapter-test') return;
+      void services.questionAttemptRepository
+        .save(toQuestionAttemptDraft(attempt), userId)
+        .catch(() => {
+          if (mounted.current)
+            setNotice('La tentative n’a pas pu être enregistrée.');
+        });
+    },
+    [mode, services.questionAttemptRepository, userId],
+  );
+
+  const loadChapterQuestion = useCallback(
+    async (session: ChapterTestSession, index: number) => {
+      const instance = session.blueprint.orderedQuestionInstances[index];
+      if (!instance) return;
+      const content = instantiateQuestionVariant(
+        instance.frozenQuestion,
+        instance.parameterValues,
+      );
+      if (!content.ok) return;
+      const [savedDraft, evaluations] = await Promise.all([
+        services.questionAttemptRepository.get(instance.id, userId),
+        services.evaluationRepository.listBySession(
+          session.blueprint.sessionId,
+          userId,
+        ),
+      ]);
+      const evaluation =
+        evaluations.find((entry) => entry.questionInstanceId === instance.id) ??
+        null;
+      const now = new Date(services.clock.now()).toISOString();
+      const draft =
+        savedDraft ??
+        toQuestionAttemptDraft(
+          createQuestionAttempt({
+            id: services.revisionSeedSource.nextSeed(),
+            userId,
+            instance,
+            startedAt: evaluation?.startedAt ?? now,
+          }),
+        );
+      if (!savedDraft)
+        await services.questionAttemptRepository.save(draft, userId);
+      const attempt = restoreQuestionAttempt({ draft, instance, evaluation });
+      if (!mounted.current) return;
+      setHintOpen(false);
+      setCorrectionOpen(attempt.correctionViewed);
+      setState({
+        kind: 'ready',
+        instance,
+        question: instance.frozenQuestion,
+        prepared: {
+          questionId: instance.questionId,
+          questionVersion: instance.questionVersion,
+          seed: instance.seed,
+          parameterValues: instance.parameterValues,
+          content: content.value,
+        },
+        attempt,
+        reflexDeadline:
+          instance.frozenQuestion.type === 'reflex' && !evaluation
+            ? Date.parse(attempt.startedAt) + 60_000
+            : null,
+      });
+    },
+    [services, userId],
+  );
 
   useEffect(
     () => () => {
@@ -324,36 +396,7 @@ export function RevisionExperienceProvider({
         void services.chapterTestRepository.getActive(userId).then((saved) => {
           if (!saved || !mounted.current) return;
           setChapterTest(saved);
-          const instance =
-            saved.blueprint.orderedQuestionInstances[saved.currentIndex];
-          if (!instance) return;
-          const content = instantiateQuestionVariant(
-            instance.frozenQuestion,
-            instance.parameterValues,
-          );
-          if (!content.ok) return;
-          setState({
-            kind: 'ready',
-            instance,
-            question: instance.frozenQuestion,
-            prepared: {
-              questionId: instance.questionId,
-              questionVersion: instance.questionVersion,
-              seed: instance.seed,
-              parameterValues: instance.parameterValues,
-              content: content.value,
-            },
-            attempt: createQuestionAttempt({
-              id: services.revisionSeedSource.nextSeed(),
-              userId: saved.blueprint.userId,
-              instance,
-              startedAt: new Date(services.clock.now()).toISOString(),
-            }),
-            reflexDeadline:
-              instance.frozenQuestion.type === 'reflex'
-                ? services.clock.now() + 60_000
-                : null,
-          });
+          void loadChapterQuestion(saved, saved.currentIndex);
         });
         return;
       }
@@ -380,7 +423,7 @@ export function RevisionExperienceProvider({
             });
         });
     },
-    [activeFilters, attemptFree, board, services, userId],
+    [activeFilters, attemptFree, board, loadChapterQuestion, services, userId],
   );
 
   const requestFree = useCallback(
@@ -465,16 +508,32 @@ export function RevisionExperienceProvider({
           );
           return;
         }
+        if (mode === 'chapter-test' && chapterTest) {
+          void (async () => {
+            const now = new Date(services.clock.now()).toISOString();
+            const moved = moveChapterTest(
+              chapterTest,
+              chapterTest.currentIndex + 1,
+              now,
+            );
+            if (moved === chapterTest) return;
+            await services.chapterTestRepository.save(moved, userId);
+            setChapterTest(moved);
+            await loadChapterQuestion(moved, moved.currentIndex);
+          })();
+          return;
+        }
         requestFree(activeFilters, true, trigger);
       },
       hintOpen,
       correctionOpen,
       openHint: (trigger) => {
-        setState((current) =>
-          current.kind === 'ready'
-            ? { ...current, attempt: markHintUsed(current.attempt) }
-            : current,
-        );
+        setState((current) => {
+          if (current.kind !== 'ready') return current;
+          const attempt = markHintUsed(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        });
         setHelpTrigger(trigger ?? null);
         setHintOpen(true);
       },
@@ -483,11 +542,12 @@ export function RevisionExperienceProvider({
         queueMicrotask(() => helpTrigger?.focus());
       },
       openCorrection: (trigger) => {
-        setState((current) =>
-          current.kind === 'ready'
-            ? { ...current, attempt: markCorrectionViewed(current.attempt) }
-            : current,
-        );
+        setState((current) => {
+          if (current.kind !== 'ready') return current;
+          const attempt = markCorrectionViewed(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        });
         setHelpTrigger(trigger ?? null);
         setCorrectionOpen(true);
       },
@@ -496,13 +556,13 @@ export function RevisionExperienceProvider({
         queueMicrotask(() => helpTrigger?.focus());
       },
       markReflexExceeded: () =>
-        setState((current) =>
-          current.kind === 'ready'
-            ? current.attempt.timeExceeded
-              ? current
-              : { ...current, attempt: markTimeExceeded(current.attempt) }
-            : current,
-        ),
+        setState((current) => {
+          if (current.kind !== 'ready' || current.attempt.timeExceeded)
+            return current;
+          const attempt = markTimeExceeded(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        }),
       evaluate: async (action) => {
         if (state.kind !== 'ready') return;
         if (mode === 'chapter-test' && chapterTest?.status !== 'active') return;
@@ -514,6 +574,10 @@ export function RevisionExperienceProvider({
         if (!completed.evaluation || completed === state.attempt) return;
         await services.evaluationRepository.append(
           completed.evaluation,
+          userId,
+        );
+        await services.questionAttemptRepository.save(
+          toQuestionAttemptDraft(completed),
           userId,
         );
         setState((current) =>
@@ -552,30 +616,7 @@ export function RevisionExperienceProvider({
           instance.parameterValues,
         );
         if (!content.ok) return false;
-        setHintOpen(false);
-        setCorrectionOpen(false);
-        setState({
-          kind: 'ready',
-          instance,
-          question: instance.frozenQuestion,
-          prepared: {
-            questionId: instance.questionId,
-            questionVersion: instance.questionVersion,
-            seed: instance.seed,
-            parameterValues: instance.parameterValues,
-            content: content.value,
-          },
-          attempt: createQuestionAttempt({
-            id: services.revisionSeedSource.nextSeed(),
-            userId,
-            instance,
-            startedAt: now,
-          }),
-          reflexDeadline:
-            instance.frozenQuestion.type === 'reflex'
-              ? services.clock.now() + 60_000
-              : null,
-        });
+        await loadChapterQuestion(session, 0);
         return true;
       },
       navigateChapterTest: async (index) => {
@@ -585,54 +626,7 @@ export function RevisionExperienceProvider({
         if (moved === chapterTest) return;
         await services.chapterTestRepository.save(moved, userId);
         setChapterTest(moved);
-        const instance = moved.blueprint.orderedQuestionInstances[index];
-        if (!instance) return;
-        const content = instantiateQuestionVariant(
-          instance.frozenQuestion,
-          instance.parameterValues,
-        );
-        if (!content.ok) return;
-        const evaluations = await services.evaluationRepository.listBySession(
-          moved.blueprint.sessionId,
-          userId,
-        );
-        const evaluation =
-          evaluations.find(
-            (entry) => entry.questionInstanceId === instance.id,
-          ) ?? null;
-        let attempt = createQuestionAttempt({
-          id: services.revisionSeedSource.nextSeed(),
-          userId,
-          instance,
-          startedAt: evaluation?.startedAt ?? now,
-        });
-        if (evaluation)
-          attempt = {
-            ...attempt,
-            hintUsed: evaluation.hintUsed,
-            timeExceeded: evaluation.timeExceeded,
-            correctionViewed: true,
-            evaluation,
-          };
-        setHintOpen(false);
-        setCorrectionOpen(evaluation !== null);
-        setState({
-          kind: 'ready',
-          instance,
-          question: instance.frozenQuestion,
-          prepared: {
-            questionId: instance.questionId,
-            questionVersion: instance.questionVersion,
-            seed: instance.seed,
-            parameterValues: instance.parameterValues,
-            content: content.value,
-          },
-          attempt,
-          reflexDeadline:
-            instance.frozenQuestion.type === 'reflex' && !evaluation
-              ? services.clock.now() + 60_000
-              : null,
-        });
+        await loadChapterQuestion(moved, index);
       },
       finishChapterTest: async (status) => {
         if (!chapterTest) return;
@@ -660,7 +654,9 @@ export function RevisionExperienceProvider({
       hintOpen,
       mode,
       notice,
+      loadChapterQuestion,
       pending,
+      persistAttempt,
       requestFree,
       setMode,
       setFreeFilters,

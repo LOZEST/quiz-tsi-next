@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   IndexedDbChapterTestRepository,
   IndexedDbEvaluationRepository,
+  IndexedDbQuestionAttemptRepository,
 } from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
 import type { QuestionEvaluation } from '@domain/evaluation/QuestionEvaluation';
 import { createChapterTestBlueprint } from '@domain/chapter-tests/ChapterTest';
@@ -51,6 +52,51 @@ describe('IndexedDbEvaluationRepository', () => {
     await expect(
       repository.append({ ...entry, outcome: 'failed' }, 'owner'),
     ).rejects.toThrow('existe déjà');
+  });
+  it('refuse une seconde évaluation logique avec un autre identifiant', async () => {
+    const repository = new IndexedDbEvaluationRepository();
+    const suffix = crypto.randomUUID();
+    const first = evaluation(`first-${suffix}`, 'owner');
+    const second = {
+      ...evaluation(`second-${suffix}`, 'owner'),
+      questionInstanceId: first.questionInstanceId,
+      outcome: 'failed' as const,
+    };
+    await repository.append(first, 'owner');
+    await expect(repository.append(second, 'owner')).rejects.toThrow();
+    expect(
+      (await repository.listByUser('owner')).filter(
+        (entry) => entry.questionInstanceId === first.questionInstanceId,
+      ),
+    ).toEqual([first]);
+  });
+});
+
+describe('IndexedDbQuestionAttemptRepository', () => {
+  it('persiste et remplace les marqueurs transitoires de la même instance', async () => {
+    const repository = new IndexedDbQuestionAttemptRepository();
+    const suffix = crypto.randomUUID();
+    const draft = {
+      id: `attempt-${suffix}`,
+      userId: `owner-${suffix}`,
+      sessionId: `session-${suffix}`,
+      questionInstanceId: `instance-${suffix}`,
+      startedAt: '2026-08-09T00:00:00.000Z',
+      hintUsed: true,
+      correctionViewed: false,
+      timeExceeded: false,
+    };
+    await repository.save(draft, draft.userId);
+    await repository.save(
+      { ...draft, correctionViewed: true, timeExceeded: true },
+      draft.userId,
+    );
+    expect(
+      await repository.get(draft.questionInstanceId, draft.userId),
+    ).toEqual({ ...draft, correctionViewed: true, timeExceeded: true });
+    expect(
+      await repository.get(draft.questionInstanceId, 'intruder'),
+    ).toBeNull();
   });
 });
 

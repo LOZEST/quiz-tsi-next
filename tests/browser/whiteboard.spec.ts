@@ -343,8 +343,27 @@ test('keeps the same question and canvas through hint, correction and evaluation
   await expect(
     page.getByRole('button', { name: 'Partiellement réussi' }),
   ).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Réussi' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Raté' })).toBeVisible();
+  const actions = page.getByRole('group', { name: 'Actions de la question' });
+  await expect(actions.getByRole('button')).toHaveText([
+    'Réussi',
+    'Raté',
+    'Question suivante',
+  ]);
+  for (const name of [
+    'Indice',
+    'Voir la correction',
+    'Passer',
+    'Partiellement réussi',
+    'Presque réussi',
+  ])
+    await expect(actions.getByRole('button', { name })).toHaveCount(0);
+  await actions.getByRole('button', { name: 'Question suivante' }).click();
+  await expect(
+    page.getByText(
+      'Indique ton résultat avant de passer à la question suivante.',
+    ),
+  ).toBeVisible();
+  expect(await question.textContent()).toBe(prompt);
   await page.getByRole('button', { name: 'Réussi' }).click();
   await expect(
     page.getByRole('button', { name: 'Question suivante' }),

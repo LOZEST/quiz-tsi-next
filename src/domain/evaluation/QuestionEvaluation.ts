@@ -25,6 +25,17 @@ export interface QuestionAttemptState {
   readonly evaluation: QuestionEvaluation | null;
 }
 
+export type QuestionAttemptDraft = Readonly<{
+  id: string;
+  userId: string;
+  sessionId: string;
+  questionInstanceId: string;
+  startedAt: string;
+  hintUsed: boolean;
+  correctionViewed: boolean;
+  timeExceeded: boolean;
+}>;
+
 export interface QuestionEvaluation {
   readonly id: string;
   readonly userId: string;
@@ -57,6 +68,39 @@ export function createQuestionAttempt(input: {
     correctionViewed: false,
     timeExceeded: false,
     evaluation: null,
+  });
+}
+
+export function toQuestionAttemptDraft(
+  attempt: QuestionAttemptState,
+): QuestionAttemptDraft {
+  return deepFreezeOwned({
+    id: attempt.id,
+    userId: attempt.userId,
+    sessionId: attempt.instance.sessionId,
+    questionInstanceId: attempt.instance.id,
+    startedAt: attempt.startedAt,
+    hintUsed: attempt.hintUsed,
+    correctionViewed: attempt.correctionViewed,
+    timeExceeded: attempt.timeExceeded,
+  });
+}
+
+export function restoreQuestionAttempt(input: {
+  draft: QuestionAttemptDraft;
+  instance: QuestionInstance;
+  evaluation: QuestionEvaluation | null;
+}): QuestionAttemptState {
+  return deepFreezeOwned({
+    id: input.draft.id,
+    userId: input.draft.userId,
+    instance: input.instance,
+    startedAt: input.draft.startedAt,
+    hintUsed: input.draft.hintUsed || input.evaluation?.hintUsed === true,
+    correctionViewed: input.draft.correctionViewed || input.evaluation !== null,
+    timeExceeded:
+      input.draft.timeExceeded || input.evaluation?.timeExceeded === true,
+    evaluation: input.evaluation,
   });
 }
 
