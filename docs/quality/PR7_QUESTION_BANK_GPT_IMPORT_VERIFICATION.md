@@ -26,9 +26,10 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 | `npm run build:pages` | Réussi |
 | `npm run test:browser` | Réussi — 87 scénarios desktop, iPad portrait et iPad paysage |
 | `git diff --check` | Réussi |
-| `npm run test:rls` | Tenté localement, bloqué avant exécution : daemon Docker absent (`~/.docker/run/docker.sock`) |
+| `npm run test:rls` | Réussi en CI — 16 assertions comportementales PR7 multi-compte et 9 assertions profils |
+| GitHub Actions `quality` (`da8b621`) | Réussi en 5 min — run `31408094609` |
 
-La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre désormais Supabase puis exécute obligatoirement `test:rls`. L’absence de preuve locale est déclarée et n’est pas remplacée par une validation simulée.
+La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre Supabase puis exécute obligatoirement `test:rls`. L’exécution locale a été tentée mais reste indisponible faute de daemon Docker (`~/.docker/run/docker.sock`) ; la preuve CI réelle n’est pas remplacée par une validation simulée.
 
 ## Vérifications manuelles
 
@@ -40,4 +41,4 @@ La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre
 
 ## Point de reprise
 
-Avant fusion, la CI de la PR doit exécuter pgTAP avec succès. Le test GPT/OAuth manuel à deux comptes reste à consigner.
+La CI obligatoire, y compris pgTAP, est verte. Le test GPT/OAuth manuel à deux comptes reste à consigner avant de considérer cette vérification manuelle comme acquise.
