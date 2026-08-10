@@ -7,6 +7,7 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 
 - Banque officielle et personnelle, recherche et filtres combinés.
 - Création locale structurée, brouillons, relecture, partage et archivage.
+- Variables integer/decimal/choice, contraintes visuelles allowlistées et aperçu de dix variantes réelles.
 - Cache IndexedDB partitionné, outbox, synchronisation bornée et conflits explicites.
 - Taxonomie officielle distincte de la taxonomie personnelle.
 - Contrat d’import ChatGPT v1, validation, quarantaine, idempotence et couverture d’analyse.
@@ -20,14 +21,14 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 | `npm run format:check` | Réussi |
 | `npm run lint` | Réussi |
 | `npm run typecheck` | Réussi |
-| `npm run test:coverage` | Réussi — 49 fichiers, 553 tests ; statements 84,57 %, branches 80,02 %, functions 81,99 %, lines 87,10 % |
+| `npm run test:coverage` | Réussi — 51 fichiers, 559 tests ; statements 84,55 %, branches 80,04 %, functions 81,23 %, lines 87,01 % |
 | `npm run build` | Réussi |
 | `npm run build:pages` | Réussi |
 | `npm run test:browser` | Réussi — 87 scénarios desktop, iPad portrait et iPad paysage |
 | `git diff --check` | Réussi |
-| `npm run test:rls` | Non exécuté : aucune base Supabase/Postgres locale joignable |
+| `npm run test:rls` | Tenté localement, bloqué avant exécution : daemon Docker absent (`~/.docker/run/docker.sock`) |
 
-La migration et le fichier pgTAP RLS sont livrés, mais leur exécution doit être reprise dans un environnement Supabase local actif ou en CI. Cette absence de preuve d’exécution est déclarée et n’est pas remplacée par une validation simulée.
+La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre désormais Supabase puis exécute obligatoirement `test:rls`. L’absence de preuve locale est déclarée et n’est pas remplacée par une validation simulée.
 
 ## Vérifications manuelles
 
@@ -35,7 +36,8 @@ La migration et le fichier pgTAP RLS sont livrés, mais leur exécution doit êt
 - Le défaut d’interaction détecté sur iPad portrait a été corrigé ; le scénario ciblé puis la suite multi-viewport complète passent.
 - Aucun média source de cours n’est envoyé au backend : le GPT analyse les médias dans ChatGPT et transmet uniquement le JSON structuré.
 - Aucun secret, package OpenAI ou appel à `api.openai.com` n’est présent dans l’application ou la fonction Edge.
+- Le test GPT/OAuth de bout en bout avec deux vrais comptes reste manuel et en attente.
 
 ## Point de reprise
 
-Avant fusion, exécuter `npm run test:rls` avec Supabase local démarré et joindre le résultat pgTAP à la PR.
+Avant fusion, la CI de la PR doit exécuter pgTAP avec succès. Le test GPT/OAuth manuel à deux comptes reste à consigner.

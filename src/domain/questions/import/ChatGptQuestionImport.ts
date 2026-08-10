@@ -84,6 +84,7 @@ type Result =
   | Readonly<{
       ok: true;
       value: ChatGptQuestionImportV1;
+      acceptedIndices: readonly number[];
       quarantined: readonly ImportReportEntryV1[];
     }>
   | Readonly<{ ok: false; issues: readonly ImportReportEntryV1[] }>;
@@ -329,11 +330,15 @@ export function validateChatGptQuestionImport(input: unknown): Result {
       ],
     };
   const accepted: ChatGptQuestionImportEntryV1[] = [];
+  const acceptedIndices: number[] = [];
   const quarantined: ImportReportEntryV1[] = [];
   input.questions.forEach((entry, index) => {
     const result = validateEntry(entry, index);
     if ('code' in result) quarantined.push(result);
-    else accepted.push(result);
+    else {
+      accepted.push(result);
+      acceptedIndices.push(index);
+    }
   });
   return {
     ok: true,
@@ -342,10 +347,11 @@ export function validateChatGptQuestionImport(input: unknown): Result {
       questions: accepted,
     } as unknown as ChatGptQuestionImportV1,
     quarantined,
+    acceptedIndices,
   };
 }
 
-export function canonicalizeImport(value: ChatGptQuestionImportV1): string {
+export function canonicalizeImport(value: unknown): string {
   const normalize = (entry: unknown): unknown =>
     Array.isArray(entry)
       ? entry.map(normalize)

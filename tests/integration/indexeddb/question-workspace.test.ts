@@ -69,4 +69,37 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     expect((await repository.load('account-a')).courses).toEqual([course]);
     expect((await repository.load('account-b')).courses).toEqual([]);
   });
+
+  it('consomme l’opération conflictuelle et prépare une seconde synchronisation saine', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const local = { ...draft('conflict-owner', 'conflict-q'), version: 2 };
+    const remote = {
+      ...local,
+      version: 2,
+      prompt: [{ kind: 'text' as const, value: 'Serveur' }],
+    };
+    await repository.saveQuestion('conflict-owner', local, 'update', 'old-op');
+    await repository.recordConflict('conflict-owner', {
+      id: 'conflict-id',
+      userId: 'conflict-owner',
+      entityId: local.id,
+      operationId: 'old-op',
+      local,
+      remote,
+      detectedAt: new Date().toISOString(),
+    });
+    await repository.resolveConflict('conflict-owner', 'conflict-id', 'local');
+    const replacement = await repository.listOutbox('conflict-owner');
+    expect(replacement).toHaveLength(1);
+    expect(replacement[0]).toMatchObject({
+      kind: 'update',
+      baseVersion: 2,
+      payload: { version: 3 },
+    });
+    await repository.completeOperation(
+      'conflict-owner',
+      replacement[0]!.operationId,
+    );
+    expect(await repository.listOutbox('conflict-owner')).toEqual([]);
+  });
 });

@@ -195,12 +195,11 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     const conflictRow = await db.get('conflicts', key(userId, conflictId));
     if (!conflictRow || conflictRow.userId !== userId)
       throw new Error('Conflit introuvable.');
-    const selected =
-      choice === 'remote' ? conflictRow.value.remote : conflictRow.value.local;
+    const { local, remote, operationId } = conflictRow.value;
     const resolved =
       choice === 'duplicate'
         ? {
-            ...selected,
+            ...local,
             id: crypto.randomUUID(),
             version: 1,
             source: 'private' as const,
@@ -208,14 +207,37 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
             status: 'draft' as const,
             validated: false,
           }
-        : selected;
-    const transaction = db.transaction(['questions', 'conflicts'], 'readwrite');
+        : choice === 'remote'
+          ? remote
+          : { ...local, version: remote.version + 1 };
+    const transaction = db.transaction(
+      ['questions', 'conflicts', 'outbox'],
+      'readwrite',
+    );
+    await transaction.objectStore('outbox').delete(key(userId, operationId));
     await transaction.objectStore('questions').put({
       key: key(userId, `${resolved.id}:${resolved.version}`),
       userId,
       question: structuredClone(resolved),
     });
     await transaction.objectStore('conflicts').delete(key(userId, conflictId));
+    if (choice !== 'remote') {
+      const nextOperationId = crypto.randomUUID();
+      const operation: QuestionOutboxOperation = {
+        operationId: nextOperationId,
+        userId,
+        entityId: resolved.id,
+        kind: choice === 'duplicate' ? 'create' : 'update',
+        baseVersion: choice === 'duplicate' ? null : remote.version,
+        payload: structuredClone(resolved),
+        createdAt: new Date().toISOString(),
+      };
+      await transaction.objectStore('outbox').put({
+        key: key(userId, nextOperationId),
+        userId,
+        value: operation,
+      });
+    }
     await transaction.done;
   }
   async listOutbox(userId: string) {

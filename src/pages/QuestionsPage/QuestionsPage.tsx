@@ -12,13 +12,19 @@ import {
   questionClassification,
   type ContentSegment,
   type Question,
+  type SafeExpressionNode,
+  type VariableDefinition,
 } from '@domain/questions/Question';
+import { validateQuestionForReview } from '@domain/questions/QuestionAuthoringValidation';
+import { validateParameterizedQuestion } from '@domain/questions/QuestionParameterValidation';
 import {
   MATH_SYMBOL_REGISTRY_V1,
   MATH_SYNTAX_REGISTRY_V1,
 } from '@domain/math/MathSyntaxRegistry';
 import { parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
+import type { QuestionWorkspaceRepository } from '@domain/repositories/QuestionWorkspaceRepository';
+import type { ProgramIndex } from '@domain/program/Program';
 import styles from './QuestionsPage.module.css';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 
@@ -53,6 +59,9 @@ export function QuestionsPage() {
   const [filters, setFilters] = useState<QuestionBankFilters>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
+  const [reviewErrors, setReviewErrors] = useState<
+    readonly { path: string; message: string }[]
+  >([]);
   const [offline, setOffline] = useState(!navigator.onLine);
   const [syncState, setSyncState] = useState<
     'idle' | 'syncing' | 'denied' | 'error'
@@ -146,6 +155,15 @@ export function QuestionsPage() {
         </p>
       ) : null}
       {storageError ? <p role="alert">{storageError}</p> : null}
+      {reviewErrors.length ? (
+        <ul role="alert">
+          {reviewErrors.map((entry) => (
+            <li key={`${entry.path}:${entry.message}`}>
+              {entry.path} — {entry.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className={styles.actions}>
         <button type="button" onClick={() => setEditing(true)}>
           Créer une question
@@ -404,29 +422,35 @@ export function QuestionsPage() {
                     'create',
                   );
                 }}
-                onReview={() =>
-                  void mutate(
-                    {
-                      ...selected,
-                      version: selected.version + 1,
-                      validated: true,
-                      updatedAt: new Date().toISOString(),
-                    },
-                    'update',
-                  )
-                }
-                onPublish={() =>
-                  void mutate(
-                    {
-                      ...selected,
-                      version: selected.version + 1,
-                      source: 'shared',
-                      status: 'published',
-                      updatedAt: new Date().toISOString(),
-                    },
-                    'publish',
-                  )
-                }
+                onReview={() => {
+                  const errors = validateQuestionForReview(selected);
+                  setReviewErrors(errors);
+                  if (!errors.length)
+                    void mutate(
+                      {
+                        ...selected,
+                        version: selected.version + 1,
+                        validated: true,
+                        updatedAt: new Date().toISOString(),
+                      },
+                      'update',
+                    );
+                }}
+                onPublish={() => {
+                  const errors = validateQuestionForReview(selected);
+                  setReviewErrors(errors);
+                  if (!errors.length)
+                    void mutate(
+                      {
+                        ...selected,
+                        version: selected.version + 1,
+                        source: 'shared',
+                        status: 'published',
+                        updatedAt: new Date().toISOString(),
+                      },
+                      'publish',
+                    );
+                }}
                 onArchive={() =>
                   void mutate(
                     {
@@ -485,6 +509,9 @@ export function QuestionsPage() {
         <QuestionEditor
           initial={selected?.source === 'static' ? null : selected}
           userId={userId}
+          programIndex={programIndex}
+          workspace={workspace}
+          repository={questionWorkspaceRepository}
           onCancel={() => setEditing(false)}
           onSave={async (question, kind) => {
             await questionWorkspaceRepository.saveQuestion(
@@ -611,11 +638,17 @@ function QuestionPreview({
 function QuestionEditor({
   initial,
   userId,
+  programIndex,
+  workspace,
+  repository,
   onCancel,
   onSave,
 }: {
   initial: Readonly<Question> | null;
   userId: string;
+  programIndex: ProgramIndex | null;
+  workspace: QuestionWorkspaceSnapshot;
+  repository: QuestionWorkspaceRepository;
   onCancel: () => void;
   onSave: (question: Question, kind: 'create' | 'update') => Promise<void>;
 }) {
@@ -630,6 +663,78 @@ function QuestionEditor({
       ?.value ?? '',
   );
   const [variable, setVariable] = useState('');
+  const [variableLabel, setVariableLabel] = useState('');
+  const [domainKind, setDomainKind] = useState<
+    'integer' | 'decimal' | 'choice'
+  >('integer');
+  const [domainMinimum, setDomainMinimum] = useState('1');
+  const [domainMaximum, setDomainMaximum] = useState('10');
+  const [domainDecimals, setDomainDecimals] = useState('2');
+  const [choiceValues, setChoiceValues] = useState('1, 2');
+  const [variables, setVariables] = useState<VariableDefinition[]>(
+    initial?.parameterization?.variables
+      ? [...initial.parameterization.variables]
+      : [],
+  );
+  const [constraints, setConstraints] = useState<SafeExpressionNode[]>(
+    initial?.parameterization?.constraints
+      ? [...initial.parameterization.constraints]
+      : [],
+  );
+  const [constraintLeft, setConstraintLeft] = useState('');
+  const [constraintOperator, setConstraintOperator] = useState<
+    | 'equal'
+    | 'not-equal'
+    | 'less-than'
+    | 'less-than-or-equal'
+    | 'greater-than'
+    | 'greater-than-or-equal'
+  >('not-equal');
+  const [constraintRightKind, setConstraintRightKind] = useState<
+    'literal' | 'variable'
+  >('literal');
+  const [constraintRight, setConstraintRight] = useState('0');
+  const existingClassification = initial
+    ? questionClassification(initial)
+    : null;
+  const [classificationKind, setClassificationKind] = useState<
+    'official' | 'personal'
+  >(existingClassification?.kind ?? 'official');
+  const [partId, setPartId] = useState(
+    existingClassification?.kind === 'official'
+      ? existingClassification.partId
+      : '',
+  );
+  const [chapterId, setChapterId] = useState(
+    existingClassification?.kind === 'official'
+      ? existingClassification.chapterId
+      : '',
+  );
+  const [notionId, setNotionId] = useState(
+    existingClassification?.kind === 'official'
+      ? existingClassification.notionId
+      : '',
+  );
+  const [courseId, setCourseId] = useState(
+    existingClassification?.kind === 'personal'
+      ? existingClassification.courseId
+      : '',
+  );
+  const [personalChapterId, setPersonalChapterId] = useState(
+    existingClassification?.kind === 'personal'
+      ? (existingClassification.chapterId ?? '')
+      : '',
+  );
+  const [personalNotionId, setPersonalNotionId] = useState(
+    existingClassification?.kind === 'personal'
+      ? (existingClassification.notionId ?? '')
+      : '',
+  );
+  const [personalCourseTitle, setPersonalCourseTitle] = useState('');
+  const [personalChapterTitle, setPersonalChapterTitle] = useState('');
+  const [personalNotionTitle, setPersonalNotionTitle] = useState('');
+  const [editorErrors, setEditorErrors] = useState<string[]>([]);
+  const [variantPreview, setVariantPreview] = useState<readonly string[]>([]);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const activeMath = useRef<HTMLInputElement | null>(null);
@@ -647,11 +752,68 @@ function QuestionEditor({
       input.setSelectionRange(start + symbol.length, start + symbol.length),
     );
   };
-  const save = async () => {
+  const buildClassification = async () => {
+    if (classificationKind === 'official') {
+      if (!partId || !chapterId || !notionId) return null;
+      return officialClassification(partId, chapterId, notionId);
+    }
+    let resolvedCourseId = courseId;
+    if (!resolvedCourseId && personalCourseTitle.trim()) {
+      resolvedCourseId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      await repository.savePersonalCourse(userId, {
+        id: resolvedCourseId,
+        ownerId: userId,
+        title: personalCourseTitle.trim(),
+        createdAt: now,
+        updatedAt: now,
+      });
+      setCourseId(resolvedCourseId);
+    }
+    if (!resolvedCourseId) return null;
+    let resolvedChapterId: string | null = personalChapterId || null;
+    let resolvedNotionId: string | null = personalNotionId || null;
+    if (personalChapterTitle.trim()) {
+      resolvedChapterId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      await repository.savePersonalChapter(userId, {
+        id: resolvedChapterId,
+        ownerId: userId,
+        courseId: resolvedCourseId,
+        title: personalChapterTitle.trim(),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    if (personalNotionTitle.trim()) {
+      resolvedNotionId = crypto.randomUUID();
+      const now = new Date().toISOString();
+      await repository.savePersonalNotion(userId, {
+        id: resolvedNotionId,
+        ownerId: userId,
+        courseId: resolvedCourseId,
+        chapterId: resolvedChapterId,
+        title: personalNotionTitle.trim(),
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    return {
+      kind: 'personal' as const,
+      courseId: resolvedCourseId,
+      chapterId: resolvedChapterId,
+      notionId: resolvedNotionId,
+    };
+  };
+  const buildQuestion = async (): Promise<Question | null> => {
+    const classification = await buildClassification();
+    if (!classification) {
+      setEditorErrors(['Une classification valide est obligatoire.']);
+      return null;
+    }
     const now = new Date().toISOString();
     const first = initial ?? null;
-    const official = first ? questionClassification(first) : null;
-    const question: Question = {
+    return {
       id: first?.id ?? crypto.randomUUID(),
       version: first ? first.version + 1 : 1,
       source: 'private',
@@ -659,26 +821,35 @@ function QuestionEditor({
       status: 'draft',
       validated: false,
       provenance: first?.provenance ?? null,
-      classification:
-        official ??
-        officialClassification('numbers', 'numbers-arithmetic', 'NUM-F01'),
+      classification,
       type: first?.type ?? 'course',
       difficulty: first?.difficulty ?? 'standard',
-      parameterization: null,
+      parameterization: variables.length
+        ? {
+            schemaVersion: 1,
+            variables,
+            constraints,
+            validationVariantCount: 10,
+          }
+        : null,
       prompt: segments,
       hint: hint ? [{ kind: 'text', value: hint }] : [],
       correction: [
         {
           id: 'step-1',
           title: null,
-          content: [{ kind: 'text', value: correction || 'À compléter' }],
+          content: [{ kind: 'text', value: correction }],
         },
       ],
       tags: [],
       createdAt: first?.createdAt ?? now,
       updatedAt: now,
     };
-    await onSave(question, first ? 'update' : 'create');
+  };
+  const save = async () => {
+    const question = await buildQuestion();
+    if (!question) return;
+    await onSave(question, initial ? 'update' : 'create');
   };
   return (
     <div className={styles.editorBackdrop}>
@@ -699,6 +870,180 @@ function QuestionEditor({
             Enregistrer le brouillon
           </button>
         </div>
+        {editorErrors.length ? (
+          <ul role="alert">
+            {editorErrors.map((message) => (
+              <li key={message}>{message}</li>
+            ))}
+          </ul>
+        ) : null}
+        <fieldset>
+          <legend>Classification</legend>
+          <label>
+            Type de classification
+            <select
+              aria-label="Type de classification"
+              value={classificationKind}
+              onChange={(event) =>
+                setClassificationKind(
+                  event.target.value as 'official' | 'personal',
+                )
+              }
+            >
+              <option value="official">Programme officiel</option>
+              <option value="personal">Cours personnel</option>
+            </select>
+          </label>
+          {classificationKind === 'official' ? (
+            <>
+              <label>
+                Partie
+                <select
+                  value={partId}
+                  onChange={(event) => {
+                    setPartId(event.target.value);
+                    setChapterId('');
+                    setNotionId('');
+                  }}
+                >
+                  <option value="">Choisir</option>
+                  {programIndex?.getAllParts().map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Chapitre
+                <select
+                  value={chapterId}
+                  onChange={(event) => {
+                    setChapterId(event.target.value);
+                    setNotionId('');
+                  }}
+                >
+                  <option value="">Choisir</option>
+                  {programIndex?.getChaptersForPart(partId).map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Notion
+                <select
+                  value={notionId}
+                  onChange={(event) => setNotionId(event.target.value)}
+                >
+                  <option value="">Choisir</option>
+                  {programIndex?.getNotionsForChapter(chapterId).map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          ) : (
+            <>
+              <label>
+                Cours
+                <select
+                  value={courseId}
+                  onChange={(event) => {
+                    setCourseId(event.target.value);
+                    setPersonalChapterId('');
+                    setPersonalNotionId('');
+                  }}
+                >
+                  <option value="">Créer un cours</option>
+                  {workspace.courses.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {!courseId ? (
+                <label>
+                  Nouveau cours
+                  <input
+                    value={personalCourseTitle}
+                    onChange={(event) =>
+                      setPersonalCourseTitle(event.target.value)
+                    }
+                  />
+                </label>
+              ) : null}
+              {courseId ? (
+                <label>
+                  Chapitre existant facultatif
+                  <select
+                    value={personalChapterId}
+                    onChange={(event) => {
+                      setPersonalChapterId(event.target.value);
+                      setPersonalNotionId('');
+                    }}
+                  >
+                    <option value="">Aucun</option>
+                    {workspace.chapters
+                      .filter((item) => item.courseId === courseId)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.title}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              ) : null}
+              {courseId ? (
+                <label>
+                  Notion existante facultative
+                  <select
+                    value={personalNotionId}
+                    onChange={(event) =>
+                      setPersonalNotionId(event.target.value)
+                    }
+                  >
+                    <option value="">Aucune</option>
+                    {workspace.notions
+                      .filter(
+                        (item) =>
+                          item.courseId === courseId &&
+                          (!personalChapterId ||
+                            item.chapterId === personalChapterId),
+                      )
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.title}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              ) : null}
+              <label>
+                Nouveau chapitre facultatif
+                <input
+                  value={personalChapterTitle}
+                  onChange={(event) =>
+                    setPersonalChapterTitle(event.target.value)
+                  }
+                />
+              </label>
+              <label>
+                Nouvelle notion facultative
+                <input
+                  value={personalNotionTitle}
+                  onChange={(event) =>
+                    setPersonalNotionTitle(event.target.value)
+                  }
+                />
+              </label>
+            </>
+          )}
+        </fieldset>
         <div className={styles.segmentList}>
           {segments.map((segment, index) =>
             segment.kind === 'text' ? (
@@ -847,17 +1192,257 @@ function QuestionEditor({
               }
             />
           </label>
+          <label>
+            Libellé
+            <input
+              value={variableLabel}
+              onChange={(event) => setVariableLabel(event.target.value)}
+            />
+          </label>
+          <label>
+            Domaine
+            <select
+              value={domainKind}
+              onChange={(event) =>
+                setDomainKind(event.target.value as typeof domainKind)
+              }
+            >
+              <option value="integer">Entier</option>
+              <option value="decimal">Décimal</option>
+              <option value="choice">Choix</option>
+            </select>
+          </label>
+          {domainKind === 'choice' ? (
+            <label>
+              Valeurs séparées par des virgules
+              <input
+                value={choiceValues}
+                onChange={(event) => setChoiceValues(event.target.value)}
+              />
+            </label>
+          ) : (
+            <>
+              <label>
+                Minimum
+                <input
+                  type="number"
+                  value={domainMinimum}
+                  onChange={(event) => setDomainMinimum(event.target.value)}
+                />
+              </label>
+              <label>
+                Maximum
+                <input
+                  type="number"
+                  value={domainMaximum}
+                  onChange={(event) => setDomainMaximum(event.target.value)}
+                />
+              </label>
+              {domainKind === 'decimal' ? (
+                <label>
+                  Décimales
+                  <input
+                    type="number"
+                    min="0"
+                    max="6"
+                    value={domainDecimals}
+                    onChange={(event) => setDomainDecimals(event.target.value)}
+                  />
+                </label>
+              ) : null}
+            </>
+          )}
           <button
             type="button"
-            disabled={!variable}
+            disabled={!variable || !variableLabel.trim()}
+            onClick={() => {
+              const domain: VariableDefinition['domain'] =
+                domainKind === 'choice'
+                  ? {
+                      kind: 'choice' as const,
+                      values: choiceValues
+                        .split(',')
+                        .map((value) => value.trim())
+                        .filter(Boolean)
+                        .map((value) =>
+                          Number.isNaN(Number(value)) ? value : Number(value),
+                        ),
+                    }
+                  : domainKind === 'integer'
+                    ? {
+                        kind: 'integer' as const,
+                        minimum: Number(domainMinimum),
+                        maximum: Number(domainMaximum),
+                        step: 1,
+                        excludedValues: [],
+                      }
+                    : {
+                        kind: 'decimal' as const,
+                        minimum: Number(domainMinimum),
+                        maximum: Number(domainMaximum),
+                        decimals: Number(domainDecimals),
+                        excludedValues: [],
+                      };
+              setVariables((items) => [
+                ...items.filter((item) => item.id !== variable),
+                { id: variable, label: variableLabel.trim(), domain },
+              ]);
+            }}
+          >
+            Définir la variable
+          </button>
+          {variables.length ? (
+            <ul>
+              {variables.map((item) => (
+                <li key={item.id}>
+                  @{item.id} — {item.label} ({item.domain.kind})
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <button
+            type="button"
+            disabled={!variables.some((item) => item.id === variable)}
             onClick={() => add({ kind: 'text', value: `@${variable}` })}
           >
             Insérer @{variable || 'nom'}
           </button>
-          <p>
-            Domaines disponibles : entier, décimal, choix. Les contraintes sont
-            composées visuellement et jamais en JavaScript.
-          </p>
+          <fieldset>
+            <legend>Contrainte visuelle</legend>
+            <label>
+              Variable gauche
+              <select
+                value={constraintLeft}
+                onChange={(event) => setConstraintLeft(event.target.value)}
+              >
+                <option value="">Choisir</option>
+                {variables.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    @{item.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Opérateur
+              <select
+                value={constraintOperator}
+                onChange={(event) =>
+                  setConstraintOperator(
+                    event.target.value as typeof constraintOperator,
+                  )
+                }
+              >
+                <option value="equal">=</option>
+                <option value="not-equal">≠</option>
+                <option value="less-than">&lt;</option>
+                <option value="less-than-or-equal">≤</option>
+                <option value="greater-than">&gt;</option>
+                <option value="greater-than-or-equal">≥</option>
+              </select>
+            </label>
+            <label>
+              Valeur droite
+              <select
+                value={constraintRightKind}
+                onChange={(event) =>
+                  setConstraintRightKind(
+                    event.target.value as 'literal' | 'variable',
+                  )
+                }
+              >
+                <option value="literal">Valeur</option>
+                <option value="variable">Autre variable</option>
+              </select>
+            </label>
+            {constraintRightKind === 'variable' ? (
+              <select
+                aria-label="Variable droite"
+                value={constraintRight}
+                onChange={(event) => setConstraintRight(event.target.value)}
+              >
+                <option value="">Choisir</option>
+                {variables.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    @{item.id}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label="Valeur de contrainte"
+                value={constraintRight}
+                onChange={(event) => setConstraintRight(event.target.value)}
+              />
+            )}
+            <button
+              type="button"
+              disabled={!constraintLeft || !constraintRight}
+              onClick={() =>
+                setConstraints((items) => [
+                  ...items,
+                  {
+                    kind: 'comparison',
+                    operator: constraintOperator,
+                    left: { kind: 'variable', variableId: constraintLeft },
+                    right:
+                      constraintRightKind === 'variable'
+                        ? { kind: 'variable', variableId: constraintRight }
+                        : {
+                            kind: 'literal',
+                            value: Number.isNaN(Number(constraintRight))
+                              ? constraintRight
+                              : Number(constraintRight),
+                          },
+                  },
+                ])
+              }
+            >
+              Ajouter la contrainte
+            </button>
+          </fieldset>
+          <button
+            type="button"
+            disabled={!variables.length}
+            onClick={() =>
+              void buildQuestion().then((question) => {
+                if (!question) return;
+                const result = validateParameterizedQuestion(
+                  question,
+                  `${question.id}:preview`,
+                );
+                setEditorErrors(
+                  result.errors.map(
+                    (entry) => `${entry.path} — ${entry.message}`,
+                  ),
+                );
+                setVariantPreview(
+                  result.variants
+                    .slice(0, 10)
+                    .map((variant) =>
+                      variant.content.prompt
+                        .map((segment) =>
+                          segment.kind === 'text'
+                            ? segment.value
+                            : segment.kind === 'line-break'
+                              ? '\n'
+                              : segment.mathSource.source,
+                        )
+                        .join(' '),
+                    ),
+                );
+              })
+            }
+          >
+            Tester les variantes
+          </button>
+          {variantPreview.length ? (
+            <ol aria-label="Variantes générées">
+              {variantPreview.map((value, index) => (
+                <li key={`${index}:${value}`}>{value}</li>
+              ))}
+            </ol>
+          ) : null}
         </fieldset>
       </section>
     </div>

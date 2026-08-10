@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Question } from '@domain/questions/Question';
+import { validateQuestion, type Question } from '@domain/questions/Question';
 import type { QuestionRemoteGateway } from '@domain/repositories/QuestionRemoteGateway';
 import type { QuestionOutboxOperation } from '@domain/repositories/QuestionWorkspaceRepository';
 
@@ -24,33 +24,34 @@ const rowFor = (question: Readonly<Question>) => ({
   created_at: question.createdAt,
   updated_at: question.updatedAt,
 });
-const questionFor = (row: Record<string, unknown>): Question => {
-  const content = row.content as {
-    prompt: Question['prompt'];
-    hint: Question['hint'];
-    correction: Question['correction'];
-  };
-  return {
+export const questionFromRemoteRow = (row: unknown): Question => {
+  if (!isRecord(row) || !isRecord(row.content))
+    throw new Error('Question distante invalide.');
+  const candidate = {
     id: String(row.id),
     version: Number(row.version),
     ownerId: typeof row.owner_id === 'string' ? row.owner_id : null,
-    source: row.source as Question['source'],
-    status: row.status as Question['status'],
-    validated: Boolean(row.validated),
-    classification: row.classification as NonNullable<
-      Question['classification']
-    >,
-    type: row.type as Question['type'],
-    difficulty: row.difficulty as Question['difficulty'],
-    prompt: content.prompt,
-    hint: content.hint,
-    correction: content.correction,
-    parameterization: row.parameterization as Question['parameterization'],
-    tags: row.tags as string[],
-    provenance: row.provenance as Question['provenance'],
+    source: row.source,
+    status: row.status,
+    validated: row.validated,
+    classification: row.classification,
+    type: row.type,
+    difficulty: row.difficulty,
+    prompt: row.content.prompt,
+    hint: row.content.hint,
+    correction: row.content.correction,
+    parameterization: row.parameterization,
+    tags: row.tags,
+    provenance: row.provenance,
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
   };
+  const validated = validateQuestion(candidate);
+  if (!validated.ok)
+    throw new Error(
+      `Question distante invalide : ${validated.issues[0]?.path ?? 'row'}.`,
+    );
+  return validated.value;
 };
 
 export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
@@ -69,7 +70,10 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
       operation.baseVersion !== null &&
       Number(latest.version) !== operation.baseVersion
     )
-      return { kind: 'conflict' as const, remote: questionFor(latest) };
+      return {
+        kind: 'conflict' as const,
+        remote: questionFromRemoteRow(latest),
+      };
     const { error } = await this.client
       .from('questions')
       .insert(rowFor(operation.payload));
@@ -90,7 +94,7 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
     const { data, error } = response;
     if (error) throw new Error('Récupération des questions impossible.');
     if (!Array.isArray(data)) return [];
-    return data.filter(isRecord).map(questionFor);
+    return data.map(questionFromRemoteRow);
   }
 }
 

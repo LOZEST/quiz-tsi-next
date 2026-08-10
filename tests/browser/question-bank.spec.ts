@@ -32,6 +32,9 @@ test('creates a structured local draft with math and restores it after reload', 
   await page.goto('questions');
   await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
+  await editor.getByLabel('Partie').selectOption('numbers');
+  await editor.getByLabel('Chapitre').selectOption('numbers-arithmetic');
+  await editor.getByLabel('Notion').selectOption('NUM-F01');
   await editor.getByLabel('Texte').fill('Calculer une puissance');
   await editor.getByRole('button', { name: '+ Formule', exact: true }).click();
   await editor.getByLabel('Formule en ligne').fill('sqrt(x)');

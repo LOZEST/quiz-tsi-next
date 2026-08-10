@@ -26,6 +26,13 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Start Supabase and run behavioral RLS tests
+        run: |
+          npm run supabase:start
+          npm run test:rls
+      - name: Stop Supabase
+        if: ${{ !cancelled() }}
+        run: npm run supabase:stop
       - name: Check formatting
         run: npm run format:check
       - name: Lint

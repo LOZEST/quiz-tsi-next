@@ -55,6 +55,9 @@ const questionWorkspaceRepository = {
   completeOperation: vi.fn(() => Promise.resolve()),
   applyRemoteQuestion: vi.fn(() => Promise.resolve()),
   recordConflict: vi.fn(() => Promise.resolve()),
+  savePersonalCourse: vi.fn(() => Promise.resolve()),
+  savePersonalChapter: vi.fn(() => Promise.resolve()),
+  savePersonalNotion: vi.fn(() => Promise.resolve()),
 };
 const questionRemoteGateway = {
   push: vi.fn(() => Promise.resolve({ kind: 'accepted' as const })),
@@ -138,6 +141,11 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Créer une question' }),
     );
+    await user.selectOptions(
+      screen.getByLabelText('Type de classification'),
+      'personal',
+    );
+    await user.type(screen.getByLabelText('Nouveau cours'), 'Mon cours');
     await user.type(screen.getByLabelText('Texte'), 'Une nouvelle question');
     await user.click(screen.getByRole('button', { name: '+ Formule' }));
     const formula = screen.getByRole('textbox', { name: /Formule en ligne/ });
@@ -150,6 +158,8 @@ describe('QuestionsPage', () => {
       screen.getByRole('button', { name: 'Clavier mathématique' }),
     );
     await user.click(screen.getByRole('button', { name: /π/ }));
+    await user.clear(formula);
+    await user.type(formula, '@n^2');
     await user.click(screen.getByRole('button', { name: 'Raccourcis' }));
     await user.click(
       screen.getByRole('button', { name: '+ Formule affichée' }),
@@ -158,7 +168,38 @@ describe('QuestionsPage', () => {
     await user.type(screen.getByLabelText('Indice'), 'Un indice');
     await user.type(screen.getByLabelText('Correction'), 'Une correction');
     await user.type(screen.getByLabelText('Nom'), 'n!');
+    await user.type(screen.getByLabelText('Libellé'), 'Entier n');
+    await user.selectOptions(screen.getByLabelText('Domaine'), 'choice');
+    await user.clear(
+      screen.getByLabelText('Valeurs séparées par des virgules'),
+    );
+    await user.type(
+      screen.getByLabelText('Valeurs séparées par des virgules'),
+      '1,2,3,4,5,6,7,8,9,10',
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Définir la variable' }),
+    );
     await user.click(screen.getByRole('button', { name: 'Insérer @n' }));
+    await user.selectOptions(screen.getByLabelText('Variable gauche'), 'n');
+    await user.type(screen.getByLabelText('Valeur de contrainte'), '0');
+    await user.click(
+      screen.getByRole('button', { name: 'Ajouter la contrainte' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Tester les variantes' }),
+    );
+    expect(
+      await screen.findByRole('list', { name: 'Variantes générées' }),
+    ).toBeInTheDocument();
+    await user.selectOptions(
+      screen.getByLabelText('Valeur droite'),
+      'variable',
+    );
+    await user.selectOptions(screen.getByLabelText('Variable droite'), 'n');
+    await user.click(
+      screen.getByRole('button', { name: 'Ajouter la contrainte' }),
+    );
     await user.click(
       screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
     );

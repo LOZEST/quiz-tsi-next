@@ -1,16 +1,35 @@
 begin;
-select plan(12);
-select has_table('public', 'questions', 'questions exists');
-select has_table('public', 'personal_courses', 'personal courses exists');
-select has_table('public', 'question_imports', 'imports exists');
-select has_table('public', 'question_import_quarantine', 'quarantine exists');
-select policies_are('public', 'questions', array['questions_delete_own','questions_insert_own_private','questions_read_accessible','questions_update_own'], 'question policies fixed');
-select policies_are('public', 'personal_courses', array['personal_courses_own'], 'courses isolated');
-select policies_are('public', 'personal_chapters', array['personal_chapters_own'], 'chapters isolated');
-select policies_are('public', 'personal_notions', array['personal_notions_own'], 'notions isolated');
-select policies_are('public', 'question_imports', array['question_imports_own'], 'imports isolated');
-select policies_are('public', 'question_import_quarantine', array['question_import_quarantine_own'], 'quarantine isolated');
-select col_is_pk('public', 'questions', array['id','version'], 'question versions immutable by key');
-select has_index('public', 'questions', 'questions_owner_updated_idx', 'bounded remote pull indexed');
+select plan(16);
+
+insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
+values
+('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','00000000-0000-0000-0000-000000000000','authenticated','authenticated','a@example.test','',now(),now()),
+('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','00000000-0000-0000-0000-000000000000','authenticated','authenticated','b@example.test','',now(),now());
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Cours A')$$,'A écrit son cours');
+select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values('aaaaaaaa-0000-4000-8000-000000000010',1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapterId":null,"notionId":null}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'A écrit private A');
+select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),1,'A lit private A');
+
+select set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas private A');
+select is_empty($$update public.questions set status='archived' where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' returning 1$$,'B ne modifie pas A');
+select is_empty($$delete from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' returning 1$$,'B ne supprime pas A');
+select throws_ok($$insert into public.personal_chapters(owner_id,course_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','aaaaaaaa-0000-4000-8000-000000000001','Intrus')$$,'23503',null,'B ne référence pas le cours A');
+select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('bbbbbbbb-0000-4000-8000-000000000001','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Cours B')$$,'B écrit son cours');
+select throws_ok($$insert into public.personal_notions(owner_id,course_id,chapter_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','bbbbbbbb-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000002','Intruse')$$,'23503',null,'B ne référence pas le chapitre A');
+select is((select count(*)::integer from public.question_imports where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas les imports A');
+select is((select count(*)::integer from public.question_import_quarantine where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas la quarantaine A');
+select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,null,'static','published',true,'{}','course','standard','{}','[]')$$,'42501',null,'static non mutable par utilisateur');
+
+select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
+insert into public.personal_chapters(id,owner_id,course_id,title) values('aaaaaaaa-0000-4000-8000-000000000002','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','aaaaaaaa-0000-4000-8000-000000000001','Chapitre A');
+select lives_ok($$insert into public.personal_notions(owner_id,course_id,chapter_id,title) values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000002','Notion A')$$,'A référence sa taxonomie');
+update public.questions set source='shared',status='published',validated=true where id='aaaaaaaa-0000-4000-8000-000000000010';
+select set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
+select is((select count(*)::integer from public.questions where source='shared'),1,'B lit shared A');
+select is_empty($$update public.questions set status='archived' where source='shared' returning 1$$,'B ne modifie pas shared A');
+select has_function('public','import_chatgpt_question_drafts',array['text','text','jsonb','jsonb','jsonb','jsonb'],'RPC atomique présent');
 select * from finish();
 rollback;
