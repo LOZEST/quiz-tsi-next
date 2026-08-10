@@ -38,11 +38,11 @@ describe('WhiteboardToolbar', () => {
 });
 
 describe('QuestionActions', () => {
-  it('keeps the no-bank action bar visible and fully disabled', async () => {
+  it('loads the production NUM action bar with real help content', async () => {
     render(
       <AppServicesProvider>
         <WhiteboardProvider>
-          <RevisionExperienceProvider>
+          <RevisionExperienceProvider userId="test-user">
             <WhiteboardContainer />
           </RevisionExperienceProvider>
         </WhiteboardProvider>
@@ -50,23 +50,27 @@ describe('QuestionActions', () => {
     );
     await waitFor(() =>
       expect(
-        screen.getByText(
-          'Aucune banque de questions validée n’est disponible pour le moment.',
-        ),
+        screen.getByRole('article', { name: 'Question active' }),
       ).toBeInTheDocument(),
     );
     expect(
       screen.getByRole('group', { name: 'Actions de la question' }),
     ).toBeVisible();
-    for (const label of ['Indice', 'Correction', 'Suivante']) {
-      expect(screen.getByRole('button', { name: label })).toBeDisabled();
-    }
+    expect(screen.getByRole('button', { name: 'Indice' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Voir la correction' }),
+    ).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Passer' })).toBeEnabled();
   });
 
-  it('enables only next for an active question', () => {
+  it('enables Passer for an active question before correction', () => {
     render(<QuestionActions active onNext={() => undefined} />);
-    expect(screen.getByRole('button', { name: 'Indice' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Correction' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Suivante' })).toBeEnabled();
+    expect(
+      screen.getByRole('button', { name: 'Indice indisponible' }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Correction indisponible' }),
+    ).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Passer' })).toBeEnabled();
   });
 });

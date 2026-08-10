@@ -93,6 +93,44 @@ describe('banque NUM de production', () => {
     expect(concordances).toBe(120);
   });
 
+  it('audite prompt, indice et correction sur les 120 vecteurs normatifs', () => {
+    let inspected = 0;
+    for (const { calculId, test, parameters } of sourceTests) {
+      const instantiated = instantiate(calculId, parameters);
+      const segments = [
+        ...instantiated.prompt,
+        ...instantiated.hint,
+        ...instantiated.correction.flatMap((step) => step.content),
+      ];
+      expect(
+        instantiated.hint.length,
+        `${calculId} — test ${test}`,
+      ).toBeGreaterThan(0);
+      expect(
+        instantiated.correction.length,
+        `${calculId} — test ${test}`,
+      ).toBeGreaterThan(0);
+      const visible = segments
+        .map((segment) =>
+          segment.kind === 'text'
+            ? segment.value
+            : segment.kind === 'line-break'
+              ? '\n'
+              : mathAstToLatex(segment.ast),
+        )
+        .join(' ');
+      expect(visible, `${calculId} — test ${test}`).not.toContain('@');
+      expect(visible, `${calculId} — test ${test}`).not.toMatch(
+        /\{\s*"(?:kind|source|syntaxVersion)"/,
+      );
+      for (const segment of segments)
+        if (segment.kind === 'inline-math' || segment.kind === 'display-math')
+          expect(() => mathAstToLatex(segment.ast)).not.toThrow();
+      inspected += 1;
+    }
+    expect(inspected).toBe(120);
+  });
+
   it('documente que les champs source expression et réponse sont identiques', () => {
     expect(sourceTests).toHaveLength(120);
     for (const { sourceExpression, expected } of sourceTests)

@@ -5,6 +5,7 @@ import { useRevisionExperience } from '@features/session/RevisionExperienceProvi
 import { QuestionCard } from '@features/questions/QuestionCard';
 import { QuestionChangeDialog } from '@features/session/QuestionChangeDialog';
 import { QuestionActions } from './QuestionActions';
+import { QuestionHelpPanels } from '@features/session/QuestionHelpPanels';
 
 export function WhiteboardContainer() {
   const experience = useRevisionExperience();
@@ -18,6 +19,7 @@ export function WhiteboardContainer() {
           prepared={experience.state.prepared}
           question={experience.state.question}
           reflexDeadline={experience.state.reflexDeadline}
+          onReflexExceeded={experience.markReflexExceeded}
         />
       ) : (
         <div className={styles.futureQuestion} role="status" aria-live="polite">
@@ -38,11 +40,55 @@ export function WhiteboardContainer() {
           {experience.notice}
         </p>
       ) : null}
-      <WhiteboardCanvas />
+      <WhiteboardCanvas
+        sceneId={
+          experience.mode === 'chapter-test' &&
+          experience.state.kind === 'ready'
+            ? `test:${experience.state.instance.sessionId}:${experience.state.instance.id}`
+            : 'main'
+        }
+        questionInstanceId={
+          experience.state.kind === 'ready'
+            ? experience.state.instance.id
+            : 'whiteboard'
+        }
+      />
       <WhiteboardToolbar />
+      {experience.state.kind === 'ready' ? (
+        <QuestionHelpPanels
+          content={experience.state.prepared.content}
+          hintOpen={experience.hintOpen}
+          correctionOpen={experience.correctionOpen}
+          onCloseHint={experience.closeHint}
+          onCloseCorrection={experience.closeCorrection}
+        />
+      ) : null}
       <QuestionActions
         active={experience.state.kind === 'ready'}
-        onNext={(trigger) => experience.nextQuestion(trigger)}
+        hasHint={
+          experience.state.kind === 'ready' &&
+          experience.state.prepared.content.hint.length > 0
+        }
+        hasCorrection={
+          experience.state.kind === 'ready' &&
+          experience.state.prepared.content.correction.length > 0
+        }
+        hintOpen={experience.hintOpen}
+        correctionOpen={experience.correctionOpen}
+        completed={
+          experience.state.kind === 'ready' &&
+          experience.state.attempt.evaluation !== null
+        }
+        onHint={experience.openHint}
+        onCorrection={experience.openCorrection}
+        onEvaluate={(action) => void experience.evaluate(action)}
+        onNext={(trigger) => {
+          if (experience.mode === 'chapter-test' && experience.chapterTest) {
+            void experience.navigateChapterTest(
+              experience.chapterTest.currentIndex + 1,
+            );
+          } else experience.nextQuestion(trigger);
+        }}
       />
       <QuestionChangeDialog />
     </section>

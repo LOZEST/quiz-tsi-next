@@ -130,9 +130,11 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   expect(history!.y).toBeGreaterThan(viewport!.height * 0.7);
   expect(questionActions).not.toBeNull();
   expect(questionActions!.y).toBeGreaterThan(viewport!.height * 0.7);
-  await expect(page.getByRole('button', { name: 'Indice' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Correction' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Suivante' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Indice' })).toBeEnabled();
+  await expect(
+    page.getByRole('button', { name: 'Voir la correction' }),
+  ).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
@@ -146,23 +148,21 @@ async function openRevisionOptions(page: Page) {
   await page.getByRole('button', { name: 'Options du parcours' }).click();
 }
 
-test('uses the controlled PR4 bank and dependent free revision filters', async ({
+test('uses the production NUM bank and dependent free revision filters', async ({
   page,
 }) => {
   await login(page);
   const card = page.getByRole('article', { name: 'Question active' });
   await expect(card).toBeVisible();
-  await expect(card).toContainText(/Suites géométriques|Produit matriciel/);
+  await expect(card).toContainText(/Calcul/);
   await openRevisionOptions(page);
-  await page.getByLabel('Partie').selectOption('analysis');
+  await page.getByLabel('Partie').selectOption('numbers');
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
-    .selectOption('sequences');
-  await page.getByLabel('Notion').selectOption('geometric-sequences');
-  await page.getByLabel('Type de question').selectOption('reflex');
-  await expect(page.getByLabel('Difficulté')).toHaveCount(0);
-  await expect(card).toContainText('Réflexe');
-  await page.getByLabel('Type de question').selectOption('');
+    .selectOption('numbers-arithmetic');
+  await page.getByLabel('Notion').selectOption('NUM-F01');
+  await page.getByLabel('Type de question').selectOption('calculation');
+  await expect(card).toContainText('Calcul');
   await expect(page.getByLabel('Difficulté')).toHaveValue('');
 });
 
@@ -178,12 +178,13 @@ test('protects a drawn draft and atomically changes the question', async ({
   await page.mouse.down();
   await page.mouse.move(box!.x + 180, box!.y + 220, { steps: 5 });
   await page.mouse.up();
-  await page.getByRole('button', { name: 'Suivante' }).click();
+  await page.getByRole('button', { name: 'Passer' }).click();
+  await page.getByRole('button', { name: 'Question suivante' }).click();
   const dialog = page.getByRole('dialog', { name: 'Changer de question' });
   await expect(dialog).toBeVisible();
   await dialog.getByRole('button', { name: 'Annuler' }).click();
   await expect(card).toHaveText(initial ?? '');
-  await page.getByRole('button', { name: 'Suivante' }).click();
+  await page.getByRole('button', { name: 'Question suivante' }).click();
   await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
   await expect(card).not.toHaveText(initial ?? '');
 });
@@ -208,49 +209,36 @@ test('restores focus to the filter that cancels a draft change', async ({
   await expect(filter).toBeFocused();
 });
 
-test('keeps the reflex deadline while reducing the card and navigating', async ({
+test('keeps the question stable while reducing the card and navigating', async ({
   page,
 }) => {
   await login(page);
-  await page.evaluate(() => {
-    globalThis.__QTSI_TEST_NOW__ = 1_000;
-  });
-  await openRevisionOptions(page);
-  await page.getByLabel('Type de question').selectOption('reflex');
-  await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
-  await expect(card.getByText('60 s restantes')).toBeVisible();
+  const original = await card.textContent();
   await card.getByRole('button', { name: 'Réduire' }).click();
-  await page.evaluate(() => {
-    globalThis.__QTSI_TEST_NOW__! += 2_000;
-  });
-  await page.waitForTimeout(300);
   await card.getByRole('button', { name: 'Afficher la question' }).click();
-  await expect(card.getByText('58 s restantes')).toBeVisible();
+  await expect(card).toHaveText(original ?? '');
   await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
   await page.getByRole('link', { name: 'Réglages' }).click();
   await expect(page).toHaveURL(/\/settings$/);
-  await page.evaluate(() => {
-    globalThis.__QTSI_TEST_NOW__! += 5_000;
-  });
   await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
   await page.getByRole('link', { name: 'Tableau blanc' }).click();
   await expect(page).toHaveURL(/\/whiteboard$/);
   await expect(
-    page
-      .getByRole('article', { name: 'Question active' })
-      .getByText('53 s restantes'),
-  ).toBeVisible();
+    page.getByRole('article', { name: 'Question active' }),
+  ).toHaveText(original ?? '');
 });
 
-test('keeps the only compatible question active', async ({ page }) => {
+test('keeps a compatible NUM filter active while changing question', async ({
+  page,
+}) => {
   await login(page);
   await openRevisionOptions(page);
-  await page.getByLabel('Partie').selectOption('algebra');
+  await page.getByLabel('Partie').selectOption('numbers');
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
-    .selectOption('matrices');
-  await page.getByLabel('Notion').selectOption('matrix-products');
+    .selectOption('numbers-arithmetic');
+  await page.getByLabel('Notion').selectOption('NUM-F01');
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const card = page.getByRole('article', { name: 'Question active' });
   const current = await card.textContent();
@@ -260,17 +248,14 @@ test('keeps the only compatible question active', async ({ page }) => {
   await page.mouse.down();
   await page.mouse.move(box!.x + 190, box!.y + 210, { steps: 5 });
   await page.mouse.up();
-  const next = page.getByRole('button', { name: 'Suivante' });
+  await page.getByRole('button', { name: 'Passer' }).click();
+  const next = page.getByRole('button', { name: 'Question suivante' });
   await next.click();
   const dialog = page.getByRole('dialog', { name: 'Changer de question' });
   await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
   await expect(dialog).toHaveCount(0);
-  await expect(next).toBeFocused();
-  await expect(card).toHaveText(current ?? '');
+  await expect(card).not.toHaveText(current ?? '');
   await expect(page.getByRole('button', { name: 'Annuler' })).toBeEnabled();
-  await expect(
-    page.getByText('Aucune autre question compatible n’est disponible.'),
-  ).toBeVisible();
 });
 
 test('renders Daily empty states and Weak points calibration', async ({
@@ -303,15 +288,65 @@ test('renders controlled Daily, Weak points and chapter-test states', async ({
   await page.goto('whiteboard?daily=ready&weak=ready');
   await openRevisionOptions(page);
   await page.getByLabel('Type de séance').selectOption('daily');
-  await expect(page.getByText('Suites géométriques')).toBeVisible();
+  await expect(page.getByText(/Calcul d’une expression/)).toBeVisible();
   await expect(page.getByText('2/4')).toBeVisible();
   await page.getByLabel('Type de séance').selectOption('weak-points');
-  await expect(page.getByText(/Produit matriciel/)).toBeVisible();
+  await expect(page.getByText(/Divisibilité/)).toBeVisible();
   await page.getByLabel('Type de séance').selectOption('chapter-test');
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
-    .selectOption('sequences');
+    .selectOption('numbers-arithmetic');
   await page.getByLabel('40').check();
-  await expect(page.getByText(/40 questions/)).toBeVisible();
-  await expect(page.getByRole('button', { name: /Commencer/ })).toHaveCount(0);
+  await expect(page.getByText('60 question(s) compatible(s).')).toBeVisible();
+  const start = page.getByRole('button', { name: /Commencer/ });
+  await expect(start).toBeEnabled();
+  await start.click();
+  await expect(page.getByText('Question 1 / 40')).toBeVisible();
+  await page.getByRole('button', { name: 'Question suivante' }).click();
+  await expect(page.getByText('Question 2 / 40')).toBeVisible();
+  await page.reload();
+  await openRevisionOptions(page);
+  await page.getByLabel('Type de séance').selectOption('chapter-test');
+  await expect(page.getByText('Question 2 / 40')).toBeVisible();
+  await page.getByRole('button', { name: 'Soumettre le test' }).click();
+  const confirmation = page.getByRole('dialog', {
+    name: 'Soumettre le test ?',
+  });
+  await confirmation.getByRole('button', { name: 'Confirmer' }).click();
+  await expect(page.getByText('Réussies sans aide')).toBeVisible();
+});
+
+test('keeps the same question and canvas through hint, correction and evaluation', async ({
+  page,
+}) => {
+  await login(page);
+  const question = page.getByRole('article', { name: 'Question active' });
+  const prompt = await question.textContent();
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error('Canvas absent.');
+  await page.mouse.move(box.x + 120, box.y + 180);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 200, box.y + 220, { steps: 5 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'Indice' }).click();
+  await expect(
+    page.getByRole('complementary', { name: 'Indice' }),
+  ).toBeVisible();
+  expect(await question.textContent()).toBe(prompt);
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await page.getByRole('button', { name: 'Voir la correction' }).click();
+  await expect(
+    page.getByRole('complementary', { name: 'Correction' }),
+  ).toBeVisible();
+  expect(await question.textContent()).toBe(prompt);
+  await expect(
+    page.getByRole('button', { name: 'Partiellement réussi' }),
+  ).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Réussi' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Raté' })).toBeVisible();
+  await page.getByRole('button', { name: 'Réussi' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Question suivante' }),
+  ).toBeVisible();
 });

@@ -23,7 +23,14 @@ import {
   UnavailableDailyPlanStateRepository,
   UnavailableWeakPointsStateRepository,
 } from '@infrastructure/session/UnavailableRevisionStateRepositories';
-import { createRevisionTestServices } from '@infrastructure/session/RevisionServicesComposition';
+import { createRevisionTestServices as createControlledRevisionServices } from '@infrastructure/session/ControlledRevisionServices';
+import { createRevisionTestServices as createProductionRevisionServices } from '@infrastructure/session/ProductionRevisionServices';
+import type { EvaluationRepository } from '@domain/repositories/EvaluationRepository';
+import type { ChapterTestRepository } from '@domain/repositories/ChapterTestRepository';
+import {
+  IndexedDbChapterTestRepository,
+  IndexedDbEvaluationRepository,
+} from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -34,6 +41,8 @@ export interface AppServices {
   weakPointsStateRepository?: WeakPointsStateRepository;
   revisionSeedSource?: RevisionSeedSource;
   clock?: Clock;
+  evaluationRepository?: EvaluationRepository;
+  chapterTestRepository?: ChapterTestRepository;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -54,6 +63,10 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     revisionSeedSource:
       services.revisionSeedSource ?? new BrowserRevisionSeedSource(),
     clock: services.clock ?? new SystemClock(),
+    evaluationRepository:
+      services.evaluationRepository ?? new IndexedDbEvaluationRepository(),
+    chapterTestRepository:
+      services.chapterTestRepository ?? new IndexedDbChapterTestRepository(),
   };
 }
 
@@ -84,7 +97,7 @@ function createDefaultServices(): AppServices {
     return {
       authGateway: new ControlledAuthGateway(),
       workspaceRepository: new IndexedDbWorkspaceRepository(),
-      ...createRevisionTestServices(),
+      ...createControlledRevisionServices(),
     };
   }
   try {
@@ -100,7 +113,7 @@ function createDefaultServices(): AppServices {
   return {
     authGateway,
     workspaceRepository: new IndexedDbWorkspaceRepository(),
-    ...createRevisionTestServices(),
+    ...createProductionRevisionServices(),
   };
 }
 
