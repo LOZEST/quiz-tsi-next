@@ -4,7 +4,7 @@
 
 - Base `origin/main` vérifiée : `c1ae048c0127025446a527249bb274547c5f8494`.
 - Branche : `feat/pr6-progress-advanced-whiteboard`.
-- Head de travail : à renseigner après commits.
+- Head d'implémentation et de preuves avant la présente correction documentaire : `ec68970`.
 - Source historique vérifiée en lecture : `LOZEST/quizz-prepa` au SHA `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`.
 - Sources exactes : `scripts/scheduler.js`, `scripts/mastery/mastery-event.js`, `scripts/mastery/mastery-engine.js`, `scripts/mastery/mastery-policy.js`, `scripts/mastery/mastery-model.js`, `scripts/board-shapes.js`, `scripts/board-model.js`, `scripts/board.js`.
 - Décision : `REFERENCE-ONLY` + `REWRITE`. Aucun module historique n'est importé ou copié. `LEGACY_INVENTORY.md` contient la caractérisation, les dépendances et les destinations.
