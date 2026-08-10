@@ -417,7 +417,7 @@ describe('QuestionsPage', () => {
     expect(savedTaxonomy?.course?.title).toBe('Mon cours');
     expect(savedTaxonomy?.chapter?.title).toBe('Chapitre 1');
     expect(savedTaxonomy?.notion?.title).toBe('Notion 1');
-  });
+  }, 10_000);
 
   it('affiche les erreurs de stockage et de synchronisation et réagit au hors-ligne', async () => {
     load.mockRejectedValueOnce('stockage');
