@@ -15,6 +15,16 @@ import { ToolManager } from '@features/whiteboard/tools/ToolManager';
 import { restoreWhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 import { pointFromPointerEvent } from '@features/whiteboard/model/Point';
 import { snapshotScene } from '@features/whiteboard/model/WhiteboardSnapshot';
+import {
+  createShape,
+  resizeHandlePosition,
+  rotationHandlePosition,
+  rotateShape,
+  shapeLocalPointToWorld,
+  worldPointToShapeLocal,
+  type Point2d,
+  type WhiteboardShape,
+} from '@domain/whiteboard/WhiteboardShape';
 
 const input = (x: number, y: number, pressure = 0.5): PointerInput => ({
   pointerId: 1,
@@ -286,6 +296,62 @@ describe('CanvasController', () => {
     return { controller, ...fixture };
   }
 
+  const shapeStyle = {
+    color: '#1d1d1f',
+    width: 3,
+    opacity: 1,
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const,
+  };
+
+  function rectangle(rotation = 0) {
+    return rotateShape(
+      createShape(
+        'rectangle',
+        'rectangle',
+        { x: 100, y: 100 },
+        { x: 220, y: 180 },
+        shapeStyle,
+      ),
+      rotation,
+    );
+  }
+
+  function pointerAt(pointerId: number, point: Point2d) {
+    return pointer(pointerId, 'mouse', {
+      clientX: point.x,
+      clientY: point.y,
+    });
+  }
+
+  function selectRectangle(
+    controller: CanvasController,
+    shape: WhiteboardShape,
+  ) {
+    controller.selectTool('select');
+    const body = shapeLocalPointToWorld(shape, {
+      x: shape.geometry.width / 2,
+      y: 0,
+    });
+    controller.pointerDown(pointerAt(50, body));
+    controller.pointerUp(pointerAt(50, body));
+  }
+
+  function moveSelectedRectangle(
+    controller: CanvasController,
+    shape: WhiteboardShape,
+    pointerId: number,
+  ) {
+    const start = shapeLocalPointToWorld(shape, {
+      x: shape.geometry.width / 2,
+      y: 0,
+    });
+    const end = { x: start.x + 30, y: start.y + 20 };
+    controller.pointerDown(pointerAt(pointerId, start));
+    controller.pointerMove(pointerAt(pointerId, end));
+    controller.pointerUp(pointerAt(pointerId, end));
+  }
+
   it('draws, commits, switches tools and supports undo/redo', () => {
     class Observer {
       observe = vi.fn();
@@ -300,7 +366,8 @@ describe('CanvasController', () => {
     controller.pointerMove(pointer(1, 'mouse', { clientX: 40 }));
     controller.pointerUp(pointer(1, 'mouse', { clientX: 50 }));
     expect(commits.at(-1)?.objects).toHaveLength(1);
-    expect(commits.at(-1)?.objects[0]?.points).toHaveLength(3);
+    const drawn = commits.at(-1)?.objects[0];
+    expect(drawn?.kind === 'stroke' ? drawn.points : []).toHaveLength(3);
     controller.undo();
     expect(commits.at(-1)?.objects).toEqual([]);
     controller.redo();
@@ -318,6 +385,202 @@ describe('CanvasController', () => {
     controller.pointerDown(pointer(2, 'touch'));
     expect(pointerCapture.setPointerCapture).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('places, moves and atomically undoes/redoes a shape without altering strokes', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller } = prepareController((scene) => commits.push(scene));
+    controller.selectTool('shape', 'rectangle');
+    controller.pointerDown(
+      pointer(40, 'mouse', { clientX: 100, clientY: 100 }),
+    );
+    controller.pointerMove(
+      pointer(40, 'mouse', { clientX: 220, clientY: 180 }),
+    );
+    controller.pointerUp(pointer(40, 'mouse', { clientX: 220, clientY: 180 }));
+    const placed = controller.getScene().objects[0];
+    expect(placed?.kind).toBe('shape');
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([]);
+    controller.redo();
+    expect(controller.getScene().objects).toHaveLength(1);
+    controller.selectTool('select');
+    controller.pointerDown(
+      pointer(41, 'mouse', { clientX: 150, clientY: 100 }),
+    );
+    controller.pointerMove(
+      pointer(41, 'mouse', { clientX: 190, clientY: 130 }),
+    );
+    controller.pointerUp(pointer(41, 'mouse', { clientX: 190, clientY: 130 }));
+    const moved = controller.getScene().objects[0];
+    expect(moved?.kind === 'shape' ? moved.geometry.x : 0).toBe(140);
+    controller.undo();
+    const restored = controller.getScene().objects[0];
+    expect(restored?.kind === 'shape' ? restored.geometry.x : 0).toBe(100);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('starts rotation from the visible handle outside the selected rectangle', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const handle = rotationHandlePosition(initial)!;
+    const target = { x: 230, y: 140 };
+    controller.pointerDown(pointerAt(51, handle));
+    controller.pointerMove(pointerAt(51, target));
+    controller.pointerUp(pointerAt(51, target));
+    const rotated = controller.getScene().objects[0];
+    expect(
+      rotated?.kind === 'shape' ? rotated.geometry.rotation : 0,
+    ).toBeCloseTo(Math.PI / 2);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('reuses transformed rotation handles and preserves atomic undo/redo', () => {
+    const { controller } = prepareController();
+    const initial = rectangle(Math.PI / 4);
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const visibleHandle = rotationHandlePosition(initial)!;
+    const targetRotation = -Math.PI / 4;
+    const target = rotationHandlePosition(
+      rotateShape(initial, targetRotation),
+    )!;
+    controller.pointerDown(pointerAt(52, visibleHandle));
+    controller.pointerMove(pointerAt(52, target));
+    controller.pointerUp(pointerAt(52, target));
+    const changed = controller.getScene().objects[0];
+    expect(
+      changed?.kind === 'shape' ? changed.geometry.rotation : 0,
+    ).toBeCloseTo(targetRotation);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(changed);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('resizes a rotated rectangle at its visible handle, not its stale handle, with exact history', () => {
+    const { controller } = prepareController();
+    const initial = rectangle(Math.PI / 4);
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const visibleHandle = resizeHandlePosition(initial);
+    const target = shapeLocalPointToWorld(initial, { x: 160, y: 120 });
+    controller.pointerDown(pointerAt(53, visibleHandle));
+    controller.pointerMove(pointerAt(53, target));
+    controller.pointerUp(pointerAt(53, target));
+    const resized = controller.getScene().objects[0];
+    expect(resized?.kind).toBe('shape');
+    if (resized?.kind !== 'shape') throw new Error('Shape attendue.');
+    expect(resized.geometry.width).toBeCloseTo(160);
+    expect(resized.geometry.height).toBeCloseTo(120);
+    const resizedHandle = resizeHandlePosition(resized);
+    expect(resizedHandle.x).toBeCloseTo(target.x, 8);
+    expect(resizedHandle.y).toBeCloseTo(target.y, 8);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(resized);
+
+    const staleHandle = {
+      x: resized.geometry.x + resized.geometry.width,
+      y: resized.geometry.y + resized.geometry.height,
+    };
+    expect(worldPointToShapeLocal(resized, staleHandle)).not.toEqual({
+      x: resized.geometry.width,
+      y: resized.geometry.height,
+    });
+    controller.pointerDown(pointerAt(54, staleHandle));
+    controller.pointerMove(
+      pointerAt(54, { x: staleHandle.x + 30, y: staleHandle.y + 20 }),
+    );
+    controller.pointerUp(
+      pointerAt(54, { x: staleHandle.x + 30, y: staleHandle.y + 20 }),
+    );
+    const afterStaleHandle = controller.getScene().objects[0];
+    expect(
+      afterStaleHandle?.kind === 'shape'
+        ? {
+            width: afterStaleHandle.geometry.width,
+            height: afterStaleHandle.geometry.height,
+          }
+        : null,
+    ).toEqual({
+      width: resized.geometry.width,
+      height: resized.geometry.height,
+    });
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo after selecting a shape without moving it', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 60);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    selectRectangle(controller, initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo after an empty selection click', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 61);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    controller.pointerDown(pointerAt(62, { x: 700, y: 600 }));
+    controller.pointerUp(pointerAt(62, { x: 700, y: 600 }));
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo when Escape cancels an in-progress placement', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 63);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    controller.selectTool('shape', 'circle');
+    controller.pointerDown(pointerAt(64, { x: 300, y: 300 }));
+    controller.pointerMove(pointerAt(64, { x: 380, y: 370 }));
+    controller.cancelInteraction();
+    expect(controller.getScene().objects).toEqual([initial]);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not add an undo no-op for selection and pointerUp without movement', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 65);
+    const modified = controller.getScene().objects[0];
+    if (modified?.kind !== 'shape') throw new Error('Shape attendue.');
+    selectRectangle(controller, modified);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
     controller.destroy();
     vi.unstubAllGlobals();
   });
@@ -341,7 +604,8 @@ describe('CanvasController', () => {
     controller.pointerMove(pointer(10, 'pen', { clientX: 40 }));
     controller.pointerUp(pointer(10, 'pen', { clientX: 50 }));
     expect(commits).toHaveLength(1);
-    expect(commits[0]?.objects[0]?.points).toHaveLength(3);
+    const isolated = commits[0]?.objects[0];
+    expect(isolated?.kind === 'stroke' ? isolated.points : []).toHaveLength(3);
     expect(pointerCapture.releasePointerCapture).toHaveBeenCalledWith(10);
     controller.destroy();
     vi.unstubAllGlobals();
@@ -358,9 +622,10 @@ describe('CanvasController', () => {
       }),
     );
     controller.pointerUp(pointer(5, 'pen', { clientX: 60 }));
-    expect(commits[0]?.objects[0]?.points.map(({ x }) => x)).toEqual([
-      20, 40, 60,
-    ]);
+    const coalesced = commits[0]?.objects[0];
+    expect(
+      coalesced?.kind === 'stroke' ? coalesced.points.map(({ x }) => x) : [],
+    ).toEqual([20, 40, 60]);
     controller.destroy();
     vi.unstubAllGlobals();
   });
@@ -426,7 +691,7 @@ describe('scene restoration', () => {
     };
     const first = restoreWhiteboardScene(source);
     const second = restoreWhiteboardScene(first.scene);
-    expect(first.scene.schemaVersion).toBe(1);
+    expect(first.scene.schemaVersion).toBe(2);
     expect(first.scene.objects).toEqual([valid]);
     expect(first.quarantine).toHaveLength(1);
     expect(second.scene).toEqual(first.scene);

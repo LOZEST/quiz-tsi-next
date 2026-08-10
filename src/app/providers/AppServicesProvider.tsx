@@ -20,9 +20,9 @@ import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQu
 import { BrowserRevisionSeedSource } from '@infrastructure/session/BrowserRevisionSeedSource';
 import { SystemClock } from '@infrastructure/session/SystemClock';
 import {
-  UnavailableDailyPlanStateRepository,
-  UnavailableWeakPointsStateRepository,
-} from '@infrastructure/session/UnavailableRevisionStateRepositories';
+  ProjectedDailyPlanRepository,
+  ProjectedWeakPointsRepository,
+} from '@infrastructure/session/ProjectedRevisionStateRepositories';
 import { createRevisionTestServices as createControlledRevisionServices } from '@infrastructure/session/ControlledRevisionServices';
 import { createRevisionTestServices as createProductionRevisionServices } from '@infrastructure/session/ProductionRevisionServices';
 import type { EvaluationRepository } from '@domain/repositories/EvaluationRepository';
@@ -52,6 +52,11 @@ export type ResolvedAppServices = Required<AppServices>;
 const AppServicesContext = createContext<ResolvedAppServices | null>(null);
 
 function withRevisionDefaults(services: AppServices): ResolvedAppServices {
+  const clock = services.clock ?? new SystemClock();
+  const evaluationRepository =
+    services.evaluationRepository ?? new IndexedDbEvaluationRepository();
+  const chapterTestRepository =
+    services.chapterTestRepository ?? new IndexedDbChapterTestRepository();
   return {
     ...services,
     programIndex: services.programIndex ?? null,
@@ -59,17 +64,23 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
       services.questionRepository ?? new InMemoryQuestionRepository(),
     dailyPlanStateRepository:
       services.dailyPlanStateRepository ??
-      new UnavailableDailyPlanStateRepository(),
+      new ProjectedDailyPlanRepository(
+        evaluationRepository,
+        chapterTestRepository,
+        clock,
+      ),
     weakPointsStateRepository:
       services.weakPointsStateRepository ??
-      new UnavailableWeakPointsStateRepository(),
+      new ProjectedWeakPointsRepository(
+        evaluationRepository,
+        chapterTestRepository,
+        clock,
+      ),
     revisionSeedSource:
       services.revisionSeedSource ?? new BrowserRevisionSeedSource(),
-    clock: services.clock ?? new SystemClock(),
-    evaluationRepository:
-      services.evaluationRepository ?? new IndexedDbEvaluationRepository(),
-    chapterTestRepository:
-      services.chapterTestRepository ?? new IndexedDbChapterTestRepository(),
+    clock,
+    evaluationRepository,
+    chapterTestRepository,
     questionAttemptRepository:
       services.questionAttemptRepository ??
       new IndexedDbQuestionAttemptRepository(),

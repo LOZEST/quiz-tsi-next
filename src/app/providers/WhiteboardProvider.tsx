@@ -7,13 +7,18 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type { WhiteboardShapeKind } from '@domain/whiteboard/WhiteboardShape';
+
+export type WhiteboardActiveTool = 'pen' | 'eraser' | 'select' | 'shape';
 
 export interface WhiteboardUiState {
-  activeTool: 'pen' | 'eraser';
+  activeTool: WhiteboardActiveTool;
+  shapeKind: WhiteboardShapeKind;
   penWidth: number;
   gridEnabled: boolean;
   handedness: 'left' | 'right';
-  setActiveTool: (value: 'pen' | 'eraser') => void;
+  setActiveTool: (value: WhiteboardActiveTool) => void;
+  setShapeKind: (value: WhiteboardShapeKind) => void;
   setPenWidth: (value: number) => void;
   setGridEnabled: (value: boolean) => void;
   setHandedness: (value: 'left' | 'right') => void;
@@ -28,7 +33,8 @@ export interface WhiteboardUiState {
 const WhiteboardContext = createContext<WhiteboardUiState | null>(null);
 
 export function WhiteboardProvider({ children }: { children: ReactNode }) {
-  const [activeTool, setActiveTool] = useState<'pen' | 'eraser'>('pen');
+  const [activeTool, setActiveTool] = useState<WhiteboardActiveTool>('pen');
+  const [shapeKind, setShapeKind] = useState<WhiteboardShapeKind>('line');
   const [penWidth, setPenWidth] = useState(3);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [handedness, setHandedness] = useState<'left' | 'right'>('right');
@@ -55,10 +61,12 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       activeTool,
+      shapeKind,
       penWidth,
       gridEnabled,
       handedness,
       setActiveTool,
+      setShapeKind,
       setPenWidth,
       setGridEnabled,
       setHandedness,
@@ -82,6 +90,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       hasDraft,
       history,
       penWidth,
+      shapeKind,
     ],
   );
   return (

@@ -3,9 +3,16 @@ import type {
   WhiteboardScene,
 } from '@domain/whiteboard/WhiteboardScene';
 import { GridRenderer } from './GridRenderer';
+import {
+  resizeHandlePosition,
+  rotationHandlePosition,
+  shapeLocalPointToWorld,
+  shapePrimitives,
+} from '@domain/whiteboard/WhiteboardShape';
 
 export class CanvasRenderer {
   private frame: number | null = null;
+  private selectedShapeId: string | null = null;
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly grid = new GridRenderer(),
@@ -13,6 +20,10 @@ export class CanvasRenderer {
 
   setGrid(enabled: boolean) {
     this.grid.enabled = enabled;
+  }
+
+  setSelection(id: string | null) {
+    this.selectedShapeId = id;
   }
 
   schedule(scene: WhiteboardScene) {
@@ -52,6 +63,51 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     object: WhiteboardObject,
   ) {
+    if (object.kind === 'shape') {
+      context.save();
+      const { geometry, style } = object;
+      context.translate(
+        geometry.x + geometry.width / 2,
+        geometry.y + geometry.height / 2,
+      );
+      context.rotate(geometry.rotation ?? 0);
+      context.translate(-geometry.width / 2, -geometry.height / 2);
+      context.strokeStyle = style.color;
+      context.globalAlpha = style.opacity;
+      context.lineWidth = style.width;
+      context.lineCap = style.lineCap;
+      context.lineJoin = style.lineJoin;
+      for (const primitive of shapePrimitives(object)) {
+        context.beginPath();
+        if (primitive.kind === 'line') {
+          context.moveTo(primitive.from.x, primitive.from.y);
+          context.lineTo(primitive.to.x, primitive.to.y);
+        } else if (primitive.kind === 'ellipse') {
+          context.ellipse(
+            primitive.center.x,
+            primitive.center.y,
+            primitive.radiusX,
+            primitive.radiusY,
+            0,
+            0,
+            Math.PI * 2,
+          );
+        } else {
+          const first = primitive.points[0];
+          if (!first) continue;
+          context.moveTo(first.x, first.y);
+          primitive.points
+            .slice(1)
+            .forEach((point) => context.lineTo(point.x, point.y));
+          if (primitive.closed) context.closePath();
+        }
+        context.stroke();
+      }
+      context.restore();
+      if (object.id === this.selectedShapeId)
+        this.drawSelection(context, object);
+      return;
+    }
     context.save();
     context.strokeStyle = object.color;
     context.lineCap = 'round';
@@ -75,6 +131,49 @@ export class CanvasRenderer {
       context.beginPath();
       context.arc(first.x, first.y, object.width / 2, 0, Math.PI * 2);
       context.fill();
+    }
+    context.restore();
+  }
+
+  private drawSelection(
+    context: CanvasRenderingContext2D,
+    shape: Extract<WhiteboardObject, { kind: 'shape' }>,
+  ) {
+    const { width, height } = shape.geometry;
+    const corners = [
+      shapeLocalPointToWorld(shape, { x: 0, y: 0 }),
+      shapeLocalPointToWorld(shape, { x: width, y: 0 }),
+      shapeLocalPointToWorld(shape, { x: width, y: height }),
+      shapeLocalPointToWorld(shape, { x: 0, y: height }),
+    ];
+    const resizeHandle = resizeHandlePosition(shape);
+    const rotationHandle = rotationHandlePosition(shape);
+    context.save();
+    context.strokeStyle = '#0a66d8';
+    context.lineWidth = 1.5;
+    context.setLineDash([5, 4]);
+    context.beginPath();
+    context.moveTo(corners[0]!.x, corners[0]!.y);
+    corners.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+    context.closePath();
+    context.stroke();
+    context.setLineDash([]);
+    context.fillStyle = '#ffffff';
+    context.strokeStyle = '#0a66d8';
+    context.beginPath();
+    context.arc(resizeHandle.x, resizeHandle.y, 6, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    if (rotationHandle) {
+      const topCenter = shapeLocalPointToWorld(shape, { x: width / 2, y: 0 });
+      context.beginPath();
+      context.moveTo(topCenter.x, topCenter.y);
+      context.lineTo(rotationHandle.x, rotationHandle.y);
+      context.stroke();
+      context.beginPath();
+      context.arc(rotationHandle.x, rotationHandle.y, 6, 0, Math.PI * 2);
+      context.fill();
+      context.stroke();
     }
     context.restore();
   }

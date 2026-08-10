@@ -170,4 +170,15 @@ export class IndexedDbChapterTestRepository implements ChapterTestRepository {
     ).get('chapterTests', `${userId}:${sessionId}`);
     return row?.session ?? null;
   }
+  async listByUser(userId: string, limit = 200) {
+    const rows = await (
+      await database()
+    ).getAllFromIndex(
+      'chapterTests',
+      'by-user',
+      userId,
+      Math.max(0, Math.min(limit, 500)),
+    );
+    return rows.map((row) => row.session);
+  }
 }

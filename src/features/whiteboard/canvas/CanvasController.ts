@@ -6,6 +6,19 @@ import { CanvasRenderer } from './CanvasRenderer';
 import { EraserTool } from '../tools/EraserTool';
 import { PenTool } from '../tools/PenTool';
 import { ToolManager } from '../tools/ToolManager';
+import type { WhiteboardActiveTool } from '@app/providers/WhiteboardProvider';
+import {
+  createShape,
+  hitTestResizeHandle,
+  hitTestRotationHandle,
+  hitTestShape,
+  resizeShapeFromWorldPoint,
+  rotateShape,
+  translateShape,
+  type Point2d,
+  type WhiteboardShape,
+  type WhiteboardShapeKind,
+} from '@domain/whiteboard/WhiteboardShape';
 
 export class CanvasController {
   private scene: WhiteboardScene;
@@ -18,6 +31,14 @@ export class CanvasController {
   });
   private undoStack: WhiteboardScene[] = [];
   private redoStack: WhiteboardScene[] = [];
+  private activeTool: WhiteboardActiveTool = 'pen';
+  private shapeKind: WhiteboardShapeKind = 'line';
+  private selectedShapeId: string | null = null;
+  private gestureStart: Point2d | null = null;
+  private gestureShape: WhiteboardShape | null = null;
+  private gestureKind: 'place' | 'move' | 'resize' | 'rotate' | null = null;
+  private currentPenWidth = 3;
+  private transactionBaseline: WhiteboardScene | null = null;
 
   getScene(): WhiteboardScene {
     return this.scene;
@@ -70,14 +91,114 @@ export class CanvasController {
     this.canvas.setPointerCapture(event.pointerId);
     this.activePointerId = event.pointerId;
     this.activePointerType = event.pointerType;
-    this.undoStack.push(snapshotScene(this.scene).scene);
-    this.redoStack = [];
+    this.transactionBaseline = snapshotScene(this.scene).scene;
+    if (this.activeTool === 'shape' || this.activeTool === 'select') {
+      const point = this.input(event).point;
+      this.gestureStart = point;
+      if (this.activeTool === 'shape') {
+        this.gestureKind = 'place';
+        this.gestureShape = createShape(
+          `shape-${event.timeStamp}-${event.pointerId}`,
+          this.shapeKind,
+          point,
+          { x: point.x + 1, y: point.y + 1 },
+          {
+            color: '#1d1d1f',
+            width: this.penWidth(),
+            opacity: 1,
+            lineCap: 'round',
+            lineJoin: 'round',
+          },
+        );
+        this.scene = {
+          ...this.scene,
+          objects: [...this.scene.objects, this.gestureShape],
+        };
+      } else {
+        const currentSelection = this.scene.objects.find(
+          (object): object is WhiteboardShape =>
+            object.kind === 'shape' && object.id === this.selectedShapeId,
+        );
+        let selected: WhiteboardShape | undefined;
+        if (
+          currentSelection &&
+          hitTestRotationHandle(currentSelection, point)
+        ) {
+          selected = currentSelection;
+          this.gestureKind = 'rotate';
+        } else if (
+          currentSelection &&
+          hitTestResizeHandle(currentSelection, point)
+        ) {
+          selected = currentSelection;
+          this.gestureKind = 'resize';
+        } else if (currentSelection && hitTestShape(currentSelection, point)) {
+          selected = currentSelection;
+          this.gestureKind = 'move';
+        } else {
+          selected = [...this.scene.objects]
+            .reverse()
+            .find(
+              (object): object is WhiteboardShape =>
+                object.kind === 'shape' && hitTestShape(object, point),
+            );
+          this.gestureKind = selected ? 'move' : null;
+        }
+        this.selectedShapeId = selected?.id ?? null;
+        this.gestureShape = selected ?? null;
+      }
+      this.renderer.setSelection(this.selectedShapeId);
+      this.renderer.schedule(this.scene);
+      return;
+    }
     this.scene = this.tools.current.begin(this.scene, this.input(event)).scene;
     this.renderer.schedule(this.scene);
   }
 
   pointerMove(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    if (this.gestureKind && this.gestureStart && this.gestureShape) {
+      const point = this.input(event).point;
+      let shape = this.gestureShape;
+      if (this.gestureKind === 'place')
+        shape = createShape(
+          shape.id,
+          shape.shapeKind,
+          this.gestureStart,
+          point,
+          shape.style,
+        );
+      if (this.gestureKind === 'move')
+        shape = translateShape(
+          shape,
+          point.x - this.gestureStart.x,
+          point.y - this.gestureStart.y,
+        );
+      if (this.gestureKind === 'resize')
+        shape = resizeShapeFromWorldPoint(shape, point);
+      if (this.gestureKind === 'rotate') {
+        const center = {
+          x: shape.geometry.x + shape.geometry.width / 2,
+          y: shape.geometry.y + shape.geometry.height / 2,
+        };
+        shape = rotateShape(
+          shape,
+          Math.atan2(point.y - center.y, point.x - center.x) + Math.PI / 2,
+        );
+      }
+      this.scene = {
+        ...this.scene,
+        objects: this.scene.objects.map((object) =>
+          object.id === shape.id ? shape : object,
+        ),
+      };
+      this.renderer.schedule(this.scene);
+      return;
+    }
+    if (this.activeTool === 'shape' || this.activeTool === 'select') {
+      this.renderer.schedule(this.scene);
+      return;
+    }
     const coalesced = event.getCoalescedEvents?.();
     const samples = coalesced && coalesced.length > 0 ? coalesced : [event];
     for (const sample of samples) {
@@ -92,21 +213,31 @@ export class CanvasController {
 
   pointerUp(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    if (this.activeTool === 'shape' || this.activeTool === 'select') {
+      this.pointerMove(event);
+      if (this.gestureKind === 'place')
+        this.selectedShapeId = this.gestureShape?.id ?? null;
+      this.renderer.setSelection(this.selectedShapeId);
+      this.clearGesture();
+      this.finishPointer(event.pointerId, true);
+      this.finishTransaction();
+      return;
+    }
     this.scene = this.tools.current.end(this.scene, this.input(event)).scene;
     this.finishPointer(event.pointerId, true);
-    this.commit();
+    this.finishTransaction();
   }
 
   pointerCancel(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
     this.finishPointer(event.pointerId, true);
-    this.commit();
+    this.finishTransaction();
   }
 
   lostPointerCapture(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
     this.finishPointer(event.pointerId, false);
-    this.commit();
+    this.finishTransaction();
   }
 
   private isActivePointer(event: PointerEvent): boolean {
@@ -127,10 +258,19 @@ export class CanvasController {
     }
   }
 
-  selectTool(tool: 'pen' | 'eraser') {
-    this.tools.select(tool);
+  selectTool(
+    tool: WhiteboardActiveTool,
+    shapeKind: WhiteboardShapeKind = this.shapeKind,
+  ) {
+    this.activeTool = tool;
+    this.shapeKind = shapeKind;
+    if (tool === 'pen' || tool === 'eraser') this.tools.select(tool);
+    if (tool !== 'select') this.selectedShapeId = null;
+    this.renderer.setSelection(this.selectedShapeId);
+    this.renderer.schedule(this.scene);
   }
   setPenWidth(width: number) {
+    this.currentPenWidth = width;
     this.pen.setWidth(width);
   }
   setGrid(enabled: boolean) {
@@ -178,5 +318,50 @@ export class CanvasController {
     this.activePointerType = null;
     this.resizeObserver?.disconnect();
     this.renderer.destroy();
+  }
+
+  cancelInteraction() {
+    if (this.transactionBaseline) {
+      this.scene = this.transactionBaseline;
+      this.transactionBaseline = null;
+      const pointerId = this.activePointerId;
+      this.activePointerId = null;
+      this.activePointerType = null;
+      if (pointerId !== null && this.canvas.hasPointerCapture(pointerId)) {
+        try {
+          this.canvas.releasePointerCapture(pointerId);
+        } catch {
+          // Capture may already have been released by the browser.
+        }
+      }
+      this.clearGesture();
+      this.renderer.schedule(this.scene);
+    }
+  }
+
+  private finishTransaction() {
+    const baseline = this.transactionBaseline;
+    this.transactionBaseline = null;
+    if (!baseline) return;
+    if (
+      JSON.stringify(baseline.objects) === JSON.stringify(this.scene.objects)
+    ) {
+      this.scene = baseline;
+      this.renderer.schedule(this.scene);
+      return;
+    }
+    this.undoStack.push(baseline);
+    this.redoStack = [];
+    this.commit();
+  }
+
+  private penWidth() {
+    return this.currentPenWidth;
+  }
+
+  private clearGesture() {
+    this.gestureStart = null;
+    this.gestureShape = null;
+    this.gestureKind = null;
   }
 }

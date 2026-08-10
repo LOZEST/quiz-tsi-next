@@ -100,6 +100,24 @@
   pointer-events: auto;
 }
 
+.shapePicker {
+  position: absolute;
+  inset-inline-end: calc(100% + var(--qtsi-space-2));
+  inset-block-start: 0;
+  display: grid;
+  inline-size: 13rem;
+  padding: var(--qtsi-space-1);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  box-shadow: var(--qtsi-shadow-subtle);
+}
+
+.shapePicker button {
+  justify-content: flex-start;
+  text-align: start;
+}
+
 .toolbar[data-handedness='left'] .toolPalette {
   inset-inline: calc(var(--qtsi-space-4) + var(--qtsi-safe-left)) auto;
 }

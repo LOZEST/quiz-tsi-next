@@ -75,8 +75,8 @@ export function WhiteboardCanvas({
   usePointerInput(canvasRef, controller);
 
   useEffect(() => {
-    controller?.selectTool(settings.activeTool);
-  }, [controller, settings.activeTool]);
+    controller?.selectTool(settings.activeTool, settings.shapeKind);
+  }, [controller, settings.activeTool, settings.shapeKind]);
   useEffect(
     () => controller?.setPenWidth(settings.penWidth),
     [controller, settings.penWidth],
@@ -93,6 +93,14 @@ export function WhiteboardCanvas({
     );
     return () => bindHistory(null);
   }, [bindHistory, controller]);
+  useEffect(() => {
+    if (!controller) return;
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') controller.cancelInteraction();
+    };
+    document.addEventListener('keydown', cancel);
+    return () => document.removeEventListener('keydown', cancel);
+  }, [controller]);
 
   return (
     <>

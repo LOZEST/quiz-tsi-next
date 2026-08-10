@@ -7,7 +7,7 @@
 
 ## Traçabilité de l'audit
 
-Audit initial tenté le 2026-07-29 depuis le checkout de PR0 sans accès au dépôt historique. Audit PR4 repris le 2026-07-30 depuis un checkout temporaire en lecture de `LOZEST/quizz-prepa` au SHA `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`. Les chemins PR4 ci-dessous ont été constatés ; aucun code historique n'est copié dans le nouveau dépôt.
+Audit initial tenté le 2026-07-29 depuis le checkout de PR0 sans accès au dépôt historique. Audit PR4 repris le 2026-07-30 depuis un checkout temporaire en lecture de `LOZEST/quizz-prepa` au SHA `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`. L'audit ciblé PR6 a vérifié le 2026-08-10, au même SHA immuable, uniquement les huit sources listées ci-dessous. Aucun code historique n'est copié dans le nouveau dépôt.
 
 ## Résultat de l'audit PR0
 
@@ -57,12 +57,7 @@ Les éléments PR4 constatés ci-dessus ne sont plus des pistes. Les lignes rest
 
 | Catégorie à auditer | Chemin indicatif à vérifier | Informations obligatoires lors du constat | PR probable |
 |---|---|---|---|
-| planification | `scripts/scheduler.js` | temps, hasard, stockage | PR6 |
-| maîtrise | `scripts/mastery/` | événements, agrégats, scores | PR6 |
-| répétition espacée | `scripts/repetition/` | algorithme, dates, fuseau | PR6 |
 | tests de chapitre | `scripts/tests/` | sélection 20/40, seed, snapshots | PR5 |
-| tableau | `scripts/board.js`, `scripts/board-model.js` | Canvas, pointer events, modèle | PR3 |
-| formes | `scripts/board-shapes.js` | géométrie et hit-testing | PR3 |
 | sérialisation | chemins tableau/workspace à découvrir | version, tolérance, coordonnées | PR3/PR9 |
 | authentification | `scripts/auth/` | Supabase, tokens, DOM | PR2 |
 | workspace | `scripts/workspace/` | isolation, persistance, UI | PR2 |
@@ -74,12 +69,29 @@ Les éléments PR4 constatés ci-dessus ne sont plus des pistes. Les lignes rest
 
 Lorsqu'un chemin est constaté, ajouter une ligne d'inventaire avec : chemin exact ; responsabilité ; dépendances ; état apparent ; tests ; dépendances DOM, `localStorage`, Supabase ; décision autorisée ; PR cible ; stratégie de caractérisation ; SHA source.
 
+## Éléments PR6 constatés le 2026-08-10
+
+**Dépôt et SHA :** `LOZEST/quizz-prepa` à `8d0f7082194b0cdcf9c6bb10084361c52b40bd37`. **Décision commune :** `REFERENCE-ONLY` pour caractériser les comportements, puis `REWRITE` en TypeScript strict selon les contrats PR6. Les sources emploient des schémas incompatibles, parfois `Math.random`, `Date.now`, DOM ou `localStorage`; aucun module ni donnée n'est copié.
+
+| Identifiant | Chemin historique exact | Responsabilités et dépendances constatées | Décision / destination / tests |
+|---|---|---|---|
+| `LEGACY-PR6-SCHEDULER-001` | `scripts/scheduler.js` | Ignore `skipped`, crée des événements et agrégats historiques; dépend des anciens contrats question/session | REFERENCE-ONLY + REWRITE vers `domain/mastery`; projection et plan testés |
+| `LEGACY-PR6-MASTERY-EVENT-001` | `scripts/mastery/mastery-event.js` | Normalise les résultats; identifiants de secours avec `Math.random`; schéma d'événement historique | REFERENCE-ONLY + REWRITE vers `MasteryEvent`; projection déterministe testée |
+| `LEGACY-PR6-MASTERY-ENGINE-001` | `scripts/mastery/mastery-engine.js` | Pondération temporelle, confiance, stabilité; niveaux numériques et types de sources incompatibles; dates implicites | REFERENCE-ONLY + REWRITE vers `MasteryPolicy`; fausse horloge et formules V1 testées |
+| `LEGACY-PR6-MASTERY-POLICY-001` | `scripts/mastery/mastery-policy.js` | Valeurs succès/partiel/échec, demi-vie 90 jours et multiplicateurs historiques; poids de niveau/source abandonnés | REFERENCE-ONLY + REWRITE centralisée dans `quiz-tsi-mastery-v1`; constantes testées |
+| `LEGACY-PR6-MASTERY-MODEL-001` | `scripts/mastery/mastery-model.js` | État de maîtrise avec niveaux 1–4 et score de difficulté historique incompatibles | REFERENCE-ONLY + REWRITE vers le read model PR6; statuts et recommandation testés |
+| `LEGACY-PR6-SHAPES-001` | `scripts/board-shapes.js` | Neuf formes, primitives et hit-test; anciens noms `trig-circle`/`orthonormal-frame`; identifiants aléatoires | REFERENCE-ONLY + REWRITE vers `WhiteboardShape`; géométrie/round-trip/hit-test par forme testés |
+| `LEGACY-PR6-BOARD-MODEL-001` | `scripts/board-model.js` | Modèle de traits/formes historique et conversions; schéma incompatible avec les scènes PR3 | REFERENCE-ONLY + REWRITE vers scène V2; migration et quarantaine testées |
+| `LEGACY-PR6-BOARD-001` | `scripts/board.js` | Placement/rendu Canvas couplés au DOM et `localStorage`; pas de modèle final sélection/déplacement/redimensionnement | REFERENCE-ONLY + REWRITE vers contrôleur Canvas injecté; opérations et undo/redo testés |
+
+Les tests historiques n'ont pas été importés. La caractérisation PR6 repose sur des entrées/sorties représentatives du nouveau domaine et sur les scénarios `BOARD-007`, `BOARD-009`, `BOARD-010`, `PROGRESS-001` et `PROGRESS-002`. Aucun accès Supabase n'a été constaté dans ces huit sources ciblées. Les dépendances DOM et `localStorage` de `board.js` sont explicitement abandonnées; IndexedDB et les ports injectés restent les frontières actuelles.
+
 ## Comptage des décisions
 
 | Décision | Nombre constaté |
 |---|---:|
 | PORT | 0 |
 | PORT-WITH-ADAPTER | 1 |
-| REWRITE | 2 |
-| REFERENCE-ONLY | 3 |
+| REWRITE | 10 |
+| REFERENCE-ONLY | 11 |
 | DISCARD | 0 |

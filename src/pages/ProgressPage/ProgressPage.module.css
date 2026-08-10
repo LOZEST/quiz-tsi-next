@@ -1,0 +1,118 @@
+.page {
+  max-inline-size: 70rem;
+  margin-inline: auto;
+  padding: var(--qtsi-space-4);
+}
+.page section {
+  padding-block: var(--qtsi-space-4);
+  border-block-end: 1px solid var(--qtsi-border);
+}
+.page h2 {
+  margin-block: 0 var(--qtsi-space-3);
+  font-size: 1.1rem;
+}
+.notice {
+  padding: var(--qtsi-space-3);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-2);
+}
+.summary {
+  display: grid;
+  gap: var(--qtsi-space-3);
+}
+.primary {
+  display: flex;
+  min-block-size: 7rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qtsi-space-3);
+  padding: var(--qtsi-space-4);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-3);
+}
+.primary strong {
+  font-size: clamp(1.4rem, 4vw, 2.5rem);
+}
+.secondary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--qtsi-space-2);
+  margin: 0;
+}
+.secondary div {
+  padding: var(--qtsi-space-3);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-2);
+}
+.secondary dd {
+  margin: var(--qtsi-space-1) 0 0;
+  font-weight: 650;
+}
+.parts {
+  display: grid;
+  gap: var(--qtsi-space-2);
+}
+.parts button,
+.notionList button {
+  display: flex;
+  min-block-size: var(--qtsi-touch-target);
+  inline-size: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  color: inherit;
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  text-align: start;
+}
+.notionList {
+  display: grid;
+  gap: var(--qtsi-space-2);
+  padding: var(--qtsi-space-2) 0 var(--qtsi-space-2) var(--qtsi-space-4);
+}
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--qtsi-space-2);
+  margin: 0;
+  padding: var(--qtsi-space-3);
+}
+.details div {
+  padding: var(--qtsi-space-2);
+  background: var(--qtsi-surface-muted);
+}
+.details dd {
+  margin: var(--qtsi-space-1) 0 0;
+}
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--qtsi-space-1);
+  padding: 0;
+  list-style: none;
+}
+.calendar li {
+  display: grid;
+  min-block-size: 4.5rem;
+  place-content: center;
+  text-align: center;
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-1);
+}
+.calendar span {
+  color: var(--qtsi-text-secondary);
+  font-size: 0.7rem;
+}
+@media (max-width: 40rem) {
+  .secondary {
+    grid-template-columns: 1fr;
+  }
+  .calendar {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .details {
+    grid-template-columns: 1fr;
+  }
+}
