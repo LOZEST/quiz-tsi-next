@@ -403,8 +403,8 @@ export function RevisionExperienceProvider({
       setState({ kind: 'loading' });
       const source =
         next === 'daily'
-          ? services.dailyPlanStateRepository.getState()
-          : services.weakPointsStateRepository.getState();
+          ? services.dailyPlanStateRepository.getState(userId)
+          : services.weakPointsStateRepository.getState(userId);
       void source
         .then((value) => {
           if (!mounted.current || id !== request.current) return;

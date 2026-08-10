@@ -1,11 +1,11 @@
 import type { DailyPlanState, WeakPointsState } from '../session/Session';
 
 export interface DailyPlanStateRepository {
-  getState(signal?: AbortSignal): Promise<DailyPlanState>;
+  getState(userId?: string, signal?: AbortSignal): Promise<DailyPlanState>;
 }
 
 export interface WeakPointsStateRepository {
-  getState(signal?: AbortSignal): Promise<WeakPointsState>;
+  getState(userId?: string, signal?: AbortSignal): Promise<WeakPointsState>;
 }
 
 export interface RevisionSeedSource {
