@@ -5,7 +5,11 @@ import {
   deriveAvailableNotions,
   normalizeFreeRevisionFilters,
 } from '@domain/session/FreeRevisionFilters';
-import type { Difficulty, QuestionType } from '@domain/questions/Question';
+import {
+  questionClassification,
+  type Difficulty,
+  type QuestionType,
+} from '@domain/questions/Question';
 import type { ProgramIndex } from '@domain/program/Program';
 import type {
   DailyPlanState,
@@ -402,7 +406,10 @@ function ChapterTest() {
     ? new Set(
         questionRepository
           .listPublished()
-          .filter((question) => question.chapterId === chapter)
+          .filter(
+            (question) =>
+              questionClassification(question)?.chapterId === chapter,
+          )
           .map((question) => question.id),
       ).size
     : 0;

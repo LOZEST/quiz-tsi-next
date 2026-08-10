@@ -137,7 +137,31 @@ export interface QuestionProvenance {
   readonly bundleId: string;
   readonly importedAt: string;
   readonly references: readonly QuestionSourceReference[];
+  readonly chatGptImport?: Readonly<{
+    coverage: 'text-and-visuals' | 'text-only' | 'incomplete';
+    entryIndex: number;
+    clientEntryId: string | null;
+    uncertainties: readonly Readonly<{
+      code: string;
+      path: string;
+      message: string;
+    }>[];
+  }>;
 }
+
+export type QuestionClassification =
+  | Readonly<{
+      kind: 'official';
+      partId: string;
+      chapterId: string;
+      notionId: string;
+    }>
+  | Readonly<{
+      kind: 'personal';
+      courseId: string;
+      chapterId: string | null;
+      notionId: string | null;
+    }>;
 
 export interface Question {
   readonly id: string;
@@ -146,9 +170,12 @@ export interface Question {
   readonly ownerId: string | null;
   readonly status: 'draft' | 'published' | 'archived';
   readonly provenance: QuestionProvenance | null;
-  readonly partId: string;
-  readonly chapterId: string;
-  readonly notionId: string;
+  /** Current persisted taxonomy contract. */
+  readonly classification?: QuestionClassification;
+  /** Legacy snapshot fields, accepted only by the idempotent migration. */
+  readonly partId?: string;
+  readonly chapterId?: string;
+  readonly notionId?: string;
   readonly type: QuestionType;
   readonly difficulty: Difficulty | null;
   readonly parameterization: ParameterizedQuestionSpec | null;
@@ -159,6 +186,75 @@ export interface Question {
   readonly validated: boolean;
   readonly createdAt: string;
   readonly updatedAt: string;
+}
+
+export const officialClassification = (
+  partId: string,
+  chapterId: string,
+  notionId: string,
+): QuestionClassification => ({
+  kind: 'official',
+  partId,
+  chapterId,
+  notionId,
+});
+
+export const personalClassification = (
+  courseId: string,
+  chapterId: string | null = null,
+  notionId: string | null = null,
+): QuestionClassification => ({
+  kind: 'personal',
+  courseId,
+  chapterId,
+  notionId,
+});
+
+export function questionClassification(
+  question: Pick<
+    Question,
+    'classification' | 'partId' | 'chapterId' | 'notionId'
+  >,
+): QuestionClassification | null {
+  if (question.classification) return question.classification;
+  return isNonEmptyString(question.partId) &&
+    isNonEmptyString(question.chapterId) &&
+    isNonEmptyString(question.notionId)
+    ? officialClassification(
+        question.partId,
+        question.chapterId,
+        question.notionId,
+      )
+    : null;
+}
+
+export const isOfficialQuestion = (
+  question: Pick<
+    Question,
+    'classification' | 'partId' | 'chapterId' | 'notionId'
+  >,
+): boolean => questionClassification(question)?.kind === 'official';
+
+export const isPersonalQuestion = (
+  question: Pick<
+    Question,
+    'classification' | 'partId' | 'chapterId' | 'notionId'
+  >,
+): boolean => questionClassification(question)?.kind === 'personal';
+
+export function migrateQuestionClassification<T extends Question>(
+  question: T,
+): T {
+  const classification = questionClassification(question);
+  if (!classification || question.classification) return question;
+  const migrated: { -readonly [K in keyof Question]: Question[K] } = {
+    ...question,
+    classification,
+  };
+  delete migrated.partId;
+  delete migrated.chapterId;
+  delete migrated.notionId;
+  return migrated as T;
 }
 
 export interface QuestionInstance {
@@ -529,17 +625,70 @@ export function validateQuestionProvenance(
   return valid(value as unknown as QuestionProvenance);
 }
 
+function validateQuestionClassification(
+  value: Record<string, unknown>,
+): ValidationResult<QuestionClassification> {
+  const candidate = value.classification;
+  if (isRecord(candidate) && candidate.kind === 'official') {
+    return isNonEmptyString(candidate.partId) &&
+      isNonEmptyString(candidate.chapterId) &&
+      isNonEmptyString(candidate.notionId)
+      ? valid(
+          officialClassification(
+            candidate.partId,
+            candidate.chapterId,
+            candidate.notionId,
+          ),
+        )
+      : invalid(
+          issue(
+            'question.classification',
+            'Classification officielle invalide.',
+          ),
+        );
+  }
+  if (isRecord(candidate) && candidate.kind === 'personal') {
+    return isNonEmptyString(candidate.courseId) &&
+      (candidate.chapterId === null || isNonEmptyString(candidate.chapterId)) &&
+      (candidate.notionId === null || isNonEmptyString(candidate.notionId))
+      ? valid(
+          personalClassification(
+            candidate.courseId,
+            candidate.chapterId,
+            candidate.notionId,
+          ),
+        )
+      : invalid(
+          issue(
+            'question.classification',
+            'Classification personnelle invalide.',
+          ),
+        );
+  }
+  return isNonEmptyString(value.partId) &&
+    isNonEmptyString(value.chapterId) &&
+    isNonEmptyString(value.notionId)
+    ? valid(
+        officialClassification(value.partId, value.chapterId, value.notionId),
+      )
+    : invalid(
+        issue('question.classification', 'Classification de question requise.'),
+      );
+}
+
 export function validateQuestion(value: unknown): ValidationResult<Question> {
   if (!isRecord(value)) {
     return invalid(issue('question', 'Une question doit être un objet.'));
   }
   const issues: ValidationIssue[] = [];
-  const requiredStrings = ['id', 'partId', 'chapterId', 'notionId'] as const;
+  const requiredStrings = ['id'] as const;
   for (const key of requiredStrings) {
     if (!isNonEmptyString(value[key])) {
       issues.push(issue(`question.${key}`, 'Valeur requise.'));
     }
   }
+  const classification = validateQuestionClassification(value);
+  if (!classification.ok) issues.push(...classification.issues);
   if (!Number.isInteger(value.version) || (value.version as number) < 1) {
     issues.push(
       issue('question.version', 'Version strictement positive requise.'),
@@ -633,9 +782,12 @@ export function validateQuestion(value: unknown): ValidationResult<Question> {
       value.source as QuestionSource,
     ),
   );
-  return issues.length
+  return issues.length || !classification.ok
     ? invalid(...issues)
-    : valid(value as unknown as Question);
+    : valid({
+        ...value,
+        classification: classification.value,
+      } as unknown as Question);
 }
 
 function isPlainPrimitiveRecord(

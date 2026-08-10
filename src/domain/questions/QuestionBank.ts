@@ -10,6 +10,7 @@ import {
   type ValidationResult,
 } from '../validation/ValidationResult';
 import {
+  questionClassification,
   validateQuestion,
   validateQuestionSourceReference,
   type Question,
@@ -191,10 +192,11 @@ export function validateQuestionBankBundle(
           ),
         );
     }
-    if (program) {
-      const part = program.getPart(question.partId);
-      const chapter = program.getChapter(question.chapterId);
-      const notion = program.getNotion(question.notionId);
+    const classification = questionClassification(question);
+    if (program && classification?.kind === 'official') {
+      const part = program.getPart(classification.partId);
+      const chapter = program.getChapter(classification.chapterId);
+      const notion = program.getNotion(classification.notionId);
       if (!part)
         errors.push(
           issue(`${path}.question.partId`, 'Partie absente du programme.'),
@@ -207,14 +209,14 @@ export function validateQuestionBankBundle(
         errors.push(
           issue(`${path}.question.notionId`, 'Notion absente du programme.'),
         );
-      if (chapter && chapter.partId !== question.partId)
+      if (chapter && chapter.partId !== classification.partId)
         errors.push(
           issue(
             `${path}.question.chapterId`,
             'Le chapitre ne dépend pas de cette partie.',
           ),
         );
-      if (notion && notion.chapterId !== question.chapterId)
+      if (notion && notion.chapterId !== classification.chapterId)
         errors.push(
           issue(
             `${path}.question.notionId`,

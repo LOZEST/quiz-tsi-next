@@ -18,9 +18,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -53,10 +50,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@a-@b" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@a-@b"
+            }
           },
           {
             "kind": "text",
@@ -64,7 +67,10 @@
           }
         ],
         "hint": [
-          { "kind": "text", "value": "Calculer a−b avant tout classement." }
+          {
+            "kind": "text",
+            "value": "Calculer a−b avant tout classement."
+          }
         ],
         "correction": [
           {
@@ -86,7 +92,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -107,9 +119,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -142,17 +151,29 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "Q=(@a*@b)/@b" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "Q=(@a*@b)/@b"
+            }
           },
           {
             "kind": "text",
@@ -160,9 +181,15 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@b!=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@b!=0"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -190,7 +217,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -211,9 +244,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -249,19 +279,34 @@
               "left": {
                 "kind": "binary",
                 "operator": "modulo",
-                "left": { "kind": "variable", "variableId": "a" },
-                "right": { "kind": "literal", "value": 10 }
+                "left": {
+                  "kind": "variable",
+                  "variableId": "a"
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": 10
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "D=@a/(10^@k)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "D=@a/(10^@k)"
+            }
           },
           {
             "kind": "text",
@@ -294,7 +339,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -315,9 +366,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -339,10 +387,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "R=sqrt(@a^2)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "R=sqrt(@a^2)"
+            }
           },
           {
             "kind": "text",
@@ -375,7 +429,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -396,9 +456,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -431,22 +488,40 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "P=@a^(-@n)" }
+            "kind": "text",
+            "value": "Calculer "
           },
-          { "kind": "text", "value": ", c’est-à-dire " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "P=1/(@a^@n)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "P=@a^(-@n)"
+            }
+          },
+          {
+            "kind": "text",
+            "value": ", c’est-à-dire "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "P=1/(@a^@n)"
+            }
           },
           {
             "kind": "text",
@@ -479,7 +554,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -500,9 +581,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -557,10 +635,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "S=@a/@b+@c/(10^@k)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "S=@a/@b+@c/(10^@k)"
+            }
           },
           {
             "kind": "text",
@@ -593,7 +677,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -614,9 +704,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -671,29 +758,53 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "c" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "c"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "d" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "d"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "Q=(@a/@b)/(@c/@d)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "Q=(@a/@b)/(@c/@d)"
+            }
           },
           {
             "kind": "text",
@@ -726,7 +837,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -747,9 +864,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -793,12 +907,22 @@
               "left": {
                 "kind": "math-function",
                 "function": "abs",
-                "arguments": [{ "kind": "variable", "variableId": "p" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "p"
+                  }
+                ]
               },
               "right": {
                 "kind": "math-function",
                 "function": "abs",
-                "arguments": [{ "kind": "variable", "variableId": "q" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "q"
+                  }
+                ]
               }
             },
             {
@@ -807,15 +931,26 @@
               "left": {
                 "kind": "math-function",
                 "function": "squarefree",
-                "arguments": [{ "kind": "variable", "variableId": "r" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "r"
+                  }
+                ]
               },
-              "right": { "kind": "literal", "value": true }
+              "right": {
+                "kind": "literal",
+                "value": true
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -823,7 +958,10 @@
               "source": "E=sqrt((@p^2)*@r)-sqrt((@q^2)*@r)"
             }
           },
-          { "kind": "text", "value": ", simplifier et classer le résultat." }
+          {
+            "kind": "text",
+            "value": ", simplifier et classer le résultat."
+          }
         ],
         "hint": [
           {
@@ -851,7 +989,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -872,9 +1016,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -929,20 +1070,35 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -981,7 +1137,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1002,9 +1164,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -1048,17 +1207,29 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "c" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "c"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "V=abs(@a-@b)/@c" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "V=abs(@a-@b)/@c"
+            }
           },
           {
             "kind": "text",
@@ -1091,7 +1262,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1112,9 +1289,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -1154,12 +1328,23 @@
                   {
                     "kind": "math-function",
                     "function": "abs",
-                    "arguments": [{ "kind": "variable", "variableId": "a" }]
+                    "arguments": [
+                      {
+                        "kind": "variable",
+                        "variableId": "a"
+                      }
+                    ]
                   },
-                  { "kind": "variable", "variableId": "b" }
+                  {
+                    "kind": "variable",
+                    "variableId": "b"
+                  }
                 ]
               },
-              "right": { "kind": "literal", "value": 1 }
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             },
             {
               "kind": "comparison",
@@ -1167,18 +1352,32 @@
               "left": {
                 "kind": "math-function",
                 "function": "has-prime-factor-other-than-2-or-5",
-                "arguments": [{ "kind": "variable", "variableId": "b" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "b"
+                  }
+                ]
               },
-              "right": { "kind": "literal", "value": true }
+              "right": {
+                "kind": "literal",
+                "value": true
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "Q=@a/@b" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "Q=@a/@b"
+            }
           },
           {
             "kind": "text",
@@ -1211,7 +1410,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1232,9 +1437,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -1278,15 +1480,26 @@
               "left": {
                 "kind": "math-function",
                 "function": "is-square",
-                "arguments": [{ "kind": "variable", "variableId": "r" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "r"
+                  }
+                ]
               },
-              "right": { "kind": "literal", "value": false }
+              "right": {
+                "kind": "literal",
+                "value": false
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -1294,7 +1507,10 @@
               "source": "E=(@a+sqrt(@r))-(@b+sqrt(@r))"
             }
           },
-          { "kind": "text", "value": ", puis donner son plus petit ensemble." }
+          {
+            "kind": "text",
+            "value": ", puis donner son plus petit ensemble."
+          }
         ],
         "hint": [
           {
@@ -1322,7 +1538,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1343,9 +1565,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -1382,11 +1601,20 @@
                 "kind": "math-function",
                 "function": "gcd",
                 "arguments": [
-                  { "kind": "variable", "variableId": "p" },
-                  { "kind": "variable", "variableId": "q" }
+                  {
+                    "kind": "variable",
+                    "variableId": "p"
+                  },
+                  {
+                    "kind": "variable",
+                    "variableId": "q"
+                  }
                 ]
               },
-              "right": { "kind": "literal", "value": 1 }
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             },
             {
               "kind": "logical",
@@ -1398,9 +1626,17 @@
                   "left": {
                     "kind": "math-function",
                     "function": "is-square",
-                    "arguments": [{ "kind": "variable", "variableId": "p" }]
+                    "arguments": [
+                      {
+                        "kind": "variable",
+                        "variableId": "p"
+                      }
+                    ]
                   },
-                  "right": { "kind": "literal", "value": false }
+                  "right": {
+                    "kind": "literal",
+                    "value": false
+                  }
                 },
                 {
                   "kind": "comparison",
@@ -1408,9 +1644,17 @@
                   "left": {
                     "kind": "math-function",
                     "function": "is-square",
-                    "arguments": [{ "kind": "variable", "variableId": "q" }]
+                    "arguments": [
+                      {
+                        "kind": "variable",
+                        "variableId": "q"
+                      }
+                    ]
                   },
-                  "right": { "kind": "literal", "value": false }
+                  "right": {
+                    "kind": "literal",
+                    "value": false
+                  }
                 }
               ]
             }
@@ -1418,10 +1662,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "R=sqrt(@p/@q)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "R=sqrt(@p/@q)"
+            }
           },
           {
             "kind": "text",
@@ -1429,7 +1679,10 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@p/@q" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@p/@q"
+            }
           },
           {
             "kind": "text",
@@ -1462,7 +1715,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1483,9 +1742,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -1521,15 +1777,26 @@
               "left": {
                 "kind": "math-function",
                 "function": "is-square",
-                "arguments": [{ "kind": "variable", "variableId": "r" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "r"
+                  }
+                ]
               },
-              "right": { "kind": "literal", "value": false }
+              "right": {
+                "kind": "literal",
+                "value": false
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -1568,7 +1835,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1589,9 +1862,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F01",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -1624,10 +1894,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a-@b)-(@a-@b)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a-@b)-(@a-@b)"
+            }
           },
           {
             "kind": "text",
@@ -1660,7 +1936,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F01"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1681,9 +1963,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -1716,8 +1995,14 @@
             {
               "kind": "comparison",
               "operator": "greater-than",
-              "left": { "kind": "variable", "variableId": "d" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "d"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
@@ -1729,19 +2014,37 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@N" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@N"
+            }
           },
-          { "kind": "text", "value": " par " },
+          {
+            "kind": "text",
+            "value": " par "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d>0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d>0"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -1769,7 +2072,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1790,9 +2099,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -1825,12 +2131,21 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer le reste modulo 2 de " },
+          {
+            "kind": "text",
+            "value": "Calculer le reste modulo 2 de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(2*@a+1)+(2*@b+1)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(2*@a+1)+(2*@b+1)"
+            }
           },
-          { "kind": "text", "value": ", puis conclure sur sa parité." }
+          {
+            "kind": "text",
+            "value": ", puis conclure sur sa parité."
+          }
         ],
         "hint": [
           {
@@ -1858,7 +2173,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1879,9 +2200,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -1925,24 +2243,45 @@
             {
               "kind": "comparison",
               "operator": "less-than-or-equal",
-              "left": { "kind": "variable", "variableId": "L" },
-              "right": { "kind": "variable", "variableId": "U" }
+              "left": {
+                "kind": "variable",
+                "variableId": "L"
+              },
+              "right": {
+                "kind": "variable",
+                "variableId": "U"
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Compter les multiples de " },
+          {
+            "kind": "text",
+            "value": "Compter les multiples de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": " dans l’intervalle entier " },
+          {
+            "kind": "text",
+            "value": " dans l’intervalle entier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "[@L;@U]" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "[@L;@U]"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -1970,7 +2309,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -1991,9 +2336,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -2043,23 +2385,44 @@
                 "left": {
                   "kind": "binary",
                   "operator": "add",
-                  "left": { "kind": "variable", "variableId": "a" },
-                  "right": { "kind": "variable", "variableId": "b" }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "a"
+                  },
+                  "right": {
+                    "kind": "variable",
+                    "variableId": "b"
+                  }
                 },
-                "right": { "kind": "variable", "variableId": "c" }
+                "right": {
+                  "kind": "variable",
+                  "variableId": "c"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Décomposer l’entier " },
+          {
+            "kind": "text",
+            "value": "Décomposer l’entier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "N=2^@a*3^@b*5^@c" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "N=2^@a*3^@b*5^@c"
+            }
           },
-          { "kind": "text", "value": " en facteurs premiers." }
+          {
+            "kind": "text",
+            "value": " en facteurs premiers."
+          }
         ],
         "hint": [
           {
@@ -2087,7 +2450,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2108,9 +2477,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -2132,10 +2498,16 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
+          {
+            "kind": "text",
+            "value": "Pour "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "n=@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "n=@n"
+            }
           },
           {
             "kind": "text",
@@ -2143,7 +2515,10 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "d<=sqrt(@n)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "d<=sqrt(@n)"
+            }
           },
           {
             "kind": "text",
@@ -2176,7 +2551,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2197,9 +2578,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -2241,27 +2619,48 @@
             {
               "id": "d",
               "label": "diviseur",
-              "domain": { "kind": "choice", "values": [2, 3, 5, 9] }
+              "domain": {
+                "kind": "choice",
+                "values": [2, 3, 5, 9]
+              }
             }
           ],
           "constraints": [],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer le reste modulo " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "kind": "text",
+            "value": "Calculer le reste modulo "
           },
-          { "kind": "text", "value": " de " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@d*(@a-@b)+@k*@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": " de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@d*(@a-@b)+@k*@d"
+            }
+          },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
           {
             "kind": "text",
@@ -2294,7 +2693,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2315,9 +2720,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -2394,20 +2796,38 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer le PGCD de " },
+          {
+            "kind": "text",
+            "value": "Calculer le PGCD de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "A=2^@a*3^@b*5^@c" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "A=2^@a*3^@b*5^@c"
+            }
           },
-          { "kind": "text", "value": " et " },
+          {
+            "kind": "text",
+            "value": " et "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "B=2^@d*3^@e*5^@f" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "B=2^@d*3^@e*5^@f"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Prendre les minima premier par premier." }
+          {
+            "kind": "text",
+            "value": "Prendre les minima premier par premier."
+          }
         ],
         "correction": [
           {
@@ -2429,7 +2849,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2450,9 +2876,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -2529,20 +2952,38 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer le PPCM de " },
+          {
+            "kind": "text",
+            "value": "Calculer le PPCM de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "A=2^@a*3^@b*5^@c" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "A=2^@a*3^@b*5^@c"
+            }
           },
-          { "kind": "text", "value": " et " },
+          {
+            "kind": "text",
+            "value": " et "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "B=2^@d*3^@e*5^@f" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "B=2^@d*3^@e*5^@f"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Prendre les maxima premier par premier." }
+          {
+            "kind": "text",
+            "value": "Prendre les maxima premier par premier."
+          }
         ],
         "correction": [
           {
@@ -2564,7 +3005,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2585,9 +3032,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -2637,9 +3081,15 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "N=2^@a*3^@b*5^@c" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "N=2^@a*3^@b*5^@c"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -2667,7 +3117,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2688,9 +3144,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -2734,17 +3187,29 @@
             {
               "kind": "comparison",
               "operator": "less-than",
-              "left": { "kind": "variable", "variableId": "r" },
-              "right": { "kind": "variable", "variableId": "d" }
+              "left": {
+                "kind": "variable",
+                "variableId": "r"
+              },
+              "right": {
+                "kind": "variable",
+                "variableId": "d"
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Déterminer " },
+          {
+            "kind": "text",
+            "value": "Déterminer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "N=@d*@q+@r" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "N=@d*@q+@r"
+            }
           },
           {
             "kind": "text",
@@ -2752,19 +3217,37 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": " donne le quotient " },
+          {
+            "kind": "text",
+            "value": " donne le quotient "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@q" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@q"
+            }
           },
-          { "kind": "text", "value": " et le reste " },
+          {
+            "kind": "text",
+            "value": " et le reste "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@r" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@r"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -2792,7 +3275,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2813,9 +3302,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -2848,22 +3334,43 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Compter les multiples positifs de " },
+          {
+            "kind": "text",
+            "value": "Compter les multiples positifs de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": " dans " },
+          {
+            "kind": "text",
+            "value": " dans "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "[1;@N]" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "[1;@N]"
+            }
           },
-          { "kind": "text", "value": ", sans compter les diviseurs de " },
+          {
+            "kind": "text",
+            "value": ", sans compter les diviseurs de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -2891,7 +3398,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2912,9 +3425,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -2947,14 +3457,28 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer le reste modulo 2 de " },
+          {
+            "kind": "text",
+            "value": "Calculer le reste modulo 2 de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(2*@a)*(2*@b+1)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(2*@a)*(2*@b+1)"
+            }
           },
-          { "kind": "text", "value": ", puis conclure sur sa parité." }
+          {
+            "kind": "text",
+            "value": ", puis conclure sur sa parité."
+          }
         ],
-        "hint": [{ "kind": "text", "value": "Repérer le facteur 2 commun." }],
+        "hint": [
+          {
+            "kind": "text",
+            "value": "Repérer le facteur 2 commun."
+          }
+        ],
         "correction": [
           {
             "id": "NUM-F02-P02-correction",
@@ -2975,7 +3499,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -2996,9 +3526,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -3007,7 +3534,10 @@
             {
               "id": "p",
               "label": "nombre premier",
-              "domain": { "kind": "choice", "values": [2, 3, 5, 7, 11, 13] }
+              "domain": {
+                "kind": "choice",
+                "values": [2, 3, 5, 7, 11, 13]
+              }
             },
             {
               "id": "x",
@@ -3031,58 +3561,121 @@
                 "left": {
                   "kind": "binary",
                   "operator": "multiply",
-                  "left": { "kind": "variable", "variableId": "x" },
-                  "right": { "kind": "variable", "variableId": "x" }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "x"
+                  },
+                  "right": {
+                    "kind": "variable",
+                    "variableId": "x"
+                  }
                 },
-                "right": { "kind": "variable", "variableId": "p" }
+                "right": {
+                  "kind": "variable",
+                  "variableId": "p"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour le nombre premier " },
+          {
+            "kind": "text",
+            "value": "Pour le nombre premier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@p" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@p"
+            }
           },
-          { "kind": "text", "value": " et l’entier " },
+          {
+            "kind": "text",
+            "value": " et l’entier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x"
+            }
           },
-          { "kind": "text", "value": ", calculer le reste de " },
+          {
+            "kind": "text",
+            "value": ", calculer le reste de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x"
+            }
           },
-          { "kind": "text", "value": " modulo " },
+          {
+            "kind": "text",
+            "value": " modulo "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@p" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@p"
+            }
           },
-          { "kind": "text", "value": ", puis celui de " },
+          {
+            "kind": "text",
+            "value": ", puis celui de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x^2" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x^2"
+            }
           },
-          { "kind": "text", "value": " modulo " },
+          {
+            "kind": "text",
+            "value": " modulo "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@p" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@p"
+            }
           },
-          { "kind": "text", "value": ". Conclure si " },
+          {
+            "kind": "text",
+            "value": ". Conclure si "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@p" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@p"
+            }
           },
-          { "kind": "text", "value": " divise " },
+          {
+            "kind": "text",
+            "value": " divise "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -3110,7 +3703,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3131,9 +3730,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -3155,10 +3751,16 @@
           "validationVariantCount": 9
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "N=(6*@a-1)*(6*@a+1)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "N=(6*@a-1)*(6*@a+1)"
+            }
           },
           {
             "kind": "text",
@@ -3192,7 +3794,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3213,9 +3821,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F02",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -3254,12 +3859,21 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "-@N" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "-@N"
+            }
           },
-          { "kind": "text", "value": " par " },
+          {
+            "kind": "text",
+            "value": " par "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
           {
             "kind": "text",
@@ -3267,9 +3881,15 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@d" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@d"
+            }
           },
-          { "kind": "text", "value": " exclu." }
+          {
+            "kind": "text",
+            "value": " exclu."
+          }
         ],
         "hint": [
           {
@@ -3297,7 +3917,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F02"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3318,9 +3944,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -3368,8 +3991,14 @@
                 {
                   "kind": "comparison",
                   "operator": "not-equal",
-                  "left": { "kind": "variable", "variableId": "a" },
-                  "right": { "kind": "literal", "value": 0 }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "a"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 0
+                  }
                 },
                 {
                   "kind": "logical",
@@ -3378,14 +4007,26 @@
                     {
                       "kind": "comparison",
                       "operator": "greater-than-or-equal",
-                      "left": { "kind": "variable", "variableId": "m" },
-                      "right": { "kind": "literal", "value": 1 }
+                      "left": {
+                        "kind": "variable",
+                        "variableId": "m"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 1
+                      }
                     },
                     {
                       "kind": "comparison",
                       "operator": "greater-than-or-equal",
-                      "left": { "kind": "variable", "variableId": "n" },
-                      "right": { "kind": "literal", "value": 1 }
+                      "left": {
+                        "kind": "variable",
+                        "variableId": "n"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 1
+                      }
                     }
                   ]
                 }
@@ -3395,20 +4036,38 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@a^@m*@a^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@a^@m*@a^@n"
+            }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Les deux facteurs ont la même base a." }
+          {
+            "kind": "text",
+            "value": "Les deux facteurs ont la même base a."
+          }
         ],
         "correction": [
           {
@@ -3430,7 +4089,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3451,9 +4116,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -3497,24 +4159,45 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a^@m)/(@a^@n)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a^@m)/(@a^@n)"
+            }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -3542,7 +4225,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3563,9 +4252,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -3609,8 +4295,14 @@
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "n" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "n"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             },
             {
               "kind": "logical",
@@ -3619,14 +4311,26 @@
                 {
                   "kind": "comparison",
                   "operator": "not-equal",
-                  "left": { "kind": "variable", "variableId": "a" },
-                  "right": { "kind": "literal", "value": 0 }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "a"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 0
+                  }
                 },
                 {
                   "kind": "comparison",
                   "operator": "greater-than-or-equal",
-                  "left": { "kind": "variable", "variableId": "m" },
-                  "right": { "kind": "literal", "value": 1 }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "m"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 1
+                  }
                 }
               ]
             }
@@ -3634,17 +4338,32 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a^@m)^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a^@m)^@n"
+            }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -3672,7 +4391,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3693,9 +4418,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -3739,19 +4461,34 @@
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "n" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "n"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "text",
+            "value": "Développer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a*@b)^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a*@b)^@n"
+            }
           },
-          { "kind": "text", "value": " en produit de puissances." }
+          {
+            "kind": "text",
+            "value": " en produit de puissances."
+          }
         ],
         "hint": [
           {
@@ -3779,7 +4516,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3800,9 +4543,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -3846,25 +4586,46 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "n" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "n"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "text",
+            "value": "Développer "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a/@b)^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a/@b)^@n"
+            }
           },
-          { "kind": "text", "value": " en quotient de puissances." }
+          {
+            "kind": "text",
+            "value": " en quotient de puissances."
+          }
         ],
         "hint": [
           {
@@ -3892,7 +4653,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -3913,9 +4680,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -3970,24 +4734,45 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a^@m*@a^@n)/(@a^@p)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a^@m*@a^@n)/(@a^@p)"
+            }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -4015,7 +4800,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4036,9 +4827,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -4093,33 +4881,63 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "p" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "p"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=((@a^@m)/(@a^@n))^@p" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=((@a^@m)/(@a^@n))^@p"
+            }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Le quotient intérieur vaut a^(m−n)." }
+          {
+            "kind": "text",
+            "value": "Le quotient intérieur vaut a^(m−n)."
+          }
         ],
         "correction": [
           {
@@ -4141,7 +4959,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4162,9 +4986,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -4197,14 +5018,23 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -4212,12 +5042,21 @@
               "source": "E=(@a^(2*@t+1)*@a^(3-@t))/(@a^(@t-2))"
             }
           },
-          { "kind": "text", "value": " à une puissance indépendante de " },
+          {
+            "kind": "text",
+            "value": " à une puissance indépendante de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@t" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@t"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -4245,7 +5084,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4266,9 +5111,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -4312,30 +5154,57 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "m" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "m"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(-@a)^@m*@a^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(-@a)^@m*@a^@n"
+            }
           },
-          { "kind": "text", "value": " en faisant apparaître la parité de " },
+          {
+            "kind": "text",
+            "value": " en faisant apparaître la parité de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@m" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@m"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -4363,7 +5232,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4384,9 +5259,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -4474,20 +5346,35 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "e" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "e"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -4495,7 +5382,10 @@
               "source": "E=(@c*@a^@m)*(@d*@a^@n)/(@e*@a^@p)"
             }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -4523,7 +5413,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4544,9 +5440,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -4590,14 +5483,23 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -4605,9 +5507,17 @@
               "source": "E=@a^(@m+@r)/(@a^@m*@a^@r)"
             }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
-        "hint": [{ "kind": "text", "value": "Le dénominateur vaut a^(m+r)." }],
+        "hint": [
+          {
+            "kind": "text",
+            "value": "Le dénominateur vaut a^(m+r)."
+          }
+        ],
         "correction": [
           {
             "id": "NUM-F03-P01-correction",
@@ -4628,7 +5538,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4649,9 +5565,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -4695,17 +5608,29 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@a^(-@m))/(@a^(-@n))" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a^(-@m))/(@a^(-@n))"
+            }
           },
           {
             "kind": "text",
@@ -4738,7 +5663,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4759,9 +5690,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -4794,14 +5722,26 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "n" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "n"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
@@ -4815,20 +5755,38 @@
                   "left": {
                     "kind": "binary",
                     "operator": "multiply",
-                    "left": { "kind": "literal", "value": 2 },
-                    "right": { "kind": "variable", "variableId": "n" }
+                    "left": {
+                      "kind": "literal",
+                      "value": 2
+                    },
+                    "right": {
+                      "kind": "variable",
+                      "variableId": "n"
+                    }
                   },
-                  "right": { "kind": "literal", "value": 1 }
+                  "right": {
+                    "kind": "literal",
+                    "value": 1
+                  }
                 },
-                "right": { "kind": "literal", "value": 2 }
+                "right": {
+                  "kind": "literal",
+                  "value": 2
+                }
               },
-              "right": { "kind": "literal", "value": 1 }
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer " },
+          {
+            "kind": "text",
+            "value": "Calculer "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -4836,9 +5794,17 @@
               "source": "E=(-@a)^(2*@n+1)/(@a^(2*@n+1))"
             }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
-        "hint": [{ "kind": "text", "value": "L’exposant 2n+1 est impair." }],
+        "hint": [
+          {
+            "kind": "text",
+            "value": "L’exposant 2n+1 est impair."
+          }
+        ],
         "correction": [
           {
             "id": "NUM-F03-P03-correction",
@@ -4859,7 +5825,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -4880,9 +5852,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -4948,38 +5917,71 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "m" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "m"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "n" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "n"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "p" },
-              "right": { "kind": "literal", "value": 1 }
+              "left": {
+                "kind": "variable",
+                "variableId": "p"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 1
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -5018,7 +6020,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5039,9 +6047,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F03",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -5096,14 +6101,23 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "b" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "b"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -5111,12 +6125,21 @@
               "source": "E=((@b^2)^@m*@b^@n)/((@b^3)^@p)"
             }
           },
-          { "kind": "text", "value": " à une seule puissance de base " },
+          {
+            "kind": "text",
+            "value": " à une seule puissance de base "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@b" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@b"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -5144,7 +6167,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F03"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5165,9 +6194,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -5269,16 +6295,28 @@
               "left": {
                 "kind": "binary",
                 "operator": "multiply",
-                "left": { "kind": "variable", "variableId": "x" },
-                "right": { "kind": "variable", "variableId": "y" }
+                "left": {
+                  "kind": "variable",
+                  "variableId": "x"
+                },
+                "right": {
+                  "kind": "variable",
+                  "variableId": "y"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -5286,7 +6324,10 @@
               "source": "E=(@a*@x^@m*@y^@n)*(@b*@x^@p*@y^@q)"
             }
           },
-          { "kind": "text", "value": " en un seul monôme." }
+          {
+            "kind": "text",
+            "value": " en un seul monôme."
+          }
         ],
         "hint": [
           {
@@ -5314,7 +6355,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5335,9 +6382,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -5442,18 +6486,33 @@
                 "left": {
                   "kind": "binary",
                   "operator": "multiply",
-                  "left": { "kind": "variable", "variableId": "b" },
-                  "right": { "kind": "variable", "variableId": "x" }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "b"
+                  },
+                  "right": {
+                    "kind": "variable",
+                    "variableId": "x"
+                  }
                 },
-                "right": { "kind": "variable", "variableId": "y" }
+                "right": {
+                  "kind": "variable",
+                  "variableId": "y"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -5461,15 +6520,27 @@
               "source": "E=(@a*@x^@m*@y^@n)/(@b*@x^@p*@y^@q)"
             }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@b*@x*@y!=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@b*@x*@y!=0"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Soustraire variable par variable." }
+          {
+            "kind": "text",
+            "value": "Soustraire variable par variable."
+          }
         ],
         "correction": [
           {
@@ -5491,7 +6562,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5512,9 +6589,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -5547,27 +6621,51 @@
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
+          {
+            "kind": "text",
+            "value": "Pour "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x>=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x>=0"
+            }
           },
-          { "kind": "text", "value": ", convertir " },
+          {
+            "kind": "text",
+            "value": ", convertir "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "sqrt(@x^(2*@m))" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "sqrt(@x^(2*@m))"
+            }
           },
-          { "kind": "text", "value": " en puissance de x et simplifier." }
+          {
+            "kind": "text",
+            "value": " en puissance de x et simplifier."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Multiplier l’exposant 2m par 1/2." }
+          {
+            "kind": "text",
+            "value": "Multiplier l’exposant 2m par 1/2."
+          }
         ],
         "correction": [
           {
@@ -5589,7 +6687,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5610,9 +6714,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -5678,29 +6779,56 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Avec " },
+          {
+            "kind": "text",
+            "value": "Avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "U=@a*@x^@m" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "U=@a*@x^@m"
+            }
           },
-          { "kind": "text", "value": " et " },
+          {
+            "kind": "text",
+            "value": " et "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "V=@b*@x^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "V=@b*@x^@n"
+            }
           },
-          { "kind": "text", "value": ", substituer puis réduire " },
+          {
+            "kind": "text",
+            "value": ", substituer puis réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=U^2*V" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=U^2*V"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -5728,7 +6856,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5749,9 +6883,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "fundamental",
         "parameterization": {
@@ -5784,27 +6915,55 @@
               "left": {
                 "kind": "math-function",
                 "function": "squarefree",
-                "arguments": [{ "kind": "variable", "variableId": "r" }]
+                "arguments": [
+                  {
+                    "kind": "variable",
+                    "variableId": "r"
+                  }
+                ]
               },
-              "right": { "kind": "literal", "value": true }
+              "right": {
+                "kind": "literal",
+                "value": true
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Extraire le carré parfait dans " },
+          {
+            "kind": "text",
+            "value": "Extraire le carré parfait dans "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "R=sqrt((@k^2)*@r)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "R=sqrt((@k^2)*@r)"
+            }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@r" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@r"
+            }
           },
-          { "kind": "text", "value": " carré libre positif." }
+          {
+            "kind": "text",
+            "value": " carré libre positif."
+          }
         ],
-        "hint": [{ "kind": "text", "value": "Séparer √(k²r)=√(k²)√r." }],
+        "hint": [
+          {
+            "kind": "text",
+            "value": "Séparer √(k²r)=√(k²)√r."
+          }
+        ],
         "correction": [
           {
             "id": "NUM-F04-F05-correction",
@@ -5825,7 +6984,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -5846,9 +7011,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -5975,18 +7137,33 @@
                 "left": {
                   "kind": "binary",
                   "operator": "multiply",
-                  "left": { "kind": "variable", "variableId": "c" },
-                  "right": { "kind": "variable", "variableId": "x" }
+                  "left": {
+                    "kind": "variable",
+                    "variableId": "c"
+                  },
+                  "right": {
+                    "kind": "variable",
+                    "variableId": "x"
+                  }
                 },
-                "right": { "kind": "variable", "variableId": "y" }
+                "right": {
+                  "kind": "variable",
+                  "variableId": "y"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -5994,12 +7171,21 @@
               "source": "E=(@a*@x^@m*@y^@n)*(@b*@x^@p)/(@c*@x^@q*@y^@r)"
             }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@c*@x*@y!=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@c*@x*@y!=0"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -6027,7 +7213,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6048,9 +7240,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -6119,36 +7308,72 @@
               "left": {
                 "kind": "binary",
                 "operator": "multiply",
-                "left": { "kind": "variable", "variableId": "b" },
-                "right": { "kind": "variable", "variableId": "x" }
+                "left": {
+                  "kind": "variable",
+                  "variableId": "b"
+                },
+                "right": {
+                  "kind": "variable",
+                  "variableId": "x"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Avec " },
+          {
+            "kind": "text",
+            "value": "Avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "U=@a*@x^@m" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "U=@a*@x^@m"
+            }
           },
-          { "kind": "text", "value": " et " },
+          {
+            "kind": "text",
+            "value": " et "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "V=@b*@x^@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "V=@b*@x^@n"
+            }
           },
-          { "kind": "text", "value": ", substituer puis réduire " },
+          {
+            "kind": "text",
+            "value": ", substituer puis réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(U^2)/V" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(U^2)/V"
+            }
           },
-          { "kind": "text", "value": ", avec " },
+          {
+            "kind": "text",
+            "value": ", avec "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@b*@x!=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@b*@x!=0"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -6176,7 +7401,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6197,9 +7428,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -6232,33 +7460,63 @@
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "u" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "u"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             },
             {
               "kind": "comparison",
               "operator": "greater-than-or-equal",
-              "left": { "kind": "variable", "variableId": "v" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "v"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@u>=0" }
+            "kind": "text",
+            "value": "Pour "
           },
-          { "kind": "text", "value": " et " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@v>=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@u>=0"
+            }
           },
-          { "kind": "text", "value": ", regrouper " },
+          {
+            "kind": "text",
+            "value": " et "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "P=sqrt(@u)*sqrt(@v)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@v>=0"
+            }
+          },
+          {
+            "kind": "text",
+            "value": ", regrouper "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "P=sqrt(@u)*sqrt(@v)"
+            }
           },
           {
             "kind": "text",
@@ -6291,7 +7549,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6312,9 +7576,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -6380,22 +7641,40 @@
             {
               "kind": "comparison",
               "operator": "greater-than",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x>0" }
+            "kind": "text",
+            "value": "Pour "
           },
-          { "kind": "text", "value": ", réduire " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@x^(@p/@m)*@x^(@q/@n)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x>0"
+            }
+          },
+          {
+            "kind": "text",
+            "value": ", réduire "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@x^(@p/@m)*@x^(@q/@n)"
+            }
           },
           {
             "kind": "text",
@@ -6403,9 +7682,15 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@m*@n" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@m*@n"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -6433,7 +7718,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6454,9 +7745,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "standard",
         "parameterization": {
@@ -6489,29 +7777,56 @@
             {
               "kind": "comparison",
               "operator": "greater-than",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
+          {
+            "kind": "text",
+            "value": "Pour "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x>0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x>0"
+            }
           },
-          { "kind": "text", "value": ", réduire " },
+          {
+            "kind": "text",
+            "value": ", réduire "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@x^@m*sqrt(@x^2)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@x^@m*sqrt(@x^2)"
+            }
           },
-          { "kind": "text", "value": " en une seule puissance de " },
+          {
+            "kind": "text",
+            "value": " en une seule puissance de "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -6539,7 +7854,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6560,9 +7881,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -6584,24 +7902,45 @@
             {
               "kind": "comparison",
               "operator": "greater-than",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "literal", "value": 0 }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Pour " },
+          {
+            "kind": "text",
+            "value": "Pour "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x>0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x>0"
+            }
           },
-          { "kind": "text", "value": ", simplifier " },
+          {
+            "kind": "text",
+            "value": ", simplifier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=@x^(1/2)*@x^(-1/2)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@x^(1/2)*@x^(-1/2)"
+            }
           },
-          { "kind": "text", "value": " et rappeler le domaine." }
+          {
+            "kind": "text",
+            "value": " et rappeler le domaine."
+          }
         ],
         "hint": [
           {
@@ -6629,7 +7968,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6650,9 +7995,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -6732,16 +8074,28 @@
               "left": {
                 "kind": "binary",
                 "operator": "multiply",
-                "left": { "kind": "variable", "variableId": "x" },
-                "right": { "kind": "variable", "variableId": "y" }
+                "left": {
+                  "kind": "variable",
+                  "variableId": "x"
+                },
+                "right": {
+                  "kind": "variable",
+                  "variableId": "y"
+                }
               },
-              "right": { "kind": "literal", "value": 0 }
+              "right": {
+                "kind": "literal",
+                "value": 0
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire " },
+          {
+            "kind": "text",
+            "value": "Réduire "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -6749,15 +8103,27 @@
               "source": "E=(@x^(-@m)*@y^@n)/(@x^@p*@y^(-@q))"
             }
           },
-          { "kind": "text", "value": " avec " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x!=0" }
+            "kind": "text",
+            "value": " avec "
           },
-          { "kind": "text", "value": " et " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@y!=0" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x!=0"
+            }
+          },
+          {
+            "kind": "text",
+            "value": " et "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@y!=0"
+            }
           },
           {
             "kind": "text",
@@ -6790,7 +8156,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6811,9 +8183,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -6862,14 +8231,23 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "r" },
-              "right": { "kind": "variable", "variableId": "s" }
+              "left": {
+                "kind": "variable",
+                "variableId": "r"
+              },
+              "right": {
+                "kind": "variable",
+                "variableId": "s"
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Réduire autant que possible " },
+          {
+            "kind": "text",
+            "value": "Réduire autant que possible "
+          },
           {
             "kind": "inline-math",
             "math": {
@@ -6877,12 +8255,21 @@
               "source": "E=@a*sqrt(@r)+@b*sqrt(@s)"
             }
           },
-          { "kind": "text", "value": ", où " },
+          {
+            "kind": "text",
+            "value": ", où "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@r!=@s" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@r!=@s"
+            }
           },
-          { "kind": "text", "value": " sont carrés libres." }
+          {
+            "kind": "text",
+            "value": " sont carrés libres."
+          }
         ],
         "hint": [
           {
@@ -6910,7 +8297,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -6931,9 +8324,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -6966,22 +8356,40 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "a" },
-              "right": { "kind": "variable", "variableId": "b" }
+              "left": {
+                "kind": "variable",
+                "variableId": "a"
+              },
+              "right": {
+                "kind": "variable",
+                "variableId": "b"
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Avec " },
           {
-            "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "U=@a-@b" }
+            "kind": "text",
+            "value": "Avec "
           },
-          { "kind": "text", "value": ", substituer dans " },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=U/U" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "U=@a-@b"
+            }
+          },
+          {
+            "kind": "text",
+            "value": ", substituer dans "
+          },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=U/U"
+            }
           },
           {
             "kind": "text",
@@ -6989,12 +8397,21 @@
           },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@a!=@b" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@a!=@b"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
-          { "kind": "text", "value": "Tester U≠0 avant de simplifier U/U." }
+          {
+            "kind": "text",
+            "value": "Tester U≠0 avant de simplifier U/U."
+          }
         ],
         "correction": [
           {
@@ -7016,7 +8433,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",
@@ -7037,9 +8460,6 @@
         "ownerId": null,
         "status": "published",
         "provenance": null,
-        "partId": "numbers",
-        "chapterId": "numbers-arithmetic",
-        "notionId": "NUM-F04",
         "type": "calculation",
         "difficulty": "trap",
         "parameterization": {
@@ -7072,24 +8492,45 @@
             {
               "kind": "comparison",
               "operator": "not-equal",
-              "left": { "kind": "variable", "variableId": "x" },
-              "right": { "kind": "variable", "variableId": "a" }
+              "left": {
+                "kind": "variable",
+                "variableId": "x"
+              },
+              "right": {
+                "kind": "variable",
+                "variableId": "a"
+              }
             }
           ],
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Simplifier " },
+          {
+            "kind": "text",
+            "value": "Simplifier "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "E=(@x^2-@a^2)/(@x-@a)" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@x^2-@a^2)/(@x-@a)"
+            }
           },
-          { "kind": "text", "value": " et conserver la valeur interdite " },
+          {
+            "kind": "text",
+            "value": " et conserver la valeur interdite "
+          },
           {
             "kind": "inline-math",
-            "math": { "syntaxVersion": 1, "source": "@x=@a" }
+            "math": {
+              "syntaxVersion": 1,
+              "source": "@x=@a"
+            }
           },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "text",
+            "value": "."
+          }
         ],
         "hint": [
           {
@@ -7117,7 +8558,13 @@
         ],
         "validated": true,
         "createdAt": "2026-08-07T00:00:00.000Z",
-        "updatedAt": "2026-08-07T00:00:00.000Z"
+        "updatedAt": "2026-08-07T00:00:00.000Z",
+        "classification": {
+          "kind": "official",
+          "partId": "numbers",
+          "chapterId": "numbers-arithmetic",
+          "notionId": "NUM-F04"
+        }
       },
       "provenance": {
         "mode": "extend",

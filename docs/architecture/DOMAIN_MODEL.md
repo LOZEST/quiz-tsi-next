@@ -82,11 +82,14 @@ interface ParameterizedQuestionSpec {
 
 ```ts
 interface CorrectionStep { id: string; title: string | null; content: ContentSegment[]; }
+type QuestionClassification =
+  | { kind: "official"; partId: string; chapterId: string; notionId: string }
+  | { kind: "personal"; courseId: string; chapterId: string | null; notionId: string | null };
 interface Question {
   id: string; version: number; source: "static" | "private" | "shared";
   ownerId: string | null; status: "draft" | "published" | "archived";
   provenance: QuestionProvenance | null;
-  partId: string; chapterId: string; notionId: string;
+  classification: QuestionClassification;
   type: QuestionType; difficulty: Difficulty | null;
   parameterization: ParameterizedQuestionSpec | null;
   prompt: ContentSegment[]; hint: ContentSegment[]; correction: CorrectionStep[];
@@ -99,6 +102,9 @@ interface QuestionInstance {
   createdAt: string;
 }
 interface FrozenQuestionInstance extends QuestionInstance { contentHash: string; }
+interface PersonalCourse { id: string; ownerId: string; title: string; createdAt: string; updatedAt: string; }
+interface PersonalChapter { id: string; ownerId: string; courseId: string; title: string; createdAt: string; updatedAt: string; }
+interface PersonalNotion { id: string; ownerId: string; courseId: string; chapterId: string | null; title: string; createdAt: string; updatedAt: string; }
 ```
 
 Invariant de propriété selon `source` :
@@ -112,6 +118,10 @@ Une question privée ou partagée sans auteur connu n'est pas complétée avec u
 valeur inventée : elle est invalide.
 
 Le contenu distant est constitué de segments, jamais de HTML arbitraire. `MathSource` est la seule source persistée d'une formule. Le langage mathématique simplifié est analysé de façon contrôlée ; le LaTeX éventuellement généré pour KaTeX reste un résultat temporaire de l'adapter, et ni ce LaTeX ni le HTML KaTeX ne sont persistés comme source de vérité. Une question publiée est validée. `difficulty` vaut `null` pour `reflex`.
+
+`ProgramIndex` reste exclusivement la taxonomie officielle. Le cours personnel est obligatoire ; son chapitre et sa notion sont facultatifs. Les identifiants personnels sont générés par Quiz TSI et isolés par `ownerId`. Une migration idempotente transforme les anciens triplets `partId/chapterId/notionId` en classification `official`; les instances historiques figées restent restaurables. Une évaluation personnelle conserve sa classification, mais PR7 ne l'agrège pas dans une notion officielle.
+
+L'import ChatGPT V1 est une exception `remote-origin` au local-first initial : GPT → Edge Function sous identité OAuth utilisateur et RLS → brouillon distant privé → pull borné → IndexedDB. L'entrée est validée depuis `unknown`, confirmée, bornée et idempotente par `(userId, client_id, importId)` et hash canonique. Le serveur dérive `ownerId`, `partId` officiel, dates, source, statut et validation. Il force `private`, `draft`, `validated=false`; conserve les entrées valides, met les invalides en quarantaine et produit un rapport. Après arrivée locale, toute édition repasse par IndexedDB et l'outbox.
 
 Une migration convertit tout ancien contenu persistant du LaTeX vers un `MathSource` contrôlé ou le met en quarantaine. Aucun contenu invalide n'est interprété silencieusement. L'auteur ne saisit et ne voit jamais directement du LaTeX.
 

@@ -192,7 +192,11 @@ describe('banque NUM de production', () => {
       new Set(bundle.questions.map(({ question }) => question.id)).size,
     ).toBe(60);
     expect(
-      new Set(bundle.questions.map(({ question }) => question.notionId)),
+      new Set(
+        bundle.questions.map(
+          ({ question }) => question.classification.notionId,
+        ),
+      ),
     ).toEqual(new Set(['NUM-F01', 'NUM-F02', 'NUM-F03', 'NUM-F04']));
     expect(
       Object.fromEntries(

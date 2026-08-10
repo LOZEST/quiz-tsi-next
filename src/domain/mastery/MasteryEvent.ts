@@ -59,7 +59,11 @@ export function projectMasteryEvents(
       evaluation.sessionId,
       chapterTestSessionIds,
     );
-    if (!sessionMode) {
+    if (
+      !sessionMode ||
+      evaluation.classification?.kind === 'personal' ||
+      !evaluation.notionId
+    ) {
       unresolvedEvaluationIds.push(evaluation.id);
       continue;
     }
