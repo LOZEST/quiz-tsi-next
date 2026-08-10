@@ -7,7 +7,8 @@ import {
 import {
   createDailyPlan,
   createWeakPoints,
-  localDayBoundary,
+  localDayCalendar,
+  type LocalDayCalendar,
 } from '../mastery/ProgressPlanning';
 
 export interface ProgressPartSnapshot {
@@ -39,6 +40,7 @@ export function createProgressSnapshot(input: {
   userId: string;
   now: number;
   programIndex: ProgramIndex | null;
+  calendar?: LocalDayCalendar;
   partial?: boolean;
 }): ProgressSnapshot {
   const events = [
@@ -121,15 +123,15 @@ export function createProgressSnapshot(input: {
           : null,
       };
     }) ?? [];
-  const startToday = localDayBoundary.startOfDay(input.now);
+  const calendarBoundary = input.calendar ?? localDayCalendar;
   const calendar = Array.from({ length: 28 }, (_, offset) => {
-    const date = new Date(startToday - (27 - offset) * 86_400_000)
-      .toISOString()
-      .slice(0, 10);
+    const range = calendarBoundary.rangeForDaysAgo(input.now, 27 - offset);
     return {
-      date,
-      count: events.filter((event) => event.occurredAt.slice(0, 10) === date)
-        .length,
+      date: range.label,
+      count: events.filter((event) => {
+        const occurredAt = Date.parse(event.occurredAt);
+        return occurredAt >= range.start && occurredAt < range.endExclusive;
+      }).length,
     };
   });
   return {

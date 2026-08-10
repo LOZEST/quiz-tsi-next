@@ -38,6 +38,7 @@ export class CanvasController {
   private gestureShape: WhiteboardShape | null = null;
   private gestureKind: 'place' | 'move' | 'resize' | 'rotate' | null = null;
   private currentPenWidth = 3;
+  private transactionBaseline: WhiteboardScene | null = null;
 
   getScene(): WhiteboardScene {
     return this.scene;
@@ -90,8 +91,7 @@ export class CanvasController {
     this.canvas.setPointerCapture(event.pointerId);
     this.activePointerId = event.pointerId;
     this.activePointerType = event.pointerType;
-    this.undoStack.push(snapshotScene(this.scene).scene);
-    this.redoStack = [];
+    this.transactionBaseline = snapshotScene(this.scene).scene;
     if (this.activeTool === 'shape' || this.activeTool === 'select') {
       const point = this.input(event).point;
       this.gestureStart = point;
@@ -195,6 +195,10 @@ export class CanvasController {
       this.renderer.schedule(this.scene);
       return;
     }
+    if (this.activeTool === 'shape' || this.activeTool === 'select') {
+      this.renderer.schedule(this.scene);
+      return;
+    }
     const coalesced = event.getCoalescedEvents?.();
     const samples = coalesced && coalesced.length > 0 ? coalesced : [event];
     for (const sample of samples) {
@@ -211,30 +215,29 @@ export class CanvasController {
     if (!this.isActivePointer(event)) return;
     if (this.activeTool === 'shape' || this.activeTool === 'select') {
       this.pointerMove(event);
-      if (!this.gestureKind) this.undoStack.pop();
       if (this.gestureKind === 'place')
         this.selectedShapeId = this.gestureShape?.id ?? null;
       this.renderer.setSelection(this.selectedShapeId);
       this.clearGesture();
       this.finishPointer(event.pointerId, true);
-      this.commit();
+      this.finishTransaction();
       return;
     }
     this.scene = this.tools.current.end(this.scene, this.input(event)).scene;
     this.finishPointer(event.pointerId, true);
-    this.commit();
+    this.finishTransaction();
   }
 
   pointerCancel(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
     this.finishPointer(event.pointerId, true);
-    this.commit();
+    this.finishTransaction();
   }
 
   lostPointerCapture(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
     this.finishPointer(event.pointerId, false);
-    this.commit();
+    this.finishTransaction();
   }
 
   private isActivePointer(event: PointerEvent): boolean {
@@ -318,9 +321,9 @@ export class CanvasController {
   }
 
   cancelInteraction() {
-    if (this.gestureKind) {
-      const previous = this.undoStack.pop();
-      if (previous) this.scene = previous;
+    if (this.transactionBaseline) {
+      this.scene = this.transactionBaseline;
+      this.transactionBaseline = null;
       const pointerId = this.activePointerId;
       this.activePointerId = null;
       this.activePointerType = null;
@@ -334,6 +337,22 @@ export class CanvasController {
       this.clearGesture();
       this.renderer.schedule(this.scene);
     }
+  }
+
+  private finishTransaction() {
+    const baseline = this.transactionBaseline;
+    this.transactionBaseline = null;
+    if (!baseline) return;
+    if (
+      JSON.stringify(baseline.objects) === JSON.stringify(this.scene.objects)
+    ) {
+      this.scene = baseline;
+      this.renderer.schedule(this.scene);
+      return;
+    }
+    this.undoStack.push(baseline);
+    this.redoStack = [];
+    this.commit();
   }
 
   private penWidth() {

@@ -84,3 +84,20 @@ Nouvelle passe finale complète après correction :
 
 - Aucun iPad matériel ni Apple Pencil physique n'a été utilisé. Les projets Playwright iPad portrait/paysage valident les viewports et parcours automatisables, pas la sensation du Pencil, la pression matérielle ni la rotation physique.
 - La validation humaine visuelle et la fusion restent requises par la Definition of Done.
+
+## Correctifs après audit du head `48c04d0`
+
+Deux derniers correctifs ciblés ont été appliqués :
+
+- l'historique Canvas utilise désormais une transaction avec baseline. Une sélection sans mouvement, un clic vide ou un placement annulé par Échap ne crée aucune entrée undo et ne vide jamais redo. Placement, déplacement, resize, rotation et suppression ne modifient les piles qu'au commit d'une mutation réelle ;
+- le calendrier de progression utilise 28 fenêtres de jours locaux injectables avec début inclusif et fin exclusive. Le navigateur avance les dates avec `setDate`, sans durée fixe de 86 400 000 ms, et compte chaque timestamp dans sa fenêtre locale au lieu de comparer des dates UTC textuelles.
+
+Validation ciblée : 29 tests réussis pour l'historique whiteboard et le calendrier, incluant préservation de redo après sélection/clic vide/Échap, absence de no-op undo, UTC+02, 28 jours uniques et une frontière DST de 23 heures.
+
+Passe finale complète après ces deux correctifs :
+
+- `npm run format:check`, `npm run lint` et `npm run typecheck` réussis ;
+- `npm run test:coverage` : 42 fichiers, 529 tests réussis, couverture globale 86,39 % statements, 81,66 % branches, 84,59 % functions et 89 % lines ;
+- `npm run build` et `npm run build:pages` réussis, avec le seul avertissement informatif déjà documenté sur le chunk supérieur à 500 kB ;
+- `npm run test:browser` : 78 tests réussis sur desktop, iPad portrait et iPad paysage ;
+- `git diff --check` réussi.

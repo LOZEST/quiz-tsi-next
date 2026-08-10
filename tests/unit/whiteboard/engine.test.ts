@@ -337,6 +337,21 @@ describe('CanvasController', () => {
     controller.pointerUp(pointerAt(50, body));
   }
 
+  function moveSelectedRectangle(
+    controller: CanvasController,
+    shape: WhiteboardShape,
+    pointerId: number,
+  ) {
+    const start = shapeLocalPointToWorld(shape, {
+      x: shape.geometry.width / 2,
+      y: 0,
+    });
+    const end = { x: start.x + 30, y: start.y + 20 };
+    controller.pointerDown(pointerAt(pointerId, start));
+    controller.pointerMove(pointerAt(pointerId, end));
+    controller.pointerUp(pointerAt(pointerId, end));
+  }
+
   it('draws, commits, switches tools and supports undo/redo', () => {
     class Observer {
       observe = vi.fn();
@@ -501,6 +516,71 @@ describe('CanvasController', () => {
       width: resized.geometry.width,
       height: resized.geometry.height,
     });
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo after selecting a shape without moving it', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 60);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    selectRectangle(controller, initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo after an empty selection click', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 61);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    controller.pointerDown(pointerAt(62, { x: 700, y: 600 }));
+    controller.pointerUp(pointerAt(62, { x: 700, y: 600 }));
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('preserves redo when Escape cancels an in-progress placement', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 63);
+    const modified = controller.getScene().objects[0];
+    controller.undo();
+    controller.selectTool('shape', 'circle');
+    controller.pointerDown(pointerAt(64, { x: 300, y: 300 }));
+    controller.pointerMove(pointerAt(64, { x: 380, y: 370 }));
+    controller.cancelInteraction();
+    expect(controller.getScene().objects).toEqual([initial]);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(modified);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not add an undo no-op for selection and pointerUp without movement', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    moveSelectedRectangle(controller, initial, 65);
+    const modified = controller.getScene().objects[0];
+    if (modified?.kind !== 'shape') throw new Error('Shape attendue.');
+    selectRectangle(controller, modified);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
     controller.destroy();
     vi.unstubAllGlobals();
   });
