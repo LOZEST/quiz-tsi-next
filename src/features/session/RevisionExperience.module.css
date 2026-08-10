@@ -76,3 +76,34 @@
   border-radius: var(--qtsi-radius-1);
   font: inherit;
 }
+.helpPanel {
+  position: absolute;
+  z-index: 5;
+  inset-block-start: calc(var(--qtsi-safe-top) + 7.5rem);
+  inset-inline-end: calc(var(--qtsi-safe-right) + var(--qtsi-space-4));
+  inline-size: min(30rem, calc(100% - 2rem));
+  max-block-size: calc(100% - 14rem);
+  overflow: hidden;
+  background: rgb(255 255 255 / 97%);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-3);
+  box-shadow: var(--qtsi-shadow-subtle);
+}
+
+.helpPanel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--qtsi-space-3);
+  border-block-end: 1px solid var(--qtsi-border);
+}
+
+.helpPanel h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+.helpPanelContent {
+  max-block-size: 55vh;
+  overflow: auto;
+  padding: var(--qtsi-space-4);
+}

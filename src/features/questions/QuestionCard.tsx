@@ -16,10 +16,12 @@ export function QuestionCard({
   prepared,
   question,
   reflexDeadline,
+  onReflexExceeded,
 }: {
   prepared: PreparedQuestion;
   question: Readonly<Question>;
   reflexDeadline: number | null;
+  onReflexExceeded?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { clock, programIndex } = useAppServices();
@@ -48,6 +50,7 @@ export function QuestionCard({
             activationKey={`${prepared.questionId}:${prepared.questionVersion}:${prepared.seed}`}
             clock={clock}
             deadline={reflexDeadline}
+            {...(onReflexExceeded ? { onExceeded: onReflexExceeded } : {})}
           />
         </div>
       ) : null}

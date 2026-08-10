@@ -11,11 +11,14 @@ export interface WhiteboardState {
   handedness: 'left' | 'right';
 }
 
-export function createEmptyScene(sceneId = 'main'): WhiteboardScene {
+export function createEmptyScene(
+  sceneId = 'main',
+  questionInstanceId = 'whiteboard',
+): WhiteboardScene {
   return {
     schemaVersion: 1,
     sceneId,
-    questionInstanceId: 'whiteboard',
+    questionInstanceId,
     logicalWidth: 1024,
     logicalHeight: 768,
     objects: [],

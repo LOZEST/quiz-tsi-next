@@ -5,10 +5,12 @@ export function ReflexTimer({
   activationKey,
   clock,
   deadline,
+  onExceeded,
 }: {
   activationKey: string;
   clock: Clock;
   deadline: number | null;
+  onExceeded?: () => void;
 }) {
   const calculateRemaining = useCallback(
     () =>
@@ -25,6 +27,9 @@ export function ReflexTimer({
     );
     return () => clock.clearInterval(handle);
   }, [activationKey, calculateRemaining, clock]);
+  useEffect(() => {
+    if (remaining === 0 && deadline !== null) onExceeded?.();
+  }, [deadline, onExceeded, remaining]);
   return (
     <p aria-live={remaining === 0 ? 'polite' : 'off'}>
       {remaining > 0

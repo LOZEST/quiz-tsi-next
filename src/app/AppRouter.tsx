@@ -38,7 +38,11 @@ export function AppRoutes() {
         <Route
           element={
             <WhiteboardProvider>
-              <RevisionExperienceProvider>
+              <RevisionExperienceProvider
+                userId={
+                  state.status === 'authenticated' ? state.session.user.id : ''
+                }
+              >
                 <AppShell whiteboardOptions={<RevisionDrawerPanel />} />
               </RevisionExperienceProvider>
             </WhiteboardProvider>

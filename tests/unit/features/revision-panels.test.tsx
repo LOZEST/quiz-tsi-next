@@ -165,7 +165,7 @@ describe('RevisionDrawerPanel', () => {
     expect(screen.getByRole('progressbar')).not.toHaveAttribute('value');
   });
 
-  it('configures chapter tests without a start action', async () => {
+  it('configures chapter tests and guards the start action by stock', async () => {
     mode = 'chapter-test';
     const user = userEvent.setup();
     render(<RevisionDrawerPanel />);
@@ -174,6 +174,6 @@ describe('RevisionDrawerPanel', () => {
     expect(
       screen.getByText(/assez de questions validées.*40 questions/),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /Commencer/ })).toBeNull();
+    expect(screen.getByRole('button', { name: /Commencer/ })).toBeDisabled();
   });
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import {
   deriveAvailableChapters,
@@ -376,9 +376,28 @@ function Weak({
 }
 function ChapterTest() {
   const { programIndex, questionRepository } = useAppServices();
+  const experience = useRevisionExperience();
   const chapters = programIndex?.getAllChapters() ?? [];
   const [chapter, setChapter] = useState('');
   const [quantity, setQuantity] = useState<20 | 40>(20);
+  const [confirmation, setConfirmation] = useState<
+    'submitted' | 'abandoned' | null
+  >(null);
+  const confirmationTrigger = useRef<HTMLElement | null>(null);
+  const confirmationButton = useRef<HTMLButtonElement | null>(null);
+  const cancelConfirmation = () => {
+    setConfirmation(null);
+    queueMicrotask(() => confirmationTrigger.current?.focus());
+  };
+  useEffect(() => {
+    if (!confirmation) return;
+    confirmationButton.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') cancelConfirmation();
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [confirmation]);
   const available = chapter
     ? new Set(
         questionRepository
@@ -389,41 +408,172 @@ function ChapterTest() {
     : 0;
   return (
     <div>
-      <label>
-        Chapitre
-        <select
-          value={chapter}
-          onChange={(event) => setChapter(event.target.value)}
-        >
-          <option value="">Choisir un chapitre</option>
-          {chapters.map((entry) => (
-            <option key={entry.id} value={entry.id}>
-              {entry.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      <fieldset>
-        <legend>Quantité</legend>
-        {([20, 40] as const).map((value) => (
-          <label key={value}>
-            <input
-              type="radio"
-              checked={quantity === value}
-              onChange={() => setQuantity(value)}
-            />
-            {value}
+      {experience.chapterTest ? (
+        <>
+          <p>
+            Question {experience.chapterTest.currentIndex + 1} /{' '}
+            {experience.chapterTest.blueprint.questionCount}
+          </p>
+          {experience.chapterTest.status === 'active' ? (
+            <div>
+              <button
+                type="button"
+                disabled={experience.chapterTest.currentIndex === 0}
+                onClick={() =>
+                  void experience.navigateChapterTest(
+                    experience.chapterTest!.currentIndex - 1,
+                  )
+                }
+              >
+                Question précédente
+              </button>
+              <button
+                type="button"
+                disabled={
+                  experience.chapterTest.currentIndex + 1 >=
+                  experience.chapterTest.blueprint.questionCount
+                }
+                onClick={() =>
+                  void experience.navigateChapterTest(
+                    experience.chapterTest!.currentIndex + 1,
+                  )
+                }
+              >
+                Question suivante
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  confirmationTrigger.current = event.currentTarget;
+                  setConfirmation('submitted');
+                }}
+              >
+                Soumettre le test
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  confirmationTrigger.current = event.currentTarget;
+                  setConfirmation('abandoned');
+                }}
+              >
+                Abandonner le test
+              </button>
+            </div>
+          ) : (
+            <ChapterTestResults />
+          )}
+          {confirmation ? (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chapter-test-confirm-title"
+            >
+              <h3 id="chapter-test-confirm-title">
+                {confirmation === 'submitted'
+                  ? 'Soumettre le test ?'
+                  : 'Abandonner le test ?'}
+              </h3>
+              <button
+                ref={confirmationButton}
+                type="button"
+                onClick={() => {
+                  void experience.finishChapterTest(confirmation);
+                  setConfirmation(null);
+                }}
+              >
+                Confirmer
+              </button>
+              <button type="button" onClick={cancelConfirmation}>
+                Annuler
+              </button>
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <label>
+            Chapitre
+            <select
+              value={chapter}
+              onChange={(event) => setChapter(event.target.value)}
+            >
+              <option value="">Choisir un chapitre</option>
+              {chapters.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
           </label>
-        ))}
-      </fieldset>
-      {chapter ? <p>{available} question(s) compatible(s).</p> : null}
-      {chapter && available < quantity ? (
-        <p>
-          Ce chapitre ne contient pas encore assez de questions validées pour
-          préparer un test de {quantity} questions.
-        </p>
-      ) : null}
-      <p>La passation sera disponible à l’étape PR5.</p>
+          <fieldset>
+            <legend>Quantité</legend>
+            {([20, 40] as const).map((value) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  checked={quantity === value}
+                  onChange={() => setQuantity(value)}
+                />
+                {value}
+              </label>
+            ))}
+          </fieldset>
+          {chapter ? <p>{available} question(s) compatible(s).</p> : null}
+          {chapter && available < quantity ? (
+            <p>
+              Ce chapitre ne contient pas encore assez de questions validées
+              pour préparer un test de {quantity} questions.
+            </p>
+          ) : null}
+          <button
+            type="button"
+            disabled={!chapter || available < quantity}
+            onClick={() => void experience.startChapterTest(chapter, quantity)}
+          >
+            Commencer le test
+          </button>
+        </>
+      )}
     </div>
+  );
+}
+
+function ChapterTestResults() {
+  const experience = useRevisionExperience();
+  const [counts, setCounts] = useState<{
+    success: number;
+    partial: number;
+    failed: number;
+    skipped: number;
+  } | null>(null);
+  const { evaluationRepository } = useAppServices();
+  const blueprint = experience.chapterTest?.blueprint;
+  useEffect(() => {
+    if (!blueprint) return;
+    void evaluationRepository
+      .listBySession(blueprint.sessionId, blueprint.userId)
+      .then((evaluations) => {
+        const next = { success: 0, partial: 0, failed: 0, skipped: 0 };
+        evaluations.forEach((evaluation) => {
+          next[evaluation.outcome] += 1;
+        });
+        setCounts(next);
+      });
+  }, [blueprint, evaluationRepository]);
+  if (!blueprint || !counts) return <p>Chargement du résultat…</p>;
+  return (
+    <dl>
+      <dt>Questions</dt>
+      <dd>{blueprint.questionCount}</dd>
+      <dt>Réussies sans aide</dt>
+      <dd>{counts.success}</dd>
+      <dt>Réussies avec aide / dépassement</dt>
+      <dd>{counts.partial}</dd>
+      <dt>Ratées</dt>
+      <dd>{counts.failed}</dd>
+      <dt>Passées</dt>
+      <dd>{counts.skipped}</dd>
+    </dl>
   );
 }

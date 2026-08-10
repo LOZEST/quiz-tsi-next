@@ -14,12 +14,33 @@ import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import type { PreparedQuestion } from '@domain/questions/PreparedQuestion';
 import { selectFreeRevisionQuestions } from '@domain/questions/QuestionSelection';
 import type { Question } from '@domain/questions/Question';
+import {
+  createQuestionInstance,
+  type QuestionInstance,
+} from '@domain/questions/Question';
+import {
+  completeQuestionAttempt,
+  createQuestionAttempt,
+  markCorrectionViewed,
+  markHintUsed,
+  markTimeExceeded,
+  restoreQuestionAttempt,
+  toQuestionAttemptDraft,
+  type QuestionAttemptState,
+} from '@domain/evaluation/QuestionEvaluation';
 import type {
   DailyPlanState,
   FreeRevisionFilters,
   SessionMode,
   WeakPointsState,
 } from '@domain/session/Session';
+import {
+  createChapterTestBlueprint,
+  finishChapterTest,
+  moveChapterTest,
+  type ChapterTestSession,
+} from '@domain/chapter-tests/ChapterTest';
+import { instantiateQuestionVariant } from '@domain/questions/QuestionInstantiation';
 
 export const initialFreeRevisionFilters: FreeRevisionFilters = Object.freeze({
   part: { kind: 'all' as const },
@@ -44,6 +65,8 @@ export type RevisionExperienceState =
       kind: 'ready';
       prepared: PreparedQuestion;
       question: Readonly<Question>;
+      instance: QuestionInstance;
+      attempt: QuestionAttemptState;
       reflexDeadline: number | null;
     }
   | { kind: 'no-match'; message: string }
@@ -62,25 +85,45 @@ type PendingChange =
 
 interface RevisionExperienceValue {
   mode: SessionMode;
-  setMode(mode: SessionMode, trigger?: HTMLElement): void;
+  setMode: (mode: SessionMode, trigger?: HTMLElement) => void;
   state: RevisionExperienceState;
   notice: string | null;
   activeFilters: FreeRevisionFilters;
   visibleFilters: FreeRevisionFilters;
-  setVisibleFilters(filters: FreeRevisionFilters, trigger?: HTMLElement): void;
-  nextQuestion(trigger?: HTMLElement): void;
+  setVisibleFilters: (
+    filters: FreeRevisionFilters,
+    trigger?: HTMLElement,
+  ) => void;
+  nextQuestion: (trigger?: HTMLElement) => void;
+  hintOpen: boolean;
+  correctionOpen: boolean;
+  openHint: (trigger?: HTMLElement) => void;
+  closeHint: () => void;
+  openCorrection: (trigger?: HTMLElement) => void;
+  closeCorrection: () => void;
+  markReflexExceeded: () => void;
+  evaluate: (action: 'success' | 'failed' | 'skipped') => Promise<void>;
+  chapterTest: ChapterTestSession | null;
+  startChapterTest: (
+    chapterId: string,
+    questionCount: 20 | 40,
+  ) => Promise<boolean>;
+  navigateChapterTest: (index: number) => Promise<void>;
+  finishChapterTest: (status: 'submitted' | 'abandoned') => Promise<void>;
   pendingChange: boolean;
   dialogTrigger: HTMLElement | null;
-  cancelChange(): void;
-  confirmChange(): void;
+  cancelChange: () => void;
+  confirmChange: () => void;
 }
 
 const Context = createContext<RevisionExperienceValue | null>(null);
 
 export function RevisionExperienceProvider({
   children,
+  userId,
 }: {
   children: ReactNode;
+  userId: string;
 }) {
   const services = useAppServices();
   const board = useWhiteboard();
@@ -94,10 +137,86 @@ export function RevisionExperienceProvider({
     initialFreeRevisionFilters,
   );
   const [pending, setPending] = useState<PendingChange | null>(null);
+  const [hintOpen, setHintOpen] = useState(false);
+  const [correctionOpen, setCorrectionOpen] = useState(false);
+  const [chapterTest, setChapterTest] = useState<ChapterTestSession | null>(
+    null,
+  );
+  const [helpTrigger, setHelpTrigger] = useState<HTMLElement | null>(null);
   const [dialogTrigger, setDialogTrigger] = useState<HTMLElement | null>(null);
   const request = useRef(0);
   const initialLoaded = useRef(false);
   const mounted = useRef(true);
+
+  const persistAttempt = useCallback(
+    (attempt: QuestionAttemptState) => {
+      if (mode !== 'chapter-test') return;
+      void services.questionAttemptRepository
+        .save(toQuestionAttemptDraft(attempt), userId)
+        .catch(() => {
+          if (mounted.current)
+            setNotice('La tentative n’a pas pu être enregistrée.');
+        });
+    },
+    [mode, services.questionAttemptRepository, userId],
+  );
+
+  const loadChapterQuestion = useCallback(
+    async (session: ChapterTestSession, index: number) => {
+      const instance = session.blueprint.orderedQuestionInstances[index];
+      if (!instance) return;
+      const content = instantiateQuestionVariant(
+        instance.frozenQuestion,
+        instance.parameterValues,
+      );
+      if (!content.ok) return;
+      const [savedDraft, evaluations] = await Promise.all([
+        services.questionAttemptRepository.get(instance.id, userId),
+        services.evaluationRepository.listBySession(
+          session.blueprint.sessionId,
+          userId,
+        ),
+      ]);
+      const evaluation =
+        evaluations.find((entry) => entry.questionInstanceId === instance.id) ??
+        null;
+      const now = new Date(services.clock.now()).toISOString();
+      const draft =
+        savedDraft ??
+        toQuestionAttemptDraft(
+          createQuestionAttempt({
+            id: services.revisionSeedSource.nextSeed(),
+            userId,
+            instance,
+            startedAt: evaluation?.startedAt ?? now,
+          }),
+        );
+      if (!savedDraft)
+        await services.questionAttemptRepository.save(draft, userId);
+      const attempt = restoreQuestionAttempt({ draft, instance, evaluation });
+      if (!mounted.current) return;
+      setHintOpen(false);
+      setCorrectionOpen(attempt.correctionViewed);
+      setState({
+        kind: 'ready',
+        instance,
+        question: instance.frozenQuestion,
+        prepared: {
+          questionId: instance.questionId,
+          questionVersion: instance.questionVersion,
+          seed: instance.seed,
+          parameterValues: instance.parameterValues,
+          content: content.value,
+        },
+        attempt,
+        reflexDeadline:
+          instance.frozenQuestion.type === 'reflex' && !evaluation
+            ? Date.parse(attempt.startedAt) + 60_000
+            : null,
+      });
+    },
+    [services, userId],
+  );
 
   useEffect(
     () => () => {
@@ -199,7 +318,43 @@ export function RevisionExperienceProvider({
         );
         return false;
       }
+      const now = new Date(services.clock.now()).toISOString();
+      const sessionId = `free:${userId}`;
+      const ordinal =
+        current?.instance.ordinal !== undefined
+          ? current.instance.ordinal + 1
+          : 0;
+      const instanceResult = createQuestionInstance({
+        id: `${sessionId}:question:${ordinal}:${prepared.seed}`,
+        questionId: question.id,
+        questionVersion: question.version,
+        sessionId,
+        ordinal,
+        frozenQuestion: question,
+        parameterValues: prepared.parameterValues,
+        seed: prepared.seed,
+        createdAt: now,
+      });
+      if (!instanceResult.ok) {
+        showAttemptFailure(
+          {
+            kind: 'error',
+            code: 'instance-invalid',
+            message: 'La question ne peut pas être figée.',
+          },
+          'La question ne peut pas être figée.',
+        );
+        return false;
+      }
+      const attempt = createQuestionAttempt({
+        id: `${instanceResult.value.id}:attempt`,
+        userId,
+        instance: instanceResult.value,
+        startedAt: now,
+      });
       if (clearDraft) board.clearDraft();
+      setHintOpen(false);
+      setCorrectionOpen(false);
       setModeState('free');
       setActiveFilters(filters);
       setVisibleFilters(filters);
@@ -208,12 +363,14 @@ export function RevisionExperienceProvider({
         kind: 'ready',
         prepared,
         question,
+        instance: instanceResult.value,
+        attempt,
         reflexDeadline:
           question.type === 'reflex' ? services.clock.now() + 60_000 : null,
       });
       return true;
     },
-    [board, services, showAttemptFailure, state],
+    [board, services, showAttemptFailure, state, userId],
   );
 
   useEffect(() => {
@@ -236,6 +393,11 @@ export function RevisionExperienceProvider({
       }
       if (next === 'chapter-test') {
         setState({ kind: 'chapter-test' });
+        void services.chapterTestRepository.getActive(userId).then((saved) => {
+          if (!saved || !mounted.current) return;
+          setChapterTest(saved);
+          void loadChapterQuestion(saved, saved.currentIndex);
+        });
         return;
       }
       setState({ kind: 'loading' });
@@ -261,7 +423,7 @@ export function RevisionExperienceProvider({
             });
         });
     },
-    [activeFilters, attemptFree, board, services],
+    [activeFilters, attemptFree, board, loadChapterQuestion, services, userId],
   );
 
   const requestFree = useCallback(
@@ -270,12 +432,16 @@ export function RevisionExperienceProvider({
       excludeCurrent: boolean,
       trigger?: HTMLElement,
     ) => {
-      if (board.hasDraft) {
+      const activeHelp =
+        state.kind === 'ready' &&
+        state.attempt.evaluation === null &&
+        (state.attempt.hintUsed || state.attempt.correctionViewed);
+      if (board.hasDraft || activeHelp) {
         setDialogTrigger(trigger ?? null);
         setPending({ kind: 'free', filters, excludeCurrent });
       } else attemptFree(filters, excludeCurrent);
     },
-    [attemptFree, board.hasDraft],
+    [attemptFree, board.hasDraft, state],
   );
 
   const setFreeFilters = useCallback(
@@ -289,7 +455,12 @@ export function RevisionExperienceProvider({
   const setMode = useCallback(
     (next: SessionMode, trigger?: HTMLElement) => {
       if (next === mode) return;
-      if (board.hasDraft && state.kind === 'ready') {
+      if (
+        state.kind === 'ready' &&
+        (board.hasDraft ||
+          (state.attempt.evaluation === null &&
+            (state.attempt.hintUsed || state.attempt.correctionViewed)))
+      ) {
         setDialogTrigger(trigger ?? null);
         setPending({ kind: 'mode', mode: next });
         return;
@@ -326,7 +497,148 @@ export function RevisionExperienceProvider({
       activeFilters,
       visibleFilters,
       setVisibleFilters: setFreeFilters,
-      nextQuestion: (trigger) => requestFree(activeFilters, true, trigger),
+      nextQuestion: (trigger) => {
+        if (
+          state.kind === 'ready' &&
+          state.attempt.correctionViewed &&
+          !state.attempt.evaluation
+        ) {
+          setNotice(
+            'Indique ton résultat avant de passer à la question suivante.',
+          );
+          return;
+        }
+        if (mode === 'chapter-test' && chapterTest) {
+          void (async () => {
+            const now = new Date(services.clock.now()).toISOString();
+            const moved = moveChapterTest(
+              chapterTest,
+              chapterTest.currentIndex + 1,
+              now,
+            );
+            if (moved === chapterTest) return;
+            await services.chapterTestRepository.save(moved, userId);
+            setChapterTest(moved);
+            await loadChapterQuestion(moved, moved.currentIndex);
+          })();
+          return;
+        }
+        requestFree(activeFilters, true, trigger);
+      },
+      hintOpen,
+      correctionOpen,
+      openHint: (trigger) => {
+        setState((current) => {
+          if (current.kind !== 'ready') return current;
+          const attempt = markHintUsed(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        });
+        setHelpTrigger(trigger ?? null);
+        setHintOpen(true);
+      },
+      closeHint: () => {
+        setHintOpen(false);
+        queueMicrotask(() => helpTrigger?.focus());
+      },
+      openCorrection: (trigger) => {
+        setState((current) => {
+          if (current.kind !== 'ready') return current;
+          const attempt = markCorrectionViewed(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        });
+        setHintOpen(false);
+        setHelpTrigger(trigger ?? null);
+        setCorrectionOpen(true);
+      },
+      closeCorrection: () => {
+        setCorrectionOpen(false);
+        queueMicrotask(() => helpTrigger?.focus());
+      },
+      markReflexExceeded: () =>
+        setState((current) => {
+          if (current.kind !== 'ready' || current.attempt.timeExceeded)
+            return current;
+          const attempt = markTimeExceeded(current.attempt);
+          persistAttempt(attempt);
+          return { ...current, attempt };
+        }),
+      evaluate: async (action) => {
+        if (state.kind !== 'ready') return;
+        if (mode === 'chapter-test' && chapterTest?.status !== 'active') return;
+        const completed = completeQuestionAttempt(state.attempt, {
+          id: services.revisionSeedSource.nextSeed(),
+          action,
+          completedAt: new Date(services.clock.now()).toISOString(),
+        });
+        if (!completed.evaluation || completed === state.attempt) return;
+        await services.evaluationRepository.append(
+          completed.evaluation,
+          userId,
+        );
+        await services.questionAttemptRepository.save(
+          toQuestionAttemptDraft(completed),
+          userId,
+        );
+        setState((current) =>
+          current.kind === 'ready' && current.instance.id === state.instance.id
+            ? { ...current, attempt: completed }
+            : current,
+        );
+      },
+      chapterTest,
+      startChapterTest: async (chapterId, questionCount) => {
+        const now = new Date(services.clock.now()).toISOString();
+        const sessionId = services.revisionSeedSource.nextSeed();
+        const blueprint = createChapterTestBlueprint({
+          id: services.revisionSeedSource.nextSeed(),
+          userId,
+          sessionId,
+          chapterId,
+          questionCount,
+          seed: services.revisionSeedSource.nextSeed(),
+          createdAt: now,
+          repository: services.questionRepository,
+        });
+        if (!blueprint) return false;
+        const session: ChapterTestSession = {
+          blueprint,
+          currentIndex: 0,
+          status: 'active',
+          updatedAt: now,
+        };
+        await services.chapterTestRepository.save(session, userId);
+        setChapterTest(session);
+        const instance = blueprint.orderedQuestionInstances[0];
+        if (!instance) return false;
+        const content = instantiateQuestionVariant(
+          instance.frozenQuestion,
+          instance.parameterValues,
+        );
+        if (!content.ok) return false;
+        await loadChapterQuestion(session, 0);
+        return true;
+      },
+      navigateChapterTest: async (index) => {
+        if (!chapterTest) return;
+        const now = new Date(services.clock.now()).toISOString();
+        const moved = moveChapterTest(chapterTest, index, now);
+        if (moved === chapterTest) return;
+        await services.chapterTestRepository.save(moved, userId);
+        setChapterTest(moved);
+        await loadChapterQuestion(moved, index);
+      },
+      finishChapterTest: async (status) => {
+        if (!chapterTest) return;
+        const finished = finishChapterTest(
+          chapterTest,
+          status,
+          new Date(services.clock.now()).toISOString(),
+        );
+        await services.chapterTestRepository.save(finished, userId);
+        setChapterTest(finished);
+      },
       pendingChange: pending !== null,
       dialogTrigger,
       cancelChange,
@@ -337,14 +649,22 @@ export function RevisionExperienceProvider({
       cancelChange,
       confirmChange,
       dialogTrigger,
+      correctionOpen,
+      chapterTest,
+      helpTrigger,
+      hintOpen,
       mode,
       notice,
+      loadChapterQuestion,
       pending,
+      persistAttempt,
       requestFree,
       setMode,
       setFreeFilters,
       state,
+      services,
       visibleFilters,
+      userId,
     ],
   );
   return <Context.Provider value={value}>{children}</Context.Provider>;

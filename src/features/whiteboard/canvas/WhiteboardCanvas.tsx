@@ -8,7 +8,13 @@ import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import { usePointerInput } from '../hooks/usePointerInput';
 import styles from '../components/Whiteboard.module.css';
 
-export function WhiteboardCanvas() {
+export function WhiteboardCanvas({
+  sceneId = 'main',
+  questionInstanceId = 'whiteboard',
+}: {
+  sceneId?: string;
+  questionInstanceId?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [controller, setController] = useState<CanvasController | null>(null);
   const [storageError, setStorageError] = useState(false);
@@ -25,14 +31,14 @@ export function WhiteboardCanvas() {
     let disposed = false;
     let activeController: CanvasController | null = null;
     void (
-      workspaceRepository.getWhiteboardScene?.('main', generation, user.id) ??
+      workspaceRepository.getWhiteboardScene?.(sceneId, generation, user.id) ??
       Promise.resolve(null)
     )
       .then((stored) => {
         if (disposed) return;
         const scene = stored
-          ? restoreWhiteboardScene(stored, 'main').scene
-          : createEmptyScene('main');
+          ? restoreWhiteboardScene(stored, sceneId).scene
+          : createEmptyScene(sceneId, questionInstanceId);
         activeController = new CanvasController(canvas, scene, (next) => {
           const persistence = workspaceRepository.saveWhiteboardScene?.(
             next,
@@ -43,12 +49,17 @@ export function WhiteboardCanvas() {
           bindDraft({
             hasDraft: () => next.objects.length > 0,
             clear: () =>
-              activeController?.replaceScene(createEmptyScene('main')),
+              activeController?.replaceScene(
+                createEmptyScene(sceneId, questionInstanceId),
+              ),
           });
         });
         bindDraft({
           hasDraft: () => activeController?.getScene().objects.length !== 0,
-          clear: () => activeController?.replaceScene(createEmptyScene('main')),
+          clear: () =>
+            activeController?.replaceScene(
+              createEmptyScene(sceneId, questionInstanceId),
+            ),
         });
         setController(activeController);
       })
@@ -59,7 +70,7 @@ export function WhiteboardCanvas() {
       bindDraft(null);
       setController(null);
     };
-  }, [bindDraft, state, workspaceRepository]);
+  }, [bindDraft, questionInstanceId, sceneId, state, workspaceRepository]);
 
   usePointerInput(canvasRef, controller);
 

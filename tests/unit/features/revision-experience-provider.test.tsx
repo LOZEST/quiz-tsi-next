@@ -226,7 +226,7 @@ function Harness({
     <AppServicesProvider services={services}>
       <WhiteboardProvider>
         <DraftBinding draft={draft} clear={clear} />
-        <RevisionExperienceProvider>
+        <RevisionExperienceProvider userId="test-user">
           <Probe />
           <QuestionChangeDialog />
         </RevisionExperienceProvider>
@@ -286,23 +286,21 @@ describe('RevisionExperienceProvider integration', () => {
     expect(screen.getByTestId('question')).toHaveTextContent('none');
   });
 
-  it('uses the real production composition as no-bank without controlled fixtures', async () => {
+  it('uses the real NUM production composition without controlled fixtures', async () => {
     render(
       <AppServicesProvider>
         <WhiteboardProvider>
-          <RevisionExperienceProvider>
+          <RevisionExperienceProvider userId="test-user">
             <Probe />
           </RevisionExperienceProvider>
         </WhiteboardProvider>
       </AppServicesProvider>,
     );
     await waitFor(() =>
-      expect(screen.getByTestId('kind')).toHaveTextContent('no-bank'),
+      expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
     );
-    expect(screen.getByTestId('question')).toHaveTextContent('none');
-    expect(screen.getByTestId('state-message')).toHaveTextContent(
-      'Aucune banque de questions validée n’est disponible pour le moment.',
-    );
+    expect(screen.getByTestId('question')).toHaveTextContent(/^NUM-/);
+    expect(screen.getByTestId('state-message')).toBeEmptyDOMElement();
   });
   it('loads an initial static question with active filters', async () => {
     render(<Harness services={baseServices([question('q1')])} />);
