@@ -14,7 +14,7 @@ vi.mock('@features/whiteboard/canvas/WhiteboardCanvas', () => ({
 }));
 
 describe('WhiteboardToolbar', () => {
-  it('exposes only the handwritten PR3 tools and changes selection', async () => {
+  it('exposes the PR6 shape picker without a main grid button', async () => {
     const user = userEvent.setup();
     render(
       <WhiteboardProvider>
@@ -23,16 +23,21 @@ describe('WhiteboardToolbar', () => {
     );
     const pen = screen.getByRole('button', { name: 'Stylo' });
     const eraser = screen.getByRole('button', { name: 'Gomme' });
-    const grid = screen.getByRole('button', { name: 'Grille' });
+    const shapes = screen.getByRole('button', { name: 'Formes' });
     expect(pen).toHaveAttribute('aria-pressed', 'true');
-    expect(grid).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', { name: 'Grille' })).toBeNull();
     await user.click(eraser);
     expect(eraser).toHaveAttribute('aria-pressed', 'true');
-    await user.click(grid);
-    expect(grid).toHaveAttribute('aria-pressed', 'false');
+    await user.click(shapes);
+    expect(screen.getByRole('menu')).toBeVisible();
     expect(
-      screen.queryByRole('button', { name: /forme|rectangle|cercle/i }),
-    ).toBeNull();
+      screen.getByRole('menuitemradio', { name: 'Sélection' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('menuitemradio', { name: 'Cercle trigonométrique' }),
+    ).toBeVisible();
+    await user.click(screen.getByRole('menuitemradio', { name: 'Rectangle' }));
+    expect(shapes).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     await user.click(screen.getByRole('button', { name: 'Rétablir' }));
   });

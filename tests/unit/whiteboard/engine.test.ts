@@ -300,7 +300,8 @@ describe('CanvasController', () => {
     controller.pointerMove(pointer(1, 'mouse', { clientX: 40 }));
     controller.pointerUp(pointer(1, 'mouse', { clientX: 50 }));
     expect(commits.at(-1)?.objects).toHaveLength(1);
-    expect(commits.at(-1)?.objects[0]?.points).toHaveLength(3);
+    const drawn = commits.at(-1)?.objects[0];
+    expect(drawn?.kind === 'stroke' ? drawn.points : []).toHaveLength(3);
     controller.undo();
     expect(commits.at(-1)?.objects).toEqual([]);
     controller.redo();
@@ -318,6 +319,40 @@ describe('CanvasController', () => {
     controller.pointerDown(pointer(2, 'touch'));
     expect(pointerCapture.setPointerCapture).not.toHaveBeenCalled();
     expect(commit).not.toHaveBeenCalled();
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('places, moves and atomically undoes/redoes a shape without altering strokes', () => {
+    const commits: ReturnType<typeof createEmptyScene>[] = [];
+    const { controller } = prepareController((scene) => commits.push(scene));
+    controller.selectTool('shape', 'rectangle');
+    controller.pointerDown(
+      pointer(40, 'mouse', { clientX: 100, clientY: 100 }),
+    );
+    controller.pointerMove(
+      pointer(40, 'mouse', { clientX: 220, clientY: 180 }),
+    );
+    controller.pointerUp(pointer(40, 'mouse', { clientX: 220, clientY: 180 }));
+    const placed = controller.getScene().objects[0];
+    expect(placed?.kind).toBe('shape');
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([]);
+    controller.redo();
+    expect(controller.getScene().objects).toHaveLength(1);
+    controller.selectTool('select');
+    controller.pointerDown(
+      pointer(41, 'mouse', { clientX: 150, clientY: 100 }),
+    );
+    controller.pointerMove(
+      pointer(41, 'mouse', { clientX: 190, clientY: 130 }),
+    );
+    controller.pointerUp(pointer(41, 'mouse', { clientX: 190, clientY: 130 }));
+    const moved = controller.getScene().objects[0];
+    expect(moved?.kind === 'shape' ? moved.geometry.x : 0).toBe(140);
+    controller.undo();
+    const restored = controller.getScene().objects[0];
+    expect(restored?.kind === 'shape' ? restored.geometry.x : 0).toBe(100);
     controller.destroy();
     vi.unstubAllGlobals();
   });
@@ -341,7 +376,8 @@ describe('CanvasController', () => {
     controller.pointerMove(pointer(10, 'pen', { clientX: 40 }));
     controller.pointerUp(pointer(10, 'pen', { clientX: 50 }));
     expect(commits).toHaveLength(1);
-    expect(commits[0]?.objects[0]?.points).toHaveLength(3);
+    const isolated = commits[0]?.objects[0];
+    expect(isolated?.kind === 'stroke' ? isolated.points : []).toHaveLength(3);
     expect(pointerCapture.releasePointerCapture).toHaveBeenCalledWith(10);
     controller.destroy();
     vi.unstubAllGlobals();
@@ -358,9 +394,10 @@ describe('CanvasController', () => {
       }),
     );
     controller.pointerUp(pointer(5, 'pen', { clientX: 60 }));
-    expect(commits[0]?.objects[0]?.points.map(({ x }) => x)).toEqual([
-      20, 40, 60,
-    ]);
+    const coalesced = commits[0]?.objects[0];
+    expect(
+      coalesced?.kind === 'stroke' ? coalesced.points.map(({ x }) => x) : [],
+    ).toEqual([20, 40, 60]);
     controller.destroy();
     vi.unstubAllGlobals();
   });
@@ -426,7 +463,7 @@ describe('scene restoration', () => {
     };
     const first = restoreWhiteboardScene(source);
     const second = restoreWhiteboardScene(first.scene);
-    expect(first.scene.schemaVersion).toBe(1);
+    expect(first.scene.schemaVersion).toBe(2);
     expect(first.scene.objects).toEqual([valid]);
     expect(first.quarantine).toHaveLength(1);
     expect(second.scene).toEqual(first.scene);

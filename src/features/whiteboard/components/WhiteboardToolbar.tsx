@@ -1,8 +1,38 @@
 import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import styles from './Whiteboard.module.css';
+import { useEffect, useRef, useState } from 'react';
+import {
+  WHITEBOARD_SHAPE_KINDS,
+  type WhiteboardShapeKind,
+} from '@domain/whiteboard/WhiteboardShape';
+
+const labels: Record<WhiteboardShapeKind, string> = {
+  line: 'Ligne',
+  arrow: 'Flèche',
+  rectangle: 'Rectangle',
+  square: 'Carré',
+  circle: 'Cercle',
+  triangle: 'Triangle',
+  axes: 'Axes',
+  'coordinate-system': 'Repère',
+  'trigonometric-circle': 'Cercle trigonométrique',
+};
 
 export function WhiteboardToolbar() {
   const board = useWhiteboard();
+  const [open, setOpen] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        trigger.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [open]);
   return (
     <div
       className={styles.toolbar}
@@ -38,15 +68,58 @@ export function WhiteboardToolbar() {
           </svg>
         </button>
         <button
+          ref={trigger}
           type="button"
-          aria-label="Grille"
-          aria-pressed={board.gridEnabled}
-          onClick={() => board.setGridEnabled(!board.gridEnabled)}
+          aria-label="Formes"
+          aria-expanded={open}
+          aria-haspopup="menu"
+          aria-pressed={
+            board.activeTool === 'shape' || board.activeTool === 'select'
+          }
+          onClick={() => setOpen((value) => !value)}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M4 4h16v16H4zM4 10h16M10 4v16" />
+            <path d="M4 18 10 7l4 11H4ZM15 5h5v5h-5z" />
           </svg>
         </button>
+        {open ? (
+          <div
+            className={styles.shapePicker}
+            role="menu"
+            aria-label="Choisir une forme"
+          >
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={board.activeTool === 'select'}
+              onClick={() => {
+                board.setActiveTool('select');
+                setOpen(false);
+                trigger.current?.focus();
+              }}
+            >
+              Sélection
+            </button>
+            {WHITEBOARD_SHAPE_KINDS.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                role="menuitemradio"
+                aria-checked={
+                  board.activeTool === 'shape' && board.shapeKind === kind
+                }
+                onClick={() => {
+                  board.setShapeKind(kind);
+                  board.setActiveTool('shape');
+                  setOpen(false);
+                  trigger.current?.focus();
+                }}
+              >
+                {labels[kind]}
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
       <div
         className={styles.historyControls}

@@ -55,7 +55,16 @@ function WhiteboardDrawerSettings() {
           Gaucher
         </label>
       </fieldset>
-      <p>Outil actif : {settings.activeTool === 'pen' ? 'Stylo' : 'Gomme'}</p>
+      <p>
+        Outil actif :{' '}
+        {settings.activeTool === 'pen'
+          ? 'Stylo'
+          : settings.activeTool === 'eraser'
+            ? 'Gomme'
+            : settings.activeTool === 'select'
+              ? 'Sélection'
+              : 'Formes'}
+      </p>
     </div>
   );
 }

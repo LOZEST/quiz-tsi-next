@@ -4,6 +4,7 @@ import type {
 } from '@domain/whiteboard/WhiteboardScene';
 import type { PointerInput } from '../model/Point';
 import type { Tool, ToolResult } from './Tool';
+import { hitTestShape } from '@domain/whiteboard/WhiteboardShape';
 
 function segmentDistanceSquared(
   px: number,
@@ -31,6 +32,7 @@ export function objectCollides(
   y: number,
   radius = 12,
 ): boolean {
+  if (object.kind === 'shape') return hitTestShape(object, { x, y }, radius);
   if (object.points.length === 1) {
     return (
       segmentDistanceSquared(
