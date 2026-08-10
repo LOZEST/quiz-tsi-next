@@ -30,6 +30,9 @@ test('shows a centered writable canvas and accessible controls', async ({
   expect(await canvas.boundingBox()).toEqual(canvasBeforeMenu);
   await openPencilSettings(page);
   await expect(page.getByLabel('Épaisseur du stylo')).toBeVisible();
+  await expect(page.getByLabel('Afficher la grille')).toBeChecked();
+  await page.getByLabel('Afficher la grille').uncheck();
+  await expect(page.getByLabel('Afficher la grille')).not.toBeChecked();
   await page.getByLabel('Gaucher').check();
   await expect(page.getByLabel('Gaucher')).toBeChecked();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
@@ -57,10 +60,8 @@ test('shows a centered writable canvas and accessible controls', async ({
     'true',
   );
   await page.getByRole('button', { name: 'Stylo' }).click();
-  await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
 });
 
 test('draws with pointer events and restores the local scene after reload', async ({
@@ -137,10 +138,56 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Grille' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
+});
+
+test('places and manipulates PR6 shapes with atomic history', async ({
+  page,
+}) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  await page.getByRole('button', { name: 'Formes' }).click();
+  await page.getByRole('menuitemradio', { name: 'Rectangle' }).click();
+  await page.mouse.move(box!.x + 220, box!.y + 220);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 380, box!.y + 320, { steps: 4 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await page.getByRole('button', { name: 'Rétablir' }).click();
+  await page.getByRole('button', { name: 'Formes' }).click();
+  await page.getByRole('menuitemradio', { name: 'Sélection' }).click();
+  await page.mouse.move(box!.x + 300, box!.y + 220);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 340, box!.y + 250, { steps: 3 });
+  await page.mouse.up();
+  await expect(canvas).toBeVisible();
+});
+
+test('opens the local progress summary and voluntary disclosure', async ({
+  page,
+}) => {
+  await login(page);
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await page.getByRole('link', { name: 'Mon parcours' }).click();
+  await expect(page).toHaveURL(/\/progress$/);
+  await expect(page.getByRole('heading', { name: 'Synthèse' })).toBeVisible();
+  await expect(page.getByTestId('primary-indicator')).toHaveCount(1);
+  await expect(page.getByTestId('notion-details')).toHaveCount(0);
+  await page
+    .getByRole('button', { name: /Nombres/ })
+    .first()
+    .click();
+  const notion = page
+    .getByRole('button', { name: /Nombres et arithmétique/ })
+    .first();
+  if (await notion.isVisible()) {
+    await notion.click();
+    await expect(page.getByTestId('notion-details')).toBeVisible();
+  }
+  await page.goto('whiteboard');
+  await expect(page.getByTestId('whiteboard-canvas')).toBeVisible();
 });
 
 async function openRevisionOptions(page: Page) {
