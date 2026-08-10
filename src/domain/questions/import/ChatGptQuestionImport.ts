@@ -5,11 +5,11 @@ import {
   type ParameterizedQuestionSpec,
   type QuestionType,
   type Difficulty,
-} from '../Question';
+} from '../Question.ts';
 import {
   CHATGPT_IMPORT_FORBIDDEN_FIELDS,
   CHATGPT_IMPORT_LIMITS,
-} from './ChatGptImportPolicy';
+} from './ChatGptImportPolicy.ts';
 
 export type AnalysisCoverage = 'text-and-visuals' | 'text-only' | 'incomplete';
 export type ImportClassification =

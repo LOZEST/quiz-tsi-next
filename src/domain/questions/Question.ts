@@ -1,11 +1,11 @@
-import { validateMathSource, type MathSource } from '../math/MathSource';
+import { validateMathSource, type MathSource } from '../math/MathSource.ts';
 import {
   invalid,
   issue,
   valid,
   type ValidationIssue,
   type ValidationResult,
-} from '../validation/ValidationResult';
+} from '../validation/ValidationResult.ts';
 
 export const QUESTION_TYPES = [
   'formula',
