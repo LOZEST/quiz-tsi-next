@@ -6,7 +6,7 @@ import type {
 export interface WhiteboardState {
   scene: WhiteboardScene;
   gridEnabled: boolean;
-  activeTool: 'pen' | 'eraser';
+  activeTool: 'pen' | 'eraser' | 'select' | 'shape';
   penWidth: number;
   handedness: 'left' | 'right';
 }
@@ -16,7 +16,7 @@ export function createEmptyScene(
   questionInstanceId = 'whiteboard',
 ): WhiteboardScene {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sceneId,
     questionInstanceId,
     logicalWidth: 1024,
