@@ -1,5 +1,9 @@
 import { openDB, type DBSchema } from 'idb';
-import type { Question } from '@domain/questions/Question';
+import {
+  questionClassification,
+  type Question,
+} from '@domain/questions/Question';
+import { latestQuestionVersions } from '@domain/questions/LatestQuestionVersions';
 import { assertPersonalTaxonomyOwner } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 import type {
   PersonalChapter,
@@ -10,6 +14,7 @@ import type {
   QuestionMutationKind,
   QuestionOutboxOperation,
   QuestionSyncConflict,
+  QuestionWorkspaceOutboxOperation,
   QuestionWorkspaceRepository,
 } from '@domain/repositories/QuestionWorkspaceRepository';
 
@@ -36,7 +41,7 @@ interface OwnedNotion {
 interface OwnedOperation {
   key: string;
   userId: string;
-  value: QuestionOutboxOperation;
+  value: QuestionWorkspaceOutboxOperation;
 }
 interface OwnedConflict {
   key: string;
@@ -98,6 +103,10 @@ const database = () =>
 const key = (userId: string, id: string) => `${userId}:${id}`;
 const owned = (question: Readonly<Question>, userId: string) =>
   question.source === 'static' || question.ownerId === userId;
+const accessible = (question: Readonly<Question>, userId: string) =>
+  question.source === 'static' ||
+  question.source === 'shared' ||
+  question.ownerId === userId;
 
 export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRepository {
   async load(userId: string) {
@@ -113,7 +122,9 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
         db.getAllFromIndex('conflicts', 'by-user', userId),
       ]);
     return {
-      questions: questions.map((row) => structuredClone(row.question)),
+      questions: latestQuestionVersions(
+        questions.map((row) => structuredClone(row.question)),
+      ),
       courses: courses.map((row) => structuredClone(row.value)),
       chapters: chapters.map((row) => structuredClone(row.value)),
       notions: notions.map((row) => structuredClone(row.value)),
@@ -138,6 +149,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     const operation: QuestionOutboxOperation = {
       operationId,
       userId,
+      entity: 'question',
       entityId: question.id,
       kind,
       baseVersion: kind === 'create' ? null : Math.max(1, question.version - 1),
@@ -155,35 +167,94 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     await transaction.done;
   }
 
-  async savePersonalCourse(userId: string, value: PersonalCourse) {
-    assertPersonalTaxonomyOwner(value, userId);
-    await (
-      await database()
-    ).put('courses', {
-      key: key(userId, value.id),
+  async saveQuestionDraftWithPersonalTaxonomy(
+    userId: string,
+    question: Readonly<Question>,
+    taxonomy: {
+      course: PersonalCourse | null;
+      chapter: PersonalChapter | null;
+      notion: PersonalNotion | null;
+    },
+    operationIds: {
+      question: string;
+      course: string | null;
+      chapter: string | null;
+      notion: string | null;
+    },
+  ) {
+    if (!owned(question, userId) || question.source === 'static')
+      throw new Error('Compte incohérent.');
+    for (const value of [taxonomy.course, taxonomy.chapter, taxonomy.notion]) {
+      if (value) assertPersonalTaxonomyOwner(value, userId);
+    }
+    const classification = questionClassification(question);
+    if (!classification || classification.kind !== 'personal')
+      throw new Error('Taxonomie personnelle requise.');
+    if (
+      taxonomy.chapter &&
+      taxonomy.chapter.courseId !== classification.courseId
+    )
+      throw new Error('Taxonomie incohérente.');
+    if (
+      taxonomy.notion &&
+      (taxonomy.notion.courseId !== classification.courseId ||
+        taxonomy.notion.chapterId !== classification.chapterId)
+    )
+      throw new Error('Taxonomie incohérente.');
+    const db = await database();
+    const transaction = db.transaction(
+      ['courses', 'chapters', 'notions', 'questions', 'outbox'],
+      'readwrite',
+    );
+    const createdAt = new Date().toISOString();
+    const taxonomyEntries = [
+      ['course', 'courses', taxonomy.course, operationIds.course],
+      ['chapter', 'chapters', taxonomy.chapter, operationIds.chapter],
+      ['notion', 'notions', taxonomy.notion, operationIds.notion],
+    ] as const;
+    for (const [entity, storeName, value, operationId] of taxonomyEntries) {
+      if (!value || !operationId) continue;
+      await transaction.objectStore(storeName).put({
+        key: key(userId, value.id),
+        userId,
+        value: structuredClone(value),
+      });
+      const operation = {
+        operationId,
+        userId,
+        entity,
+        entityId: value.id,
+        kind: 'create' as const,
+        payload: structuredClone(value),
+        createdAt,
+      } as QuestionWorkspaceOutboxOperation;
+      await transaction.objectStore('outbox').put({
+        key: key(userId, operationId),
+        userId,
+        value: operation,
+      });
+    }
+    const questionOperation: QuestionOutboxOperation = {
+      operationId: operationIds.question,
       userId,
-      value: structuredClone(value),
-    });
-  }
-  async savePersonalChapter(userId: string, value: PersonalChapter) {
-    assertPersonalTaxonomyOwner(value, userId);
-    await (
-      await database()
-    ).put('chapters', {
-      key: key(userId, value.id),
+      entity: 'question',
+      entityId: question.id,
+      kind: question.version === 1 ? 'create' : 'update',
+      baseVersion: question.version === 1 ? null : question.version - 1,
+      payload: structuredClone(question),
+      createdAt,
+    };
+    await transaction.objectStore('questions').put({
+      key: key(userId, `${question.id}:${question.version}`),
       userId,
-      value: structuredClone(value),
+      question: structuredClone(question),
     });
-  }
-  async savePersonalNotion(userId: string, value: PersonalNotion) {
-    assertPersonalTaxonomyOwner(value, userId);
-    await (
-      await database()
-    ).put('notions', {
-      key: key(userId, value.id),
+    await transaction.objectStore('outbox').put({
+      key: key(userId, operationIds.question),
       userId,
-      value: structuredClone(value),
+      value: questionOperation,
     });
+    await transaction.done;
   }
 
   async resolveConflict(
@@ -226,6 +297,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
       const operation: QuestionOutboxOperation = {
         operationId: nextOperationId,
         userId,
+        entity: 'question',
         entityId: resolved.id,
         kind: choice === 'duplicate' ? 'create' : 'update',
         baseVersion: choice === 'duplicate' ? null : remote.version,
@@ -251,15 +323,37 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
   async completeOperation(userId: string, operationId: string) {
     await (await database()).delete('outbox', key(userId, operationId));
   }
-  async applyRemoteQuestions(
+  async applyRemoteWorkspace(
     userId: string,
-    questions: readonly Readonly<Question>[],
+    changes: {
+      questions: readonly Readonly<Question>[];
+      courses: readonly PersonalCourse[];
+      chapters: readonly PersonalChapter[];
+      notions: readonly PersonalNotion[];
+    },
   ) {
     const db = await database();
-    const transaction = db.transaction('questions', 'readwrite');
-    for (const question of questions) {
-      if (!owned(question, userId)) throw new Error('Compte incohérent.');
-      await transaction.store.put({
+    const transaction = db.transaction(
+      ['courses', 'chapters', 'notions', 'questions'],
+      'readwrite',
+    );
+    for (const [storeName, values] of [
+      ['courses', changes.courses],
+      ['chapters', changes.chapters],
+      ['notions', changes.notions],
+    ] as const) {
+      for (const value of values) {
+        assertPersonalTaxonomyOwner(value, userId);
+        await transaction.objectStore(storeName).put({
+          key: key(userId, value.id),
+          userId,
+          value: structuredClone(value),
+        });
+      }
+    }
+    for (const question of changes.questions) {
+      if (!accessible(question, userId)) throw new Error('Compte incohérent.');
+      await transaction.objectStore('questions').put({
         key: key(userId, `${question.id}:${question.version}`),
         userId,
         question: structuredClone(question),
@@ -269,12 +363,20 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
   }
   async recordConflict(userId: string, conflict: QuestionSyncConflict) {
     if (conflict.userId !== userId) throw new Error('Compte incohérent.');
-    await (
-      await database()
-    ).put('conflicts', {
+    const db = await database();
+    const transaction = db.transaction('conflicts', 'readwrite');
+    const existing = await transaction.store.index('by-user').getAll(userId);
+    if (
+      existing.some((row) => row.value.operationId === conflict.operationId)
+    ) {
+      await transaction.done;
+      return;
+    }
+    await transaction.store.put({
       key: key(userId, conflict.id),
       userId,
       value: structuredClone(conflict),
     });
+    await transaction.done;
   }
 }

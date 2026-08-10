@@ -1,8 +1,9 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
+import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 
 const question = (overrides: Partial<Question> = {}): Question => ({
   id: 'private-1',
@@ -46,22 +47,47 @@ const saveQuestion = vi.fn((_userId, next: Question) => {
   return Promise.resolve();
 });
 const resolveConflict = vi.fn(() => Promise.resolve());
+const saveQuestionDraftWithPersonalTaxonomy = vi.fn(
+  (_userId, next: Question, taxonomy: PersonalTaxonomyDraft) => {
+    snapshot = {
+      ...snapshot,
+      questions: [...snapshot.questions, next],
+      courses: taxonomy.course
+        ? [...snapshot.courses, taxonomy.course]
+        : snapshot.courses,
+      chapters: taxonomy.chapter
+        ? [...snapshot.chapters, taxonomy.chapter]
+        : snapshot.chapters,
+      notions: taxonomy.notion
+        ? [...snapshot.notions, taxonomy.notion]
+        : snapshot.notions,
+      pendingOperationCount: snapshot.pendingOperationCount + 1,
+    };
+    return Promise.resolve();
+  },
+);
 const listOutbox = vi.fn(() => Promise.resolve([]));
 const questionWorkspaceRepository = {
   load,
   saveQuestion,
+  saveQuestionDraftWithPersonalTaxonomy,
   resolveConflict,
   listOutbox,
   completeOperation: vi.fn(() => Promise.resolve()),
-  applyRemoteQuestion: vi.fn(() => Promise.resolve()),
+  applyRemoteWorkspace: vi.fn(() => Promise.resolve()),
   recordConflict: vi.fn(() => Promise.resolve()),
-  savePersonalCourse: vi.fn(() => Promise.resolve()),
-  savePersonalChapter: vi.fn(() => Promise.resolve()),
-  savePersonalNotion: vi.fn(() => Promise.resolve()),
 };
 const questionRemoteGateway = {
   push: vi.fn(() => Promise.resolve({ kind: 'accepted' as const })),
-  pullRecent: vi.fn(() => Promise.resolve([])),
+  pullRecent: vi.fn(() =>
+    Promise.resolve({
+      questions: [],
+      courses: [],
+      chapters: [],
+      notions: [],
+      rejectedRows: [],
+    }),
+  ),
 };
 
 vi.mock('@app/providers/AuthProvider', () => ({
@@ -146,9 +172,23 @@ describe('QuestionsPage', () => {
       'personal',
     );
     await user.type(screen.getByLabelText('Nouveau cours'), 'Mon cours');
-    await user.type(screen.getByLabelText('Texte'), 'Une nouvelle question');
-    await user.click(screen.getByRole('button', { name: '+ Formule' }));
-    const formula = screen.getByRole('textbox', { name: /Formule en ligne/ });
+    await user.type(
+      screen.getByLabelText('Nouveau chapitre facultatif'),
+      'Chapitre 1',
+    );
+    await user.type(
+      screen.getByLabelText('Nouvelle notion facultative'),
+      'Notion 1',
+    );
+    const prompt = screen.getByRole('group', { name: 'Énoncé' });
+    await user.type(
+      within(prompt).getByLabelText('Texte'),
+      'Une nouvelle question',
+    );
+    await user.click(within(prompt).getByRole('button', { name: '+ Formule' }));
+    const formula = within(prompt).getByRole('textbox', {
+      name: /Formule en ligne/,
+    });
     await user.clear(formula);
     await user.type(formula, 'x+');
     expect(screen.queryByText('Formule valide')).not.toBeInTheDocument();
@@ -162,11 +202,24 @@ describe('QuestionsPage', () => {
     await user.type(formula, '@n^2');
     await user.click(screen.getByRole('button', { name: 'Raccourcis' }));
     await user.click(
-      screen.getByRole('button', { name: '+ Formule affichée' }),
+      within(prompt).getByRole('button', { name: '+ Formule affichée' }),
     );
-    await user.click(screen.getByRole('button', { name: '+ Saut de ligne' }));
-    await user.type(screen.getByLabelText('Indice'), 'Un indice');
-    await user.type(screen.getByLabelText('Correction'), 'Une correction');
+    await user.click(
+      within(prompt).getByRole('button', { name: '+ Saut de ligne' }),
+    );
+    const hint = screen.getByRole('group', { name: 'Indice' });
+    await user.click(within(hint).getByRole('button', { name: '+ Texte' }));
+    await user.type(within(hint).getByLabelText('Texte'), 'Un indice');
+    const correction = screen.getByRole('group', {
+      name: 'Contenu de l’étape 1',
+    });
+    await user.click(
+      within(correction).getByRole('button', { name: '+ Texte' }),
+    );
+    await user.type(
+      within(correction).getByLabelText('Texte'),
+      'Une correction',
+    );
     await user.type(screen.getByLabelText('Nom'), 'n!');
     await user.type(screen.getByLabelText('Libellé'), 'Entier n');
     await user.selectOptions(screen.getByLabelText('Domaine'), 'choice');
@@ -189,6 +242,7 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Tester les variantes' }),
     );
+    expect(saveQuestionDraftWithPersonalTaxonomy).not.toHaveBeenCalled();
     expect(
       await screen.findByRole('list', { name: 'Variantes générées' }),
     ).toBeInTheDocument();
@@ -203,7 +257,14 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
     );
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(saveQuestionDraftWithPersonalTaxonomy).toHaveBeenCalledTimes(1),
+    );
+    const savedTaxonomy =
+      saveQuestionDraftWithPersonalTaxonomy.mock.calls[0]?.[2];
+    expect(savedTaxonomy?.course?.title).toBe('Mon cours');
+    expect(savedTaxonomy?.chapter?.title).toBe('Chapitre 1');
+    expect(savedTaxonomy?.notion?.title).toBe('Notion 1');
   });
 
   it('affiche les erreurs de stockage et de synchronisation et réagit au hors-ligne', async () => {
@@ -219,6 +280,88 @@ describe('QuestionsPage', () => {
     await waitFor(() =>
       expect(screen.queryByText(/Hors connexion/)).toBeNull(),
     );
+  });
+
+  it('préserve indice structuré, étapes de correction, type et tags à l’édition', async () => {
+    const structured = question({
+      hint: [
+        { kind: 'text', value: 'Utilise ' },
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x^2' } },
+      ],
+      correction: [
+        {
+          id: 'step-a',
+          title: 'Calcul',
+          content: [
+            { kind: 'text', value: 'On obtient' },
+            { kind: 'display-math', math: { syntaxVersion: 1, source: 'x=2' } },
+          ],
+        },
+        {
+          id: 'step-b',
+          title: null,
+          content: [{ kind: 'text', value: 'Conclusion' }],
+        },
+      ],
+      tags: ['algèbre', 'carré'],
+    });
+    snapshot = { ...snapshot, questions: [structured] };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      (await screen.findAllByRole('button', { name: /Calculer la somme/ }))[0]!,
+    );
+    await user.click(screen.getByRole('button', { name: 'Modifier' }));
+    const editor = screen.getByRole('dialog', { name: 'Modifier la question' });
+    expect(
+      within(editor).getByRole('group', { name: 'Indice' }),
+    ).toHaveTextContent('Formule en ligne');
+    expect(
+      within(editor).getByRole('group', { name: 'Contenu de l’étape 1' }),
+    ).toHaveTextContent('Formule affichée');
+    await user.selectOptions(within(editor).getByLabelText('Type'), 'reflex');
+    expect(
+      within(editor).queryByLabelText('Difficulté'),
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.hint).toEqual(structured.hint);
+    expect(saved.correction).toEqual(structured.correction);
+    expect(saved.tags).toEqual(['algèbre', 'carré']);
+    expect(saved).toMatchObject({ type: 'reflex', difficulty: null });
+  });
+
+  it('tester plusieurs fois puis annuler ne persiste aucune donnée', async () => {
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('button', { name: 'Créer une question' }),
+    );
+    await user.selectOptions(
+      screen.getByLabelText('Type de classification'),
+      'personal',
+    );
+    await user.type(
+      screen.getByLabelText('Nouveau cours'),
+      'Cours sans sauvegarde',
+    );
+    await user.type(screen.getByLabelText('Nom'), 'n');
+    await user.type(screen.getByLabelText('Libellé'), 'Entier');
+    await user.click(
+      screen.getByRole('button', { name: 'Définir la variable' }),
+    );
+    const preview = screen.getByRole('button', {
+      name: 'Tester les variantes',
+    });
+    await user.click(preview);
+    await user.click(preview);
+    await user.click(preview);
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(saveQuestion).not.toHaveBeenCalled();
+    expect(saveQuestionDraftWithPersonalTaxonomy).not.toHaveBeenCalled();
   });
 
   it('présente un import incomplet, la taxonomie personnelle et les choix de conflit', async () => {

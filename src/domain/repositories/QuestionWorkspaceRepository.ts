@@ -10,11 +10,51 @@ export type QuestionMutationKind = 'create' | 'update' | 'archive' | 'publish';
 export interface QuestionOutboxOperation {
   readonly operationId: string;
   readonly userId: string;
+  readonly entity: 'question';
   readonly entityId: string;
   readonly kind: QuestionMutationKind;
   readonly baseVersion: number | null;
   readonly payload: Readonly<Question>;
   readonly createdAt: string;
+}
+
+export type PersonalTaxonomyOutboxOperation =
+  | Readonly<{
+      operationId: string;
+      userId: string;
+      entity: 'course';
+      entityId: string;
+      kind: 'create';
+      payload: PersonalCourse;
+      createdAt: string;
+    }>
+  | Readonly<{
+      operationId: string;
+      userId: string;
+      entity: 'chapter';
+      entityId: string;
+      kind: 'create';
+      payload: PersonalChapter;
+      createdAt: string;
+    }>
+  | Readonly<{
+      operationId: string;
+      userId: string;
+      entity: 'notion';
+      entityId: string;
+      kind: 'create';
+      payload: PersonalNotion;
+      createdAt: string;
+    }>;
+
+export type QuestionWorkspaceOutboxOperation =
+  | QuestionOutboxOperation
+  | PersonalTaxonomyOutboxOperation;
+
+export interface PersonalTaxonomyDraft {
+  readonly course: PersonalCourse | null;
+  readonly chapter: PersonalChapter | null;
+  readonly notion: PersonalNotion | null;
 }
 
 export interface QuestionSyncConflict {
@@ -44,19 +84,34 @@ export interface QuestionWorkspaceRepository {
     kind: QuestionMutationKind,
     operationId: string,
   ): Promise<void>;
-  savePersonalCourse(userId: string, course: PersonalCourse): Promise<void>;
-  savePersonalChapter(userId: string, chapter: PersonalChapter): Promise<void>;
-  savePersonalNotion(userId: string, notion: PersonalNotion): Promise<void>;
+  saveQuestionDraftWithPersonalTaxonomy(
+    userId: string,
+    question: Readonly<Question>,
+    taxonomy: PersonalTaxonomyDraft,
+    operationIds: Readonly<{
+      question: string;
+      course: string | null;
+      chapter: string | null;
+      notion: string | null;
+    }>,
+  ): Promise<void>;
   resolveConflict(
     userId: string,
     conflictId: string,
     choice: 'local' | 'remote' | 'duplicate',
   ): Promise<void>;
-  listOutbox(userId: string): Promise<readonly QuestionOutboxOperation[]>;
-  completeOperation(userId: string, operationId: string): Promise<void>;
-  applyRemoteQuestions(
+  listOutbox(
     userId: string,
-    questions: readonly Readonly<Question>[],
+  ): Promise<readonly QuestionWorkspaceOutboxOperation[]>;
+  completeOperation(userId: string, operationId: string): Promise<void>;
+  applyRemoteWorkspace(
+    userId: string,
+    changes: Readonly<{
+      questions: readonly Readonly<Question>[];
+      courses: readonly PersonalCourse[];
+      chapters: readonly PersonalChapter[];
+      notions: readonly PersonalNotion[];
+    }>,
   ): Promise<void>;
   recordConflict(userId: string, conflict: QuestionSyncConflict): Promise<void>;
 }

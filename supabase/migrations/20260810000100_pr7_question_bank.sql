@@ -46,6 +46,13 @@ create table public.question_import_quarantine (
   import_row_id uuid not null references public.question_imports(id) on delete cascade, entry_index integer not null,
   code text not null, path text not null, message text not null, created_at timestamptz not null default now()
 );
+create table public.oauth_integration_clients (
+  client_id text not null,
+  purpose text not null check (purpose in ('chatgpt-question-import')),
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  primary key (client_id, purpose)
+);
 
 alter table public.personal_courses enable row level security;
 alter table public.personal_chapters enable row level security;
@@ -54,6 +61,7 @@ alter table public.questions enable row level security;
 alter table public.official_program_notions enable row level security;
 alter table public.question_imports enable row level security;
 alter table public.question_import_quarantine enable row level security;
+alter table public.oauth_integration_clients enable row level security;
 
 create policy personal_courses_own on public.personal_courses for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy personal_chapters_own on public.personal_chapters for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
@@ -61,18 +69,49 @@ create policy personal_notions_own on public.personal_notions for all using (own
 create policy questions_read_accessible on public.questions for select using (source = 'static' or source = 'shared' or owner_id = auth.uid());
 create policy official_program_read on public.official_program_notions for select to authenticated using (true);
 create policy questions_insert_own_private on public.questions for insert with check (owner_id = auth.uid() and source in ('private','shared'));
-create policy questions_update_own on public.questions for update using (owner_id = auth.uid() and source <> 'static') with check (owner_id = auth.uid() and source in ('private','shared'));
-create policy questions_delete_own on public.questions for delete using (owner_id = auth.uid() and source <> 'static');
 create policy question_imports_own on public.question_imports for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy question_import_quarantine_own on public.question_import_quarantine for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 
-revoke all on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions, public.official_program_notions, public.question_imports, public.question_import_quarantine from anon;
-grant select, insert, update, delete on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions, public.question_imports, public.question_import_quarantine to authenticated;
+create view public.latest_accessible_questions
+with (security_invoker = true)
+as
+select distinct on (id) *
+from public.questions
+order by id, version desc;
+
+revoke all on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions, public.official_program_notions, public.question_imports, public.question_import_quarantine, public.oauth_integration_clients from anon;
+revoke all on table public.oauth_integration_clients, public.latest_accessible_questions from public;
+revoke all on table public.latest_accessible_questions from anon;
+revoke all on table public.oauth_integration_clients from authenticated;
+grant select, insert on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions to authenticated;
+grant select, insert, update on table public.question_imports to authenticated;
+grant select, insert on table public.question_import_quarantine to authenticated;
 grant select on table public.official_program_notions to authenticated;
+grant select on table public.latest_accessible_questions to authenticated;
 
 create index questions_owner_updated_idx on public.questions(owner_id, updated_at desc);
 create index personal_chapters_owner_course_idx on public.personal_chapters(owner_id, course_id);
 create index personal_notions_owner_course_idx on public.personal_notions(owner_id, course_id);
+
+create or replace function public.is_allowed_oauth_integration_client(
+  p_client_id text,
+  p_purpose text
+) returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(nullif(p_client_id, ''), '') <> ''
+    and exists (
+      select 1 from public.oauth_integration_clients
+      where client_id = p_client_id and purpose = p_purpose and enabled
+    );
+$$;
+
+revoke all on function public.is_allowed_oauth_integration_client(text, text) from public;
+revoke all on function public.is_allowed_oauth_integration_client(text, text) from anon;
+grant execute on function public.is_allowed_oauth_integration_client(text, text) to authenticated;
 
 create or replace function public.import_chatgpt_question_drafts(
   p_oauth_client_id text,
@@ -102,8 +141,10 @@ declare
   v_report jsonb;
 begin
   if v_owner is null then raise exception 'authentication-required'; end if;
-  if coalesce(auth.jwt()->>'client_id','') <> p_oauth_client_id then raise exception 'oauth-client-mismatch'; end if;
-  if p_oauth_client_id is null or p_payload_hash is null then raise exception 'invalid-import-authority'; end if;
+  if nullif(auth.jwt()->>'client_id','') is null then raise exception 'oauth-client-missing'; end if;
+  if auth.jwt()->>'client_id' <> p_oauth_client_id then raise exception 'oauth-client-mismatch'; end if;
+  if not public.is_allowed_oauth_integration_client(p_oauth_client_id, 'chatgpt-question-import') then raise exception 'oauth-client-not-allowed'; end if;
+  if nullif(p_oauth_client_id,'') is null or p_payload_hash is null then raise exception 'invalid-import-authority'; end if;
 
   insert into public.question_imports(owner_id, oauth_client_id, import_id, payload_hash, report, coverage)
   values (v_owner, p_oauth_client_id, p_payload->>'importId', p_payload_hash, '{}'::jsonb, p_payload->>'analysisCoverage')

@@ -35,13 +35,18 @@ test('creates a structured local draft with math and restores it after reload', 
   await editor.getByLabel('Partie').selectOption('numbers');
   await editor.getByLabel('Chapitre').selectOption('numbers-arithmetic');
   await editor.getByLabel('Notion').selectOption('NUM-F01');
-  await editor.getByLabel('Texte').fill('Calculer une puissance');
-  await editor.getByRole('button', { name: '+ Formule', exact: true }).click();
-  await editor.getByLabel('Formule en ligne').fill('sqrt(x)');
+  const prompt = editor.getByRole('group', { name: 'Énoncé' });
+  await prompt.getByLabel('Texte').fill('Calculer une puissance');
+  await prompt.getByRole('button', { name: '+ Formule', exact: true }).click();
+  await prompt.getByLabel('Formule en ligne').fill('sqrt(x)');
   await expect(editor.getByText('Formule valide')).toBeVisible();
   await editor.getByRole('button', { name: 'Clavier mathématique' }).click();
   await editor.getByRole('button', { name: /ℝ/ }).click();
-  await editor.getByLabel('Correction').fill('Utiliser la définition.');
+  const correction = editor.getByRole('group', {
+    name: 'Contenu de l’étape 1',
+  });
+  await correction.getByRole('button', { name: '+ Texte' }).click();
+  await correction.getByLabel('Texte').fill('Utiliser la définition.');
   await editor
     .getByRole('button', { name: 'Enregistrer le brouillon' })
     .click();

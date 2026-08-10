@@ -6,14 +6,21 @@ export async function syncQuestionWorkspace(
   local: QuestionWorkspaceRepository,
   remote: QuestionRemoteGateway,
 ) {
-  const operations = (await local.listOutbox(userId)).slice(0, 50);
+  const priority = { course: 0, chapter: 1, notion: 2, question: 3 } as const;
+  const operations = [...(await local.listOutbox(userId))]
+    .sort(
+      (left, right) =>
+        priority[left.entity] - priority[right.entity] ||
+        left.createdAt.localeCompare(right.createdAt),
+    )
+    .slice(0, 50);
   let permissionDenied = false;
   for (const operation of operations) {
     const result = await remote.push(operation);
     if (result.kind === 'accepted')
       await local.completeOperation(userId, operation.operationId);
     else if (result.kind === 'permission-denied') permissionDenied = true;
-    else
+    else if (operation.entity === 'question')
       await local.recordConflict(userId, {
         id: crypto.randomUUID(),
         userId,
@@ -24,9 +31,11 @@ export async function syncQuestionWorkspace(
         detectedAt: new Date().toISOString(),
       });
   }
-  await local.applyRemoteQuestions(
-    userId,
-    await remote.pullRecent(userId, 100),
-  );
-  return { pushed: operations.length, permissionDenied };
+  const pulled = await remote.pullRecent(userId, 100);
+  await local.applyRemoteWorkspace(userId, pulled);
+  return {
+    pushed: operations.length,
+    permissionDenied,
+    rejectedRemoteRows: pulled.rejectedRows,
+  };
 }

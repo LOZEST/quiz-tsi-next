@@ -14,6 +14,9 @@ import {
   type Question,
   type SafeExpressionNode,
   type VariableDefinition,
+  type QuestionType,
+  type Difficulty,
+  type CorrectionStep,
 } from '@domain/questions/Question';
 import { validateQuestionForReview } from '@domain/questions/QuestionAuthoringValidation';
 import { validateParameterizedQuestion } from '@domain/questions/QuestionParameterValidation';
@@ -23,7 +26,7 @@ import {
 } from '@domain/math/MathSyntaxRegistry';
 import { parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
-import type { QuestionWorkspaceRepository } from '@domain/repositories/QuestionWorkspaceRepository';
+import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { ProgramIndex } from '@domain/program/Program';
 import styles from './QuestionsPage.module.css';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
@@ -511,15 +514,28 @@ export function QuestionsPage() {
           userId={userId}
           programIndex={programIndex}
           workspace={workspace}
-          repository={questionWorkspaceRepository}
           onCancel={() => setEditing(false)}
-          onSave={async (question, kind) => {
-            await questionWorkspaceRepository.saveQuestion(
-              userId,
-              question,
-              kind,
-              crypto.randomUUID(),
-            );
+          onSave={async (question, kind, taxonomy) => {
+            if (taxonomy.course || taxonomy.chapter || taxonomy.notion) {
+              await questionWorkspaceRepository.saveQuestionDraftWithPersonalTaxonomy(
+                userId,
+                question,
+                taxonomy,
+                {
+                  question: crypto.randomUUID(),
+                  course: taxonomy.course ? crypto.randomUUID() : null,
+                  chapter: taxonomy.chapter ? crypto.randomUUID() : null,
+                  notion: taxonomy.notion ? crypto.randomUUID() : null,
+                },
+              );
+            } else {
+              await questionWorkspaceRepository.saveQuestion(
+                userId,
+                question,
+                kind,
+                crypto.randomUUID(),
+              );
+            }
             setEditing(false);
             setSelectedId(question.id);
             await reload();
@@ -640,7 +656,6 @@ function QuestionEditor({
   userId,
   programIndex,
   workspace,
-  repository,
   onCancel,
   onSave,
 }: {
@@ -648,20 +663,34 @@ function QuestionEditor({
   userId: string;
   programIndex: ProgramIndex | null;
   workspace: QuestionWorkspaceSnapshot;
-  repository: QuestionWorkspaceRepository;
   onCancel: () => void;
-  onSave: (question: Question, kind: 'create' | 'update') => Promise<void>;
+  onSave: (
+    question: Question,
+    kind: 'create' | 'update',
+    taxonomy: PersonalTaxonomyDraft,
+  ) => Promise<void>;
 }) {
   const [segments, setSegments] = useState<ContentSegment[]>(
     initial ? [...initial.prompt] : [{ kind: 'text', value: '' }],
   );
-  const [hint, setHint] = useState(
-    initial?.hint.find((item) => item.kind === 'text')?.value ?? '',
+  const [hintSegments, setHintSegments] = useState<ContentSegment[]>(
+    initial ? [...initial.hint] : [],
   );
-  const [correction, setCorrection] = useState(
-    initial?.correction[0]?.content.find((item) => item.kind === 'text')
-      ?.value ?? '',
+  const [correctionSteps, setCorrectionSteps] = useState<CorrectionStep[]>(
+    initial
+      ? initial.correction.map((step) => ({
+          ...step,
+          content: [...step.content],
+        }))
+      : [{ id: 'step-1', title: null, content: [] }],
   );
+  const [questionType, setQuestionType] = useState<QuestionType>(
+    initial?.type ?? 'course',
+  );
+  const [difficulty, setDifficulty] = useState<Difficulty | null>(
+    initial?.type === 'reflex' ? null : (initial?.difficulty ?? 'standard'),
+  );
+  const [tags, setTags] = useState(initial?.tags.join(', ') ?? '');
   const [variable, setVariable] = useState('');
   const [variableLabel, setVariableLabel] = useState('');
   const [domainKind, setDomainKind] = useState<
@@ -733,13 +762,16 @@ function QuestionEditor({
   const [personalCourseTitle, setPersonalCourseTitle] = useState('');
   const [personalChapterTitle, setPersonalChapterTitle] = useState('');
   const [personalNotionTitle, setPersonalNotionTitle] = useState('');
+  const pendingTaxonomyIds = useRef({
+    course: crypto.randomUUID(),
+    chapter: crypto.randomUUID(),
+    notion: crypto.randomUUID(),
+  });
   const [editorErrors, setEditorErrors] = useState<string[]>([]);
   const [variantPreview, setVariantPreview] = useState<readonly string[]>([]);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const activeMath = useRef<HTMLInputElement | null>(null);
-  const add = (segment: ContentSegment) =>
-    setSegments((value) => [...value, segment]);
   const insertSymbol = (symbol: string) => {
     const input = activeMath.current;
     if (!input) return;
@@ -752,68 +784,88 @@ function QuestionEditor({
       input.setSelectionRange(start + symbol.length, start + symbol.length),
     );
   };
-  const buildClassification = async () => {
+  const buildClassification = (): Readonly<{
+    classification: NonNullable<Question['classification']>;
+    taxonomy: PersonalTaxonomyDraft;
+  }> | null => {
+    const emptyTaxonomy: PersonalTaxonomyDraft = {
+      course: null,
+      chapter: null,
+      notion: null,
+    };
     if (classificationKind === 'official') {
       if (!partId || !chapterId || !notionId) return null;
-      return officialClassification(partId, chapterId, notionId);
+      return {
+        classification: officialClassification(partId, chapterId, notionId),
+        taxonomy: emptyTaxonomy,
+      };
     }
-    let resolvedCourseId = courseId;
-    if (!resolvedCourseId && personalCourseTitle.trim()) {
-      resolvedCourseId = crypto.randomUUID();
-      const now = new Date().toISOString();
-      await repository.savePersonalCourse(userId, {
-        id: resolvedCourseId,
-        ownerId: userId,
-        title: personalCourseTitle.trim(),
-        createdAt: now,
-        updatedAt: now,
-      });
-      setCourseId(resolvedCourseId);
-    }
+    const now = new Date().toISOString();
+    const newCourse = !courseId && personalCourseTitle.trim() !== '';
+    const resolvedCourseId =
+      courseId || (newCourse ? pendingTaxonomyIds.current.course : '');
     if (!resolvedCourseId) return null;
-    let resolvedChapterId: string | null = personalChapterId || null;
-    let resolvedNotionId: string | null = personalNotionId || null;
-    if (personalChapterTitle.trim()) {
-      resolvedChapterId = crypto.randomUUID();
-      const now = new Date().toISOString();
-      await repository.savePersonalChapter(userId, {
-        id: resolvedChapterId,
-        ownerId: userId,
-        courseId: resolvedCourseId,
-        title: personalChapterTitle.trim(),
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-    if (personalNotionTitle.trim()) {
-      resolvedNotionId = crypto.randomUUID();
-      const now = new Date().toISOString();
-      await repository.savePersonalNotion(userId, {
-        id: resolvedNotionId,
-        ownerId: userId,
+    const newChapter = personalChapterTitle.trim() !== '';
+    const resolvedChapterId = newChapter
+      ? pendingTaxonomyIds.current.chapter
+      : personalChapterId || null;
+    const newNotion = personalNotionTitle.trim() !== '';
+    const resolvedNotionId = newNotion
+      ? pendingTaxonomyIds.current.notion
+      : personalNotionId || null;
+    return {
+      classification: {
+        kind: 'personal',
         courseId: resolvedCourseId,
         chapterId: resolvedChapterId,
-        title: personalNotionTitle.trim(),
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-    return {
-      kind: 'personal' as const,
-      courseId: resolvedCourseId,
-      chapterId: resolvedChapterId,
-      notionId: resolvedNotionId,
+        notionId: resolvedNotionId,
+      },
+      taxonomy: {
+        course: newCourse
+          ? {
+              id: resolvedCourseId,
+              ownerId: userId,
+              title: personalCourseTitle.trim(),
+              createdAt: now,
+              updatedAt: now,
+            }
+          : null,
+        chapter: newChapter
+          ? {
+              id: resolvedChapterId!,
+              ownerId: userId,
+              courseId: resolvedCourseId,
+              title: personalChapterTitle.trim(),
+              createdAt: now,
+              updatedAt: now,
+            }
+          : null,
+        notion: newNotion
+          ? {
+              id: resolvedNotionId!,
+              ownerId: userId,
+              courseId: resolvedCourseId,
+              chapterId: resolvedChapterId,
+              title: personalNotionTitle.trim(),
+              createdAt: now,
+              updatedAt: now,
+            }
+          : null,
+      },
     };
   };
-  const buildQuestion = async (): Promise<Question | null> => {
-    const classification = await buildClassification();
-    if (!classification) {
+  const buildQuestion = (): Readonly<{
+    question: Question;
+    taxonomy: PersonalTaxonomyDraft;
+  }> | null => {
+    const builtClassification = buildClassification();
+    if (!builtClassification) {
       setEditorErrors(['Une classification valide est obligatoire.']);
       return null;
     }
     const now = new Date().toISOString();
     const first = initial ?? null;
-    return {
+    const question: Question = {
       id: first?.id ?? crypto.randomUUID(),
       version: first ? first.version + 1 : 1,
       source: 'private',
@@ -821,9 +873,9 @@ function QuestionEditor({
       status: 'draft',
       validated: false,
       provenance: first?.provenance ?? null,
-      classification,
-      type: first?.type ?? 'course',
-      difficulty: first?.difficulty ?? 'standard',
+      classification: builtClassification.classification,
+      type: questionType,
+      difficulty: questionType === 'reflex' ? null : difficulty,
       parameterization: variables.length
         ? {
             schemaVersion: 1,
@@ -833,23 +885,21 @@ function QuestionEditor({
           }
         : null,
       prompt: segments,
-      hint: hint ? [{ kind: 'text', value: hint }] : [],
-      correction: [
-        {
-          id: 'step-1',
-          title: null,
-          content: [{ kind: 'text', value: correction }],
-        },
-      ],
-      tags: [],
+      hint: hintSegments,
+      correction: correctionSteps,
+      tags: tags
+        .split(',')
+        .map((tag) => tag.trim())
+        .filter(Boolean),
       createdAt: first?.createdAt ?? now,
       updatedAt: now,
     };
+    return { question, taxonomy: builtClassification.taxonomy };
   };
   const save = async () => {
-    const question = await buildQuestion();
-    if (!question) return;
-    await onSave(question, initial ? 'update' : 'create');
+    const built = buildQuestion();
+    if (!built) return;
+    await onSave(built.question, initial ? 'update' : 'create', built.taxonomy);
   };
   return (
     <div className={styles.editorBackdrop}>
@@ -1044,93 +1094,55 @@ function QuestionEditor({
             </>
           )}
         </fieldset>
-        <div className={styles.segmentList}>
-          {segments.map((segment, index) =>
-            segment.kind === 'text' ? (
-              <label key={index}>
-                Texte
-                <textarea
-                  value={segment.value}
-                  onChange={(event) =>
-                    setSegments((items) =>
-                      items.map((item, position) =>
-                        position === index
-                          ? { kind: 'text', value: event.target.value }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-              </label>
-            ) : segment.kind === 'line-break' ? (
-              <p key={index}>Saut de ligne</p>
-            ) : (
-              <label key={index}>
-                {segment.kind === 'inline-math'
-                  ? 'Formule en ligne'
-                  : 'Formule affichée'}
-                <input
-                  ref={(node) => {
-                    if (node) activeMath.current = node;
-                  }}
-                  value={segment.math.source}
-                  onFocus={(event) => {
-                    activeMath.current = event.currentTarget;
-                  }}
-                  onChange={(event) =>
-                    setSegments((items) =>
-                      items.map((item, position) =>
-                        position === index
-                          ? {
-                              ...segment,
-                              math: {
-                                syntaxVersion: 1,
-                                source: event.target.value,
-                              },
-                            }
-                          : item,
-                      ),
-                    )
-                  }
-                />
-                <MathError source={segment.math.source} />
-              </label>
-            ),
-          )}
-        </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            onClick={() => add({ kind: 'text', value: '' })}
-          >
-            + Texte
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              add({
-                kind: 'inline-math',
-                math: { syntaxVersion: 1, source: 'x^2' },
-              })
-            }
-          >
-            + Formule
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              add({
-                kind: 'display-math',
-                math: { syntaxVersion: 1, source: 'x^2' },
-              })
-            }
-          >
-            + Formule affichée
-          </button>
-          <button type="button" onClick={() => add({ kind: 'line-break' })}>
-            + Saut de ligne
-          </button>
-        </div>
+        <fieldset>
+          <legend>Propriétés</legend>
+          <label>
+            Type
+            <select
+              value={questionType}
+              onChange={(event) => {
+                const next = event.target.value as QuestionType;
+                setQuestionType(next);
+                setDifficulty(next === 'reflex' ? null : 'standard');
+              }}
+            >
+              <option value="formula">Formules</option>
+              <option value="course">Cours</option>
+              <option value="calculation">Calcul</option>
+              <option value="reflex">Réflexe</option>
+            </select>
+          </label>
+          {questionType !== 'reflex' ? (
+            <label>
+              Difficulté
+              <select
+                value={difficulty ?? ''}
+                onChange={(event) =>
+                  setDifficulty(event.target.value as Difficulty)
+                }
+              >
+                <option value="fundamental">Fondamental</option>
+                <option value="standard">Standard</option>
+                <option value="trap">Piège</option>
+              </select>
+            </label>
+          ) : null}
+          <label>
+            Tags séparés par des virgules
+            <input
+              value={tags}
+              onChange={(event) => setTags(event.target.value)}
+            />
+          </label>
+        </fieldset>
+        <SegmentEditor
+          label="Énoncé"
+          segments={segments}
+          onChange={setSegments}
+          onMathFocus={(input) => {
+            activeMath.current = input;
+          }}
+        />
         <button
           type="button"
           onClick={() => setShowKeyboard((value) => !value)}
@@ -1167,20 +1179,65 @@ function QuestionEditor({
             ))}
           </ul>
         ) : null}
-        <label>
-          Indice
-          <textarea
-            value={hint}
-            onChange={(event) => setHint(event.target.value)}
-          />
-        </label>
-        <label>
-          Correction
-          <textarea
-            value={correction}
-            onChange={(event) => setCorrection(event.target.value)}
-          />
-        </label>
+        <SegmentEditor
+          label="Indice"
+          segments={hintSegments}
+          onChange={setHintSegments}
+          onMathFocus={(input) => {
+            activeMath.current = input;
+          }}
+        />
+        <fieldset>
+          <legend>Correction</legend>
+          {correctionSteps.map((step, stepIndex) => (
+            <div key={step.id}>
+              <label>
+                Titre de l’étape
+                <input
+                  value={step.title ?? ''}
+                  onChange={(event) =>
+                    setCorrectionSteps((items) =>
+                      items.map((item, index) =>
+                        index === stepIndex
+                          ? { ...item, title: event.target.value || null }
+                          : item,
+                      ),
+                    )
+                  }
+                />
+              </label>
+              <SegmentEditor
+                label={`Contenu de l’étape ${stepIndex + 1}`}
+                segments={step.content}
+                onChange={(content) =>
+                  setCorrectionSteps((items) =>
+                    items.map((item, index) =>
+                      index === stepIndex ? { ...item, content } : item,
+                    ),
+                  )
+                }
+                onMathFocus={(input) => {
+                  activeMath.current = input;
+                }}
+              />
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() =>
+              setCorrectionSteps((items) => [
+                ...items,
+                {
+                  id: crypto.randomUUID(),
+                  title: null,
+                  content: [],
+                },
+              ])
+            }
+          >
+            + Étape de correction
+          </button>
+        </fieldset>
         <fieldset>
           <legend>Assistant de variables</legend>
           <label>
@@ -1303,7 +1360,12 @@ function QuestionEditor({
           <button
             type="button"
             disabled={!variables.some((item) => item.id === variable)}
-            onClick={() => add({ kind: 'text', value: `@${variable}` })}
+            onClick={() =>
+              setSegments((items) => [
+                ...items,
+                { kind: 'text', value: `@${variable}` },
+              ])
+            }
           >
             Insérer @{variable || 'nom'}
           </button>
@@ -1404,35 +1466,35 @@ function QuestionEditor({
           <button
             type="button"
             disabled={!variables.length}
-            onClick={() =>
-              void buildQuestion().then((question) => {
-                if (!question) return;
-                const result = validateParameterizedQuestion(
-                  question,
-                  `${question.id}:preview`,
-                );
-                setEditorErrors(
-                  result.errors.map(
-                    (entry) => `${entry.path} — ${entry.message}`,
+            onClick={() => {
+              const built = buildQuestion();
+              if (!built) return;
+              const question = built.question;
+              const result = validateParameterizedQuestion(
+                question,
+                `${question.id}:preview`,
+              );
+              setEditorErrors(
+                result.errors.map(
+                  (entry) => `${entry.path} — ${entry.message}`,
+                ),
+              );
+              setVariantPreview(
+                result.variants
+                  .slice(0, 10)
+                  .map((variant) =>
+                    variant.content.prompt
+                      .map((segment) =>
+                        segment.kind === 'text'
+                          ? segment.value
+                          : segment.kind === 'line-break'
+                            ? '\n'
+                            : segment.mathSource.source,
+                      )
+                      .join(' '),
                   ),
-                );
-                setVariantPreview(
-                  result.variants
-                    .slice(0, 10)
-                    .map((variant) =>
-                      variant.content.prompt
-                        .map((segment) =>
-                          segment.kind === 'text'
-                            ? segment.value
-                            : segment.kind === 'line-break'
-                              ? '\n'
-                              : segment.mathSource.source,
-                        )
-                        .join(' '),
-                    ),
-                );
-              })
-            }
+              );
+            }}
           >
             Tester les variantes
           </button>
@@ -1446,6 +1508,96 @@ function QuestionEditor({
         </fieldset>
       </section>
     </div>
+  );
+}
+
+function SegmentEditor({
+  label,
+  segments,
+  onChange,
+  onMathFocus,
+}: {
+  label: string;
+  segments: readonly ContentSegment[];
+  onChange: (segments: ContentSegment[]) => void;
+  onMathFocus: (input: HTMLInputElement) => void;
+}) {
+  const replace = (index: number, segment: ContentSegment) =>
+    onChange(
+      segments.map((item, position) => (position === index ? segment : item)),
+    );
+  const add = (segment: ContentSegment) => onChange([...segments, segment]);
+  return (
+    <fieldset>
+      <legend>{label}</legend>
+      <div className={styles.segmentList}>
+        {segments.map((segment, index) =>
+          segment.kind === 'text' ? (
+            <label key={index}>
+              Texte
+              <textarea
+                value={segment.value}
+                onChange={(event) =>
+                  replace(index, { kind: 'text', value: event.target.value })
+                }
+              />
+            </label>
+          ) : segment.kind === 'line-break' ? (
+            <p key={index}>Saut de ligne</p>
+          ) : (
+            <label key={index}>
+              {segment.kind === 'inline-math'
+                ? 'Formule en ligne'
+                : 'Formule affichée'}
+              <input
+                value={segment.math.source}
+                onFocus={(event) => onMathFocus(event.currentTarget)}
+                onChange={(event) =>
+                  replace(index, {
+                    kind: segment.kind,
+                    math: {
+                      syntaxVersion: 1,
+                      source: event.target.value,
+                    },
+                  })
+                }
+              />
+              <MathError source={segment.math.source} />
+            </label>
+          ),
+        )}
+      </div>
+      <div className={styles.actions}>
+        <button type="button" onClick={() => add({ kind: 'text', value: '' })}>
+          + Texte
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            add({
+              kind: 'inline-math',
+              math: { syntaxVersion: 1, source: 'x^2' },
+            })
+          }
+        >
+          + Formule
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            add({
+              kind: 'display-math',
+              math: { syntaxVersion: 1, source: 'x^2' },
+            })
+          }
+        >
+          + Formule affichée
+        </button>
+        <button type="button" onClick={() => add({ kind: 'line-break' })}>
+          + Saut de ligne
+        </button>
+      </div>
+    </fieldset>
   );
 }
 
