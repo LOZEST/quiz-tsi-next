@@ -1,0 +1,16 @@
+begin;
+select plan(12);
+select has_table('public', 'questions', 'questions exists');
+select has_table('public', 'personal_courses', 'personal courses exists');
+select has_table('public', 'question_imports', 'imports exists');
+select has_table('public', 'question_import_quarantine', 'quarantine exists');
+select policies_are('public', 'questions', array['questions_delete_own','questions_insert_own_private','questions_read_accessible','questions_update_own'], 'question policies fixed');
+select policies_are('public', 'personal_courses', array['personal_courses_own'], 'courses isolated');
+select policies_are('public', 'personal_chapters', array['personal_chapters_own'], 'chapters isolated');
+select policies_are('public', 'personal_notions', array['personal_notions_own'], 'notions isolated');
+select policies_are('public', 'question_imports', array['question_imports_own'], 'imports isolated');
+select policies_are('public', 'question_import_quarantine', array['question_import_quarantine_own'], 'quarantine isolated');
+select col_is_pk('public', 'questions', array['id','version'], 'question versions immutable by key');
+select has_index('public', 'questions', 'questions_owner_updated_idx', 'bounded remote pull indexed');
+select * from finish();
+rollback;

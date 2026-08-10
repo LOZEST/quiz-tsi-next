@@ -1,0 +1,243 @@
+openapi: 3.1.0
+info:
+  title: Quiz TSI — import de brouillons privés
+  version: 1.0.0
+  description: Crée uniquement des brouillons privés après confirmation explicite.
+servers:
+  - url: https://PROJECT_REF.supabase.co/functions/v1
+paths:
+  /gpt-question-import:
+    post:
+      operationId: importQuestionDrafts
+      summary: Importer des brouillons privés Quiz TSI
+      security: [{ quizTsiOAuth: [questions.import] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatGptQuestionImportV1' }
+      responses:
+        '200':
+          description: Rapport d’import, y compris lors d’un replay identique.
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/ImportReportV1' } },
+            }
+        '409': { description: importId déjà utilisé avec un autre payload. }
+        '422': { description: Payload non fiable ou aucune entrée acceptée. }
+components:
+  securitySchemes:
+    quizTsiOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/authorize
+          tokenUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/token
+          scopes: { questions.import: Créer des brouillons privés }
+  schemas:
+    MathSource:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [syntaxVersion, source],
+        properties:
+          {
+            syntaxVersion: { const: 1 },
+            source: { type: string, maxLength: 20000 },
+          },
+      }
+    ContentSegment:
+      oneOf:
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, value],
+            properties:
+              {
+                kind: { const: text },
+                value: { type: string, maxLength: 20000 },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, math],
+            properties:
+              {
+                kind: { enum: [inline-math, display-math] },
+                math: { $ref: '#/components/schemas/MathSource' },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind],
+            properties: { kind: { const: line-break } },
+          }
+    Classification:
+      oneOf:
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, chapterId, notionId, confidence],
+            properties:
+              {
+                kind: { const: official },
+                chapterId: { type: string },
+                notionId: { type: string },
+                confidence: { enum: [certain, uncertain] },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required:
+              [
+                kind,
+                proposedCourseTitle,
+                proposedChapterTitle,
+                proposedNotionTitle,
+                reason,
+                requiresUserConfirmation,
+              ],
+            properties:
+              {
+                kind: { const: personal },
+                proposedCourseTitle: { type: string },
+                proposedChapterTitle: { type: [string, 'null'] },
+                proposedNotionTitle: { type: [string, 'null'] },
+                reason: { type: string },
+                requiresUserConfirmation: { const: true },
+              },
+          }
+    ChatGptQuestionImportV1:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          schemaVersion,
+          importId,
+          analysisCoverage,
+          confirmedByUser,
+          document,
+          questions,
+        ]
+      properties:
+        schemaVersion: { const: 1 }
+        importId: { type: string, maxLength: 200 }
+        analysisCoverage: { enum: [text-and-visuals, text-only, incomplete] }
+        confirmedByUser: { const: true }
+        document:
+          {
+            type: object,
+            additionalProperties: false,
+            required: [kind, title, pageCount],
+            properties:
+              {
+                kind: { enum: [photo, pdf] },
+                title: { type: [string, 'null'] },
+                pageCount: { type: [integer, 'null'], minimum: 1 },
+              },
+          }
+        questions:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ImportQuestion' },
+          }
+    ImportQuestion:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          clientEntryId,
+          classification,
+          type,
+          difficulty,
+          parameterization,
+          prompt,
+          hint,
+          correction,
+          tags,
+          uncertainties,
+        ]
+      properties:
+        clientEntryId: { type: [string, 'null'] }
+        classification: { $ref: '#/components/schemas/Classification' }
+        type: { enum: [formula, course, calculation, reflex] }
+        difficulty: { enum: [fundamental, standard, trap, null] }
+        parameterization: { type: [object, 'null'] }
+        prompt:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ContentSegment' },
+          }
+        hint:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ContentSegment' },
+          }
+        correction: { type: array, maxItems: 30, items: { type: object } }
+        tags: { type: array, maxItems: 30, items: { type: string } }
+        uncertainties:
+          {
+            type: array,
+            maxItems: 30,
+            items:
+              {
+                type: object,
+                required: [code, path, message],
+                properties:
+                  {
+                    code:
+                      {
+                        enum:
+                          [
+                            ocr,
+                            formula,
+                            classification,
+                            text-visual-conflict,
+                            missing-visual-analysis,
+                          ],
+                      },
+                    path: { type: string },
+                    message: { type: string },
+                  },
+              },
+          }
+    ImportReportV1:
+      type: object
+      required:
+        [schemaVersion, importId, accepted, quarantined, warnings, replayed]
+      properties:
+        {
+          schemaVersion: { const: 1 },
+          importId: { type: string },
+          accepted: { type: array, items: { type: integer } },
+          quarantined:
+            {
+              type: array,
+              items: { $ref: '#/components/schemas/ReportEntry' },
+            },
+          warnings:
+            {
+              type: array,
+              items: { $ref: '#/components/schemas/ReportEntry' },
+            },
+          replayed: { type: boolean },
+        }
+    ReportEntry:
+      {
+        type: object,
+        required: [index, code, path, message],
+        properties:
+          {
+            index: { type: integer },
+            code: { type: string },
+            path: { type: string },
+            message: { type: string },
+          },
+      }

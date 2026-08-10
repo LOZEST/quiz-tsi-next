@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "src/data/program/official-program-v1.json",
+  "notions": [
+    {
+      "chapterId": "numbers-arithmetic",
+      "chapterLabel": "Nombres et arithmétique",
+      "notionId": "NUM-F01",
+      "notionLabel": "Calcul d’une expression et classement dans les ensembles"
+    },
+    {
+      "chapterId": "numbers-arithmetic",
+      "chapterLabel": "Nombres et arithmétique",
+      "notionId": "NUM-F02",
+      "notionLabel": "Divisibilité, parité, multiples et décomposition première"
+    },
+    {
+      "chapterId": "numbers-arithmetic",
+      "chapterLabel": "Nombres et arithmétique",
+      "notionId": "NUM-F03",
+      "notionLabel": "Lois des puissances à base commune"
+    },
+    {
+      "chapterId": "numbers-arithmetic",
+      "chapterLabel": "Nombres et arithmétique",
+      "notionId": "NUM-F04",
+      "notionLabel": "Simplification à puissances, racines et substitutions"
+    }
+  ]
+}
