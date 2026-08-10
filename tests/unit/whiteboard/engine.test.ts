@@ -15,6 +15,16 @@ import { ToolManager } from '@features/whiteboard/tools/ToolManager';
 import { restoreWhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 import { pointFromPointerEvent } from '@features/whiteboard/model/Point';
 import { snapshotScene } from '@features/whiteboard/model/WhiteboardSnapshot';
+import {
+  createShape,
+  resizeHandlePosition,
+  rotationHandlePosition,
+  rotateShape,
+  shapeLocalPointToWorld,
+  worldPointToShapeLocal,
+  type Point2d,
+  type WhiteboardShape,
+} from '@domain/whiteboard/WhiteboardShape';
 
 const input = (x: number, y: number, pressure = 0.5): PointerInput => ({
   pointerId: 1,
@@ -286,6 +296,47 @@ describe('CanvasController', () => {
     return { controller, ...fixture };
   }
 
+  const shapeStyle = {
+    color: '#1d1d1f',
+    width: 3,
+    opacity: 1,
+    lineCap: 'round' as const,
+    lineJoin: 'round' as const,
+  };
+
+  function rectangle(rotation = 0) {
+    return rotateShape(
+      createShape(
+        'rectangle',
+        'rectangle',
+        { x: 100, y: 100 },
+        { x: 220, y: 180 },
+        shapeStyle,
+      ),
+      rotation,
+    );
+  }
+
+  function pointerAt(pointerId: number, point: Point2d) {
+    return pointer(pointerId, 'mouse', {
+      clientX: point.x,
+      clientY: point.y,
+    });
+  }
+
+  function selectRectangle(
+    controller: CanvasController,
+    shape: WhiteboardShape,
+  ) {
+    controller.selectTool('select');
+    const body = shapeLocalPointToWorld(shape, {
+      x: shape.geometry.width / 2,
+      y: 0,
+    });
+    controller.pointerDown(pointerAt(50, body));
+    controller.pointerUp(pointerAt(50, body));
+  }
+
   it('draws, commits, switches tools and supports undo/redo', () => {
     class Observer {
       observe = vi.fn();
@@ -353,6 +404,103 @@ describe('CanvasController', () => {
     controller.undo();
     const restored = controller.getScene().objects[0];
     expect(restored?.kind === 'shape' ? restored.geometry.x : 0).toBe(100);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('starts rotation from the visible handle outside the selected rectangle', () => {
+    const { controller } = prepareController();
+    const initial = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const handle = rotationHandlePosition(initial)!;
+    const target = { x: 230, y: 140 };
+    controller.pointerDown(pointerAt(51, handle));
+    controller.pointerMove(pointerAt(51, target));
+    controller.pointerUp(pointerAt(51, target));
+    const rotated = controller.getScene().objects[0];
+    expect(
+      rotated?.kind === 'shape' ? rotated.geometry.rotation : 0,
+    ).toBeCloseTo(Math.PI / 2);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('reuses transformed rotation handles and preserves atomic undo/redo', () => {
+    const { controller } = prepareController();
+    const initial = rectangle(Math.PI / 4);
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const visibleHandle = rotationHandlePosition(initial)!;
+    const targetRotation = -Math.PI / 4;
+    const target = rotationHandlePosition(
+      rotateShape(initial, targetRotation),
+    )!;
+    controller.pointerDown(pointerAt(52, visibleHandle));
+    controller.pointerMove(pointerAt(52, target));
+    controller.pointerUp(pointerAt(52, target));
+    const changed = controller.getScene().objects[0];
+    expect(
+      changed?.kind === 'shape' ? changed.geometry.rotation : 0,
+    ).toBeCloseTo(targetRotation);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(changed);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('resizes a rotated rectangle at its visible handle, not its stale handle, with exact history', () => {
+    const { controller } = prepareController();
+    const initial = rectangle(Math.PI / 4);
+    controller.replaceScene({ ...createEmptyScene(), objects: [initial] });
+    selectRectangle(controller, initial);
+    const visibleHandle = resizeHandlePosition(initial);
+    const target = shapeLocalPointToWorld(initial, { x: 160, y: 120 });
+    controller.pointerDown(pointerAt(53, visibleHandle));
+    controller.pointerMove(pointerAt(53, target));
+    controller.pointerUp(pointerAt(53, target));
+    const resized = controller.getScene().objects[0];
+    expect(resized?.kind).toBe('shape');
+    if (resized?.kind !== 'shape') throw new Error('Shape attendue.');
+    expect(resized.geometry.width).toBeCloseTo(160);
+    expect(resized.geometry.height).toBeCloseTo(120);
+    const resizedHandle = resizeHandlePosition(resized);
+    expect(resizedHandle.x).toBeCloseTo(target.x, 8);
+    expect(resizedHandle.y).toBeCloseTo(target.y, 8);
+    controller.undo();
+    expect(controller.getScene().objects[0]).toEqual(initial);
+    controller.redo();
+    expect(controller.getScene().objects[0]).toEqual(resized);
+
+    const staleHandle = {
+      x: resized.geometry.x + resized.geometry.width,
+      y: resized.geometry.y + resized.geometry.height,
+    };
+    expect(worldPointToShapeLocal(resized, staleHandle)).not.toEqual({
+      x: resized.geometry.width,
+      y: resized.geometry.height,
+    });
+    controller.pointerDown(pointerAt(54, staleHandle));
+    controller.pointerMove(
+      pointerAt(54, { x: staleHandle.x + 30, y: staleHandle.y + 20 }),
+    );
+    controller.pointerUp(
+      pointerAt(54, { x: staleHandle.x + 30, y: staleHandle.y + 20 }),
+    );
+    const afterStaleHandle = controller.getScene().objects[0];
+    expect(
+      afterStaleHandle?.kind === 'shape'
+        ? {
+            width: afterStaleHandle.geometry.width,
+            height: afterStaleHandle.geometry.height,
+          }
+        : null,
+    ).toEqual({
+      width: resized.geometry.width,
+      height: resized.geometry.height,
+    });
     controller.destroy();
     vi.unstubAllGlobals();
   });

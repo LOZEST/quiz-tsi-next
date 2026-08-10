@@ -71,5 +71,11 @@ describe('ProgressPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('notion-details')).toBeVisible(),
     );
+    expect(screen.getByText('En découverte')).toBeVisible();
+    expect(screen.queryByText('discovery')).toBeNull();
+    expect(screen.queryByText('Tests de chapitre liés')).toBeNull();
+    expect(
+      screen.queryByText('Disponibles dans l’historique des séances'),
+    ).toBeNull();
   });
 });

@@ -15,6 +15,90 @@ async function openPencilSettings(page: Page) {
   await expect(trigger).toHaveAttribute('aria-expanded', 'true');
 }
 
+interface BrowserShape {
+  kind: 'shape';
+  geometry: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    rotation: number | null;
+  };
+}
+
+interface BrowserScene {
+  logicalWidth: number;
+  logicalHeight: number;
+  objects: Array<BrowserShape | { kind: string }>;
+}
+
+async function readWhiteboardScene(page: Page): Promise<BrowserScene> {
+  return page.evaluate(async () => {
+    const request = indexedDB.open('quiz-tsi-user-workspaces', 2);
+    const database = await new Promise<IDBDatabase>((resolve, reject) => {
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () =>
+        reject(request.error ?? new Error('IndexedDB opening failed.'));
+    });
+    const transaction = database.transaction('whiteboardScenes', 'readonly');
+    const rows = await new Promise<Array<{ scene: BrowserScene }>>(
+      (resolve, reject) => {
+        const getAll = transaction.objectStore('whiteboardScenes').getAll();
+        getAll.onsuccess = () =>
+          resolve(getAll.result as Array<{ scene: BrowserScene }>);
+        getAll.onerror = () =>
+          reject(getAll.error ?? new Error('Scene reading failed.'));
+      },
+    );
+    database.close();
+    const scene = rows.at(-1)?.scene;
+    if (!scene) throw new Error('Whiteboard scene missing.');
+    return scene;
+  });
+}
+
+function shapeFrom(scene: BrowserScene): BrowserShape {
+  const shape = scene.objects.find(
+    (object): object is BrowserShape => object.kind === 'shape',
+  );
+  if (!shape) throw new Error('Shape missing.');
+  return shape;
+}
+
+function localToWorld(shape: BrowserShape, x: number, y: number) {
+  const geometry = shape.geometry;
+  const rotation = geometry.rotation ?? 0;
+  const dx = x - geometry.width / 2;
+  const dy = y - geometry.height / 2;
+  return {
+    x:
+      geometry.x +
+      geometry.width / 2 +
+      Math.cos(rotation) * dx -
+      Math.sin(rotation) * dy,
+    y:
+      geometry.y +
+      geometry.height / 2 +
+      Math.sin(rotation) * dx +
+      Math.cos(rotation) * dy,
+  };
+}
+
+function logicalToScreen(
+  box: { x: number; y: number; width: number; height: number },
+  scene: BrowserScene,
+  point: { x: number; y: number },
+) {
+  const scale = Math.min(
+    box.width / scene.logicalWidth,
+    box.height / scene.logicalHeight,
+  );
+  return {
+    x: box.x + (box.width - scene.logicalWidth * scale) / 2 + point.x * scale,
+    y: box.y + (box.height - scene.logicalHeight * scale) / 2 + point.y * scale,
+  };
+}
+
 test('shows a centered writable canvas and accessible controls', async ({
   page,
 }) => {
@@ -142,7 +226,7 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
 });
 
-test('places and manipulates PR6 shapes with atomic history', async ({
+test('places, rotates and resizes a shape with atomic history', async ({
   page,
 }) => {
   await login(page);
@@ -154,15 +238,63 @@ test('places and manipulates PR6 shapes with atomic history', async ({
   await page.mouse.down();
   await page.mouse.move(box!.x + 380, box!.y + 320, { steps: 4 });
   await page.mouse.up();
-  await page.getByRole('button', { name: 'Annuler' }).click();
-  await page.getByRole('button', { name: 'Rétablir' }).click();
   await page.getByRole('button', { name: 'Formes' }).click();
   await page.getByRole('menuitemradio', { name: 'Sélection' }).click();
-  await page.mouse.move(box!.x + 300, box!.y + 220);
+
+  let scene = await readWhiteboardScene(page);
+  let shape = shapeFrom(scene);
+  const rotationHandle = logicalToScreen(
+    box!,
+    scene,
+    localToWorld(shape, shape.geometry.width / 2, -24),
+  );
+  const center = logicalToScreen(
+    box!,
+    scene,
+    localToWorld(shape, shape.geometry.width / 2, shape.geometry.height / 2),
+  );
+  await page.mouse.move(rotationHandle.x, rotationHandle.y);
   await page.mouse.down();
-  await page.mouse.move(box!.x + 340, box!.y + 250, { steps: 3 });
+  await page.mouse.move(center.x + 70, center.y + 20, { steps: 4 });
   await page.mouse.up();
-  await expect(canvas).toBeVisible();
+  await expect
+    .poll(
+      async () => shapeFrom(await readWhiteboardScene(page)).geometry.rotation,
+    )
+    .not.toBe(0);
+
+  scene = await readWhiteboardScene(page);
+  shape = shapeFrom(scene);
+  const beforeResize = structuredClone(shape.geometry);
+  const resizeHandle = logicalToScreen(
+    box!,
+    scene,
+    localToWorld(shape, shape.geometry.width, shape.geometry.height),
+  );
+  const resizeTarget = logicalToScreen(
+    box!,
+    scene,
+    localToWorld(shape, shape.geometry.width + 70, shape.geometry.height + 45),
+  );
+  await page.mouse.move(resizeHandle.x, resizeHandle.y);
+  await page.mouse.down();
+  await page.mouse.move(resizeTarget.x, resizeTarget.y, { steps: 4 });
+  await page.mouse.up();
+  await expect
+    .poll(async () => shapeFrom(await readWhiteboardScene(page)).geometry.width)
+    .toBeGreaterThan(beforeResize.width + 60);
+  const afterResize = structuredClone(
+    shapeFrom(await readWhiteboardScene(page)).geometry,
+  );
+
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await expect
+    .poll(async () => shapeFrom(await readWhiteboardScene(page)).geometry.width)
+    .toBeCloseTo(beforeResize.width, 5);
+  await page.getByRole('button', { name: 'Rétablir' }).click();
+  await expect
+    .poll(async () => shapeFrom(await readWhiteboardScene(page)).geometry.width)
+    .toBeCloseTo(afterResize.width, 5);
 });
 
 test('opens the local progress summary and voluntary disclosure', async ({

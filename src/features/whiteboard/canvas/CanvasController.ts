@@ -9,8 +9,10 @@ import { ToolManager } from '../tools/ToolManager';
 import type { WhiteboardActiveTool } from '@app/providers/WhiteboardProvider';
 import {
   createShape,
+  hitTestResizeHandle,
+  hitTestRotationHandle,
   hitTestShape,
-  resizeShape,
+  resizeShapeFromWorldPoint,
   rotateShape,
   translateShape,
   type Point2d,
@@ -113,17 +115,37 @@ export class CanvasController {
           objects: [...this.scene.objects, this.gestureShape],
         };
       } else {
-        const selected = [...this.scene.objects]
-          .reverse()
-          .find(
-            (object): object is WhiteboardShape =>
-              object.kind === 'shape' && hitTestShape(object, point),
-          );
+        const currentSelection = this.scene.objects.find(
+          (object): object is WhiteboardShape =>
+            object.kind === 'shape' && object.id === this.selectedShapeId,
+        );
+        let selected: WhiteboardShape | undefined;
+        if (
+          currentSelection &&
+          hitTestRotationHandle(currentSelection, point)
+        ) {
+          selected = currentSelection;
+          this.gestureKind = 'rotate';
+        } else if (
+          currentSelection &&
+          hitTestResizeHandle(currentSelection, point)
+        ) {
+          selected = currentSelection;
+          this.gestureKind = 'resize';
+        } else if (currentSelection && hitTestShape(currentSelection, point)) {
+          selected = currentSelection;
+          this.gestureKind = 'move';
+        } else {
+          selected = [...this.scene.objects]
+            .reverse()
+            .find(
+              (object): object is WhiteboardShape =>
+                object.kind === 'shape' && hitTestShape(object, point),
+            );
+          this.gestureKind = selected ? 'move' : null;
+        }
         this.selectedShapeId = selected?.id ?? null;
         this.gestureShape = selected ?? null;
-        this.gestureKind = selected
-          ? this.selectionGesture(selected, point)
-          : null;
       }
       this.renderer.setSelection(this.selectedShapeId);
       this.renderer.schedule(this.scene);
@@ -153,11 +175,7 @@ export class CanvasController {
           point.y - this.gestureStart.y,
         );
       if (this.gestureKind === 'resize')
-        shape = resizeShape(
-          shape,
-          point.x - shape.geometry.x,
-          point.y - shape.geometry.y,
-        );
+        shape = resizeShapeFromWorldPoint(shape, point);
       if (this.gestureKind === 'rotate') {
         const center = {
           x: shape.geometry.x + shape.geometry.width / 2,
@@ -320,21 +338,6 @@ export class CanvasController {
 
   private penWidth() {
     return this.currentPenWidth;
-  }
-
-  private selectionGesture(
-    shape: WhiteboardShape,
-    point: Point2d,
-  ): 'move' | 'resize' | 'rotate' {
-    const { x, y, width, height, rotation } = shape.geometry;
-    if (
-      rotation !== null &&
-      Math.hypot(point.x - (x + width / 2), point.y - (y - 24)) <= 14
-    )
-      return 'rotate';
-    if (Math.hypot(point.x - (x + width), point.y - (y + height)) <= 16)
-      return 'resize';
-    return 'move';
   }
 
   private clearGesture() {

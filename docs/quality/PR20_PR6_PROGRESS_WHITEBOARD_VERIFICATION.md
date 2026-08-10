@@ -59,6 +59,27 @@ Passe finale complète du 2026-08-10 :
 
 Les deux builds signalent seulement le chunk JavaScript existant supérieur à 500 kB. L'inspection unique de `dist` ne trouve aucun secret connu, XLS/XLSX, `localStorage`, `eval`, `new Function`, nom de module historique copié ou ancienne dénomination de forme. `package.json` et `package-lock.json` sont inchangés : aucune dépendance de dessin ou autre dépendance npm n'a été ajoutée.
 
+## Correctifs après audit du head `89d9db5`
+
+L'audit fonctionnel de la PR a identifié deux blocages corrigés sans élargir PR6 :
+
+- les conversions `worldPointToShapeLocal` et `shapeLocalPointToWorld`, les positions et hit-tests des handles de resize/rotation sont désormais des fonctions pures partagées par le renderer et le contrôleur ;
+- une shape déjà sélectionnée teste le handle de rotation, puis le handle de resize, puis son corps, puis les autres shapes ; le handle de rotation reste donc interactif hors contour ;
+- le resize d'une shape tournée est calculé dans son repère local en conservant l'ancre opposée, de sorte que le handle visible suit le pointeur ;
+- rotation initiale, nouvelle rotation d'une shape déjà tournée, resize tourné, rejet de l'ancien emplacement non tourné et undo/redo exact sont couverts dans `CanvasController` ;
+- la ligne fabriquée « Tests de chapitre liés » est masquée tant qu'aucune donnée factuelle n'existe ;
+- les sept statuts métier restent inchangés dans le domaine et utilisent un mapping français unique dans l'interface élève.
+
+Validation ciblée après correction : 37 tests Vitest réussis et le parcours Playwright rotation/resize/undo/redo réussi sur desktop, iPad portrait et iPad paysage (3/3).
+
+Nouvelle passe finale complète après correction :
+
+- `npm run format:check`, `npm run lint` et `npm run typecheck` réussis ;
+- `npm run test:coverage` : 41 fichiers, 523 tests réussis, couverture globale 86,02 % statements, 81,39 % branches, 84,26 % functions et 88,59 % lines ;
+- `npm run build` et `npm run build:pages` réussis, avec le seul avertissement informatif déjà documenté sur le chunk supérieur à 500 kB ;
+- `npm run test:browser` : 78 tests réussis sur desktop, iPad portrait et iPad paysage ;
+- `git diff --check` réussi après mise à jour du présent rapport.
+
 ## Limites manuelles
 
 - Aucun iPad matériel ni Apple Pencil physique n'a été utilisé. Les projets Playwright iPad portrait/paysage valident les viewports et parcours automatisables, pas la sensation du Pencil, la pression matérielle ni la rotation physique.

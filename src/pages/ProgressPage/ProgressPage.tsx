@@ -11,6 +11,7 @@ import {
   type ProgressSnapshot,
 } from '@domain/progress/ProgressSnapshot';
 import styles from './ProgressPage.module.css';
+import type { MasteryStatus } from '@domain/mastery/MasteryPolicy';
 
 const resultLabels = {
   success: 'Réussi',
@@ -24,6 +25,15 @@ const modeLabels = {
   'weak-points': 'Points faibles',
   'chapter-test': 'Test de chapitres',
 } as const;
+const masteryStatusLabels: Record<MasteryStatus, string> = {
+  new: 'Nouveau',
+  'needs-review': 'À revoir',
+  overdue: 'Révision en retard',
+  discovery: 'En découverte',
+  fragile: 'Fragile',
+  solid: 'Solide',
+  progressing: 'En progression',
+};
 
 export function ProgressPage() {
   const { state } = useAuth();
@@ -205,7 +215,7 @@ function ProgressContent({
                             </div>
                             <div>
                               <dt>Statut</dt>
-                              <dd>{notion.status}</dd>
+                              <dd>{masteryStatusLabels[notion.status]}</dd>
                             </div>
                             <div>
                               <dt>Dernière activité</dt>
@@ -218,10 +228,6 @@ function ProgressContent({
                             <div>
                               <dt>Historique</dt>
                               <dd>{notion.evidenceCount} preuve(s)</dd>
-                            </div>
-                            <div>
-                              <dt>Tests de chapitre liés</dt>
-                              <dd>Disponibles dans l’historique des séances</dd>
                             </div>
                           </dl>
                         ) : null}

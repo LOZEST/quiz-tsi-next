@@ -3,11 +3,18 @@ import { restoreWhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 import {
   WHITEBOARD_SHAPE_KINDS,
   createShape,
+  hitTestResizeHandle,
+  hitTestRotationHandle,
   hitTestShape,
+  resizeHandlePosition,
   resizeShape,
+  resizeShapeFromWorldPoint,
+  rotationHandlePosition,
   rotateShape,
   shapePrimitives,
+  shapeLocalPointToWorld,
   translateShape,
+  worldPointToShapeLocal,
   type WhiteboardShapeStyle,
 } from '@domain/whiteboard/WhiteboardShape';
 
@@ -114,4 +121,31 @@ it('translates, resizes and rotates shapes without touching proportional invaria
     style,
   );
   expect(rotateShape(circle, 1)).toBe(circle);
+});
+
+it('shares exact local/world handle geometry and resizes rotated shapes from world input', () => {
+  const shape = rotateShape(
+    createShape(
+      'rotated',
+      'rectangle',
+      { x: 100, y: 100 },
+      { x: 220, y: 180 },
+      style,
+    ),
+    Math.PI / 4,
+  );
+  const local = { x: 37, y: 19 };
+  const world = shapeLocalPointToWorld(shape, local);
+  expect(worldPointToShapeLocal(shape, world).x).toBeCloseTo(local.x);
+  expect(worldPointToShapeLocal(shape, world).y).toBeCloseTo(local.y);
+  expect(hitTestResizeHandle(shape, resizeHandlePosition(shape))).toBe(true);
+  expect(hitTestRotationHandle(shape, rotationHandlePosition(shape)!)).toBe(
+    true,
+  );
+  const target = shapeLocalPointToWorld(shape, { x: 180, y: 130 });
+  const resized = resizeShapeFromWorldPoint(shape, target);
+  expect(resized.geometry.width).toBeCloseTo(180);
+  expect(resized.geometry.height).toBeCloseTo(130);
+  expect(resizeHandlePosition(resized).x).toBeCloseTo(target.x);
+  expect(resizeHandlePosition(resized).y).toBeCloseTo(target.y);
 });

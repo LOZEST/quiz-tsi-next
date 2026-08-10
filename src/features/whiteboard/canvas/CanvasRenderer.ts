@@ -3,7 +3,12 @@ import type {
   WhiteboardScene,
 } from '@domain/whiteboard/WhiteboardScene';
 import { GridRenderer } from './GridRenderer';
-import { shapePrimitives } from '@domain/whiteboard/WhiteboardShape';
+import {
+  resizeHandlePosition,
+  rotationHandlePosition,
+  shapeLocalPointToWorld,
+  shapePrimitives,
+} from '@domain/whiteboard/WhiteboardShape';
 
 export class CanvasRenderer {
   private frame: number | null = null;
@@ -134,29 +139,39 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     shape: Extract<WhiteboardObject, { kind: 'shape' }>,
   ) {
-    const { x, y, width, height, rotation } = shape.geometry;
+    const { width, height } = shape.geometry;
+    const corners = [
+      shapeLocalPointToWorld(shape, { x: 0, y: 0 }),
+      shapeLocalPointToWorld(shape, { x: width, y: 0 }),
+      shapeLocalPointToWorld(shape, { x: width, y: height }),
+      shapeLocalPointToWorld(shape, { x: 0, y: height }),
+    ];
+    const resizeHandle = resizeHandlePosition(shape);
+    const rotationHandle = rotationHandlePosition(shape);
     context.save();
-    context.translate(x + width / 2, y + height / 2);
-    context.rotate(rotation ?? 0);
-    context.translate(-width / 2, -height / 2);
     context.strokeStyle = '#0a66d8';
     context.lineWidth = 1.5;
     context.setLineDash([5, 4]);
-    context.strokeRect(0, 0, width, height);
+    context.beginPath();
+    context.moveTo(corners[0]!.x, corners[0]!.y);
+    corners.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+    context.closePath();
+    context.stroke();
     context.setLineDash([]);
     context.fillStyle = '#ffffff';
     context.strokeStyle = '#0a66d8';
     context.beginPath();
-    context.arc(width, height, 6, 0, Math.PI * 2);
+    context.arc(resizeHandle.x, resizeHandle.y, 6, 0, Math.PI * 2);
     context.fill();
     context.stroke();
-    if (rotation !== null) {
+    if (rotationHandle) {
+      const topCenter = shapeLocalPointToWorld(shape, { x: width / 2, y: 0 });
       context.beginPath();
-      context.moveTo(width / 2, 0);
-      context.lineTo(width / 2, -24);
+      context.moveTo(topCenter.x, topCenter.y);
+      context.lineTo(rotationHandle.x, rotationHandle.y);
       context.stroke();
       context.beginPath();
-      context.arc(width / 2, -24, 6, 0, Math.PI * 2);
+      context.arc(rotationHandle.x, rotationHandle.y, 6, 0, Math.PI * 2);
       context.fill();
       context.stroke();
     }

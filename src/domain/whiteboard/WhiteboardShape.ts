@@ -64,6 +64,10 @@ const fixedRotationKinds = new Set<WhiteboardShapeKind>([
   'trigonometric-circle',
 ]);
 
+export const WHITEBOARD_RESIZE_HANDLE_RADIUS = 16;
+export const WHITEBOARD_ROTATION_HANDLE_RADIUS = 14;
+export const WHITEBOARD_ROTATION_HANDLE_OFFSET = 24;
+
 export function createShape(
   id: string,
   shapeKind: WhiteboardShapeKind,
@@ -138,7 +142,10 @@ export function rotateShape(
   return { ...shape, geometry: { ...shape.geometry, rotation } };
 }
 
-function localPoint(shape: WhiteboardShape, point: Point2d): Point2d {
+export function worldPointToShapeLocal(
+  shape: WhiteboardShape,
+  point: Point2d,
+): Point2d {
   const { x, y, width, height, rotation } = shape.geometry;
   const center = { x: x + width / 2, y: y + height / 2 };
   const angle = -(rotation ?? 0);
@@ -147,6 +154,91 @@ function localPoint(shape: WhiteboardShape, point: Point2d): Point2d {
   return {
     x: Math.cos(angle) * dx - Math.sin(angle) * dy + width / 2,
     y: Math.sin(angle) * dx + Math.cos(angle) * dy + height / 2,
+  };
+}
+
+export function shapeLocalPointToWorld(
+  shape: WhiteboardShape,
+  point: Point2d,
+): Point2d {
+  const { x, y, width, height, rotation } = shape.geometry;
+  const center = { x: x + width / 2, y: y + height / 2 };
+  const angle = rotation ?? 0;
+  const dx = point.x - width / 2;
+  const dy = point.y - height / 2;
+  return {
+    x: Math.cos(angle) * dx - Math.sin(angle) * dy + center.x,
+    y: Math.sin(angle) * dx + Math.cos(angle) * dy + center.y,
+  };
+}
+
+export function resizeHandlePosition(shape: WhiteboardShape): Point2d {
+  return shapeLocalPointToWorld(shape, {
+    x: shape.geometry.width,
+    y: shape.geometry.height,
+  });
+}
+
+export function rotationHandlePosition(shape: WhiteboardShape): Point2d | null {
+  if (shape.geometry.rotation === null) return null;
+  return shapeLocalPointToWorld(shape, {
+    x: shape.geometry.width / 2,
+    y: -WHITEBOARD_ROTATION_HANDLE_OFFSET,
+  });
+}
+
+export function hitTestResizeHandle(
+  shape: WhiteboardShape,
+  point: Point2d,
+  tolerance = WHITEBOARD_RESIZE_HANDLE_RADIUS,
+): boolean {
+  const handle = resizeHandlePosition(shape);
+  return Math.hypot(point.x - handle.x, point.y - handle.y) <= tolerance;
+}
+
+export function hitTestRotationHandle(
+  shape: WhiteboardShape,
+  point: Point2d,
+  tolerance = WHITEBOARD_ROTATION_HANDLE_RADIUS,
+): boolean {
+  const handle = rotationHandlePosition(shape);
+  return (
+    handle !== null &&
+    Math.hypot(point.x - handle.x, point.y - handle.y) <= tolerance
+  );
+}
+
+export function resizeShapeFromWorldPoint(
+  shape: WhiteboardShape,
+  point: Point2d,
+): WhiteboardShape {
+  const anchor = shapeLocalPointToWorld(shape, { x: 0, y: 0 });
+  const angle = -(shape.geometry.rotation ?? 0);
+  const dx = point.x - anchor.x;
+  const dy = point.y - anchor.y;
+  const localWidth = Math.cos(angle) * dx - Math.sin(angle) * dy;
+  const localHeight = Math.sin(angle) * dx + Math.cos(angle) * dy;
+  const resized = resizeShape(
+    shape,
+    Math.max(1, localWidth),
+    Math.max(1, localHeight),
+  );
+  const half = {
+    x: resized.geometry.width / 2,
+    y: resized.geometry.height / 2,
+  };
+  const rotation = resized.geometry.rotation ?? 0;
+  const center = {
+    x: anchor.x + Math.cos(rotation) * half.x - Math.sin(rotation) * half.y,
+    y: anchor.y + Math.sin(rotation) * half.x + Math.cos(rotation) * half.y,
+  };
+  return {
+    ...resized,
+    geometry: {
+      ...resized.geometry,
+      x: center.x - half.x,
+      y: center.y - half.y,
+    },
   };
 }
 
@@ -172,7 +264,7 @@ export function hitTestShape(
   point: Point2d,
   tolerance = 8,
 ): boolean {
-  const p = localPoint(shape, point);
+  const p = worldPointToShapeLocal(shape, point);
   const { width: w, height: h } = shape.geometry;
   if (
     p.x < -tolerance ||
