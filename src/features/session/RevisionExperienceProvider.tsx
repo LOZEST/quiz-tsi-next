@@ -548,6 +548,7 @@ export function RevisionExperienceProvider({
           persistAttempt(attempt);
           return { ...current, attempt };
         });
+        setHintOpen(false);
         setHelpTrigger(trigger ?? null);
         setCorrectionOpen(true);
       },

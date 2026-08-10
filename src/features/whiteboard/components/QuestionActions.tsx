@@ -6,6 +6,7 @@ export function QuestionActions({
   hasCorrection = false,
   hintOpen = false,
   correctionOpen = false,
+  afterCorrection = false,
   completed = false,
   onHint,
   onCorrection,
@@ -17,6 +18,7 @@ export function QuestionActions({
   hasCorrection?: boolean;
   hintOpen?: boolean;
   correctionOpen?: boolean;
+  afterCorrection?: boolean;
   completed?: boolean;
   onHint?: (trigger: HTMLElement) => void;
   onCorrection?: (trigger: HTMLElement) => void;
@@ -29,7 +31,7 @@ export function QuestionActions({
       role="group"
       aria-label="Actions de la question"
     >
-      {!correctionOpen && !completed ? (
+      {!afterCorrection && !completed ? (
         <>
           <button
             type="button"
@@ -62,7 +64,7 @@ export function QuestionActions({
           </button>
         </>
       ) : null}
-      {correctionOpen && !completed ? (
+      {afterCorrection && !completed ? (
         <>
           <button type="button" onClick={() => onEvaluate?.('success')}>
             Réussi

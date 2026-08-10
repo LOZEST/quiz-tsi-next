@@ -75,6 +75,10 @@ export function WhiteboardContainer() {
         }
         hintOpen={experience.hintOpen}
         correctionOpen={experience.correctionOpen}
+        afterCorrection={
+          experience.state.kind === 'ready' &&
+          experience.state.attempt.correctionViewed
+        }
         completed={
           experience.state.kind === 'ready' &&
           experience.state.attempt.evaluation !== null

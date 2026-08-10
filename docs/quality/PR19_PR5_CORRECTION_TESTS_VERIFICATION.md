@@ -48,13 +48,14 @@
 
 - `EVALUATION-001` : indice, correction, Réussi donne `partial` avec `hintUsed: true`.
 - `EVALUATION-002` : dépassement, Réussi donne `partial` avec `timeExceeded: true`.
-- `EVALUATION-003` : un test RTL strict vérifie qu’après ouverture de la correction les boutons sont exactement Réussi, Raté et Question suivante. Indice, Voir la correction, Passer, Partiellement réussi et Presque réussi sont absents. Question suivante avant évaluation conserve la question et affiche l’instruction normative.
+- `EVALUATION-003` : un test RTL strict vérifie qu’après ouverture puis fermeture de la correction les boutons restent exactement Réussi, Raté et Question suivante. La phase pédagogique irréversible dépend de `correctionViewed`, indépendamment de la visibilité du panneau. Indice, Voir la correction, Passer, Partiellement réussi et Presque réussi sont absents. Question suivante avant évaluation conserve la question et affiche l’instruction normative.
+- Ouvrir la correction ferme un panneau Indice encore visible sans réinitialiser `hintUsed`.
 - Les tests de reprise prouvent qu’Indice puis navigation ou reload conserve `hintUsed` et transforme Réussi en `partial`; ils couvrent aussi la conservation de `timeExceeded` et `correctionViewed` par navigation.
 - Une question évaluée est reprise avec la même `QuestionEvaluation`; une nouvelle évaluation de la même instance n’est pas ajoutée.
 - `TEST-001` : le filtre de chapitre est transmis à la sélection et toutes les instances portent ce chapitre.
 - `TEST-002` / `TEST-003` : 20 et 40 instances figées exactes.
 - `TEST-004` : la clé de scène contient session et instance ; Playwright vérifie navigation et reprise.
-- Vitest : 38 fichiers et 496 tests ; couverture globale 86,90 % statements, 81,83 % branches, 83,33 % fonctions et 89,80 % lignes.
+- Vitest : 38 fichiers et 497 tests ; couverture globale 87,45 % statements, 82,11 % branches, 84,76 % fonctions et 90,30 % lignes.
 - Playwright : desktop, iPad portrait et iPad paysage ; 72 scénarios lors de la suite complète. Le parcours PR5 utilise une question NUM réelle et couvre aide, correction, Canvas, évaluation, test 40, navigation, rechargement, reprise, soumission et résultat.
 
 ## Limites

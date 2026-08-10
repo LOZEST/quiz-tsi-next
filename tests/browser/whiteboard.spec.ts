@@ -357,6 +357,23 @@ test('keeps the same question and canvas through hint, correction and evaluation
     'Presque réussi',
   ])
     await expect(actions.getByRole('button', { name })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Fermer' }).click();
+  await expect(
+    page.getByRole('complementary', { name: 'Correction' }),
+  ).toHaveCount(0);
+  await expect(actions.getByRole('button')).toHaveText([
+    'Réussi',
+    'Raté',
+    'Question suivante',
+  ]);
+  for (const name of [
+    'Indice',
+    'Voir la correction',
+    'Passer',
+    'Partiellement réussi',
+    'Presque réussi',
+  ])
+    await expect(actions.getByRole('button', { name })).toHaveCount(0);
   await actions.getByRole('button', { name: 'Question suivante' }).click();
   await expect(
     page.getByText(

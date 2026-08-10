@@ -6,6 +6,7 @@ import { WhiteboardToolbar } from '@features/whiteboard/components/WhiteboardToo
 import { QuestionActions } from '@features/whiteboard/components/QuestionActions';
 import { WhiteboardContainer } from '@features/whiteboard/components/WhiteboardContainer';
 import { RevisionExperienceProvider } from '@features/session/RevisionExperienceProvider';
+import { useRevisionExperience } from '@features/session/RevisionExperienceProvider';
 import { AppServicesProvider } from '@app/providers/AppServicesProvider';
 
 vi.mock('@features/whiteboard/canvas/WhiteboardCanvas', () => ({
@@ -38,6 +39,16 @@ describe('WhiteboardToolbar', () => {
 });
 
 describe('QuestionActions', () => {
+  function AttemptProbe() {
+    const experience = useRevisionExperience();
+    return (
+      <output data-testid="hint-used">
+        {experience.state.kind === 'ready'
+          ? String(experience.state.attempt.hintUsed)
+          : 'false'}
+      </output>
+    );
+  }
   it('loads the production NUM action bar with real help content', async () => {
     render(
       <AppServicesProvider>
@@ -81,6 +92,7 @@ describe('QuestionActions', () => {
         hasHint
         hasCorrection
         correctionOpen
+        afterCorrection
         onNext={() => undefined}
       />,
     );
@@ -100,5 +112,67 @@ describe('QuestionActions', () => {
       'Presque réussi',
     ])
       expect(within(group).queryByRole('button', { name })).toBeNull();
+  });
+
+  it('keeps the after-correction phase after closing and closes an open hint', async () => {
+    const user = userEvent.setup();
+    render(
+      <AppServicesProvider>
+        <WhiteboardProvider>
+          <RevisionExperienceProvider userId="phase-user">
+            <WhiteboardContainer />
+            <AttemptProbe />
+          </RevisionExperienceProvider>
+        </WhiteboardProvider>
+      </AppServicesProvider>,
+    );
+    const question = await screen.findByRole('article', {
+      name: 'Question active',
+    });
+    const prompt = question.textContent;
+    await user.click(screen.getByRole('button', { name: 'Indice' }));
+    expect(screen.getByRole('complementary', { name: 'Indice' })).toBeVisible();
+    expect(screen.getByTestId('hint-used')).toHaveTextContent('true');
+    await user.click(
+      screen.getByRole('button', { name: 'Voir la correction' }),
+    );
+    expect(screen.queryByRole('complementary', { name: 'Indice' })).toBeNull();
+    expect(
+      screen.getByRole('complementary', { name: 'Correction' }),
+    ).toBeVisible();
+    expect(screen.getByTestId('hint-used')).toHaveTextContent('true');
+    const actions = screen.getByRole('group', {
+      name: 'Actions de la question',
+    });
+    const expectAfterCorrectionActions = () => {
+      expect(
+        within(actions)
+          .getAllByRole('button')
+          .map((button) => button.textContent),
+      ).toEqual(['Réussi', 'Raté', 'Question suivante']);
+      for (const name of [
+        'Indice',
+        'Voir la correction',
+        'Passer',
+        'Partiellement réussi',
+        'Presque réussi',
+      ])
+        expect(within(actions).queryByRole('button', { name })).toBeNull();
+    };
+    expectAfterCorrectionActions();
+    await user.click(screen.getByRole('button', { name: 'Fermer' }));
+    expect(
+      screen.queryByRole('complementary', { name: 'Correction' }),
+    ).toBeNull();
+    expectAfterCorrectionActions();
+    await user.click(
+      within(actions).getByRole('button', { name: 'Question suivante' }),
+    );
+    expect(question).toHaveTextContent(prompt ?? '');
+    expect(
+      screen.getByText(
+        'Indique ton résultat avant de passer à la question suivante.',
+      ),
+    ).toBeVisible();
   });
 });
