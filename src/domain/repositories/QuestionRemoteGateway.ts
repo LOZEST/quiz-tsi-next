@@ -9,6 +9,7 @@ import type { QuestionWorkspaceOutboxOperation } from './QuestionWorkspaceReposi
 export type QuestionPushResult =
   | Readonly<{ kind: 'accepted' }>
   | Readonly<{ kind: 'conflict'; remote: Readonly<Question> }>
+  | Readonly<{ kind: 'taxonomy-conflict' }>
   | Readonly<{ kind: 'permission-denied' }>;
 export interface QuestionRemoteGateway {
   push(

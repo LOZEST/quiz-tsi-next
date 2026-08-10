@@ -69,7 +69,15 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     };
     await repository.saveQuestionDraftWithPersonalTaxonomy(
       'account-a',
-      draft('account-a', 'taxonomy-q'),
+      {
+        ...draft('account-a', 'taxonomy-q'),
+        classification: {
+          kind: 'personal',
+          courseId: 'course-a',
+          chapterId: null,
+          notionId: null,
+        },
+      },
       { course, chapter: null, notion: null },
       {
         question: 'taxonomy-q-op',
@@ -368,5 +376,69 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     });
     expect(pushed).toEqual(['course', 'chapter', 'notion', 'question']);
     expect(await repository.listOutbox(ownerId)).toEqual([]);
+  });
+
+  it('refuse atomiquement une notion existante rattachée à un autre chapitre', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const ownerId = 'coherent-owner';
+    const now = '2026-01-01T00:00:00.000Z';
+    const course = {
+      id: 'c',
+      ownerId,
+      title: 'Cours',
+      createdAt: now,
+      updatedAt: now,
+    };
+    const chapterA = {
+      id: 'a',
+      ownerId,
+      courseId: 'c',
+      title: 'A',
+      createdAt: now,
+      updatedAt: now,
+    };
+    const notionA = {
+      id: 'a1',
+      ownerId,
+      courseId: 'c',
+      chapterId: 'a',
+      title: 'A1',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveQuestionDraftWithPersonalTaxonomy(
+      ownerId,
+      {
+        ...draft(ownerId, 'baseline'),
+        classification: {
+          kind: 'personal',
+          courseId: 'c',
+          chapterId: 'a',
+          notionId: 'a1',
+        },
+      },
+      { course, chapter: chapterA, notion: notionA },
+      { question: 'q1', course: 'c1', chapter: 'a1-op', notion: 'n1' },
+    );
+    const chapterB = { ...chapterA, id: 'b', title: 'B' };
+    await expect(
+      repository.saveQuestionDraftWithPersonalTaxonomy(
+        ownerId,
+        {
+          ...draft(ownerId, 'invalid'),
+          classification: {
+            kind: 'personal',
+            courseId: 'c',
+            chapterId: 'b',
+            notionId: 'a1',
+          },
+        },
+        { course: null, chapter: chapterB, notion: null },
+        { question: 'q2', course: null, chapter: 'b-op', notion: null },
+      ),
+    ).rejects.toThrow('Taxonomie incohérente');
+    expect(
+      (await repository.load(ownerId)).questions.map((item) => item.id),
+    ).toEqual(['baseline']);
   });
 });

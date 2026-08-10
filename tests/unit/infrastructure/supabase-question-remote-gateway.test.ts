@@ -4,6 +4,7 @@ import {
   questionFromRemoteRow,
   SupabaseQuestionRemoteGateway,
 } from '../../../src/infrastructure/questions/SupabaseQuestionRemoteGateway';
+import type { QuestionWorkspaceOutboxOperation } from '../../../src/domain/repositories/QuestionWorkspaceRepository';
 
 const row = () => ({
   id: 'q',
@@ -109,5 +110,161 @@ describe('questionFromRemoteRow', () => {
     expect(pulled.courses.map((course) => course.title)).toEqual([
       'Thermodynamique perso',
     ]);
+  });
+});
+
+const statefulClient = (initial: Record<string, unknown[]> = {}) => {
+  const tables = new Map(Object.entries(initial));
+  const client = {
+    from(table: string) {
+      let id: string | null = null;
+      const query = {
+        select: () => query,
+        eq: (_column: string, value: string) => {
+          id = value;
+          return query;
+        },
+        order: () => query,
+        limit: () => query,
+        maybeSingle() {
+          const rows = (tables.get(table) ?? []).filter(
+            (item) => !id || (item as { id: string }).id === id,
+          );
+          return Promise.resolve({
+            data:
+              rows.sort(
+                (a, b) =>
+                  Number((b as { version?: number }).version ?? 0) -
+                  Number((a as { version?: number }).version ?? 0),
+              )[0] ?? null,
+            error: null,
+          });
+        },
+        insert(value: unknown) {
+          const rows = tables.get(table) ?? [];
+          const duplicate = rows.some(
+            (item) =>
+              (item as { id: string; version?: number }).id ===
+                (value as { id: string }).id &&
+              (table !== 'questions' ||
+                (item as { version: number }).version ===
+                  (value as { version: number }).version),
+          );
+          if (duplicate) return Promise.resolve({ error: { code: '23505' } });
+          rows.push(value);
+          tables.set(table, rows);
+          return Promise.resolve({ error: null });
+        },
+      };
+      return query;
+    },
+  } as unknown as SupabaseClient;
+  return { client, tables };
+};
+
+const questionOperation = (
+  payload = questionFromRemoteRow(row()),
+  baseVersion: number | null = null,
+): QuestionWorkspaceOutboxOperation => ({
+  operationId: 'op',
+  userId: 'owner',
+  entity: 'question',
+  entityId: payload.id,
+  kind: baseVersion === null ? 'create' : 'update',
+  baseVersion,
+  payload,
+  createdAt: payload.updatedAt,
+});
+
+describe('push distant idempotent', () => {
+  it('accepte create puis retry après réponse perdue', async () => {
+    const remote = statefulClient();
+    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
+    const operation = questionOperation();
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    expect(remote.tables.get('questions')).toHaveLength(1);
+  });
+
+  it('relit après une course 23505 et accepte le payload identique', async () => {
+    let reads = 0;
+    const payload = row();
+    const client = {
+      from() {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          order: () => query,
+          limit: () => query,
+          maybeSingle: () =>
+            Promise.resolve({
+              data: reads++ === 0 ? null : payload,
+              error: null,
+            }),
+          insert: () => Promise.resolve({ error: { code: '23505' } }),
+        };
+        return query;
+      },
+    } as unknown as SupabaseClient;
+    const gateway = new SupabaseQuestionRemoteGateway(client);
+    expect(
+      await gateway.push(questionOperation(questionFromRemoteRow(payload))),
+    ).toEqual({ kind: 'accepted' });
+  });
+
+  it('accepte update puis retry et signale un contenu différent', async () => {
+    const v1 = row();
+    const remote = statefulClient({ questions: [v1] });
+    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
+    const v2 = questionFromRemoteRow({
+      ...v1,
+      version: 2,
+      content: { ...v1.content, prompt: [{ kind: 'text', value: 'v2' }] },
+    });
+    const operation = questionOperation(v2, 1);
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    const different = { ...v2, tags: ['different'] };
+    expect(await gateway.push(questionOperation(different, 1))).toMatchObject({
+      kind: 'conflict',
+    });
+  });
+
+  it('distingue replay et conflit de taxonomie', async () => {
+    const course = {
+      id: 'c',
+      ownerId: 'owner',
+      title: 'Cours',
+      createdAt: '2026-08-10T00:00:00.000Z',
+      updatedAt: '2026-08-10T00:00:00.000Z',
+    };
+    const remote = statefulClient({
+      personal_courses: [
+        {
+          id: 'c',
+          owner_id: 'owner',
+          title: 'Cours',
+          created_at: course.createdAt,
+          updated_at: course.updatedAt,
+        },
+      ],
+    });
+    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
+    const operation = {
+      operationId: 'tax',
+      userId: 'owner',
+      entity: 'course',
+      entityId: 'c',
+      kind: 'create',
+      payload: course,
+      createdAt: course.createdAt,
+    } as const;
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    expect(
+      await gateway.push({
+        ...operation,
+        payload: { ...course, title: 'Autre' },
+      }),
+    ).toEqual({ kind: 'taxonomy-conflict' });
   });
 });

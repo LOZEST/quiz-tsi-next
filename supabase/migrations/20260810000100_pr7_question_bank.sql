@@ -66,11 +66,68 @@ alter table public.oauth_integration_clients enable row level security;
 create policy personal_courses_own on public.personal_courses for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy personal_chapters_own on public.personal_chapters for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy personal_notions_own on public.personal_notions for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
-create policy questions_read_accessible on public.questions for select using (source = 'static' or source = 'shared' or owner_id = auth.uid());
 create policy official_program_read on public.official_program_notions for select to authenticated using (true);
-create policy questions_insert_own_private on public.questions for insert with check (owner_id = auth.uid() and source in ('private','shared'));
 create policy question_imports_own on public.question_imports for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy question_import_quarantine_own on public.question_import_quarantine for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+create or replace function public.is_latest_question_version(p_id uuid, p_version integer)
+returns boolean language sql stable security definer set search_path = public, pg_temp
+as $$ select p_version = (select max(version) from public.questions where id = p_id); $$;
+
+create or replace function public.is_valid_question_classification(p_classification jsonb, p_source text)
+returns boolean language plpgsql stable security definer set search_path = public, pg_temp
+as $$
+declare v_owner uuid := auth.uid();
+begin
+  if p_classification->>'kind' = 'official' then
+    return exists (
+      select 1 from public.official_program_notions
+      where part_id = p_classification->>'partId'
+        and chapter_id = p_classification->>'chapterId'
+        and notion_id = p_classification->>'notionId'
+    );
+  end if;
+  if p_classification->>'kind' <> 'personal' or p_source = 'shared' then return false; end if;
+  return exists (
+    select 1 from public.personal_courses c
+    where c.id = (p_classification->>'courseId')::uuid and c.owner_id = v_owner
+      and (nullif(p_classification->>'chapterId','') is null or exists (
+        select 1 from public.personal_chapters ch
+        where ch.id = (p_classification->>'chapterId')::uuid
+          and ch.course_id = c.id and ch.owner_id = v_owner
+      ))
+      and (nullif(p_classification->>'notionId','') is null or exists (
+        select 1 from public.personal_notions n
+        where n.id = (p_classification->>'notionId')::uuid
+          and n.course_id = c.id and n.owner_id = v_owner
+          and n.chapter_id is not distinct from nullif(p_classification->>'chapterId','')::uuid
+      ))
+  );
+exception when invalid_text_representation then return false;
+end $$;
+
+revoke all on function public.is_latest_question_version(uuid, integer) from public, anon, authenticated;
+revoke all on function public.is_valid_question_classification(jsonb, text) from public, anon, authenticated;
+grant execute on function public.is_latest_question_version(uuid, integer) to authenticated;
+grant execute on function public.is_valid_question_classification(jsonb, text) to authenticated;
+
+create policy questions_read_accessible on public.questions for select using (
+  owner_id = auth.uid() or source = 'static' or (
+    source = 'shared' and status = 'published' and validated
+    and public.is_latest_question_version(id, version)
+  )
+);
+create policy questions_insert_own on public.questions for insert with check (
+  owner_id = auth.uid()
+  and source in ('private','shared')
+  and public.is_valid_question_classification(classification, source)
+  and (
+    source = 'private' or exists (
+      select 1 from public.profiles
+      where user_id = auth.uid() and role in ('admin','owner')
+    )
+  )
+);
 
 create view public.latest_accessible_questions
 with (security_invoker = true)

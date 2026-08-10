@@ -41,6 +41,30 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     if (result.ok) expect(result.value.questions).toHaveLength(1);
   });
 
+  it('accepte une classification officielle et tous les segments fermés', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        {
+          ...entry,
+          classification: {
+            kind: 'official',
+            chapterId: 'numbers-arithmetic',
+            notionId: 'NUM-F01',
+            confidence: 'certain',
+          },
+          prompt: [
+            { kind: 'text', value: 'Calculer' },
+            { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x+1' } },
+            { kind: 'display-math', math: { syntaxVersion: 1, source: 'x=1' } },
+            { kind: 'line-break' },
+          ],
+        },
+      ],
+    });
+    expect(result.ok && result.acceptedIndices).toEqual([0]);
+  });
+
   it.each(['ownerId', 'validated', 'source', 'status', 'partId'])(
     'refuse le champ autoritaire %s',
     (field) => {
@@ -73,6 +97,77 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
       ]);
     }
   });
+
+  it('quarantaine un titre personnel trop long sans perdre une autre entrée', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        entry,
+        {
+          ...entry,
+          classification: {
+            ...entry.classification,
+            proposedCourseTitle: 'x'.repeat(201),
+          },
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.acceptedIndices).toEqual([0]);
+      expect(result.quarantined).toEqual([
+        expect.objectContaining({ index: 1 }),
+      ]);
+    }
+  });
+
+  it('refuse les dépassements segment et variables', () => {
+    const long = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        { ...entry, prompt: [{ kind: 'text', value: 'x'.repeat(20_001) }] },
+      ],
+    });
+    expect(long.ok && long.quarantined[0]?.code).toBe('invalid-content');
+    const parameterized = {
+      ...entry,
+      parameterization: {
+        schemaVersion: 1,
+        validationVariantCount: 1,
+        constraints: [],
+        variables: Array.from({ length: 33 }, (_, index) => ({
+          id: `v${index}`,
+          label: 'v',
+          domain: { kind: 'choice', values: [1] },
+        })),
+      },
+    };
+    const variables = validateChatGptQuestionImport({
+      ...payload,
+      questions: [parameterized],
+    });
+    expect(variables.ok && variables.quarantined[0]?.code).toBe(
+      'invalid-parameterization',
+    );
+  });
+
+  it.each(['unknownField', '__proto__', 'constructor', 'prototype'])(
+    'refuse la propriété inconnue ou dangereuse %s',
+    (field) => {
+      const hostile = JSON.parse(JSON.stringify(payload)) as Record<
+        string,
+        unknown
+      >;
+      const questions = hostile.questions as Record<string, unknown>[];
+      Object.defineProperty(questions[0]!, field, {
+        value: {},
+        enumerable: true,
+        configurable: true,
+      });
+      const result = validateChatGptQuestionImport(hostile);
+      expect(result.ok && result.quarantined[0]?.code).toBe('unknown-field');
+    },
+  );
 
   it('exige la confirmation et canonicalise indépendamment de l’ordre des clés', () => {
     expect(

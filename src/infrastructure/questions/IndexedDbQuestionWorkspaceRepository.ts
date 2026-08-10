@@ -206,6 +206,45 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
       ['courses', 'chapters', 'notions', 'questions', 'outbox'],
       'readwrite',
     );
+    const course =
+      taxonomy.course ??
+      (
+        await transaction
+          .objectStore('courses')
+          .get(key(userId, classification.courseId))
+      )?.value;
+    const chapter = classification.chapterId
+      ? (taxonomy.chapter ??
+        (
+          await transaction
+            .objectStore('chapters')
+            .get(key(userId, classification.chapterId))
+        )?.value)
+      : null;
+    const notion = classification.notionId
+      ? (taxonomy.notion ??
+        (
+          await transaction
+            .objectStore('notions')
+            .get(key(userId, classification.notionId))
+        )?.value)
+      : null;
+    if (
+      !course ||
+      course.ownerId !== userId ||
+      course.id !== classification.courseId ||
+      (classification.chapterId &&
+        (!chapter ||
+          chapter.ownerId !== userId ||
+          chapter.courseId !== course.id)) ||
+      (classification.notionId &&
+        (!notion ||
+          notion.ownerId !== userId ||
+          notion.courseId !== course.id ||
+          notion.chapterId !== classification.chapterId))
+    ) {
+      throw new Error('Taxonomie incohérente.');
+    }
     const createdAt = new Date().toISOString();
     const taxonomyEntries = [
       ['course', 'courses', taxonomy.course, operationIds.course],

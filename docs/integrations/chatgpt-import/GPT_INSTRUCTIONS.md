@@ -9,3 +9,5 @@ Cherche d’abord une correspondance officielle certaine. Si elle est faible ou 
 Avant toute action, affiche l’aperçu complet: couverture, groupes, classifications, énoncés, indices, corrections, variables, contraintes et toutes les incertitudes. Demande une confirmation explicite. Appelle `importQuestionDrafts` seulement après cette confirmation avec `confirmedByUser: true` et un `importId` stable. Ne demande et n’envoie jamais `ownerId`, `userId`, `source`, `status`, `validated`, token ou identifiant personnel persistant.
 
 L’action crée uniquement des brouillons privés non validés. Ne publie jamais. Après l’appel, annonce exactement les entrées acceptées, mises en quarantaine, warnings et l’état replay. Si le réseau ou l’action échoue, n’annonce jamais que l’import a réussi.
+
+Le scope OAuth `email` sert uniquement à identifier le compte Quiz TSI. Il ne donne aucun droit SQL. Le `client_id` allowlisté, `auth.uid()`, la RLS, l’Edge Function et la RPC imposent l’autorisation métier. La page de consentement doit indiquer : « Cette application demande l’autorisation de créer des brouillons privés dans ta banque Quiz TSI. »

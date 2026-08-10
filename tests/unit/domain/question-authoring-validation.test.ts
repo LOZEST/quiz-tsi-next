@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { validateQuestionForReview } from '../../../src/domain/questions/QuestionAuthoringValidation';
-import type { Question } from '../../../src/domain/questions/Question';
+import {
+  prepareQuestionForReview,
+  validateQuestionForReview,
+} from '../../../src/domain/questions/QuestionAuthoringValidation';
+import {
+  validateQuestion,
+  type Question,
+} from '../../../src/domain/questions/Question';
 
 const value = (): Question => ({
   id: 'authoring',
@@ -56,6 +62,18 @@ const value = (): Question => ({
 describe('validateQuestionForReview', () => {
   it('exige dix variantes réelles pour private paramétrée', () => {
     expect(validateQuestionForReview(value())).toEqual([]);
+    const prepared = prepareQuestionForReview(value());
+    expect(prepared.validationEvidence.variantCount).toBe(10);
+    expect(
+      prepared.normalizedQuestion.parameterization?.validationVariantCount,
+    ).toBe(10);
+    expect(
+      validateQuestion({
+        ...prepared.normalizedQuestion,
+        status: 'published',
+        validated: true,
+      }).ok,
+    ).toBe(true);
     const base = value();
     const insufficient: Question = {
       ...base,

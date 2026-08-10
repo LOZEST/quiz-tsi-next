@@ -98,6 +98,26 @@ const text = (value: unknown, nullable = false): value is string | null =>
   (nullable && value === null) ||
   (typeof value === 'string' &&
     value.length <= CHATGPT_IMPORT_LIMITS.textCharacters);
+const hasOnlyKeys = (
+  value: Record<string, unknown>,
+  allowed: readonly string[],
+) => Object.keys(value).every((key) => allowed.includes(key));
+const hasDangerousKey = (value: unknown): boolean => {
+  if (Array.isArray(value)) return value.some(hasDangerousKey);
+  if (!record(value)) return false;
+  return Object.keys(value).some(
+    (key) =>
+      ['__proto__', 'constructor', 'prototype'].includes(key) ||
+      hasDangerousKey(value[key]),
+  );
+};
+const hasOwnDangerousKey = (value: Record<string, unknown>) =>
+  Object.keys(value).some((key) =>
+    ['__proto__', 'constructor', 'prototype'].includes(key),
+  );
+const boundedText = (value: unknown, maximum: number, nullable = false) =>
+  (nullable && value === null) ||
+  (typeof value === 'string' && value.length <= maximum);
 const issue = (
   index: number,
   code: string,
@@ -127,12 +147,101 @@ const segments = (
   Array.isArray(value) &&
   value.length <= CHATGPT_IMPORT_LIMITS.segmentsPerField &&
   (allowEmpty || value.length > 0) &&
-  value.every((entry) => validateContentSegment(entry).ok);
+  value.every(
+    (entry) => strictSegment(entry) && validateContentSegment(entry).ok,
+  );
+
+function strictSegment(value: unknown): boolean {
+  if (!record(value)) return false;
+  if (value.kind === 'text')
+    return (
+      hasOnlyKeys(value, ['kind', 'value']) &&
+      boundedText(value.value, CHATGPT_IMPORT_LIMITS.textCharacters)
+    );
+  if (value.kind === 'line-break') return hasOnlyKeys(value, ['kind']);
+  if (value.kind === 'inline-math' || value.kind === 'display-math')
+    return (
+      hasOnlyKeys(value, ['kind', 'math']) &&
+      record(value.math) &&
+      hasOnlyKeys(value.math, ['syntaxVersion', 'source']) &&
+      boundedText(value.math.source, CHATGPT_IMPORT_LIMITS.textCharacters)
+    );
+  return false;
+}
+
+function strictExpression(value: unknown): boolean {
+  if (!record(value)) return false;
+  const keys: Record<string, readonly string[]> = {
+    literal: ['kind', 'value'],
+    variable: ['kind', 'variableId'],
+    unary: ['kind', 'operator', 'operand'],
+    binary: ['kind', 'operator', 'left', 'right'],
+    comparison: ['kind', 'operator', 'left', 'right'],
+    'math-function': ['kind', 'function', 'arguments'],
+    logical: ['kind', 'operator', 'operands'],
+    'logical-not': ['kind', 'operand'],
+  };
+  const allowed = keys[String(value.kind)];
+  if (!allowed || !hasOnlyKeys(value, allowed)) return false;
+  if ('operand' in value && !strictExpression(value.operand)) return false;
+  if (
+    'left' in value &&
+    (!strictExpression(value.left) || !strictExpression(value.right))
+  )
+    return false;
+  if (
+    'arguments' in value &&
+    (!Array.isArray(value.arguments) ||
+      !value.arguments.every(strictExpression))
+  )
+    return false;
+  if (
+    'operands' in value &&
+    (!Array.isArray(value.operands) || !value.operands.every(strictExpression))
+  )
+    return false;
+  return true;
+}
+
+function strictParameterization(value: unknown): boolean {
+  if (
+    !record(value) ||
+    !hasOnlyKeys(value, [
+      'schemaVersion',
+      'variables',
+      'constraints',
+      'validationVariantCount',
+    ]) ||
+    !Array.isArray(value.variables) ||
+    value.variables.length > CHATGPT_IMPORT_LIMITS.variables ||
+    !Array.isArray(value.constraints) ||
+    !value.constraints.every(strictExpression)
+  )
+    return false;
+  return value.variables.every((variable) => {
+    if (
+      !record(variable) ||
+      !hasOnlyKeys(variable, ['id', 'label', 'domain']) ||
+      !record(variable.domain)
+    )
+      return false;
+    const domainKeys =
+      variable.domain.kind === 'integer'
+        ? ['kind', 'minimum', 'maximum', 'step', 'excludedValues']
+        : variable.domain.kind === 'decimal'
+          ? ['kind', 'minimum', 'maximum', 'decimals', 'excludedValues']
+          : variable.domain.kind === 'choice'
+            ? ['kind', 'values']
+            : [];
+    return domainKeys.length > 0 && hasOnlyKeys(variable.domain, domainKeys);
+  });
+}
 
 function classification(value: unknown): value is ImportClassification {
   if (!record(value)) return false;
   if (value.kind === 'official')
     return (
+      hasOnlyKeys(value, ['kind', 'chapterId', 'notionId', 'confidence']) &&
       text(value.chapterId) &&
       text(value.notionId) &&
       (value.confidence === 'certain' || value.confidence === 'uncertain') &&
@@ -140,11 +249,30 @@ function classification(value: unknown): value is ImportClassification {
     );
   return (
     value.kind === 'personal' &&
+    hasOnlyKeys(value, [
+      'kind',
+      'proposedCourseTitle',
+      'proposedChapterTitle',
+      'proposedNotionTitle',
+      'reason',
+      'requiresUserConfirmation',
+    ]) &&
     typeof value.proposedCourseTitle === 'string' &&
-    text(value.proposedCourseTitle) &&
+    boundedText(
+      value.proposedCourseTitle,
+      CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
+    ) &&
     value.proposedCourseTitle.trim() !== '' &&
-    text(value.proposedChapterTitle, true) &&
-    text(value.proposedNotionTitle, true) &&
+    boundedText(
+      value.proposedChapterTitle,
+      CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
+      true,
+    ) &&
+    boundedText(
+      value.proposedNotionTitle,
+      CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
+      true,
+    ) &&
     text(value.reason) &&
     value.requiresUserConfirmation === true
   );
@@ -159,6 +287,40 @@ function validateEntry(
     return issue(index, 'invalid-entry', path, 'Question invalide.');
   const injected = forbidden(value, path, index);
   if (injected) return injected;
+  if (
+    hasDangerousKey(value) ||
+    !hasOnlyKeys(value, [
+      'clientEntryId',
+      'classification',
+      'type',
+      'difficulty',
+      'parameterization',
+      'prompt',
+      'hint',
+      'correction',
+      'tags',
+      'uncertainties',
+    ])
+  )
+    return issue(
+      index,
+      'unknown-field',
+      path,
+      'Propriété inconnue ou dangereuse.',
+    );
+  if (
+    !boundedText(
+      value.clientEntryId,
+      CHATGPT_IMPORT_LIMITS.clientEntryIdCharacters,
+      true,
+    )
+  )
+    return issue(
+      index,
+      'invalid-client-entry-id',
+      `${path}.clientEntryId`,
+      'Identifiant client invalide.',
+    );
   if (!classification(value.classification))
     return issue(
       index,
@@ -193,7 +355,14 @@ function validateEntry(
     value.correction.length > CHATGPT_IMPORT_LIMITS.correctionSteps ||
     !value.correction.every(
       (step) =>
-        record(step) && text(step.title, true) && segments(step.content, false),
+        record(step) &&
+        hasOnlyKeys(step, ['title', 'content']) &&
+        boundedText(
+          step.title,
+          CHATGPT_IMPORT_LIMITS.correctionTitleCharacters,
+          true,
+        ) &&
+        segments(step.content, false),
     )
   )
     return issue(
@@ -205,7 +374,9 @@ function validateEntry(
   if (
     !Array.isArray(value.tags) ||
     value.tags.length > CHATGPT_IMPORT_LIMITS.tags ||
-    !value.tags.every((tag) => text(tag))
+    !value.tags.every((tag) =>
+      boundedText(tag, CHATGPT_IMPORT_LIMITS.tagCharacters),
+    )
   )
     return issue(index, 'invalid-tags', `${path}.tags`, 'Tags invalides.');
   const codes = new Set([
@@ -221,9 +392,16 @@ function validateEntry(
     !value.uncertainties.every(
       (entry) =>
         record(entry) &&
+        hasOnlyKeys(entry, ['code', 'path', 'message']) &&
         codes.has(String(entry.code)) &&
-        text(entry.path) &&
-        text(entry.message),
+        boundedText(
+          entry.path,
+          CHATGPT_IMPORT_LIMITS.uncertaintyPathCharacters,
+        ) &&
+        boundedText(
+          entry.message,
+          CHATGPT_IMPORT_LIMITS.uncertaintyMessageCharacters,
+        ),
     )
   )
     return issue(
@@ -234,7 +412,8 @@ function validateEntry(
     );
   if (
     value.parameterization !== null &&
-    !validateParameterizedQuestionSpec(value.parameterization).ok
+    (!strictParameterization(value.parameterization) ||
+      !validateParameterizedQuestionSpec(value.parameterization).ok)
   )
     return issue(
       index,
@@ -264,6 +443,23 @@ export function validateChatGptQuestionImport(input: unknown): Result {
     };
   const injected = forbidden(input, '$', -1);
   if (injected) return { ok: false, issues: [injected] };
+  if (
+    hasOwnDangerousKey(input) ||
+    !hasOnlyKeys(input, [
+      'schemaVersion',
+      'importId',
+      'analysisCoverage',
+      'confirmedByUser',
+      'document',
+      'questions',
+    ])
+  )
+    return {
+      ok: false,
+      issues: [
+        issue(-1, 'unknown-field', '$', 'Propriété inconnue ou dangereuse.'),
+      ],
+    };
   if (
     input.schemaVersion !== 1 ||
     typeof input.importId !== 'string' ||
@@ -300,6 +496,8 @@ export function validateChatGptQuestionImport(input: unknown): Result {
     };
   if (
     !record(input.document) ||
+    hasOwnDangerousKey(input.document) ||
+    !hasOnlyKeys(input.document, ['kind', 'title', 'pageCount']) ||
     !['photo', 'pdf'].includes(String(input.document.kind)) ||
     !text(input.document.title, true) ||
     !(

@@ -18,7 +18,7 @@ import {
   type Difficulty,
   type CorrectionStep,
 } from '@domain/questions/Question';
-import { validateQuestionForReview } from '@domain/questions/QuestionAuthoringValidation';
+import { prepareQuestionForReview } from '@domain/questions/QuestionAuthoringValidation';
 import { validateParameterizedQuestion } from '@domain/questions/QuestionParameterValidation';
 import {
   MATH_SYMBOL_REGISTRY_V1,
@@ -54,6 +54,8 @@ export function QuestionsPage() {
     programIndex,
   } = useAppServices();
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
+  const canPublishShared =
+    state.status === 'authenticated' && state.session.user.role !== 'user';
   const [workspace, setWorkspace] =
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
@@ -407,6 +409,7 @@ export function QuestionsPage() {
             {selected ? (
               <QuestionPreview
                 question={selected}
+                canPublishShared={canPublishShared}
                 onEdit={() => setEditing(true)}
                 onDuplicate={() => {
                   const now = new Date().toISOString();
@@ -426,12 +429,12 @@ export function QuestionsPage() {
                   );
                 }}
                 onReview={() => {
-                  const errors = validateQuestionForReview(selected);
-                  setReviewErrors(errors);
-                  if (!errors.length)
+                  const prepared = prepareQuestionForReview(selected);
+                  setReviewErrors(prepared.issues);
+                  if (!prepared.issues.length)
                     void mutate(
                       {
-                        ...selected,
+                        ...prepared.normalizedQuestion,
                         version: selected.version + 1,
                         validated: true,
                         updatedAt: new Date().toISOString(),
@@ -440,12 +443,22 @@ export function QuestionsPage() {
                     );
                 }}
                 onPublish={() => {
-                  const errors = validateQuestionForReview(selected);
+                  const prepared = prepareQuestionForReview(selected);
+                  const errors =
+                    questionClassification(selected)?.kind !== 'official'
+                      ? [
+                          {
+                            path: 'question.classification',
+                            message:
+                              'Seule une classification officielle peut être partagée.',
+                          },
+                        ]
+                      : prepared.issues;
                   setReviewErrors(errors);
-                  if (!errors.length)
+                  if (canPublishShared && !errors.length)
                     void mutate(
                       {
-                        ...selected,
+                        ...prepared.normalizedQuestion,
                         version: selected.version + 1,
                         source: 'shared',
                         status: 'published',
@@ -566,6 +579,7 @@ export function QuestionsPage() {
 
 function QuestionPreview({
   question,
+  canPublishShared,
   onEdit,
   onDuplicate,
   onReview,
@@ -573,6 +587,7 @@ function QuestionPreview({
   onArchive,
 }: {
   question: Readonly<Question>;
+  canPublishShared: boolean;
   onEdit: () => void;
   onDuplicate: () => void;
   onReview: () => void;
@@ -641,7 +656,9 @@ function QuestionPreview({
         ) : null}
         {question.source === 'private' &&
         question.status === 'draft' &&
-        question.validated ? (
+        question.validated &&
+        canPublishShared &&
+        classification?.kind === 'official' ? (
           <button type="button" onClick={onPublish}>
             Partager
           </button>
@@ -812,7 +829,32 @@ function QuestionEditor({
     const newNotion = personalNotionTitle.trim() !== '';
     const resolvedNotionId = newNotion
       ? pendingTaxonomyIds.current.notion
-      : personalNotionId || null;
+      : newChapter
+        ? null
+        : personalNotionId || null;
+    const existingCourse = workspace.courses.find(
+      (item) => item.id === resolvedCourseId && item.ownerId === userId,
+    );
+    if (!newCourse && !existingCourse) return null;
+    const existingChapter = resolvedChapterId
+      ? workspace.chapters.find(
+          (item) =>
+            item.id === resolvedChapterId &&
+            item.ownerId === userId &&
+            item.courseId === resolvedCourseId,
+        )
+      : null;
+    if (resolvedChapterId && !newChapter && !existingChapter) return null;
+    const existingNotion = resolvedNotionId
+      ? workspace.notions.find(
+          (item) =>
+            item.id === resolvedNotionId &&
+            item.ownerId === userId &&
+            item.courseId === resolvedCourseId &&
+            item.chapterId === resolvedChapterId,
+        )
+      : null;
+    if (resolvedNotionId && !newNotion && !existingNotion) return null;
     return {
       classification: {
         kind: 'personal',
@@ -881,7 +923,8 @@ function QuestionEditor({
             schemaVersion: 1,
             variables,
             constraints,
-            validationVariantCount: 10,
+            validationVariantCount:
+              initial?.parameterization?.validationVariantCount ?? 0,
           }
         : null,
       prompt: segments,
@@ -1077,9 +1120,10 @@ function QuestionEditor({
                 Nouveau chapitre facultatif
                 <input
                   value={personalChapterTitle}
-                  onChange={(event) =>
-                    setPersonalChapterTitle(event.target.value)
-                  }
+                  onChange={(event) => {
+                    setPersonalChapterTitle(event.target.value);
+                    if (event.target.value.trim()) setPersonalNotionId('');
+                  }}
                 />
               </label>
               <label>

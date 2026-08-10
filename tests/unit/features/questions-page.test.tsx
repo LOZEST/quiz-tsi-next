@@ -34,6 +34,7 @@ const question = (overrides: Partial<Question> = {}): Question => ({
 });
 
 let snapshot: QuestionWorkspaceSnapshot;
+let currentRole: 'user' | 'admin' | 'owner' = 'owner';
 const load = vi.fn(() => Promise.resolve(snapshot));
 const saveQuestion = vi.fn((_userId, next: Question) => {
   snapshot = {
@@ -92,7 +93,10 @@ const questionRemoteGateway = {
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
-    state: { status: 'authenticated', session: { user: { id: 'user-1' } } },
+    state: {
+      status: 'authenticated',
+      session: { user: { id: 'user-1', role: currentRole } },
+    },
   }),
 }));
 vi.mock('@app/providers/AppServicesProvider', () => ({
@@ -118,6 +122,7 @@ import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
 
 describe('QuestionsPage', () => {
   beforeEach(() => {
+    currentRole = 'owner';
     snapshot = {
       questions: [question()],
       courses: [],
@@ -158,6 +163,153 @@ describe('QuestionsPage', () => {
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     await user.click(screen.getByRole('button', { name: 'Archiver' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(3));
+  });
+
+  it('masque le partage à un user', async () => {
+    currentRole = 'user';
+    snapshot = { ...snapshot, questions: [question({ validated: true })] };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      (await screen.findAllByRole('button', { name: /Calculer la somme/ }))[0]!,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Partager' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('persiste dix variantes prouvées lors de la relecture d’un import paramétré', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({
+          prompt: [{ kind: 'text', value: 'Calculer @n' }],
+          correction: [
+            {
+              id: 'step-1',
+              title: null,
+              content: [{ kind: 'text', value: '@n' }],
+            },
+          ],
+          parameterization: {
+            schemaVersion: 1,
+            validationVariantCount: 1,
+            variables: [
+              {
+                id: 'n',
+                label: 'n',
+                domain: {
+                  kind: 'integer',
+                  minimum: 1,
+                  maximum: 10,
+                  step: 1,
+                  excludedValues: [],
+                },
+              },
+            ],
+            constraints: [],
+          },
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      (await screen.findAllByRole('button', { name: /Calculer/ }))[0]!,
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Valider la relecture' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.parameterization?.validationVariantCount).toBe(10);
+    expect(saved.validated).toBe(true);
+    await user.click(await screen.findByRole('button', { name: 'Partager' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).status).toBe(
+      'published',
+    );
+  });
+
+  it('efface une notion existante lorsqu’un nouveau chapitre est saisi', async () => {
+    snapshot = {
+      ...snapshot,
+      courses: [
+        {
+          id: 'course',
+          ownerId: 'user-1',
+          title: 'Cours',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      chapters: [
+        {
+          id: 'chapter-a',
+          courseId: 'course',
+          ownerId: 'user-1',
+          title: 'A',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      notions: [
+        {
+          id: 'notion-a1',
+          courseId: 'course',
+          chapterId: 'chapter-a',
+          ownerId: 'user-1',
+          title: 'A1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('button', { name: 'Créer une question' }),
+    );
+    await user.selectOptions(
+      screen.getByLabelText('Type de classification'),
+      'personal',
+    );
+    await user.selectOptions(screen.getByLabelText('Cours'), 'course');
+    await user.selectOptions(
+      screen.getByLabelText('Chapitre existant facultatif'),
+      'chapter-a',
+    );
+    await user.selectOptions(
+      screen.getByLabelText('Notion existante facultative'),
+      'notion-a1',
+    );
+    await user.type(screen.getByLabelText('Nouveau chapitre facultatif'), 'B');
+    await user.type(screen.getByLabelText('Texte'), 'Question');
+    const correction = screen.getByRole('group', {
+      name: 'Contenu de l’étape 1',
+    });
+    await user.click(
+      within(correction).getByRole('button', { name: '+ Texte' }),
+    );
+    await user.type(within(correction).getByLabelText('Texte'), 'Réponse');
+    await user.click(
+      screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
+    );
+    await waitFor(() =>
+      expect(saveQuestionDraftWithPersonalTaxonomy).toHaveBeenCalled(),
+    );
+    const saved = saveQuestionDraftWithPersonalTaxonomy.mock.calls.at(
+      -1,
+    )?.[1] as Question;
+    expect(saved.classification).toMatchObject({
+      courseId: 'course',
+      notionId: null,
+    });
+    expect(
+      saved.classification &&
+        'chapterId' in saved.classification &&
+        saved.classification.chapterId,
+    ).not.toBe('chapter-a');
   });
 
   it('crée et édite les segments structurés et les aides mathématiques', async () => {

@@ -15,11 +15,13 @@ export async function syncQuestionWorkspace(
     )
     .slice(0, 50);
   let permissionDenied = false;
+  let taxonomyConflict = false;
   for (const operation of operations) {
     const result = await remote.push(operation);
     if (result.kind === 'accepted')
       await local.completeOperation(userId, operation.operationId);
     else if (result.kind === 'permission-denied') permissionDenied = true;
+    else if (result.kind === 'taxonomy-conflict') taxonomyConflict = true;
     else if (operation.entity === 'question')
       await local.recordConflict(userId, {
         id: crypto.randomUUID(),
@@ -36,6 +38,7 @@ export async function syncQuestionWorkspace(
   return {
     pushed: operations.length,
     permissionDenied,
+    taxonomyConflict,
     rejectedRemoteRows: pulled.rejectedRows,
   };
 }

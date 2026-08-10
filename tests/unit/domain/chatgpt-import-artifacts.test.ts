@@ -10,6 +10,9 @@ describe('artefacts Import ChatGPT', () => {
     );
     expect(openapi).toContain('operationId: importQuestionDrafts');
     expect(openapi.match(/operationId:/g)).toHaveLength(1);
+    expect(openapi).toContain('quizTsiOAuth: [email]');
+    expect(openapi).toContain('email: Identifier le compte Quiz TSI');
+    expect(openapi).not.toContain('questions.import');
     expect(openapi).not.toMatch(
       /OPENAI_API_KEY|service_role|Bearer [A-Za-z0-9]/,
     );

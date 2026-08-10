@@ -81,8 +81,13 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
       });
       if (error?.code === '42501')
         return { kind: 'permission-denied' as const };
-      if (error && error.code !== '23505')
-        throw new Error('Synchronisation de la taxonomie impossible.');
+      if (error?.code === '23505') {
+        const existing = await this.readTaxonomy(table, payload.id);
+        return existing && taxonomyEqual(existing, payload)
+          ? { kind: 'accepted' as const }
+          : { kind: 'taxonomy-conflict' as const };
+      }
+      if (error) throw new Error('Synchronisation de la taxonomie impossible.');
       return { kind: 'accepted' as const };
     }
     const latestResponse = (await this.client
@@ -93,21 +98,51 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
       .limit(1)
       .maybeSingle()) as { data: unknown };
     const latest = latestResponse.data;
-    if (
-      isRecord(latest) &&
-      operation.baseVersion !== null &&
-      Number(latest.version) !== operation.baseVersion
-    )
-      return {
-        kind: 'conflict' as const,
-        remote: questionFromRemoteRow(latest),
-      };
+    if (isRecord(latest)) {
+      const remote = questionFromRemoteRow(latest);
+      if (remote.version === operation.payload.version)
+        return questionsEqual(remote, operation.payload)
+          ? { kind: 'accepted' as const }
+          : { kind: 'conflict' as const, remote };
+      if (
+        remote.version > operation.payload.version ||
+        operation.baseVersion === null ||
+        remote.version !== operation.baseVersion
+      )
+        return { kind: 'conflict' as const, remote };
+    }
     const { error } = await this.client
       .from('questions')
       .insert(rowFor(operation.payload));
     if (error?.code === '42501') return { kind: 'permission-denied' as const };
+    if (error?.code === '23505') {
+      const replay = await this.readLatestQuestion(operation.entityId);
+      if (replay && questionsEqual(replay, operation.payload))
+        return { kind: 'accepted' as const };
+      if (replay) return { kind: 'conflict' as const, remote: replay };
+    }
     if (error) throw new Error('Synchronisation de la question impossible.');
     return { kind: 'accepted' as const };
+  }
+  private async readLatestQuestion(id: string): Promise<Question | null> {
+    const response = (await this.client
+      .from('questions')
+      .select('*')
+      .eq('id', id)
+      .order('version', { ascending: false })
+      .limit(1)
+      .maybeSingle()) as { data: unknown };
+    return isRecord(response.data)
+      ? questionFromRemoteRow(response.data)
+      : null;
+  }
+  private async readTaxonomy(table: string, id: string): Promise<unknown> {
+    const response = (await this.client
+      .from(table)
+      .select('*')
+      .eq('id', id)
+      .maybeSingle()) as { data: unknown };
+    return response.data;
   }
   async pullRecent(userId: string, limit: number) {
     const boundedLimit = Math.min(100, Math.max(1, limit));
@@ -216,3 +251,29 @@ function taxonomyRows(
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const questionsEqual = (
+  left: Readonly<Question>,
+  right: Readonly<Question>,
+) => {
+  const normalize = (question: Readonly<Question>) => ({
+    ...rowFor(question),
+    created_at: Date.parse(question.createdAt),
+    updated_at: Date.parse(question.updatedAt),
+  });
+  return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
+};
+
+const taxonomyEqual = (
+  row: unknown,
+  payload: PersonalCourse | PersonalChapter | PersonalNotion,
+) => {
+  if (!isRecord(row)) return false;
+  return (
+    row.id === payload.id &&
+    row.owner_id === payload.ownerId &&
+    row.title === payload.title &&
+    (!('courseId' in payload) || row.course_id === payload.courseId) &&
+    (!('chapterId' in payload) || row.chapter_id === payload.chapterId)
+  );
+};
