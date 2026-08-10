@@ -44,7 +44,7 @@ create table public.question_imports (
 create table public.question_import_quarantine (
   id uuid primary key default gen_random_uuid(), owner_id uuid not null references auth.users(id) on delete cascade,
   import_row_id uuid not null references public.question_imports(id) on delete cascade, entry_index integer not null,
-  code text not null, path text not null, message text not null, snapshot jsonb, created_at timestamptz not null default now()
+  code text not null, path text not null, message text not null, created_at timestamptz not null default now()
 );
 
 alter table public.personal_courses enable row level security;
@@ -65,6 +65,10 @@ create policy questions_update_own on public.questions for update using (owner_i
 create policy questions_delete_own on public.questions for delete using (owner_id = auth.uid() and source <> 'static');
 create policy question_imports_own on public.question_imports for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy question_import_quarantine_own on public.question_import_quarantine for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+revoke all on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions, public.official_program_notions, public.question_imports, public.question_import_quarantine from anon;
+grant select, insert, update, delete on table public.personal_courses, public.personal_chapters, public.personal_notions, public.questions, public.question_imports, public.question_import_quarantine to authenticated;
+grant select on table public.official_program_notions to authenticated;
 
 create index questions_owner_updated_idx on public.questions(owner_id, updated_at desc);
 create index personal_chapters_owner_course_idx on public.personal_chapters(owner_id, course_id);
@@ -154,3 +158,7 @@ begin
   select v_owner,v_import.id,(q->>'index')::integer,q->>'code',left(q->>'path',500),left(q->>'message',1000) from jsonb_array_elements(v_quarantined) q;
   return jsonb_build_object('kind','created','report',v_report);
 end $$;
+
+revoke all on function public.import_chatgpt_question_drafts(text, text, jsonb, jsonb, jsonb, jsonb) from public;
+revoke all on function public.import_chatgpt_question_drafts(text, text, jsonb, jsonb, jsonb, jsonb) from anon;
+grant execute on function public.import_chatgpt_question_drafts(text, text, jsonb, jsonb, jsonb, jsonb) to authenticated;
