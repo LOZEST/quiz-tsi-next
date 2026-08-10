@@ -9,6 +9,9 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 - Création locale structurée, brouillons, relecture, partage et archivage.
 - Variables integer/decimal/choice, contraintes visuelles allowlistées et aperçu de dix variantes réelles.
 - Cache IndexedDB partitionné, outbox, synchronisation bornée et conflits explicites.
+- Historique physique append-only, projection de la dernière version et sauvegarde atomique question/taxonomie personnelle.
+- Publication commune réservée aux rôles `admin`/`owner`, classifications officielles vérifiées et retrait effectif lorsqu’une dernière version est archivée.
+- Import GPT strict et borné, scope OAuth standard `email` limité à l’identité, retries question/taxonomie idempotents.
 - Taxonomie officielle distincte de la taxonomie personnelle.
 - Contrat d’import ChatGPT v1, validation, quarantaine, idempotence et couverture d’analyse.
 - OAuth Supabase, fonction Edge sans clé ni appel OpenAI, migration et politiques RLS.
@@ -21,13 +24,13 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 | `npm run format:check` | Réussi |
 | `npm run lint` | Réussi |
 | `npm run typecheck` | Réussi |
-| `npm run test:coverage` | Réussi — 51 fichiers, 559 tests ; statements 84,55 %, branches 80,04 %, functions 81,23 %, lines 87,01 % |
+| `npm run test:coverage` | Réussi — 52 fichiers, 584 tests ; statements 85,49 %, branches 80,21 %, functions 83,77 %, lines 88,15 % |
 | `npm run build` | Réussi |
 | `npm run build:pages` | Réussi |
 | `npm run test:browser` | Réussi — 87 scénarios desktop, iPad portrait et iPad paysage |
 | `git diff --check` | Réussi |
-| `npm run test:rls` | Réussi en CI — 16 assertions comportementales PR7 multi-compte et 9 assertions profils |
-| GitHub Actions `quality` (`da8b621`) | Réussi en 5 min — run `31408094609` |
+| `npm run test:rls` | Réussi en CI — 32 assertions comportementales PR7 multi-compte et 9 assertions profils |
+| GitHub Actions `quality` (`ae9aefb`) | Réussi — run `31433020229` |
 
 La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre Supabase puis exécute obligatoirement `test:rls`. L’exécution locale a été tentée mais reste indisponible faute de daemon Docker (`~/.docker/run/docker.sock`) ; la preuve CI réelle n’est pas remplacée par une validation simulée.
 
