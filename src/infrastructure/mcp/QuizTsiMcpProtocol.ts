@@ -1,3 +1,5 @@
+import { CHATGPT_IMPORT_FORBIDDEN_FIELDS } from '../../domain/questions/import/ChatGptImportPolicy';
+
 export const QUIZ_TSI_MCP_PROTOCOL_VERSION = '2025-06-18';
 export const QUIZ_TSI_IMPORT_TOOL_NAME = 'import_question_drafts';
 
@@ -17,11 +19,23 @@ interface McpDependencies {
   ) => Promise<{ ok: boolean; status: number; body: unknown }>;
 }
 
+interface McpRequestContext {
+  protocolVersion: string | null;
+}
+
+const forbiddenPropertiesSchema = {
+  not: {
+    anyOf: CHATGPT_IMPORT_FORBIDDEN_FIELDS.map((field) => ({
+      required: [field],
+    })),
+  },
+} as const;
+
 const importTool = {
   name: QUIZ_TSI_IMPORT_TOOL_NAME,
   title: 'Importer des brouillons de questions Quiz TSI',
   description:
-    'Crée uniquement des brouillons privés non validés dans le compte Quiz TSI de l’utilisateur authentifié. Ne publie jamais de question.',
+    'Crée uniquement des brouillons privés non validés dans le compte Quiz TSI de l’utilisateur authentifié. Ne publie jamais de question. Le schéma MCP décrit l’enveloppe publique; la validation métier complète reste appliquée par gpt-question-import.',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
@@ -30,8 +44,9 @@ const importTool = {
       payload: {
         type: 'object',
         description:
-          'Lot structuré conforme au contrat ChatGptQuestionImportV1. L’utilisateur doit avoir explicitement confirmé l’import.',
-        additionalProperties: true,
+          'Lot structuré ChatGptQuestionImportV1 confirmé explicitement par l’utilisateur.',
+        additionalProperties: false,
+        ...forbiddenPropertiesSchema,
         required: [
           'schemaVersion',
           'importId',
@@ -47,8 +62,29 @@ const importTool = {
             enum: ['text-and-visuals', 'text-only', 'incomplete'],
           },
           confirmedByUser: { const: true },
-          document: { type: 'object' },
-          questions: { type: 'array', minItems: 1, maxItems: 100 },
+          document: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['kind', 'title', 'pageCount'],
+            properties: {
+              kind: { enum: ['photo', 'pdf'] },
+              title: { type: 'string', minLength: 1 },
+              pageCount: {
+                anyOf: [{ type: 'integer', minimum: 1 }, { type: 'null' }],
+              },
+            },
+          },
+          questions: {
+            type: 'array',
+            minItems: 1,
+            maxItems: 100,
+            items: {
+              type: 'object',
+              ...forbiddenPropertiesSchema,
+              description:
+                'Entrée structurée validée en profondeur et mise en quarantaine individuellement par gpt-question-import.',
+            },
+          },
         },
       },
     },
@@ -81,6 +117,21 @@ const parseRequest = (value: unknown): JsonRpcRequest | null => {
   return value as unknown as JsonRpcRequest;
 };
 
+const validImplementation = (value: unknown) =>
+  isRecord(value) &&
+  typeof value.name === 'string' &&
+  value.name.length > 0 &&
+  typeof value.version === 'string' &&
+  value.version.length > 0 &&
+  (!('title' in value) || typeof value.title === 'string');
+
+const validInitializeParams = (value: unknown) =>
+  isRecord(value) &&
+  typeof value.protocolVersion === 'string' &&
+  value.protocolVersion.length > 0 &&
+  isRecord(value.capabilities) &&
+  validImplementation(value.clientInfo);
+
 const success = (id: JsonRpcId, result: unknown) => ({
   jsonrpc: '2.0' as const,
   id,
@@ -101,13 +152,20 @@ export const handleQuizTsiMcpRequest = async (
   input: unknown,
   authorization: string,
   dependencies: McpDependencies,
+  context: McpRequestContext = { protocolVersion: null },
 ): Promise<{ status: number; body: unknown }> => {
   const request = parseRequest(input);
   if (!request)
     return { status: 400, body: failure(null, -32600, 'Invalid Request') };
-  if (request.id === undefined) return { status: 202, body: null };
 
   if (request.method === 'initialize') {
+    if (request.id === undefined)
+      return { status: 400, body: failure(null, -32600, 'Invalid Request') };
+    if (!validInitializeParams(request.params))
+      return {
+        status: 200,
+        body: failure(request.id, -32602, 'Invalid initialize params'),
+      };
     return {
       status: 200,
       body: success(request.id, {
@@ -117,6 +175,18 @@ export const handleQuizTsiMcpRequest = async (
       }),
     };
   }
+
+  if (context.protocolVersion !== QUIZ_TSI_MCP_PROTOCOL_VERSION)
+    return {
+      status: 400,
+      body: failure(
+        request.id ?? null,
+        -32600,
+        'Unsupported or missing MCP-Protocol-Version',
+      ),
+    };
+
+  if (request.id === undefined) return { status: 202, body: null };
 
   if (request.method === 'ping')
     return { status: 200, body: success(request.id, {}) };
@@ -151,7 +221,14 @@ export const handleQuizTsiMcpRequest = async (
         content: textContent(imported.body),
         structuredContent: isRecord(imported.body) ? imported.body : undefined,
         isError: !imported.ok,
-        _meta: { backendStatus: imported.status },
+        _meta: {
+          backendStatus: imported.status,
+          errorKind: imported.ok
+            ? undefined
+            : imported.status === 503
+              ? 'technical'
+              : 'business',
+        },
       }),
     };
   }

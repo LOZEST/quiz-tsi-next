@@ -54,14 +54,23 @@ describe('artefacts Import ChatGPT', () => {
       'src/infrastructure/mcp/QuizTsiMcpProtocol.ts',
       'utf8',
     );
-    expect(mcp).toContain("request.headers.get('authorization')");
+    const transport = readFileSync(
+      'src/infrastructure/mcp/QuizTsiMcpHttp.ts',
+      'utf8',
+    );
+    expect(transport).toContain("request.headers.get('authorization')");
     expect(mcp).toContain('/functions/v1/gpt-question-import');
-    expect(mcp).toContain('authorization: bearer');
+    expect(mcp).toContain('authorization,');
+    expect(mcp).toContain('authClient.auth.getClaims(token)');
+    expect(transport).toContain('claims.clientId !== config.expectedClientId');
+    expect(transport).toContain('config.expectedAudience');
     expect(protocol).toContain(
       "QUIZ_TSI_IMPORT_TOOL_NAME = 'import_question_drafts'",
     );
     expect(protocol).toContain('Ne publie jamais de question');
     expect(protocol).not.toContain('publish_question');
-    expect(mcp).not.toMatch(/service_role|SUPABASE_SERVICE_ROLE_KEY/);
+    expect(`${mcp}\n${transport}`).not.toMatch(
+      /service_role|SUPABASE_SERVICE_ROLE_KEY/,
+    );
   });
 });
