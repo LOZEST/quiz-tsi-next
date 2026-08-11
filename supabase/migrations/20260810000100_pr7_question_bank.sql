@@ -237,7 +237,17 @@ begin
         if v_chapter is null then insert into public.personal_chapters(owner_id,course_id,title) values(v_owner,v_course,v_entry#>>'{classification,proposedChapterTitle}') returning id into v_chapter; end if;
       end if;
       if nullif(v_entry#>>'{classification,proposedNotionTitle}','') is not null then
-        insert into public.personal_notions(owner_id,course_id,chapter_id,title) values(v_owner,v_course,v_chapter,v_entry#>>'{classification,proposedNotionTitle}') returning id into v_notion;
+        select id into v_notion from public.personal_notions
+        where owner_id = v_owner
+          and course_id = v_course
+          and chapter_id is not distinct from v_chapter
+          and title = v_entry#>>'{classification,proposedNotionTitle}'
+        order by created_at limit 1;
+        if v_notion is null then
+          insert into public.personal_notions(owner_id,course_id,chapter_id,title)
+          values(v_owner,v_course,v_chapter,v_entry#>>'{classification,proposedNotionTitle}')
+          returning id into v_notion;
+        end if;
       end if;
       v_classification := jsonb_build_object('kind','personal','courseId',v_course,'chapterId',v_chapter,'notionId',v_notion);
     end if;

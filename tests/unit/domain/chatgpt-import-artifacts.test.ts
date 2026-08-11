@@ -35,4 +35,13 @@ describe('artefacts Import ChatGPT', () => {
       (packageJson as { dependencies?: Record<string, unknown> }).dependencies,
     ).not.toHaveProperty('openai');
   });
+
+  it('aligne la fonction Edge sur le statut 422 sans brouillon accepté', () => {
+    const edge = readFileSync(
+      'supabase/functions/gpt-question-import/index.ts',
+      'utf8',
+    );
+    expect(edge).toContain('importReportHttpStatus(report)');
+    expect(edge).toContain("client.rpc('import_chatgpt_question_drafts'");
+  });
 });

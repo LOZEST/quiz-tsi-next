@@ -4,6 +4,8 @@ import {
   validateChatGptQuestionImport,
 } from '../../../src/domain/questions/import/ChatGptQuestionImport.ts';
 import { CHATGPT_IMPORT_LIMITS } from '../../../src/domain/questions/import/ChatGptImportPolicy.ts';
+import { importReportHttpStatus } from '../../../src/domain/questions/import/ChatGptImportHttp.ts';
+import type { ImportReportV1 } from '../../../src/domain/questions/import/ChatGptQuestionImport.ts';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -95,5 +97,8 @@ Deno.serve(async (request) => {
   if (error) return json({ requestId, code: 'atomic-import-failed' }, 422);
   if (data?.kind === 'conflict')
     return json({ requestId, code: 'import-id-conflict' }, 409);
-  return json(data?.report ?? { requestId, code: 'invalid-rpc-result' }, 200);
+  const report = data?.report as ImportReportV1 | undefined;
+  return report
+    ? json(report, importReportHttpStatus(report))
+    : json({ requestId, code: 'invalid-rpc-result' }, 200);
 });

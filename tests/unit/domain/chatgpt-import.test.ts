@@ -3,6 +3,7 @@ import {
   canonicalizeImport,
   validateChatGptQuestionImport,
 } from '../../../src/domain/questions/import/ChatGptQuestionImport';
+import { importReportHttpStatus } from '../../../src/domain/questions/import/ChatGptImportHttp';
 
 const entry = {
   clientEntryId: 'one',
@@ -35,6 +36,35 @@ const payload = {
 };
 
 describe('ChatGptQuestionImportV1 depuis unknown', () => {
+  it('retourne 422 lorsque le rapport ne contient aucun brouillon accepté', () => {
+    expect(
+      importReportHttpStatus({
+        schemaVersion: 1,
+        importId: 'quarantine-only',
+        accepted: [],
+        quarantined: [
+          {
+            index: 0,
+            code: 'invalid',
+            path: 'questions[0]',
+            message: 'Invalide',
+          },
+        ],
+        warnings: [],
+        replayed: false,
+      }),
+    ).toBe(422);
+    expect(
+      importReportHttpStatus({
+        schemaVersion: 1,
+        importId: 'accepted',
+        accepted: [0],
+        quarantined: [],
+        warnings: [],
+        replayed: false,
+      }),
+    ).toBe(200);
+  });
   it('accepte un cours personnel sans chapitre ni notion', () => {
     const result = validateChatGptQuestionImport(payload);
     expect(result.ok).toBe(true);

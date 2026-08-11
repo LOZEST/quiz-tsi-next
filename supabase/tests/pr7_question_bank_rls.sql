@@ -1,5 +1,5 @@
 begin;
-select plan(32);
+select plan(48);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
@@ -9,6 +9,41 @@ values
 update public.profiles set role='admin' where user_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 update public.profiles set role='owner' where user_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 insert into public.oauth_integration_clients(client_id,purpose) values('gpt-fixture','chatgpt-question-import');
+
+create function pg_temp.personal_import_entry(p_client text, p_course text, p_chapter text, p_notion text)
+returns jsonb language sql immutable as $$
+  select jsonb_build_object(
+    'clientEntryId', p_client,
+    'classification', jsonb_build_object(
+      'kind','personal','proposedCourseTitle',p_course,
+      'proposedChapterTitle',p_chapter,'proposedNotionTitle',p_notion,
+      'reason','Hors programme','requiresUserConfirmation',true
+    ),
+    'type','course','difficulty','standard','parameterization',null,
+    'prompt',jsonb_build_array(jsonb_build_object('kind','text','value','Question '||p_client)),
+    'hint','[]'::jsonb,
+    'correction',jsonb_build_array(jsonb_build_object('title',null,'content',jsonb_build_array(jsonb_build_object('kind','text','value','Réponse')))),
+    'tags','[]'::jsonb,'uncertainties','[]'::jsonb
+  );
+$$;
+create temporary table import_dedup_fixture(payload jsonb);
+insert into import_dedup_fixture values (jsonb_build_object(
+  'schemaVersion',1,'importId','dedup-fixture','analysisCoverage','text-only','confirmedByUser',true,
+  'document',jsonb_build_object('kind','pdf','title','Fixture','pageCount',1),
+  'questions',jsonb_build_array(
+    pg_temp.personal_import_entry('a1','Cours A','Chapitre B','Notion C'),
+    pg_temp.personal_import_entry('a2','Cours A','Chapitre B','Notion C'),
+    pg_temp.personal_import_entry('b1','Cours A',null,'Notion sans chapitre'),
+    pg_temp.personal_import_entry('b2','Cours A',null,'Notion sans chapitre'),
+    pg_temp.personal_import_entry('c1','Cours A','Chapitre B','Notion D'),
+    pg_temp.personal_import_entry('c2','Cours A','Chapitre B','Notion E'),
+    pg_temp.personal_import_entry('d1','Cours A','Chapitre X','Notion répétée'),
+    pg_temp.personal_import_entry('d2','Cours A','Chapitre Y','Notion répétée'),
+    pg_temp.personal_import_entry('e1','Cours M',null,'Notion commune'),
+    pg_temp.personal_import_entry('e2','Cours N',null,'Notion commune')
+  )
+));
+grant select on import_dedup_fixture to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
@@ -53,6 +88,8 @@ select set_config('request.jwt.claims','{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb
 select throws_ok($$select public.import_chatgpt_question_drafts('other-client', 'hash-other', '{"importId":"other","analysisCoverage":"text-only","questions":[]}', '[]', '[]', '[]')$$,'P0001','oauth-client-not-allowed','RPC refuse client non allowlisté');
 select set_config('request.jwt.claims','{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb","client_id":"gpt-fixture"}',true);
 select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture', 'hash-allowed', '{"importId":"allowed","analysisCoverage":"text-only","questions":[]}', '[]', '[]', '[]')$$,'RPC accepte client GPT allowlisté');
+select is((select (public.import_chatgpt_question_drafts('gpt-fixture','hash-quarantine','{"importId":"only-quarantine","analysisCoverage":"text-only","questions":[]}','[]','[{"index":0,"code":"invalid-entry","path":"questions[0]","message":"Question invalide."}]','[]')->'report'->'accepted')::text),'[]','rapport sans entrée acceptée conservé');
+select is((select jsonb_array_length(report->'quarantined') from public.question_imports where owner_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' and import_id='only-quarantine'),1,'rapport de quarantaine persisté');
 select throws_ok($$select * from public.oauth_integration_clients$$,'42501',null,'allowlist privée inaccessible');
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}',true);
@@ -63,5 +100,20 @@ select is((select count(*)::integer from public.latest_accessible_questions wher
 select set_config('request.jwt.claim.sub','cccccccc-cccc-4ccc-8ccc-cccccccccccc',true);
 select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc"}',true);
 select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','shared','published',true,'{"kind":"official","partId":"numbers","chapterId":"numbers-arithmetic","notionId":"NUM-F02"}','course','standard','{"prompt":[{"kind":"text","value":"C"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'owner crée shared official valide');
+select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","client_id":"gpt-fixture"}',true);
+select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-dedup',(select payload from import_dedup_fixture),'[0,1,2,3,4,5,6,7,8,9]','[]','[]')$$,'import personnel groupé créé');
+select is((select count(*)::integer from public.personal_courses where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'trois cours distincts');
+select is((select count(*)::integer from public.personal_chapters where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'trois chapitres distincts');
+select is((select count(*)::integer from public.personal_notions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),8,'huit notions par groupe exact');
+select is((select count(*)::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'),10,'dix questions importées');
+select is((select count(distinct (classification->>'courseId',classification->>'chapterId',classification->>'notionId'))::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('0','1')),1,'même cours chapitre notion partage les trois IDs');
+select is((select count(*)::integer from public.personal_notions n join public.personal_courses c on c.id=n.course_id where n.owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and c.title='Cours A' and n.chapter_id is null and n.title='Notion sans chapitre'),1,'notion sans chapitre dédupliquée');
+select is((select count(*)::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('2','3') and classification->>'chapterId' is null),2,'deux questions conservent chapter null');
+select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('4','5')),2,'deux titres de notion restent distincts');
+select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('6','7')),2,'même libellé sous deux chapitres reste distinct');
+select is((select count(distinct classification->>'courseId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('8','9')),2,'même libellé sous deux cours conserve deux cours');
+select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('8','9')),2,'même libellé sous deux cours conserve deux notions');
+select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-dedup',(select payload from import_dedup_fixture),'[0,1,2,3,4,5,6,7,8,9]','[]','[]')$$,'replay identique accepté');
+select is((select jsonb_build_array((select count(*) from public.personal_courses where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.personal_chapters where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.personal_notions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'))),'[3,3,8,10]'::jsonb,'replay ne crée aucune ligne');
 select * from finish();
 rollback;
