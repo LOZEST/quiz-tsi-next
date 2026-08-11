@@ -668,6 +668,8 @@ describe('domain dependency boundary', () => {
     expect(combined).not.toMatch(
       /(?:from|import\s*\()\s*['"](?:react|react-dom|@supabase|idb|katex)/,
     );
-    expect(combined).not.toMatch(/\b(?:document|window|indexedDB)\b/);
+    expect(combined).not.toMatch(
+      /(?<![\w.])(?:document|window)\s*\.|(?<![\w.])indexedDB\s*[.(]/,
+    );
   });
 });

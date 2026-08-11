@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import type { PreparedQuestion } from '@domain/questions/PreparedQuestion';
-import type { Question } from '@domain/questions/Question';
+import {
+  questionClassification,
+  type Question,
+} from '@domain/questions/Question';
 import { QuestionContentRenderer } from './QuestionContentRenderer';
 import { ReflexTimer } from '@features/session/ReflexTimer';
 import styles from './QuestionCard.module.css';
@@ -25,8 +28,15 @@ export function QuestionCard({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const { clock, programIndex } = useAppServices();
-  const notion = programIndex?.getNotion(question.notionId);
-  const chapter = programIndex?.getChapter(question.chapterId);
+  const classification = questionClassification(question);
+  const notion =
+    classification?.kind === 'official'
+      ? programIndex?.getNotion(classification.notionId)
+      : null;
+  const chapter =
+    classification?.kind === 'official'
+      ? programIndex?.getChapter(classification.chapterId)
+      : null;
   const contextLabel = notion?.label ?? chapter?.label ?? null;
   return (
     <article className={styles.card} aria-label="Question active">

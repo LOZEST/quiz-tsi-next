@@ -22,6 +22,7 @@
     "test:coverage": "vitest run --coverage",
     "test:browser": "playwright test",
     "bank:import:num": "node scripts/import-num-question-bank.mjs",
+    "gpt:export-program-knowledge": "node scripts/export-gpt-program-knowledge.mjs",
     "supabase:start": "npx --yes supabase@2.110.0 start",
     "supabase:reset": "npx --yes supabase@2.110.0 db reset",
     "test:rls": "npx --yes supabase@2.110.0 test db",

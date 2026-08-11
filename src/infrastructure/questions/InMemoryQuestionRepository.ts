@@ -10,7 +10,10 @@ import {
   type QuestionBankImportResult,
 } from '../../domain/questions/QuestionBankImporter';
 import type { QuestionBankBundle } from '../../domain/questions/QuestionBank';
-import type { Question } from '../../domain/questions/Question';
+import {
+  questionClassification,
+  type Question,
+} from '../../domain/questions/Question';
 import {
   createSafeSnapshot,
   deepFreezeOwned,
@@ -52,14 +55,19 @@ export class InMemoryQuestionRepository
   }
   query(query: QuestionRepositoryQuery): readonly Readonly<Question>[] {
     return clone(
-      this.#questions.filter(
-        (item) =>
-          (query.partId === undefined || item.partId === query.partId) &&
+      this.#questions.filter((item) => {
+        const classification = questionClassification(item);
+        return (
+          (query.partId === undefined ||
+            (classification?.kind === 'official' &&
+              classification.partId === query.partId)) &&
           (query.chapterId === undefined ||
-            item.chapterId === query.chapterId) &&
-          (query.notionId === undefined || item.notionId === query.notionId) &&
-          (query.source === undefined || item.source === query.source),
-      ),
+            classification?.chapterId === query.chapterId) &&
+          (query.notionId === undefined ||
+            classification?.notionId === query.notionId) &&
+          (query.source === undefined || item.source === query.source)
+        );
+      }),
     );
   }
   replaceBankAtomically(bundle: QuestionBankBundle): void {

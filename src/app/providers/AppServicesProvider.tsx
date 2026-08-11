@@ -33,6 +33,16 @@ import {
   IndexedDbEvaluationRepository,
   IndexedDbQuestionAttemptRepository,
 } from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
+import type { QuestionWorkspaceRepository } from '@domain/repositories/QuestionWorkspaceRepository';
+import { IndexedDbQuestionWorkspaceRepository } from '@infrastructure/questions/IndexedDbQuestionWorkspaceRepository';
+import type { OAuthConsentGateway } from '@domain/auth/OAuthConsentGateway';
+import {
+  SupabaseOAuthConsentGateway,
+  UnavailableOAuthConsentGateway,
+} from '@infrastructure/auth/SupabaseOAuthConsentGateway';
+import type { QuestionRemoteGateway } from '@domain/repositories/QuestionRemoteGateway';
+import { UnavailableQuestionRemoteGateway } from '@infrastructure/questions/UnavailableQuestionRemoteGateway';
+import { SupabaseQuestionRemoteGateway } from '@infrastructure/questions/SupabaseQuestionRemoteGateway';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -46,6 +56,9 @@ export interface AppServices {
   evaluationRepository?: EvaluationRepository;
   chapterTestRepository?: ChapterTestRepository;
   questionAttemptRepository?: QuestionAttemptRepository;
+  questionWorkspaceRepository?: QuestionWorkspaceRepository;
+  oauthConsentGateway?: OAuthConsentGateway;
+  questionRemoteGateway?: QuestionRemoteGateway;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -84,6 +97,13 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     questionAttemptRepository:
       services.questionAttemptRepository ??
       new IndexedDbQuestionAttemptRepository(),
+    questionWorkspaceRepository:
+      services.questionWorkspaceRepository ??
+      new IndexedDbQuestionWorkspaceRepository(),
+    oauthConsentGateway:
+      services.oauthConsentGateway ?? new UnavailableOAuthConsentGateway(),
+    questionRemoteGateway:
+      services.questionRemoteGateway ?? new UnavailableQuestionRemoteGateway(),
   };
 }
 
@@ -121,9 +141,15 @@ function createDefaultServices(): AppServices {
     const environment = readSupabaseEnvironment(
       import.meta.env as Record<string, string | boolean | undefined>,
     );
-    authGateway = new SupabaseAuthGateway(
-      createSupabaseBrowserClient(environment),
-    );
+    const client = createSupabaseBrowserClient(environment);
+    authGateway = new SupabaseAuthGateway(client);
+    return {
+      authGateway,
+      oauthConsentGateway: new SupabaseOAuthConsentGateway(client),
+      questionRemoteGateway: new SupabaseQuestionRemoteGateway(client),
+      workspaceRepository: new IndexedDbWorkspaceRepository(),
+      ...createProductionRevisionServices(),
+    };
   } catch {
     authGateway = new ConfigurationMissingGateway();
   }

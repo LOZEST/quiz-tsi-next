@@ -17,6 +17,8 @@ import { AccessDeniedPage } from '@pages/AccessDeniedPage/AccessDeniedPage';
 import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
 import { RevisionExperienceProvider } from '@features/session/RevisionExperienceProvider';
 import { RevisionDrawerPanel } from '@features/session/RevisionDrawerPanel';
+import { OAuthConsentPage } from '@pages/OAuthConsentPage/OAuthConsentPage';
+import { ChatGptImportPrivacyPage } from '@pages/ChatGptImportPrivacyPage/ChatGptImportPrivacyPage';
 
 export function AppRoutes() {
   const { state } = useAuth();
@@ -34,6 +36,10 @@ export function AppRoutes() {
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
       </Route>
+      <Route
+        path="/privacy/chatgpt-import"
+        element={<ChatGptImportPrivacyPage />}
+      />
       <Route element={<ProtectedRoute />}>
         <Route
           element={
@@ -53,6 +59,7 @@ export function AppRoutes() {
           <Route path="/questions" element={<QuestionsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/account" element={<AccountPage />} />
+          <Route path="/oauth/consent" element={<OAuthConsentPage />} />
           <Route path="/access-denied" element={<AccessDeniedPage />} />
           <Route element={<RoleProtectedRoute />}>
             <Route path="/admin" element={<AdminPage />} />

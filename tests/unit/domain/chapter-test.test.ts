@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { questionClassification } from '@domain/questions/Question';
 import {
   createChapterTestBlueprint,
   finishChapterTest,
@@ -30,7 +31,9 @@ describe('ChapterTestBlueprint', () => {
       ).toBe(count);
       expect(
         blueprint?.orderedQuestionInstances.every(
-          (entry) => entry.frozenQuestion.chapterId === 'numbers-arithmetic',
+          (entry) =>
+            questionClassification(entry.frozenQuestion)?.chapterId ===
+            'numbers-arithmetic',
         ),
       ).toBe(true);
       expect(Object.isFrozen(blueprint)).toBe(true);

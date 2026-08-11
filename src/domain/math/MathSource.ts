@@ -3,7 +3,7 @@ import {
   issue,
   valid,
   type ValidationResult,
-} from '../validation/ValidationResult';
+} from '../validation/ValidationResult.ts';
 
 export const MATH_SYNTAX_VERSION = 1 as const;
 

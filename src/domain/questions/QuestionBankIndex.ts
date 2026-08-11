@@ -4,6 +4,7 @@ import {
 } from '../validation/SafeSnapshot';
 import {
   DIFFICULTIES,
+  questionClassification,
   QUESTION_SOURCES,
   QUESTION_TYPES,
   type Difficulty,
@@ -96,13 +97,16 @@ export class QuestionBankIndex {
         !['all', 'not-applicable', ...DIFFICULTIES].includes(typed.difficulty)
       )
         throw new Error();
-      const questions = this.#questions.filter(
-        (question) =>
-          (typed.partId === undefined || question.partId === typed.partId) &&
+      const questions = this.#questions.filter((question) => {
+        const classification = questionClassification(question);
+        return (
+          (typed.partId === undefined ||
+            (classification?.kind === 'official' &&
+              classification.partId === typed.partId)) &&
           (typed.chapterId === undefined ||
-            question.chapterId === typed.chapterId) &&
+            classification?.chapterId === typed.chapterId) &&
           (typed.notionId === undefined ||
-            question.notionId === typed.notionId) &&
+            classification?.notionId === typed.notionId) &&
           (typed.type === undefined || question.type === typed.type) &&
           (typed.source === undefined || question.source === typed.source) &&
           (typed.status === undefined || question.status === typed.status) &&
@@ -110,8 +114,9 @@ export class QuestionBankIndex {
             typed.difficulty === 'all' ||
             (typed.difficulty === 'not-applicable'
               ? question.type === 'reflex'
-              : question.difficulty === typed.difficulty)),
-      );
+              : question.difficulty === typed.difficulty))
+        );
+      });
       return deepFreezeOwned({ ok: true, questions: [...questions] });
     } catch {
       return {

@@ -150,6 +150,8 @@ Première vue : au plus un indicateur principal, trois secondaires, travail du j
 ### Banque (`/questions`)
 Recherche, filtres, liste, aperçu, création/modification/duplication/publication/archivage ; banques privée/commune ; statiques migrées et paramétrées avec aperçu de variantes ; math sécurisé. États : chargement, liste vide, aucun résultat, réseau, hors connexion, brouillon local, attente, conflit, permission insuffisante, invalide. Jamais HTML distant non sécurisé, `eval` ou `new Function`.
 
+PR7 distingue la taxonomie officielle immuable du programme et la taxonomie personnelle privée d'un compte. Une question porte une classification discriminée officielle ou personnelle ; un identifiant personnel n'est jamais résolu par `ProgramIndex`. Le flux optionnel « Import Quiz TSI » reçoit, après confirmation explicite et OAuth, uniquement un JSON structuré provenant du GPT personnalisé de l'utilisateur. Il crée côté serveur des brouillons privés non validés, sans publication automatique, puis le prochain pull les place dans le cache local. La photo ou le PDF original reste dans ChatGPT et n'est pas envoyé à Quiz TSI par ce flux. Le rapport conserve la couverture `text-and-visuals`, `text-only` ou `incomplete`, les incertitudes, la quarantaine et l'idempotence.
+
 ### Réglages (`/settings`)
 Apparence, Apple Pencil, Données locales, Synchronisation, Sauvegardes, Hors connexion ; secondaires fermées. Ne pas exposer outbox interne, tokens, URL/clés Supabase, identifiants techniques ou logs complets sans nécessité.
 

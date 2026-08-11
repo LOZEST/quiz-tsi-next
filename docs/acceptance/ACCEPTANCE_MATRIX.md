@@ -45,6 +45,11 @@ Statuts autorisés : **À implémenter**, **En cours**, **Existant à caractéri
 | QUESTIONS-002 | Banque | Filtres | questions variées | filtrer | intersection exacte | unit | recette | PR7 | À implémenter |
 | QUESTIONS-003 | Banque | Brouillon hors connexion | offline | créer/enregistrer | brouillon local + outbox | intégration IDB | mode avion | PR7 | À implémenter |
 | QUESTIONS-004 | Banque | Publication selon le rôle | rôles variés | publier | serveur autorise/refuse | tests RLS | recette rôles | PR7 | À implémenter |
+| QUESTIONS-005 | Banque | Classification personnelle isolée | cours hors programme | créer/importer | cours obligatoire, chapitre/notion facultatifs, aucun ID dans ProgramIndex | unit/intégration/RLS | recette comptes A/B | PR7 | À implémenter |
+| QUESTIONS-006 | Banque | Import GPT remote-origin | JSON confirmé et OAuth valide | importer puis synchroniser | brouillons privés distants puis cache local, aucune publication | intégration Edge Function | recette GPT réelle | PR7 | À implémenter |
+| QUESTIONS-007 | Banque | Import GPT idempotent et partiel | lot mixte | rejouer/importer | même rapport sans doublon, valides conservées, invalide quarantainée | unit/intégration | revue rapport | PR7 | À implémenter |
+| QUESTIONS-008 | Banque | Couverture et incertitudes visibles | import text-only/incomplete | ouvrir le brouillon | avertissement et points à vérifier, aucune validation automatique | RTL/browser | recette | PR7 | À implémenter |
+| OAUTH-001 | OAuth | Consentement GPT | authorization_id valide | approuver/refuser | client/scopes visibles, redirection SDK, identifiant conservé après login | RTL/browser mock | recette Supabase | PR7 | À implémenter |
 | SETTINGS-001 | Réglages | Sections repliables | page ouverte | observer/ouvrir | secondaires fermées par défaut | RTL | inspection | PR8 | À implémenter |
 | ACCOUNT-001 | Compte | Rôles traduits | profils rôles | ouvrir compte | Élève/Administrateur/Propriétaire | unit | inspection | PR2 | En cours |
 | ACCOUNT-002 | Compte | Déconnexion hors du menu principal | tableau ouvert | ouvrir tiroir | pas de gros bouton déconnexion | RTL absence | inspection | PR2 | En cours |

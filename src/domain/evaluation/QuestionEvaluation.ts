@@ -1,6 +1,7 @@
 import type {
   Difficulty,
   QuestionInstance,
+  QuestionClassification,
   QuestionSource,
   QuestionType,
 } from '../questions/Question';
@@ -44,9 +45,10 @@ export interface QuestionEvaluation {
   readonly questionId: string;
   readonly questionVersion: number;
   readonly questionSource: QuestionSource;
-  readonly partId: string;
-  readonly chapterId: string;
-  readonly notionId: string;
+  readonly classification?: QuestionClassification;
+  readonly partId: string | null;
+  readonly chapterId: string | null;
+  readonly notionId: string | null;
   readonly questionType: QuestionType;
   readonly difficulty: Difficulty | null;
   readonly hintUsed: boolean;
@@ -138,6 +140,12 @@ export function completeQuestionAttempt(
 ): QuestionAttemptState {
   if (attempt.evaluation) return attempt;
   const question = attempt.instance.frozenQuestion;
+  const classification = question.classification ?? {
+    kind: 'official' as const,
+    partId: question.partId ?? '',
+    chapterId: question.chapterId ?? '',
+    notionId: question.notionId ?? '',
+  };
   const outcome: EvaluationOutcome =
     input.action === 'success'
       ? attempt.hintUsed || attempt.timeExceeded
@@ -152,9 +160,10 @@ export function completeQuestionAttempt(
     questionId: question.id,
     questionVersion: question.version,
     questionSource: question.source,
-    partId: question.partId,
-    chapterId: question.chapterId,
-    notionId: question.notionId,
+    classification,
+    partId: classification.kind === 'official' ? classification.partId : null,
+    chapterId: classification.chapterId,
+    notionId: classification.notionId,
     questionType: question.type,
     difficulty: question.difficulty,
     hintUsed: attempt.hintUsed,

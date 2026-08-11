@@ -1,0 +1,446 @@
+openapi: 3.1.0
+info:
+  title: Quiz TSI — import de brouillons privés
+  version: 1.0.0
+  description: Crée uniquement des brouillons privés après confirmation explicite.
+servers:
+  - url: https://PROJECT_REF.supabase.co/functions/v1
+paths:
+  /gpt-question-import:
+    post:
+      operationId: importQuestionDrafts
+      summary: Importer des brouillons privés Quiz TSI
+      security: [{ quizTsiOAuth: [email] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChatGptQuestionImportV1' }
+      responses:
+        '200':
+          description: Rapport d’import, y compris lors d’un replay identique.
+          content:
+            {
+              application/json:
+                { schema: { $ref: '#/components/schemas/ImportReportV1' } },
+            }
+        '409': { description: importId déjà utilisé avec un autre payload. }
+        '422': { description: Payload non fiable ou aucune entrée acceptée. }
+components:
+  securitySchemes:
+    quizTsiOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/authorize
+          tokenUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/token
+          scopes: { email: Identifier le compte Quiz TSI }
+  schemas:
+    MathSource:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [syntaxVersion, source],
+        properties:
+          {
+            syntaxVersion: { const: 1 },
+            source: { type: string, maxLength: 20000 },
+          },
+      }
+    ContentSegment:
+      oneOf:
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, value],
+            properties:
+              {
+                kind: { const: text },
+                value: { type: string, maxLength: 20000 },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, math],
+            properties:
+              {
+                kind: { enum: [inline-math, display-math] },
+                math: { $ref: '#/components/schemas/MathSource' },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind],
+            properties: { kind: { const: line-break } },
+          }
+    Classification:
+      oneOf:
+        - {
+            type: object,
+            additionalProperties: false,
+            required: [kind, chapterId, notionId, confidence],
+            properties:
+              {
+                kind: { const: official },
+                chapterId: { type: string },
+                notionId: { type: string },
+                confidence: { enum: [certain, uncertain] },
+              },
+          }
+        - {
+            type: object,
+            additionalProperties: false,
+            required:
+              [
+                kind,
+                proposedCourseTitle,
+                proposedChapterTitle,
+                proposedNotionTitle,
+                reason,
+                requiresUserConfirmation,
+              ],
+            properties:
+              {
+                kind: { const: personal },
+                proposedCourseTitle: { type: string, maxLength: 200 },
+                proposedChapterTitle:
+                  { type: [string, 'null'], maxLength: 200 },
+                proposedNotionTitle: { type: [string, 'null'], maxLength: 200 },
+                reason: { type: string, maxLength: 20000 },
+                requiresUserConfirmation: { const: true },
+              },
+          }
+    ChatGptQuestionImportV1:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          schemaVersion,
+          importId,
+          analysisCoverage,
+          confirmedByUser,
+          document,
+          questions,
+        ]
+      properties:
+        schemaVersion: { const: 1 }
+        importId: { type: string, maxLength: 200 }
+        analysisCoverage: { enum: [text-and-visuals, text-only, incomplete] }
+        confirmedByUser: { const: true }
+        document:
+          {
+            type: object,
+            additionalProperties: false,
+            required: [kind, title, pageCount],
+            properties:
+              {
+                kind: { enum: [photo, pdf] },
+                title: { type: [string, 'null'] },
+                pageCount: { type: [integer, 'null'], minimum: 1 },
+              },
+          }
+        questions:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ImportQuestion' },
+          }
+    ImportQuestion:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          clientEntryId,
+          classification,
+          type,
+          difficulty,
+          parameterization,
+          prompt,
+          hint,
+          correction,
+          tags,
+          uncertainties,
+        ]
+      properties:
+        clientEntryId: { type: [string, 'null'], maxLength: 200 }
+        classification: { $ref: '#/components/schemas/Classification' }
+        type: { enum: [formula, course, calculation, reflex] }
+        difficulty: { enum: [fundamental, standard, trap, null] }
+        parameterization:
+          oneOf:
+            - { $ref: '#/components/schemas/ParameterizedQuestionSpec' }
+            - { type: 'null' }
+        prompt:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ContentSegment' },
+          }
+        hint:
+          {
+            type: array,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ContentSegment' },
+          }
+        correction:
+          {
+            type: array,
+            maxItems: 30,
+            items: { $ref: '#/components/schemas/CorrectionStep' },
+          }
+        tags:
+          { type: array, maxItems: 30, items: { type: string, maxLength: 200 } }
+        uncertainties:
+          {
+            type: array,
+            maxItems: 30,
+            items:
+              {
+                type: object,
+                additionalProperties: false,
+                required: [code, path, message],
+                properties:
+                  {
+                    code:
+                      {
+                        enum:
+                          [
+                            ocr,
+                            formula,
+                            classification,
+                            text-visual-conflict,
+                            missing-visual-analysis,
+                          ],
+                      },
+                    path: { type: string, maxLength: 500 },
+                    message: { type: string, maxLength: 1000 },
+                  },
+              },
+          }
+    CorrectionStep:
+      type: object
+      additionalProperties: false
+      required: [title, content]
+      properties:
+        title: { type: [string, 'null'], maxLength: 500 }
+        content:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 100,
+            items: { $ref: '#/components/schemas/ContentSegment' },
+          }
+    VariableDefinition:
+      type: object
+      additionalProperties: false
+      required: [id, label, domain]
+      properties:
+        id: { type: string }
+        label: { type: string }
+        domain:
+          oneOf:
+            - { $ref: '#/components/schemas/IntegerDomain' }
+            - { $ref: '#/components/schemas/DecimalDomain' }
+            - { $ref: '#/components/schemas/ChoiceDomain' }
+    IntegerDomain:
+      type: object
+      additionalProperties: false
+      required: [kind, minimum, maximum, step, excludedValues]
+      properties:
+        kind: { const: integer }
+        minimum: { type: integer }
+        maximum: { type: integer }
+        step: { type: integer }
+        excludedValues: { type: array, items: { type: integer } }
+    DecimalDomain:
+      type: object
+      additionalProperties: false
+      required: [kind, minimum, maximum, decimals, excludedValues]
+      properties:
+        kind: { const: decimal }
+        minimum: { type: number }
+        maximum: { type: number }
+        decimals: { type: integer }
+        excludedValues: { type: array, items: { type: number } }
+    ChoiceDomain:
+      type: object
+      additionalProperties: false
+      required: [kind, values]
+      properties:
+        kind: { const: choice }
+        values:
+          {
+            type: array,
+            maxItems: 32,
+            items: { type: [string, number, boolean] },
+          }
+    SafeExpression:
+      oneOf:
+        - { $ref: '#/components/schemas/LiteralExpression' }
+        - { $ref: '#/components/schemas/VariableExpression' }
+        - { $ref: '#/components/schemas/UnaryExpression' }
+        - { $ref: '#/components/schemas/BinaryExpression' }
+        - { $ref: '#/components/schemas/ComparisonExpression' }
+        - { $ref: '#/components/schemas/MathFunctionExpression' }
+        - { $ref: '#/components/schemas/LogicalExpression' }
+        - { $ref: '#/components/schemas/LogicalNotExpression' }
+    LiteralExpression:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [kind, value],
+        properties:
+          {
+            kind: { const: literal },
+            value: { type: [string, number, boolean] },
+          },
+      }
+    VariableExpression:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [kind, variableId],
+        properties: { kind: { const: variable }, variableId: { type: string } },
+      }
+    UnaryExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, operator, operand]
+      properties:
+        kind: { const: unary }
+        operator: { enum: [negate, absolute] }
+        operand: { $ref: '#/components/schemas/SafeExpression' }
+    BinaryExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, operator, left, right]
+      properties:
+        kind: { const: binary }
+        operator: { enum: [add, subtract, multiply, divide, modulo, power] }
+        left: { $ref: '#/components/schemas/SafeExpression' }
+        right: { $ref: '#/components/schemas/SafeExpression' }
+    ComparisonExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, operator, left, right]
+      properties:
+        kind: { const: comparison }
+        operator:
+          {
+            enum:
+              [
+                equal,
+                not-equal,
+                less-than,
+                less-than-or-equal,
+                greater-than,
+                greater-than-or-equal,
+              ],
+          }
+        left: { $ref: '#/components/schemas/SafeExpression' }
+        right: { $ref: '#/components/schemas/SafeExpression' }
+    MathFunctionExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, function, arguments]
+      properties:
+        kind: { const: math-function }
+        function:
+          {
+            enum:
+              [
+                abs,
+                sqrt,
+                min,
+                max,
+                round,
+                floor,
+                ceil,
+                gcd,
+                is-square,
+                squarefree,
+                has-prime-factor-other-than-2-or-5,
+              ],
+          }
+        arguments:
+          {
+            type: array,
+            maxItems: 32,
+            items: { $ref: '#/components/schemas/SafeExpression' },
+          }
+    LogicalExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, operator, operands]
+      properties:
+        kind: { const: logical }
+        operator: { enum: [and, or] }
+        operands:
+          {
+            type: array,
+            maxItems: 32,
+            items: { $ref: '#/components/schemas/SafeExpression' },
+          }
+    LogicalNotExpression:
+      type: object
+      additionalProperties: false
+      required: [kind, operand]
+      properties:
+        kind: { const: logical-not }
+        operand: { $ref: '#/components/schemas/SafeExpression' }
+    ParameterizedQuestionSpec:
+      type: object
+      additionalProperties: false
+      required: [schemaVersion, variables, constraints, validationVariantCount]
+      properties:
+        schemaVersion: { const: 1 }
+        variables:
+          {
+            type: array,
+            minItems: 1,
+            maxItems: 32,
+            items: { $ref: '#/components/schemas/VariableDefinition' },
+          }
+        constraints:
+          {
+            type: array,
+            items: { $ref: '#/components/schemas/SafeExpression' },
+          }
+        validationVariantCount: { type: integer, minimum: 0 }
+    ImportReportV1:
+      type: object
+      additionalProperties: false
+      required:
+        [schemaVersion, importId, accepted, quarantined, warnings, replayed]
+      properties:
+        {
+          schemaVersion: { const: 1 },
+          importId: { type: string },
+          accepted: { type: array, items: { type: integer } },
+          quarantined:
+            {
+              type: array,
+              items: { $ref: '#/components/schemas/ReportEntry' },
+            },
+          warnings:
+            {
+              type: array,
+              items: { $ref: '#/components/schemas/ReportEntry' },
+            },
+          replayed: { type: boolean },
+        }
+    ReportEntry:
+      {
+        type: object,
+        additionalProperties: false,
+        required: [index, code, path, message],
+        properties:
+          {
+            index: { type: integer },
+            code: { type: string },
+            path: { type: string },
+            message: { type: string },
+          },
+      }
