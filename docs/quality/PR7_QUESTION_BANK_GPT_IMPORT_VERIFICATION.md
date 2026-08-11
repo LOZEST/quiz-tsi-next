@@ -1,6 +1,6 @@
 # Vérification PR7 — Banque de questions et import ChatGPT
 
-Date : 2026-08-10
+Date : 2026-08-11
 Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 
 ## Périmètre vérifié
@@ -24,15 +24,15 @@ Base imposée : `95bac133f8d98adcc926d91af4568225d1426a5a`
 | `npm run format:check` | Réussi |
 | `npm run lint` | Réussi |
 | `npm run typecheck` | Réussi |
-| `npm run test:coverage` | Réussi — 52 fichiers, 584 tests ; statements 85,49 %, branches 80,21 %, functions 83,77 %, lines 88,15 % |
+| `npm run test:coverage` | Réussi — 52 fichiers, 586 tests ; statements 85,5 %, branches 80,25 %, functions 83,79 %, lines 88,16 % |
 | `npm run build` | Réussi |
 | `npm run build:pages` | Réussi |
 | `npm run test:browser` | Réussi — 87 scénarios desktop, iPad portrait et iPad paysage |
 | `git diff --check` | Réussi |
-| `npm run test:rls` | Réussi en CI — 32 assertions comportementales PR7 multi-compte et 9 assertions profils |
-| GitHub Actions `quality` (`ae9aefb`) | Réussi — run `31433020229` |
+| `npm run test:rls` | Réussi en CI — 48 assertions comportementales PR7 multi-compte et 9 assertions profils |
+| GitHub Actions `quality` (`cf9158f`) | Réussi — run `31472526993` |
 
-La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre Supabase puis exécute obligatoirement `test:rls`. L’exécution locale a été tentée mais reste indisponible faute de daemon Docker (`~/.docker/run/docker.sock`) ; la preuve CI réelle n’est pas remplacée par une validation simulée.
+La migration et les tests pgTAP comportementaux A/B sont livrés. La CI démarre Supabase puis exécute obligatoirement `test:rls`. L’exécution locale a été tentée mais reste indisponible faute de service PostgreSQL/Supabase local joignable ; la preuve CI réelle n’est pas remplacée par une validation simulée.
 
 ## Vérifications manuelles
 
