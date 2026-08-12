@@ -48,6 +48,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_CHATGPT_IMPORT_GPT_URL: ${{ vars.VITE_CHATGPT_IMPORT_GPT_URL }}
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Browser tests

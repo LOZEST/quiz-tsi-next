@@ -30,6 +30,7 @@ import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspa
 import type { ProgramIndex } from '@domain/program/Program';
 import styles from './QuestionsPage.module.css';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
+import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
   questions: [],
@@ -56,6 +57,7 @@ export function QuestionsPage() {
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
   const canPublishShared =
     state.status === 'authenticated' && state.session.user.role !== 'user';
+  const chatGptImportUrl = readChatGptImportUrl();
   const [workspace, setWorkspace] =
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
@@ -176,6 +178,16 @@ export function QuestionsPage() {
         <button type="button" onClick={() => setEditing(true)}>
           Créer une question
         </button>
+        {chatGptImportUrl ? (
+          <a
+            className="qtsi-text-link"
+            href={chatGptImportUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Importer avec ChatGPT
+          </a>
+        ) : null}
         <button
           type="button"
           onClick={() =>

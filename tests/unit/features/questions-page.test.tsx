@@ -137,6 +137,51 @@ describe('QuestionsPage', () => {
       value: true,
     });
     vi.stubGlobal('crypto', { randomUUID: vi.fn(() => 'generated-id') });
+    vi.stubEnv(
+      'VITE_CHATGPT_IMPORT_GPT_URL',
+      'https://chatgpt.com/g/quiz-tsi-import',
+    );
+  });
+
+  it('ouvre le GPT configuré dans un nouvel onglet sans remplacer la page', async () => {
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+
+    const importLink = await screen.findByRole('link', {
+      name: 'Importer avec ChatGPT',
+    });
+    expect(importLink).toHaveAttribute(
+      'href',
+      'https://chatgpt.com/g/quiz-tsi-import',
+    );
+    expect(importLink).toHaveAttribute('target', '_blank');
+    expect(importLink.getAttribute('rel')?.split(' ')).toEqual(
+      expect.arrayContaining(['noopener', 'noreferrer']),
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Créer une question' }),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Nouvelle question' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    const previousPullCount =
+      questionRemoteGateway.pullRecent.mock.calls.length;
+    await user.click(screen.getByRole('button', { name: 'Synchroniser' }));
+    await waitFor(() =>
+      expect(
+        questionRemoteGateway.pullRecent.mock.calls.length,
+      ).toBeGreaterThan(previousPullCount),
+    );
+  });
+
+  it('ne rend aucun lien lorsque la configuration ChatGPT est dangereuse', () => {
+    vi.stubEnv('VITE_CHATGPT_IMPORT_GPT_URL', 'javascript:alert(1)');
+    render(<QuestionsPage />);
+    expect(
+      screen.queryByRole('link', { name: 'Importer avec ChatGPT' }),
+    ).not.toBeInTheDocument();
   });
 
   it('recherche, filtre, relit, partage et archive un brouillon', async () => {

@@ -25,21 +25,30 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Validate Supabase Pages configuration
+      - name: Validate Pages configuration
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_CHATGPT_IMPORT_GPT_URL: ${{ vars.VITE_CHATGPT_IMPORT_GPT_URL }}
         run: |
-          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error::Les variables Supabase de GitHub Pages sont absentes."
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ] || [ -z "$VITE_CHATGPT_IMPORT_GPT_URL" ]; then
+            echo "::error::Les variables de configuration GitHub Pages sont absentes (Supabase ou URL du GPT d’import)."
             exit 1
           fi
+          case "$VITE_CHATGPT_IMPORT_GPT_URL" in
+            https://chatgpt.com/*|https://www.chatgpt.com/*) ;;
+            *)
+              echo "::error::VITE_CHATGPT_IMPORT_GPT_URL doit être une URL HTTPS chatgpt.com."
+              exit 1
+              ;;
+          esac
 
       - name: Build Pages artifact
         run: npm run build:pages
         env:
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_CHATGPT_IMPORT_GPT_URL: ${{ vars.VITE_CHATGPT_IMPORT_GPT_URL }}
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - name: Upload Pages artifact
