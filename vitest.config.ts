@@ -16,6 +16,7 @@ export default defineConfig({
       '@design-system': fileURLToPath(
         new URL('./src/design-system', import.meta.url),
       ),
+      '@shared': fileURLToPath(new URL('./src/shared', import.meta.url)),
     },
   },
   test: {

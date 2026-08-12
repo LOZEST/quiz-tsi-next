@@ -43,6 +43,10 @@ import {
 import type { QuestionRemoteGateway } from '@domain/repositories/QuestionRemoteGateway';
 import { UnavailableQuestionRemoteGateway } from '@infrastructure/questions/UnavailableQuestionRemoteGateway';
 import { SupabaseQuestionRemoteGateway } from '@infrastructure/questions/SupabaseQuestionRemoteGateway';
+import type { AccountManagementGateway } from '@domain/account/AccountManagementGateway';
+import { SupabaseAccountManagementGateway } from '@infrastructure/account/SupabaseAccountManagementGateway';
+import { ControlledAccountManagementGateway } from '@infrastructure/account/ControlledAccountManagementGateway';
+import { UnavailableAccountManagementGateway } from '@infrastructure/account/UnavailableAccountManagementGateway';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -59,6 +63,7 @@ export interface AppServices {
   questionWorkspaceRepository?: QuestionWorkspaceRepository;
   oauthConsentGateway?: OAuthConsentGateway;
   questionRemoteGateway?: QuestionRemoteGateway;
+  accountManagementGateway?: AccountManagementGateway;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -104,6 +109,9 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
       services.oauthConsentGateway ?? new UnavailableOAuthConsentGateway(),
     questionRemoteGateway:
       services.questionRemoteGateway ?? new UnavailableQuestionRemoteGateway(),
+    accountManagementGateway:
+      services.accountManagementGateway ??
+      new UnavailableAccountManagementGateway(),
   };
 }
 
@@ -134,6 +142,7 @@ function createDefaultServices(): AppServices {
     return {
       authGateway: new ControlledAuthGateway(),
       workspaceRepository: new IndexedDbWorkspaceRepository(),
+      accountManagementGateway: new ControlledAccountManagementGateway(),
       ...createControlledRevisionServices(),
     };
   }
@@ -148,6 +157,7 @@ function createDefaultServices(): AppServices {
       oauthConsentGateway: new SupabaseOAuthConsentGateway(client),
       questionRemoteGateway: new SupabaseQuestionRemoteGateway(client),
       workspaceRepository: new IndexedDbWorkspaceRepository(),
+      accountManagementGateway: new SupabaseAccountManagementGateway(client),
       ...createProductionRevisionServices(),
     };
   } catch {

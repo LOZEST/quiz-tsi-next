@@ -7,6 +7,7 @@ import {
   AppServicesProvider,
   type AppServices,
 } from '@app/providers/AppServicesProvider';
+import { ThemeProvider } from '@app/providers/ThemeProvider';
 import { normalizeBasename } from '@app/routing/basename';
 import { safeRedirectTarget } from '@app/routing/redirect';
 import { mainNavigation } from '@app/routes';
@@ -72,13 +73,15 @@ function services(session: AuthSession | null): AppServices {
 
 function renderRoute(route: string, session: AuthSession | null) {
   return render(
-    <AppServicesProvider services={services(session)}>
-      <AuthProvider>
-        <MemoryRouter initialEntries={[route]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </AuthProvider>
-    </AppServicesProvider>,
+    <ThemeProvider>
+      <AppServicesProvider services={services(session)}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={[route]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </AppServicesProvider>
+    </ThemeProvider>,
   );
 }
 
@@ -99,13 +102,15 @@ describe('application routing', () => {
       testServices.authGateway.signInWithPassword,
     ).mockResolvedValue(sessions.user);
     render(
-      <AppServicesProvider services={testServices}>
-        <AuthProvider>
-          <MemoryRouter initialEntries={['/login']}>
-            <AppRoutes />
-          </MemoryRouter>
-        </AuthProvider>
-      </AppServicesProvider>,
+      <ThemeProvider>
+        <AppServicesProvider services={testServices}>
+          <AuthProvider>
+            <MemoryRouter initialEntries={['/login']}>
+              <AppRoutes />
+            </MemoryRouter>
+          </AuthProvider>
+        </AppServicesProvider>
+      </ThemeProvider>,
     );
     await screen.findByRole('heading', { name: 'Connexion' });
     const submit = screen.getByRole('button', { name: 'Se connecter' });
@@ -221,13 +226,15 @@ describe('application routing', () => {
     const user = userEvent.setup();
     const testServices = services(sessions.user);
     render(
-      <AppServicesProvider services={testServices}>
-        <AuthProvider>
-          <MemoryRouter initialEntries={['/account']}>
-            <AppRoutes />
-          </MemoryRouter>
-        </AuthProvider>
-      </AppServicesProvider>,
+      <ThemeProvider>
+        <AppServicesProvider services={testServices}>
+          <AuthProvider>
+            <MemoryRouter initialEntries={['/account']}>
+              <AppRoutes />
+            </MemoryRouter>
+          </AuthProvider>
+        </AppServicesProvider>
+      </ThemeProvider>,
     );
     await user.click(
       await screen.findByRole('button', { name: 'Déconnexion' }),
@@ -252,13 +259,15 @@ describe('application routing', () => {
     // eslint-disable-next-line @typescript-eslint/unbound-method
     vi.mocked(delayed.authGateway.getCurrentSession).mockReturnValue(pending);
     render(
-      <AppServicesProvider services={delayed}>
-        <AuthProvider>
-          <MemoryRouter initialEntries={['/account']}>
-            <AppRoutes />
-          </MemoryRouter>
-        </AuthProvider>
-      </AppServicesProvider>,
+      <ThemeProvider>
+        <AppServicesProvider services={delayed}>
+          <AuthProvider>
+            <MemoryRouter initialEntries={['/account']}>
+              <AppRoutes />
+            </MemoryRouter>
+          </AuthProvider>
+        </AppServicesProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByRole('status')).toHaveTextContent(
       'Vérification de la session',
