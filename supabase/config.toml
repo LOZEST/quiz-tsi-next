@@ -17,3 +17,12 @@ enabled = true
 site_url = "http://127.0.0.1:5173"
 additional_redirect_urls = ["http://127.0.0.1:4173"]
 enable_signup = false
+
+[functions.gpt-oauth-authorize]
+verify_jwt = false
+
+[functions.gpt-oauth-callback]
+verify_jwt = false
+
+[functions.gpt-oauth-token]
+verify_jwt = false
