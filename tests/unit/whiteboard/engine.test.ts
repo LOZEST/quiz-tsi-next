@@ -679,6 +679,91 @@ describe('CanvasController', () => {
     controller.destroy();
     vi.unstubAllGlobals();
   });
+
+  it('snaps an eligible held Pencil stroke to a straight line after 500 ms', () => {
+    vi.useFakeTimers();
+    const { controller } = prepareController();
+    controller.pointerDown(
+      pointer(70, 'pen', { clientX: 100, clientY: 200, timeStamp: 0 }),
+    );
+    for (let index = 1; index <= 10; index += 1)
+      controller.pointerMove(
+        pointer(70, 'pen', {
+          clientX: 100 + index * 10,
+          clientY: 200 + (index % 2),
+          timeStamp: index * 10,
+        }),
+      );
+    vi.advanceTimersByTime(500);
+    const snapped = controller.getScene().objects[0];
+    expect(snapped?.kind === 'stroke' ? snapped.points : []).toHaveLength(2);
+    controller.pointerUp(
+      pointer(70, 'pen', { clientX: 210, clientY: 201, timeStamp: 600 }),
+    );
+    controller.destroy();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('snaps a held circular Pencil stroke and keeps ordinary writing unsnapped when disabled', () => {
+    vi.useFakeTimers();
+    const { controller } = prepareController();
+    const circle = Array.from({ length: 25 }, (_, index) => {
+      const angle = (index / 24) * Math.PI * 2;
+      return {
+        x: 300 + Math.cos(angle) * 60,
+        y: 300 + Math.sin(angle) * 60,
+      };
+    });
+    controller.pointerDown(
+      pointer(71, 'pen', {
+        clientX: circle[0]!.x,
+        clientY: circle[0]!.y,
+        timeStamp: 0,
+      }),
+    );
+    circle.slice(1).forEach((sample, index) =>
+      controller.pointerMove(
+        pointer(71, 'pen', {
+          clientX: sample.x,
+          clientY: sample.y,
+          timeStamp: index * 10 + 10,
+        }),
+      ),
+    );
+    vi.advanceTimersByTime(500);
+    const snapped = controller.getScene().objects[0];
+    expect(snapped?.kind === 'stroke' ? snapped.points : []).toHaveLength(49);
+    controller.pointerUp(
+      pointer(71, 'pen', {
+        clientX: circle.at(-1)!.x,
+        clientY: circle.at(-1)!.y,
+        timeStamp: 800,
+      }),
+    );
+
+    controller.setMagicShapes(false);
+    controller.pointerDown(
+      pointer(72, 'pen', { clientX: 100, clientY: 400, timeStamp: 900 }),
+    );
+    controller.pointerMove(
+      pointer(72, 'pen', { clientX: 220, clientY: 400, timeStamp: 950 }),
+    );
+    controller.pointerMove(
+      pointer(72, 'pen', { clientX: 260, clientY: 400, timeStamp: 980 }),
+    );
+    vi.advanceTimersByTime(600);
+    const ordinary = controller.getScene().objects.at(-1);
+    expect(
+      ordinary?.kind === 'stroke' ? ordinary.points.length : 0,
+    ).toBeGreaterThan(2);
+    controller.pointerCancel(
+      pointer(72, 'pen', { clientX: 220, clientY: 400, timeStamp: 1_600 }),
+    );
+    controller.destroy();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
 });
 
 describe('scene restoration', () => {

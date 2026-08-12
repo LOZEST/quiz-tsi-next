@@ -323,8 +323,11 @@ test('opens the local progress summary and voluntary disclosure', async ({
 });
 
 async function openRevisionOptions(page: Page) {
-  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
-  await page.getByRole('button', { name: 'Options du parcours' }).click();
+  const openMenu = page.getByRole('button', { name: 'Ouvrir le menu' });
+  if (await openMenu.isVisible()) await openMenu.click();
+  const options = page.getByRole('button', { name: 'Options du parcours' });
+  if ((await options.getAttribute('aria-expanded')) !== 'true')
+    await options.click();
 }
 
 test('uses the production NUM bank and dependent free revision filters', async ({
@@ -345,7 +348,7 @@ test('uses the production NUM bank and dependent free revision filters', async (
   await expect(page.getByLabel('Difficulté')).toHaveValue('');
 });
 
-test('protects a drawn draft and atomically changes the question', async ({
+test('clears a drawn draft and atomically changes the question without a dialog', async ({
   page,
 }) => {
   await login(page);
@@ -359,16 +362,13 @@ test('protects a drawn draft and atomically changes the question', async ({
   await page.mouse.up();
   await page.getByRole('button', { name: 'Passer' }).click();
   await page.getByRole('button', { name: 'Question suivante' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Annuler' }).click();
-  await expect(card).toHaveText(initial ?? '');
-  await page.getByRole('button', { name: 'Question suivante' }).click();
-  await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Changer de question' }),
+  ).toHaveCount(0);
   await expect(card).not.toHaveText(initial ?? '');
 });
 
-test('restores focus to the filter that cancels a draft change', async ({
+test('applies a filter with a draft without showing a confirmation', async ({
   page,
 }) => {
   await login(page);
@@ -381,11 +381,10 @@ test('restores focus to the filter that cancels a draft change', async ({
   await openRevisionOptions(page);
   const filter = page.getByLabel('Type de question');
   await filter.selectOption('calculation');
-  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Annuler' }).click();
-  await expect(filter).toHaveValue('');
-  await expect(filter).toBeFocused();
+  await expect(
+    page.getByRole('dialog', { name: 'Changer de question' }),
+  ).toHaveCount(0);
+  await expect(filter).toHaveValue('calculation');
 });
 
 test('keeps the question stable while reducing the card and navigating', async ({
@@ -430,11 +429,19 @@ test('keeps a compatible NUM filter active while changing question', async ({
   await page.getByRole('button', { name: 'Passer' }).click();
   const next = page.getByRole('button', { name: 'Question suivante' });
   await next.click();
-  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
-  await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
-  await expect(dialog).toHaveCount(0);
+  await expect(
+    page.getByRole('dialog', { name: 'Changer de question' }),
+  ).toHaveCount(0);
   await expect(card).not.toHaveText(current ?? '');
-  await expect(page.getByRole('button', { name: 'Annuler' })).toBeEnabled();
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects)
+    .toEqual([]);
+  await openRevisionOptions(page);
+  await expect(page.getByLabel('Partie')).toHaveValue('numbers');
+  await expect(
+    page.getByRole('combobox', { name: 'Chapitre', exact: true }),
+  ).toHaveValue('numbers-arithmetic');
+  await expect(page.getByLabel('Notion')).toHaveValue('NUM-F01');
 });
 
 test('renders Daily empty states and Weak points calibration', async ({
@@ -514,6 +521,9 @@ test('keeps the same question and canvas through hint, correction and evaluation
   ).toBeVisible();
   expect(await question.textContent()).toBe(prompt);
   await page.getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.getByRole('complementary', { name: 'Indice' })).toHaveCount(
+    0,
+  );
   await page.getByRole('button', { name: 'Voir la correction' }).click();
   await expect(
     page.getByRole('complementary', { name: 'Correction' }),
@@ -536,31 +546,29 @@ test('keeps the same question and canvas through hint, correction and evaluation
     'Presque réussi',
   ])
     await expect(actions.getByRole('button', { name })).toHaveCount(0);
+  await actions.getByRole('button', { name: 'Réussi' }).click();
+  await expect(
+    page.getByRole('complementary', { name: 'Correction' }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Fermer' }).click();
   await expect(
     page.getByRole('complementary', { name: 'Correction' }),
   ).toHaveCount(0);
-  await expect(actions.getByRole('button')).toHaveText([
-    'Réussi',
-    'Raté',
-    'Question suivante',
-  ]);
-  for (const name of [
-    'Indice',
-    'Voir la correction',
-    'Passer',
-    'Partiellement réussi',
-    'Presque réussi',
-  ])
-    await expect(actions.getByRole('button', { name })).toHaveCount(0);
-  await actions.getByRole('button', { name: 'Question suivante' }).click();
-  await expect(
-    page.getByText(
-      'Indique ton résultat avant de passer à la question suivante.',
-    ),
-  ).toBeVisible();
+  await expect(actions.getByRole('button')).toHaveText(['Question suivante']);
   expect(await question.textContent()).toBe(prompt);
-  await page.getByRole('button', { name: 'Réussi' }).click();
+  await actions.getByRole('button', { name: 'Question suivante' }).click();
+  await expect(question).not.toHaveText(prompt ?? '');
+});
+
+test('accepts a failed evaluation while the correction bubble is open', async ({
+  page,
+}) => {
+  await login(page);
+  await page.getByRole('button', { name: 'Voir la correction' }).click();
+  const correction = page.getByRole('complementary', { name: 'Correction' });
+  await expect(correction).toBeVisible();
+  await page.getByRole('button', { name: 'Raté' }).click();
+  await expect(correction).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Question suivante' }),
   ).toBeVisible();

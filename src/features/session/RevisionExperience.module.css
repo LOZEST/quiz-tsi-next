@@ -77,17 +77,15 @@
   font: inherit;
 }
 .helpPanel {
-  position: absolute;
-  z-index: 5;
-  inset-block-start: calc(var(--qtsi-safe-top) + 7.5rem);
-  inset-inline-end: calc(var(--qtsi-safe-right) + var(--qtsi-space-4));
+  position: static;
   inline-size: min(30rem, calc(100% - 2rem));
-  max-block-size: calc(100% - 14rem);
+  max-block-size: min(55vh, calc(100vh - 11rem));
   overflow: hidden;
   background: rgb(255 255 255 / 97%);
   border: 1px solid var(--qtsi-border-strong);
   border-radius: var(--qtsi-radius-3);
   box-shadow: var(--qtsi-shadow-subtle);
+  pointer-events: auto;
 }
 
 .helpPanel > header {
@@ -106,4 +104,11 @@
   max-block-size: 55vh;
   overflow: auto;
   padding: var(--qtsi-space-4);
+}
+.correctionBubble {
+  inline-size: min(38rem, 100%);
+  pointer-events: auto;
+}
+.correctionBubble .helpPanelContent {
+  max-block-size: min(45vh, calc(100vh - 16rem));
 }

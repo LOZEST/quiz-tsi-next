@@ -34,6 +34,16 @@ function WhiteboardDrawerSettings() {
         />
         Afficher la grille
       </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.magicShapesEnabled}
+          onChange={(event) =>
+            settings.setMagicShapesEnabled(event.target.checked)
+          }
+        />
+        Formes magiques
+      </label>
       <fieldset>
         <legend>Main d’écriture</legend>
         <label>

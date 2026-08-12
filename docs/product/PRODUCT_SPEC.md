@@ -45,7 +45,7 @@ Aucune permission sensible ne dépend uniquement de l'interface.
 8. Aucun filtre factice.
 9. Aucune statistique simulée.
 10. Aucun contrôle invisible destiné à empêcher un ancien script de planter.
-11. Aucun changement de filtre ne supprime silencieusement un brouillon.
+11. Un changement de filtre ne supprime le brouillon qu'après activation effective d'une nouvelle question ; un changement impossible le conserve.
 12. L'application fonctionne au doigt et au Pencil.
 13. Le rendu est sobre, classique, pur et durable.
 14. L'application ne ressemble pas à un dashboard générique.
@@ -85,7 +85,7 @@ Filtres ordonnés : Partie, Chapitre, Notion, Type de question, Difficulté. Leu
 
 Les listes sont dépendantes : une partie ne propose que ses chapitres et un chapitre que ses notions, tout en gardant l'option générale en premier. Un parent changé réinitialise immédiatement tout enfant incompatible à son option générale ; aucun identifiant invisible ne subsiste.
 
-Quand Partie vaut **Toutes les parties**, Chapitre présente d'abord **Tous les chapitres**, puis tous les chapitres disponibles, regroupés par partie ou libellés avec leur partie afin qu'aucun homonyme ne soit ambigu. Quand une partie précise est sélectionnée et Chapitre vaut **Tous les chapitres**, Notion présente d'abord **Toutes les notions**, puis toutes les notions de cette partie, regroupées ou libellées avec leur chapitre. Quand Partie et Chapitre utilisent leurs options générales, Notion présente d'abord **Toutes les notions**, puis toutes les notions disponibles, chacune identifiable par sa partie et son chapitre.
+Quand Partie vaut **Toutes les parties**, Chapitre présente d'abord **Tous les chapitres**, puis tous les chapitres disponibles, regroupés par partie ou libellés avec leur partie afin qu'aucun homonyme ne soit ambigu. Notion présente d'abord **Toutes les notions**, puis les notions admissibles. Le contrôle explicitement intitulé **Notion** affiche toujours uniquement `notion.label` : les sélections Partie et Chapitre portent le contexte sans répéter leur libellé dans chaque option.
 
 Lorsqu'une partie change, tout chapitre incompatible revient à **Tous les chapitres** et toute notion incompatible à **Toutes les notions**. Lorsqu'un chapitre change, toute notion incompatible revient à **Toutes les notions**.
 
@@ -100,9 +100,7 @@ Cette valeur concerne exclusivement l'état du filtre. Dans le modèle d'une que
 Filtres dans l'ordre : Partie, Chapitre, Notion, Type de question, Difficulté. Types : `formula` Formules, `course` Cours, `calculation` Calcul, `reflex` Réflexe. Difficultés : `fundamental` Fondamental, `standard` Standard, `trap` Piège. Réflexe est un type, jamais une difficulté : difficulté masquée et explicitement non applicable, 60 secondes, dépassement non bloquant et réussite tardive `partial`.
 
 ### Changement de configuration
-**Cas A, non commencée** (aucun trait, forme, indice ni correction) : appliquer immédiatement, charger automatiquement une compatible, sans confirmation, Question suivante ni rechargement.
-
-**Cas B, commencée** (au moins un trait, forme, indice ou correction) : contrôle interne « Changer de question effacera le travail en cours. » avec actions exactes **Changer maintenant** et **Annuler**. Changer maintenant confirme, puis seulement efface, applique et charge. Annuler conserve question/brouillon et restaure les filtres actifs. Aucune configuration cachée « en attente ».
+Appliquer immédiatement la configuration et chercher une question compatible, sans confirmation ni rechargement. Lorsqu'une nouvelle question devient effectivement active, fermer les aides et commencer avec un tableau vide. Si aucune question compatible n'existe ou si le changement échoue, conserver la question et le brouillon courants ; aucune configuration cachée « en attente ».
 
 ### Révision du jour
 PR4 consomme un `DailyPlanState` réel fourni par un port ou un repository fiable ; il ne calcule aucun plan. `ready` contient des éléments réellement fournis, `none-scheduled` signifie qu'aucune révision n'est prévue aujourd'hui, `completed` que tous les éléments prévus sont terminés et `unavailable` que les données sont absentes ou inexploitables.

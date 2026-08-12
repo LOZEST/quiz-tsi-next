@@ -140,12 +140,8 @@ export function RevisionDrawerPanel() {
             >
               <option value="">Toutes les notions</option>
               {notions.map((notion) => {
-                const chapter = programIndex?.getChapter(notion.chapterId);
                 return (
                   <option key={notion.id} value={notion.id}>
-                    {chapter
-                      ? `${programIndex?.getPart(chapter.partId)?.label} — ${chapter.label} — `
-                      : ''}
                     {notion.label}
                   </option>
                 );

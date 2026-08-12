@@ -19,6 +19,12 @@ import {
   type WhiteboardShape,
   type WhiteboardShapeKind,
 } from '@domain/whiteboard/WhiteboardShape';
+import {
+  circleCandidate,
+  straightCandidate,
+  toCircleStroke,
+  toStraightStroke,
+} from '@domain/whiteboard/MagicShapes';
 
 export class CanvasController {
   private scene: WhiteboardScene;
@@ -39,6 +45,9 @@ export class CanvasController {
   private gestureKind: 'place' | 'move' | 'resize' | 'rotate' | null = null;
   private currentPenWidth = 3;
   private transactionBaseline: WhiteboardScene | null = null;
+  private magicShapesEnabled = true;
+  private holdTimer: ReturnType<typeof setTimeout> | null = null;
+  private snappedStroke: 'line' | 'circle' | null = null;
 
   getScene(): WhiteboardScene {
     return this.scene;
@@ -88,10 +97,12 @@ export class CanvasController {
   pointerDown(event: PointerEvent) {
     if (event.pointerType === 'touch' || this.activePointerId !== null) return;
     event.preventDefault();
+    event.stopPropagation?.();
     this.canvas.setPointerCapture(event.pointerId);
     this.activePointerId = event.pointerId;
     this.activePointerType = event.pointerType;
     this.transactionBaseline = snapshotScene(this.scene).scene;
+    this.snappedStroke = null;
     if (this.activeTool === 'shape' || this.activeTool === 'select') {
       const point = this.input(event).point;
       this.gestureStart = point;
@@ -153,10 +164,13 @@ export class CanvasController {
     }
     this.scene = this.tools.current.begin(this.scene, this.input(event)).scene;
     this.renderer.schedule(this.scene);
+    this.armMagicShapeHold();
   }
 
   pointerMove(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    event.preventDefault();
+    event.stopPropagation?.();
     if (this.gestureKind && this.gestureStart && this.gestureShape) {
       const point = this.input(event).point;
       let shape = this.gestureShape;
@@ -208,11 +222,15 @@ export class CanvasController {
         this.input(sample),
       ).scene;
     }
+    if (this.snappedStroke === 'line') this.snapActiveStroke('line');
+    if (this.snappedStroke !== 'circle') this.armMagicShapeHold();
     this.renderer.schedule(this.scene);
   }
 
   pointerUp(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    event.preventDefault();
+    this.clearHoldTimer();
     if (this.activeTool === 'shape' || this.activeTool === 'select') {
       this.pointerMove(event);
       if (this.gestureKind === 'place')
@@ -230,12 +248,15 @@ export class CanvasController {
 
   pointerCancel(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    event.preventDefault();
+    this.clearHoldTimer();
     this.finishPointer(event.pointerId, true);
     this.finishTransaction();
   }
 
   lostPointerCapture(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
+    this.clearHoldTimer();
     this.finishPointer(event.pointerId, false);
     this.finishTransaction();
   }
@@ -277,6 +298,10 @@ export class CanvasController {
     this.renderer.setGrid(enabled);
     this.renderer.schedule(this.scene);
   }
+  setMagicShapes(enabled: boolean) {
+    this.magicShapesEnabled = enabled;
+    if (!enabled) this.clearHoldTimer();
+  }
   replaceScene(scene: WhiteboardScene) {
     this.scene = scene;
     this.undoStack = [];
@@ -314,6 +339,7 @@ export class CanvasController {
     this.renderer.schedule(this.scene);
   }
   destroy() {
+    this.clearHoldTimer();
     this.activePointerId = null;
     this.activePointerType = null;
     this.resizeObserver?.disconnect();
@@ -321,6 +347,7 @@ export class CanvasController {
   }
 
   cancelInteraction() {
+    this.clearHoldTimer();
     if (this.transactionBaseline) {
       this.scene = this.transactionBaseline;
       this.transactionBaseline = null;
@@ -363,5 +390,49 @@ export class CanvasController {
     this.gestureStart = null;
     this.gestureShape = null;
     this.gestureKind = null;
+  }
+
+  private armMagicShapeHold() {
+    this.clearHoldTimer();
+    if (!this.magicShapesEnabled || this.activeTool !== 'pen') return;
+    this.holdTimer = setTimeout(() => {
+      const stroke = [...this.scene.objects]
+        .reverse()
+        .find((object) => object.kind === 'stroke');
+      if (!stroke || this.activePointerId === null) return;
+      if (circleCandidate(stroke.points)) this.snapActiveStroke('circle');
+      else if (straightCandidate(stroke.points)) this.snapActiveStroke('line');
+    }, 500);
+  }
+
+  private snapActiveStroke(kind: 'line' | 'circle') {
+    let index = -1;
+    for (
+      let candidate = this.scene.objects.length - 1;
+      candidate >= 0;
+      candidate -= 1
+    ) {
+      if (this.scene.objects[candidate]?.kind === 'stroke') {
+        index = candidate;
+        break;
+      }
+    }
+    const stroke = this.scene.objects[index];
+    if (!stroke || stroke.kind !== 'stroke') return;
+    const snapped =
+      kind === 'circle' ? toCircleStroke(stroke) : toStraightStroke(stroke);
+    this.scene = {
+      ...this.scene,
+      objects: this.scene.objects.map((object, objectIndex) =>
+        objectIndex === index ? snapped : object,
+      ),
+    };
+    this.snappedStroke = kind;
+    this.renderer.schedule(this.scene);
+  }
+
+  private clearHoldTimer() {
+    if (this.holdTimer !== null) clearTimeout(this.holdTimer);
+    this.holdTimer = null;
   }
 }

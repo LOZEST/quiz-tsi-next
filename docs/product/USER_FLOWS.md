@@ -106,9 +106,9 @@ Chaque flux spécifie préconditions, étapes, états, résultat attendu, erreur
 ### FLOW-SESSION-002 — Changement avec brouillon
 
 - **Préconditions :** trait/forme/indice/correction présent.
-- **Étapes :** modifier puis Changer maintenant ou Annuler.
-- **États :** message et dialogue interne.
-- **Résultat attendu :** confirmer efface puis charge ; annuler restaure filtres et brouillon.
+- **Étapes :** modifier un filtre, le parcours ou demander la question suivante.
+- **États :** recherche compatible → nouvelle question ou échec explicite.
+- **Résultat attendu :** une nouvelle question efface le tableau précédent sans confirmation ; un changement impossible conserve le brouillon.
 - **Erreurs :** chargement échoue explicitement.
 - **Reprise :** aucune configuration cachée.
 
@@ -339,11 +339,11 @@ Les flux de cette section appartiennent à PR5. PR4 ne fournit que `FLOW-SESSION
 ### FLOW-FILTER-008 — Quitter Réflexe et restaurer Toutes les difficultés
 - **Préconditions :** Réflexe sélectionné et Difficulté non applicable. **Étapes :** choisir **Tous les types**, Formules, Cours ou Calcul. **Résultat attendu :** Difficulté réapparaît sur **Toutes les difficultés** ; aucune valeur cachée antérieure n'est restaurée.
 
-### FLOW-FILTER-009 — Distinguer deux notions homonymes
-- **Préconditions :** Partie et Chapitre utilisent leurs options générales et deux notions ont le même nom. **Étapes :** ouvrir Notion. **Résultat attendu :** chaque notion est identifiable par sa partie et son chapitre.
+### FLOW-FILTER-009 — Libeller simplement les notions
+- **Préconditions :** le contrôle Notion est visible. **Étapes :** ouvrir Notion. **Résultat attendu :** chaque option affiche uniquement `notion.label` ; Partie et Chapitre déterminent le contexte et les identifiants restent inchangés.
 
 ## Contrat transversal des filtres
 
-Quand Partie vaut **Toutes les parties**, Chapitre contient d'abord **Tous les chapitres**, puis tous les chapitres regroupés ou libellés par partie. Avec une partie précise et **Tous les chapitres**, Notion contient d'abord **Toutes les notions**, puis toutes celles de la partie regroupées ou libellées par chapitre. Avec **Toutes les parties** et **Tous les chapitres**, toutes les notions restent accessibles et identifiables par partie et chapitre.
+Quand Partie vaut **Toutes les parties**, Chapitre contient d'abord **Tous les chapitres**, puis tous les chapitres regroupés ou libellés par partie. Notion contient d'abord **Toutes les notions**, puis les notions admissibles avec pour libellé visible le seul `notion.label`. Partie et Chapitre portent le contexte de filtrage.
 
 Changer Partie remet tout chapitre incompatible sur **Tous les chapitres** et toute notion incompatible sur **Toutes les notions**. Changer Chapitre remet toute notion incompatible sur **Toutes les notions**. Choisir Réflexe fixe `difficulty` à `{ kind: "not-applicable" }` et masque le contrôle ; le quitter remet toujours `difficulty` à `{ kind: "all" }`. Une difficulté précise exclut Réflexe sans changer Type et peut produire un état sans résultat explicite.

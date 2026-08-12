@@ -8,6 +8,8 @@ Après connexion, l'utilisateur arrive directement au tableau blanc, sans dashbo
 
 L'expérience est sobre, classique, très lisible, minimale, rapide et tactile. Elle privilégie iPad et Apple Pencil tout en restant complète à la souris et au clavier ; son élégance ne recherche aucun effet spectaculaire.
 
+Le Pencil écrit sans jamais faire défiler le viewport sur la surface du Canvas ; le doigt reste réservé à la navigation tactile prévue. Le Canvas capture le pointeur pendant l'écriture. Une nouvelle question effectivement chargée commence sur un tableau vide sans confirmation ; un changement impossible ne détruit pas le tableau courant.
+
 ## Livraison progressive des outils
 
 PR3 fournit exclusivement le moteur manuscrit : Canvas 2D natif, Apple Pencil, pression, inclinaison, stylo, gomme, grille, undo/redo, scènes versionnées, persistance locale isolée et toolbar minimale.
@@ -16,9 +18,13 @@ PR3 ne fournit aucune forme géométrique, ligne, rectangle, cercle, flèche ou 
 
 PR6, **Advanced Whiteboard Tools**, ajoute ces formes et objets vectoriels ainsi que leur sélection, leur déplacement et leur redimensionnement, en conservant la compatibilité avec les scènes manuscrites versionnées de PR3.
 
+La palette compacte de PR6 fournit droite, flèche, rectangle, carré, cercle, triangle, axes, repère orthonormé et cercle trigonométrique. La grille reste un réglage secondaire. Les formes magiques, activées par défaut dans les réglages Pencil, transforment après environ 500 ms de maintien un tracé admissible en droite ou cercle selon les seuils historiques déterministes ; la transformation reste annulable.
+
 ## Question, Canvas et menu
 
 La question reste centrée dans le viewport complet, après la safe area supérieure. Compacte, réductible sans perte, lisible en portrait et paysage, elle ne monopolise pas le tableau et ne se déplace jamais à l'ouverture du menu.
+
+Son contrôle de repli est un chevron discret, accessible et doté d'une cible tactile de 44 × 44 px. La correction structurée apparaît dans une carte responsive directement au-dessus des actions **Réussi** et **Raté**, sans masquer ces actions.
 
 Le menu est un `OverlayDrawer` qui s'ouvre depuis la gauche au-dessus du tableau sur téléphone, tablette, iPad, ordinateur et grand écran. Sa largeur est responsive, il respecte les safe areas et ne participe jamais à la largeur de mise en page. Il ne redimensionne jamais le Canvas, ne transforme aucune coordonnée logique et ne déplace ni question ni trait ; à partir de PR6, cette garantie couvre aussi les formes et autres objets vectoriels. Il possède un backdrop et se ferme par son bouton, le backdrop, Échap ou une navigation. Ouvert, il piège le focus et permet une navigation clavier complète ; fermé, il restaure le focus sur son déclencheur hors navigation.
 

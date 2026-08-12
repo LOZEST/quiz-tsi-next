@@ -3,7 +3,6 @@ import { WhiteboardToolbar } from './WhiteboardToolbar';
 import styles from './Whiteboard.module.css';
 import { useRevisionExperience } from '@features/session/RevisionExperienceProvider';
 import { QuestionCard } from '@features/questions/QuestionCard';
-import { QuestionChangeDialog } from '@features/session/QuestionChangeDialog';
 import { QuestionActions } from './QuestionActions';
 import { QuestionHelpPanels } from '@features/session/QuestionHelpPanels';
 
@@ -54,41 +53,42 @@ export function WhiteboardContainer() {
         }
       />
       <WhiteboardToolbar />
-      {experience.state.kind === 'ready' ? (
-        <QuestionHelpPanels
-          content={experience.state.prepared.content}
+      <div className={styles.actionDock}>
+        {experience.state.kind === 'ready' ? (
+          <QuestionHelpPanels
+            content={experience.state.prepared.content}
+            hintOpen={experience.hintOpen}
+            correctionOpen={experience.correctionOpen}
+            onCloseHint={experience.closeHint}
+            onCloseCorrection={experience.closeCorrection}
+          />
+        ) : null}
+        <QuestionActions
+          active={experience.state.kind === 'ready'}
+          hasHint={
+            experience.state.kind === 'ready' &&
+            experience.state.prepared.content.hint.length > 0
+          }
+          hasCorrection={
+            experience.state.kind === 'ready' &&
+            experience.state.prepared.content.correction.length > 0
+          }
           hintOpen={experience.hintOpen}
           correctionOpen={experience.correctionOpen}
-          onCloseHint={experience.closeHint}
-          onCloseCorrection={experience.closeCorrection}
+          afterCorrection={
+            experience.state.kind === 'ready' &&
+            experience.state.attempt.correctionViewed
+          }
+          completed={
+            experience.state.kind === 'ready' &&
+            experience.state.attempt.evaluation !== null
+          }
+          onHint={experience.openHint}
+          onCorrection={experience.openCorrection}
+          onEvaluate={(action) => void experience.evaluate(action)}
+          onNext={experience.nextQuestion}
         />
-      ) : null}
-      <QuestionActions
-        active={experience.state.kind === 'ready'}
-        hasHint={
-          experience.state.kind === 'ready' &&
-          experience.state.prepared.content.hint.length > 0
-        }
-        hasCorrection={
-          experience.state.kind === 'ready' &&
-          experience.state.prepared.content.correction.length > 0
-        }
-        hintOpen={experience.hintOpen}
-        correctionOpen={experience.correctionOpen}
-        afterCorrection={
-          experience.state.kind === 'ready' &&
-          experience.state.attempt.correctionViewed
-        }
-        completed={
-          experience.state.kind === 'ready' &&
-          experience.state.attempt.evaluation !== null
-        }
-        onHint={experience.openHint}
-        onCorrection={experience.openCorrection}
-        onEvaluate={(action) => void experience.evaluate(action)}
-        onNext={experience.nextQuestion}
-      />
-      <QuestionChangeDialog />
+      </div>
     </section>
   );
 }

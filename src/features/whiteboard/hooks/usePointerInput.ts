@@ -14,17 +14,23 @@ export function usePointerInput(
     const cancel = (event: PointerEvent) => controller.pointerCancel(event);
     const lostCapture = (event: PointerEvent) =>
       controller.lostPointerCapture(event);
-    canvas.addEventListener('pointerdown', down);
-    canvas.addEventListener('pointermove', move);
-    canvas.addEventListener('pointerup', up);
-    canvas.addEventListener('pointercancel', cancel);
+    const options: AddEventListenerOptions = { passive: false };
+    const blockTouch = (event: TouchEvent) => event.preventDefault();
+    canvas.addEventListener('pointerdown', down, options);
+    canvas.addEventListener('pointermove', move, options);
+    canvas.addEventListener('pointerup', up, options);
+    canvas.addEventListener('pointercancel', cancel, options);
     canvas.addEventListener('lostpointercapture', lostCapture);
+    canvas.addEventListener('touchstart', blockTouch, options);
+    canvas.addEventListener('touchmove', blockTouch, options);
     return () => {
       canvas.removeEventListener('pointerdown', down);
       canvas.removeEventListener('pointermove', move);
       canvas.removeEventListener('pointerup', up);
       canvas.removeEventListener('pointercancel', cancel);
       canvas.removeEventListener('lostpointercapture', lostCapture);
+      canvas.removeEventListener('touchstart', blockTouch);
+      canvas.removeEventListener('touchmove', blockTouch);
     };
   }, [canvasRef, controller]);
 }
