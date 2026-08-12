@@ -71,6 +71,7 @@ export function QuestionsPage() {
   const [syncState, setSyncState] = useState<
     'idle' | 'syncing' | 'denied' | 'error'
   >('idle');
+  const [rejectedRemoteRowCount, setRejectedRemoteRowCount] = useState(0);
   const reload = useCallback(async () => {
     try {
       if (userId) setWorkspace(await questionWorkspaceRepository.load(userId));
@@ -101,12 +102,14 @@ export function QuestionsPage() {
   const synchronize = useCallback(async () => {
     if (!userId || !navigator.onLine) return;
     setSyncState('syncing');
+    setRejectedRemoteRowCount(0);
     try {
       const result = await syncQuestionWorkspace(
         userId,
         questionWorkspaceRepository,
         questionRemoteGateway,
       );
+      setRejectedRemoteRowCount(result.rejectedRemoteRows.length);
       setSyncState(result.permissionDenied ? 'denied' : 'idle');
       await reload();
     } catch {
@@ -200,6 +203,14 @@ export function QuestionsPage() {
         ) : syncState === 'error' ? (
           <span role="alert">
             Synchronisation impossible; le brouillon local est conservé.
+          </span>
+        ) : null}
+        {rejectedRemoteRowCount > 0 ? (
+          <span role="status">
+            {rejectedRemoteRowCount}{' '}
+            {rejectedRemoteRowCount === 1
+              ? 'question distante n’a pas pu être chargée.'
+              : 'questions distantes n’ont pas pu être chargées.'}
           </span>
         ) : null}
       </div>

@@ -65,6 +65,62 @@ describe('questionFromRemoteRow', () => {
     );
   });
 
+  it('normalise les timestamps PostgreSQL d’une question importée', () => {
+    const imported = questionFromRemoteRow({
+      ...row(),
+      created_at: '2026-08-12T12:34:56.123456+00:00',
+      updated_at: '2026-08-12T12:34:57.654321+00:00',
+      provenance: {
+        bundleId: 'img1170-electricite-20260812-v1',
+        importedAt: '2026-08-12T12:34:56.123456+00:00',
+        references: [
+          {
+            sourceLabel: 'ChatGPT course import',
+            sourceReference: '0',
+            sourceLocator: null,
+          },
+        ],
+        chatGptImport: {
+          coverage: 'text-and-visuals',
+          entryIndex: 0,
+          clientEntryId: 'q0',
+          uncertainties: [],
+        },
+      },
+    });
+
+    expect(imported.createdAt).toBe('2026-08-12T12:34:56.123Z');
+    expect(imported.updatedAt).toBe('2026-08-12T12:34:57.654Z');
+    expect(imported.provenance?.importedAt).toBe('2026-08-12T12:34:56.123Z');
+  });
+
+  it('continue de rejeter une date distante réellement invalide', () => {
+    expect(() =>
+      questionFromRemoteRow({ ...row(), created_at: 'date-invalide' }),
+    ).toThrow('Question distante invalide : question.timestamps.');
+  });
+
+  it('isole une row aux timestamps invalides sans bloquer la valide', async () => {
+    const gateway = new SupabaseQuestionRemoteGateway(
+      clientWith({
+        latest_accessible_questions: [
+          {
+            ...row(),
+            created_at: '2026-08-12T12:34:56.123456+00:00',
+            updated_at: '2026-08-12T12:34:57.654321+00:00',
+          },
+          { ...row(), id: 'invalid-date', updated_at: 'pas-une-date' },
+        ],
+      }),
+    );
+
+    const pulled = await gateway.pullRecent('owner', 100);
+    expect(pulled.questions).toHaveLength(1);
+    expect(pulled.questions[0]?.createdAt).toBe('2026-08-12T12:34:56.123Z');
+    expect(pulled.rejectedRows).toHaveLength(1);
+    expect(pulled.rejectedRows[0]?.index).toBe(1);
+  });
+
   it('retient la dernière version par id et rejette une row sans bloquer les valides', async () => {
     const gateway = new SupabaseQuestionRemoteGateway(
       clientWith({

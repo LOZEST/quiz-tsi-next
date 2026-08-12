@@ -30,6 +30,21 @@ const rowFor = (question: Readonly<Question>) => ({
   created_at: question.createdAt,
   updated_at: question.updatedAt,
 });
+
+const normalizeRemoteTimestamp = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : value;
+};
+
+const normalizeRemoteProvenance = (value: unknown): unknown =>
+  isRecord(value)
+    ? {
+        ...value,
+        importedAt: normalizeRemoteTimestamp(value.importedAt),
+      }
+    : value;
+
 export const questionFromRemoteRow = (row: unknown): Question => {
   if (!isRecord(row) || !isRecord(row.content))
     throw new Error('Question distante invalide.');
@@ -48,9 +63,9 @@ export const questionFromRemoteRow = (row: unknown): Question => {
     correction: row.content.correction,
     parameterization: row.parameterization,
     tags: row.tags,
-    provenance: row.provenance,
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    provenance: normalizeRemoteProvenance(row.provenance),
+    createdAt: normalizeRemoteTimestamp(row.created_at),
+    updatedAt: normalizeRemoteTimestamp(row.updated_at),
   };
   const validated = validateQuestion(candidate);
   if (!validated.ok)
