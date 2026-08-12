@@ -44,6 +44,18 @@ export default defineConfig(({ mode }) => {
         })),
       ],
     },
-    build: { outDir: 'dist', sourcemap: false },
+    build: {
+      outDir: 'dist',
+      sourcemap: false,
+      rolldownOptions: {
+        output: {
+          manualChunks(id: string) {
+            return id.includes('/full-production-v1.json')
+              ? 'official-question-bank'
+              : undefined;
+          },
+        },
+      },
+    },
   };
 });

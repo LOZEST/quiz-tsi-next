@@ -447,7 +447,7 @@ test('opens the local progress summary and voluntary disclosure', async ({
   await expect(page.getByTestId('primary-indicator')).toHaveCount(1);
   await expect(page.getByTestId('notion-details')).toHaveCount(0);
   await page
-    .getByRole('button', { name: /Nombres/ })
+    .getByRole('button', { name: /Bases indispensables/ })
     .first()
     .click();
   const notion = page
@@ -469,13 +469,13 @@ async function openRevisionOptions(page: Page) {
     await options.click();
 }
 
-test('uses the production NUM bank and dependent free revision filters', async ({
+test('uses the complete production bank and dependent free revision filters', async ({
   page,
 }) => {
   await login(page);
   const card = page.getByRole('article', { name: 'Question active' });
   await expect(card).toBeVisible();
-  await expect(card).toContainText(/Calcul/);
+  await expect(card).toContainText(/Calcul|Réflexe/);
   await openRevisionOptions(page);
   const drawerPanel = page.getByRole('dialog').locator(':scope > div');
   expect(
@@ -492,12 +492,40 @@ test('uses the production NUM bank and dependent free revision filters', async (
       label.includes(' — '),
     ),
   ).toBe(false);
-  await page.getByLabel('Partie').selectOption('numbers');
+  await page.getByLabel('Partie').selectOption('fundamentals');
   await chapterSelect.selectOption('numbers-arithmetic');
   await page.getByLabel('Notion').selectOption('NUM-F01');
   await page.getByLabel('Type de question').selectOption('calculation');
   await expect(card).toContainText('Calcul');
   await expect(page.getByLabel('Difficulté')).toHaveValue('');
+});
+
+test('navigates a non-NUM notion through all difficulties and reflex mode', async ({
+  page,
+}) => {
+  await login(page);
+  await openRevisionOptions(page);
+  const card = page.getByRole('article', { name: 'Question active' });
+  await page.getByLabel('Partie').selectOption('functions-analysis');
+  await page
+    .getByRole('combobox', { name: 'Chapitre', exact: true })
+    .selectOption('derivatives-function-study');
+  await page.getByLabel('Notion').selectOption('DER-F01');
+  await page.getByLabel('Type de question').selectOption('calculation');
+  for (const difficulty of ['fundamental', 'standard', 'trap']) {
+    await page.getByLabel('Difficulté').selectOption(difficulty);
+    await expect(page.getByLabel('Difficulté')).toHaveValue(difficulty);
+    await expect(card).toContainText(/Dérivées usuelles.*Calcul/i);
+  }
+
+  await page.getByLabel('Type de question').selectOption('reflex');
+  await expect(page.getByLabel('Difficulté')).toHaveCount(0);
+  await expect(card).toContainText(/Dérivées usuelles.*Réflexe/i);
+  await page.getByRole('button', { name: 'Fermer le menu' }).click();
+  const first = await card.textContent();
+  await page.getByRole('button', { name: 'Passer' }).click();
+  await page.getByRole('button', { name: 'Question suivante' }).click();
+  await expect(card).not.toHaveText(first ?? '');
 });
 
 test('clears a drawn draft and atomically changes the question without a dialog', async ({
@@ -564,7 +592,7 @@ test('keeps a compatible NUM filter active while changing question', async ({
 }) => {
   await login(page);
   await openRevisionOptions(page);
-  await page.getByLabel('Partie').selectOption('numbers');
+  await page.getByLabel('Partie').selectOption('fundamentals');
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
     .selectOption('numbers-arithmetic');
@@ -589,7 +617,7 @@ test('keeps a compatible NUM filter active while changing question', async ({
     .poll(async () => (await readWhiteboardScene(page)).objects)
     .toEqual([]);
   await openRevisionOptions(page);
-  await expect(page.getByLabel('Partie')).toHaveValue('numbers');
+  await expect(page.getByLabel('Partie')).toHaveValue('fundamentals');
   await expect(
     page.getByRole('combobox', { name: 'Chapitre', exact: true }),
   ).toHaveValue('numbers-arithmetic');

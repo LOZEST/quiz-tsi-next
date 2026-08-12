@@ -74,6 +74,87 @@ describe('validateParameterizedQuestion', () => {
       searchCompleted: true,
     });
   });
+  it('conserve la preuve exhaustive lorsque seules deux combinaisons éparses sont valides', () => {
+    const base = question();
+    const value: Question = {
+      ...base,
+      parameterization: {
+        schemaVersion: 1,
+        variables: [
+          { id: 'a', label: 'a', domain: { kind: 'choice', values: [1, 5] } },
+          { id: 'b', label: 'b', domain: { kind: 'choice', values: [5, 1] } },
+          { id: 'p', label: 'p', domain: { kind: 'choice', values: [-1, 1] } },
+        ],
+        constraints: [
+          {
+            kind: 'logical',
+            operator: 'or',
+            operands: [
+              {
+                kind: 'logical',
+                operator: 'and',
+                operands: [
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'a' },
+                    right: { kind: 'literal', value: 1 },
+                  },
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'b' },
+                    right: { kind: 'literal', value: 5 },
+                  },
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'p' },
+                    right: { kind: 'literal', value: -1 },
+                  },
+                ],
+              },
+              {
+                kind: 'logical',
+                operator: 'and',
+                operands: [
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'a' },
+                    right: { kind: 'literal', value: 5 },
+                  },
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'b' },
+                    right: { kind: 'literal', value: 1 },
+                  },
+                  {
+                    kind: 'comparison',
+                    operator: 'equal',
+                    left: { kind: 'variable', variableId: 'p' },
+                    right: { kind: 'literal', value: 1 },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+        validationVariantCount: 2,
+      },
+      prompt: [{ kind: 'text', value: '@a @b @p' }],
+    };
+    const result = validateParameterizedQuestion(value, 'sparse-proof');
+    expect(result.kind).toBe('ready');
+    expect(result.variants).toHaveLength(2);
+    expect(result.statistics).toMatchObject({
+      totalCombinations: 8,
+      validCombinations: 2,
+      searchCompleted: true,
+      exhaustive: true,
+    });
+  });
   it('refuse un compteur officiel de neuf lorsque vingt variantes existent', () =>
     expect(
       validateParameterizedQuestion(

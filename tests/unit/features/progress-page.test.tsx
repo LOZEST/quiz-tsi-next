@@ -69,7 +69,11 @@ describe('ProgressPage', () => {
       await screen.findByText(/progression affichée est partielle/i),
     ).toBeVisible();
     expect(screen.queryByTestId('notion-details')).toBeNull();
-    await user.click(screen.getByRole('button', { name: /Nombres.*100 %/i }));
+    await user.click(
+      screen.getByRole('button', {
+        name: /Bases indispensables.*100 %/i,
+      }),
+    );
     await user.click(
       screen.getByRole('button', { name: /Nombres et arithmétique/i }),
     );

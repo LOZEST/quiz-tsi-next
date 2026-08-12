@@ -1,5 +1,5 @@
-import { MATH_SYNTAX_VERSION } from './MathSource';
-import type { MathFunctionName } from './MathAst';
+import { MATH_SYNTAX_VERSION } from './MathSource.ts';
+import type { MathFunctionName } from './MathAst.ts';
 
 export type MathSyntaxCategory =
   | 'operations'

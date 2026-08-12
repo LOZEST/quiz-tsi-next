@@ -106,6 +106,7 @@ export function generateParameterVariants(
         diagnostics: ['Le nombre de variables dépasse la limite technique.'],
       };
     const variables = typed.variables;
+    const derivedVariables = typed.derivedVariables ?? [];
     const ids: string[] = [];
     for (const entry of variables) {
       if (typeof entry.id !== 'string' || entry.id.length === 0)
@@ -178,6 +179,19 @@ export function generateParameterVariants(
         values[ids[index] as string] = domain[selected] as ParameterPrimitive;
         if (exhaustiveCapable) cursor = Math.floor(cursor / domain.length);
       }
+      let derivedValuesValid = true;
+      for (const derived of derivedVariables) {
+        const result = evaluateSafeExpression(derived.expression, values);
+        if (!result.ok) {
+          evaluationDiagnostics.push(
+            `parameterization.derivedVariables.${derived.id}: ${result.message}`,
+          );
+          derivedValuesValid = false;
+          break;
+        }
+        values[derived.id] = result.value;
+      }
+      if (!derivedValuesValid) continue;
       let valid = true;
       for (let index = 0; index < typed.constraints.length; index += 1) {
         const result = evaluateSafeExpression(typed.constraints[index], values);
@@ -192,7 +206,10 @@ export function generateParameterVariants(
       }
       if (!valid) continue;
       validCombinations += 1;
-      const key = serializeParameterValues(values, ids);
+      const key = serializeParameterValues(values, [
+        ...ids,
+        ...derivedVariables.map((entry) => entry.id),
+      ]);
       if (!seen.has(key)) {
         seen.add(key);
         variants.push(freezeValues(values));

@@ -119,9 +119,12 @@ export function analyzeQuestionParameterReferences(
     if (typeof value !== 'object' || value === null || Array.isArray(value))
       return empty;
     const question = value as Question;
-    const definitions = new Set(
-      question.parameterization?.variables.map((entry) => entry.id) ?? [],
-    );
+    const definitions = new Set([
+      ...(question.parameterization?.variables.map((entry) => entry.id) ?? []),
+      ...(question.parameterization?.derivedVariables?.map(
+        (entry) => entry.id,
+      ) ?? []),
+    ]);
     const used = new Set<string>();
     const diagnostics: ReferenceDiagnostic[] = [];
     const addText = (text: string, path: string) => {

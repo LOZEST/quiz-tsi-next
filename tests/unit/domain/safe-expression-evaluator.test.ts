@@ -80,6 +80,21 @@ describe('evaluateSafeExpression', () => {
       ),
     ).toEqual({ ok: true, value: true });
   });
+  it('évalue les fonctions sûres requises par la banque complète', () => {
+    const fn = (name: 'cos' | 'binomial' | 'is-integer', values: number[]) =>
+      evaluateSafeExpression(
+        {
+          kind: 'math-function',
+          function: name,
+          arguments: values.map(literal),
+        },
+        {},
+      );
+    expect(fn('cos', [0])).toEqual({ ok: true, value: 1 });
+    expect(fn('binomial', [5, 2])).toEqual({ ok: true, value: 10 });
+    expect(fn('is-integer', [3])).toEqual({ ok: true, value: true });
+    expect(fn('is-integer', [3.5])).toEqual({ ok: true, value: false });
+  });
   it('évalue variable, negate et absolute', () =>
     expect(
       evaluateSafeExpression(

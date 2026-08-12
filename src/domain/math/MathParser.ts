@@ -3,11 +3,14 @@ import type {
   MathComparisonOperator,
   MathFunctionName,
   MathRelationOperator,
-} from './MathAst';
-import { mathParseError, type MathParseError } from './MathParseError';
-import { MATH_SYNTAX_VERSION, type MathSource } from './MathSource';
-import { isMathFunctionName, MATH_FUNCTION_NAMES } from './MathSyntaxRegistry';
-import { tokenizeMathSource, type MathToken } from './MathTokenizer';
+} from './MathAst.ts';
+import { mathParseError, type MathParseError } from './MathParseError.ts';
+import { MATH_SYNTAX_VERSION, type MathSource } from './MathSource.ts';
+import {
+  isMathFunctionName,
+  MATH_FUNCTION_NAMES,
+} from './MathSyntaxRegistry.ts';
+import { tokenizeMathSource, type MathToken } from './MathTokenizer.ts';
 
 export const MAX_MATH_AST_DEPTH = 32;
 export const MAX_MATH_AST_NODES = 256;
@@ -32,9 +35,12 @@ export type MathSourceSnapshot = Readonly<{
 }>;
 
 class ControlledParseFailure extends Error {
-  constructor(readonly parseError: MathParseError) {
+  readonly parseError: MathParseError;
+
+  constructor(parseError: MathParseError) {
     super('Controlled math parse failure');
     this.name = 'ControlledParseFailure';
+    this.parseError = parseError;
   }
 }
 
@@ -50,12 +56,15 @@ const constantBySymbol: Readonly<Record<string, MathAstNode>> = {
 };
 
 class Parser {
+  private readonly tokens: readonly MathToken[];
   private position = 0;
   private nodeCount = 0;
   private depth = 0;
   readonly references = new Set<string>();
 
-  constructor(private readonly tokens: readonly MathToken[]) {}
+  constructor(tokens: readonly MathToken[]) {
+    this.tokens = tokens;
+  }
 
   parse(): MathAstNode {
     const ast = this.parseRelation();

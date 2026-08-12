@@ -57,6 +57,11 @@ interface VariableDefinition {
   label: string;
   domain: VariableDomain;
 }
+interface DerivedVariableDefinition {
+  id: string;
+  label: string;
+  expression: SafeExpressionNode;
+}
 
 type SafeExpressionNode =
   | { kind: "literal"; value: ParameterPrimitive }
@@ -64,19 +69,20 @@ type SafeExpressionNode =
   | { kind: "unary"; operator: "negate" | "absolute"; operand: SafeExpressionNode }
   | { kind: "binary"; operator: "add" | "subtract" | "multiply" | "divide" | "modulo" | "power"; left: SafeExpressionNode; right: SafeExpressionNode }
   | { kind: "comparison"; operator: "equal" | "not-equal" | "less-than" | "less-than-or-equal" | "greater-than" | "greater-than-or-equal"; left: SafeExpressionNode; right: SafeExpressionNode }
-  | { kind: "math-function"; function: "abs" | "sqrt" | "min" | "max" | "round" | "floor" | "ceil"; arguments: SafeExpressionNode[] }
+  | { kind: "math-function"; function: "abs" | "sqrt" | "min" | "max" | "round" | "floor" | "ceil" | "gcd" | "lcm" | "sign" | "cos" | "binomial" | "is-integer" | "numeric-value" | "is-square" | "squarefree" | "has-prime-factor-other-than-2-or-5"; arguments: SafeExpressionNode[] }
   | { kind: "logical"; operator: "and" | "or"; operands: SafeExpressionNode[] }
   | { kind: "logical-not"; operand: SafeExpressionNode };
 
 interface ParameterizedQuestionSpec {
   schemaVersion: number;
   variables: VariableDefinition[];
+  derivedVariables?: DerivedVariableDefinition[];
   constraints: SafeExpressionNode[];
   validationVariantCount: number;
 }
 ```
 
-`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides. Sa validation est bornée à une profondeur de 32, 256 nœuds et 32 arguments ou opérandes par liste. `abs`, `sqrt`, `round`, `floor` et `ceil` acceptent exactement un argument ; `min` et `max` en acceptent au moins deux ; `and` et `or` ont au moins deux opérandes.
+`SafeExpressionNode` est un AST interprété en liste blanche. Il n'autorise ni `eval`, ni `new Function`, ni JavaScript arbitraire, ni accès au DOM, au réseau ou au stockage. Les opérateurs et fonctions non énumérés sont invalides. Sa validation est bornée à une profondeur de 32, 256 nœuds et 32 arguments ou opérandes par liste. `abs`, `sqrt`, `round`, `floor`, `ceil`, `sign`, `cos`, `is-integer`, `numeric-value`, `is-square`, `squarefree` et `has-prime-factor-other-than-2-or-5` acceptent exactement un argument ; `gcd`, `lcm` et `binomial` en acceptent deux ; `min` et `max` en acceptent au moins deux ; `and` et `or` ont au moins deux opérandes. Les variables dérivées sont évaluées séquentiellement dans l'ordre déclaré, avant les contraintes ; chacune ne peut référencer que les variables déjà définies.
 
 ### Question et instance
 
@@ -125,7 +131,7 @@ L'import ChatGPT V1 est une exception `remote-origin` au local-first initial : G
 
 Une migration convertit tout ancien contenu persistant du LaTeX vers un `MathSource` contrôlé ou le met en quarantaine. Aucun contenu invalide n'est interprété silencieusement. L'auteur ne saisit et ne voit jamais directement du LaTeX.
 
-`parameterization` vaut `null` pour une question non paramétrée. Avant publication d'une question paramétrée, `validationVariantCount` vaut au minimum 10 et autant de variantes valides sont contrôlées. Toutes les valeurs générées satisfont leur domaine et toutes les contraintes. Une seed identique produit les mêmes valeurs et le même contenu. Une combinaison impossible produit une erreur explicite ; aucune variante invalide n'est publiée silencieusement.
+`parameterization` vaut `null` pour une question non paramétrée. Avant publication d'une question paramétrée, `validationVariantCount` vaut au minimum 10 et autant de variantes valides sont contrôlées. Une question officielle `static`, publiée et validée peut déclarer un compteur inférieur à 10 uniquement si une recherche exhaustive prouve que son espace valide fini contient exactement ce nombre de variantes ; elles sont alors toutes contrôlées. Cette exception est interdite aux sources `private` et `shared` et ne peut jamais être déduite d'une recherche bornée. Toutes les valeurs générées satisfont leur domaine et toutes les contraintes. Une seed identique produit les mêmes valeurs et le même contenu. Une combinaison impossible produit une erreur explicite ; aucune variante invalide n'est publiée silencieusement.
 
 Pour le bloc D de PR4, le hasard déterministe est versionné `xmur3-mulberry32` v1 : la seed textuelle est condensée par xmur3, puis la séquence est produite par Mulberry32 en arithmétique entière 32 bits. Les limites V1 sont 32 variables, 10 000 valeurs matérialisées par domaine, 8 décimales, des entiers décimaux mis à l'échelle bornés aux entiers sûrs JavaScript, 100 000 combinaisons pour une recherche exhaustive, 20 000 tentatives déterministes hors seuil et 1 000 variantes demandées. La quantification décimale convertit la représentation canonique, y compris exponentielle, en fraction `BigInt` : plafond exact pour le minimum, plancher exact pour le maximum et plus proche avec égalité vers `+∞` pour les exclusions. Une recherche bornée qui n'atteint pas la quantité demandée retourne `search-limit-exceeded` et ne conclut jamais à l'impossibilité. `searchCompleted` et `exhaustive` ne valent vrai que si toutes les combinaisons ont réellement été examinées ; `validCombinations` ne compte que les combinaisons examinées. Une paramétrisation sans variable est invalide ; une question sans paramétrisation reste statique et utilise une table de paramètres vide. Toute sortie `ready` de validation est une copie profondément immuable sans geler la question source.
 

@@ -129,7 +129,7 @@ Avant publication, toute référence correspond à une variable définie ; une r
 
 ## Variantes, publication et tutoriel
 
-Avant publication paramétrée, au moins dix variantes valides sont générées et contrôlées. Plusieurs énoncés, indices et corrections rendus sont montrés ; l'auteur peut régénérer et modifier domaines ou contraintes. Une mauvaise variante n'est jamais ignorée silencieusement.
+Avant publication paramétrée, au moins dix variantes valides sont générées et contrôlées. L'unique exception concerne une question officielle statique dont l'espace valide fini contient moins de dix variantes : le moteur doit alors en apporter la preuve exhaustive, contrôler toutes les variantes distinctes et fixer `validationVariantCount` à ce nombre exact. Cette exception n'est autorisée ni pour une question privée ou partagée, ni après une recherche bornée non exhaustive. Plusieurs énoncés, indices et corrections rendus sont montrés ; l'auteur peut régénérer et modifier domaines ou contraintes. Une mauvaise variante n'est jamais ignorée silencieusement.
 
 Une configuration impossible bloque la publication : « Aucune combinaison ne respecte toutes les règles. Vérifie les intervalles ou supprime une contrainte. » Le brouillon est restaurable, la source n'est jamais perdue après erreur et toute invalidité bloque la publication.
 
