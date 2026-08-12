@@ -17,3 +17,8 @@ enabled = true
 site_url = "http://127.0.0.1:5173"
 additional_redirect_urls = ["http://127.0.0.1:4173"]
 enable_signup = false
+
+[functions.quiz-tsi-mcp]
+# Le gateway doit laisser passer la découverte OAuth et le challenge RFC 9728.
+# Le Bearer reste contrôlé par gpt-question-import puis Supabase Auth/RLS.
+verify_jwt = false
