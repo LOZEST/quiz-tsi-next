@@ -1,0 +1,601 @@
+{
+  "schemaVersion": 1,
+  "parts": [
+    { "id": "fundamentals", "label": "Bases indispensables", "order": 0 },
+    { "id": "sequences", "label": "Suites", "order": 1 },
+    { "id": "functions-analysis", "label": "Fonctions et analyse", "order": 2 },
+    { "id": "trigonometry", "label": "Trigonométrie", "order": 3 },
+    { "id": "complex-numbers", "label": "Nombres complexes", "order": 4 },
+    {
+      "id": "probabilities-statistics",
+      "label": "Probabilités et statistiques",
+      "order": 5
+    },
+    {
+      "id": "geometry-measurements",
+      "label": "Géométrie et mesures",
+      "order": 6
+    },
+    { "id": "algorithms", "label": "Algorithmique et Python", "order": 7 }
+  ],
+  "chapters": [
+    {
+      "id": "numbers-arithmetic",
+      "partId": "fundamentals",
+      "label": "Nombres et arithmétique",
+      "order": 0
+    },
+    {
+      "id": "algebraic-calculus",
+      "partId": "fundamentals",
+      "label": "Calcul algébrique",
+      "order": 1
+    },
+    {
+      "id": "equations-signs-inequalities",
+      "partId": "fundamentals",
+      "label": "Équations, signes et inéquations",
+      "order": 2
+    },
+    {
+      "id": "sequences",
+      "partId": "sequences",
+      "label": "Suites numériques",
+      "order": 3
+    },
+    {
+      "id": "reference-functions-domains",
+      "partId": "functions-analysis",
+      "label": "Fonctions de référence et domaines",
+      "order": 4
+    },
+    {
+      "id": "analysis-logarithms-exponentials",
+      "partId": "functions-analysis",
+      "label": "Analyse, logarithmes et exponentielles",
+      "order": 5
+    },
+    {
+      "id": "derivatives-function-study",
+      "partId": "functions-analysis",
+      "label": "Dérivation et étude de fonctions",
+      "order": 6
+    },
+    {
+      "id": "primitives-integrals",
+      "partId": "functions-analysis",
+      "label": "Primitives et intégrales",
+      "order": 7
+    },
+    {
+      "id": "trigonometry",
+      "partId": "trigonometry",
+      "label": "Trigonométrie",
+      "order": 8
+    },
+    {
+      "id": "complex-numbers",
+      "partId": "complex-numbers",
+      "label": "Nombres complexes",
+      "order": 9
+    },
+    {
+      "id": "probabilities-statistics",
+      "partId": "probabilities-statistics",
+      "label": "Probabilités et statistiques",
+      "order": 10
+    },
+    {
+      "id": "analytic-geometry",
+      "partId": "geometry-measurements",
+      "label": "Géométrie analytique",
+      "order": 11
+    },
+    {
+      "id": "euclidean-geometry-measurements",
+      "partId": "geometry-measurements",
+      "label": "Géométrie euclidienne et mesures",
+      "order": 12
+    },
+    {
+      "id": "algorithms-python",
+      "partId": "algorithms",
+      "label": "Algorithmique et Python",
+      "order": 13
+    }
+  ],
+  "notions": [
+    {
+      "id": "ALG-F01",
+      "chapterId": "algebraic-calculus",
+      "label": "Développement et réduction d’expressions",
+      "order": 0
+    },
+    {
+      "id": "ALG-F02",
+      "chapterId": "algebraic-calculus",
+      "label": "Développement par identités remarquables de degrés 2 et 3",
+      "order": 1
+    },
+    {
+      "id": "ALG-F03",
+      "chapterId": "algebraic-calculus",
+      "label": "Factorisation par facteur commun et regroupement",
+      "order": 2
+    },
+    {
+      "id": "ALG-F04",
+      "chapterId": "algebraic-calculus",
+      "label": "Factorisation par identités remarquables",
+      "order": 3
+    },
+    {
+      "id": "ALG-F05",
+      "chapterId": "algebraic-calculus",
+      "label": "Mise au même dénominateur et addition de fractions rationnelles",
+      "order": 4
+    },
+    {
+      "id": "ALG-F06",
+      "chapterId": "algebraic-calculus",
+      "label": "Simplification et décomposition simple de fractions rationnelles",
+      "order": 5
+    },
+    {
+      "id": "ALGO-F01",
+      "chapterId": "algorithms-python",
+      "label": "Conditions et branchements",
+      "order": 0
+    },
+    {
+      "id": "ALGO-F02",
+      "chapterId": "algorithms-python",
+      "label": "Boucles bornées et boucles imbriquées",
+      "order": 1
+    },
+    {
+      "id": "ALGO-F03",
+      "chapterId": "algorithms-python",
+      "label": "Boucles conditionnelles while et condition d’arrêt",
+      "order": 2
+    },
+    {
+      "id": "ALGO-F04",
+      "chapterId": "algorithms-python",
+      "label": "Accumulateurs, produits et compteurs",
+      "order": 3
+    },
+    {
+      "id": "ALGO-F05",
+      "chapterId": "algorithms-python",
+      "label": "Manipulation de listes",
+      "order": 4
+    },
+    {
+      "id": "ALGO-F06",
+      "chapterId": "algorithms-python",
+      "label": "Simulation aléatoire et fréquences",
+      "order": 5
+    },
+    {
+      "id": "ALGO-F07",
+      "chapterId": "algorithms-python",
+      "label": "Fonctions Python : paramètres, retour et portée locale",
+      "order": 6
+    },
+    {
+      "id": "ANA-F01",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Calculs avec logarithmes et domaine",
+      "order": 0
+    },
+    {
+      "id": "ANA-F02",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Calculs exponentiels et lien exponentielle-logarithme",
+      "order": 1
+    },
+    {
+      "id": "ANA-F03",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Limites de polynômes et fractions rationnelles",
+      "order": 2
+    },
+    {
+      "id": "ANA-F04",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Limites avec logarithmes, exponentielles et croissances comparées",
+      "order": 3
+    },
+    {
+      "id": "ANA-F05",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Équations différentielles linéaires du premier ordre à coefficients constants",
+      "order": 4
+    },
+    {
+      "id": "ANA-F06",
+      "chapterId": "analysis-logarithms-exponentials",
+      "label": "Équations différentielles du second ordre réductibles par z=y’",
+      "order": 5
+    },
+    {
+      "id": "CPL-F01",
+      "chapterId": "complex-numbers",
+      "label": "Calcul algébrique, conjugaison et quotient",
+      "order": 0
+    },
+    {
+      "id": "CPL-F02",
+      "chapterId": "complex-numbers",
+      "label": "Module, argument et conversion de formes",
+      "order": 1
+    },
+    {
+      "id": "CPL-F03",
+      "chapterId": "complex-numbers",
+      "label": "Produits, quotients et puissances en forme exponentielle",
+      "order": 2
+    },
+    {
+      "id": "DER-F01",
+      "chapterId": "derivatives-function-study",
+      "label": "Dérivées usuelles et combinaisons linéaires",
+      "order": 0
+    },
+    {
+      "id": "DER-F02",
+      "chapterId": "derivatives-function-study",
+      "label": "Dérivée d’un produit",
+      "order": 1
+    },
+    {
+      "id": "DER-F03",
+      "chapterId": "derivatives-function-study",
+      "label": "Dérivée d’un quotient",
+      "order": 2
+    },
+    {
+      "id": "DER-F04",
+      "chapterId": "derivatives-function-study",
+      "label": "Dérivée d’une fonction composée",
+      "order": 3
+    },
+    {
+      "id": "DER-F05",
+      "chapterId": "derivatives-function-study",
+      "label": "Équation d’une tangente en une abscisse donnée",
+      "order": 4
+    },
+    {
+      "id": "DER-F06",
+      "chapterId": "derivatives-function-study",
+      "label": "Approximation affine locale",
+      "order": 5
+    },
+    {
+      "id": "DER-F07",
+      "chapterId": "derivatives-function-study",
+      "label": "Tangentes de pente imposée",
+      "order": 6
+    },
+    {
+      "id": "DER-F08",
+      "chapterId": "derivatives-function-study",
+      "label": "Tableau de variations et extremums",
+      "order": 7
+    },
+    {
+      "id": "EQI-F01",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Équations factorisables et produit nul dans R",
+      "order": 0
+    },
+    {
+      "id": "EQI-F02",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Racines réelles et factorisation réelle d’un trinôme",
+      "order": 1
+    },
+    {
+      "id": "EQI-F03",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Signe d’un trinôme réel",
+      "order": 2
+    },
+    {
+      "id": "EQI-F04",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Signe d’un produit ou quotient factorisé",
+      "order": 3
+    },
+    {
+      "id": "EQI-F05",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Inéquations polynomiales et rationnelles",
+      "order": 4
+    },
+    {
+      "id": "EQI-F06",
+      "chapterId": "equations-signs-inequalities",
+      "label": "Systèmes d’inéquations et intersections",
+      "order": 5
+    },
+    {
+      "id": "FON-F01",
+      "chapterId": "reference-functions-domains",
+      "label": "Ensemble de définition d’une expression fonctionnelle",
+      "order": 0
+    },
+    {
+      "id": "FON-F02",
+      "chapterId": "reference-functions-domains",
+      "label": "Images et comparaisons par fonctions de référence",
+      "order": 1
+    },
+    {
+      "id": "FON-F03",
+      "chapterId": "reference-functions-domains",
+      "label": "Valeur absolue : calcul, équations et inéquations",
+      "order": 2
+    },
+    {
+      "id": "FON-F04",
+      "chapterId": "reference-functions-domains",
+      "label": "Test calculatoire de parité ou d’imparité",
+      "order": 3
+    },
+    {
+      "id": "FON-F05",
+      "chapterId": "reference-functions-domains",
+      "label": "Composition et décomposition de fonctions",
+      "order": 4
+    },
+    {
+      "id": "GEO-F01",
+      "chapterId": "analytic-geometry",
+      "label": "Coordonnées de vecteurs, milieux et centre de gravité",
+      "order": 0
+    },
+    {
+      "id": "GEO-F02",
+      "chapterId": "analytic-geometry",
+      "label": "Distances entre points dans un repère orthonormé",
+      "order": 1
+    },
+    {
+      "id": "GEO-F03",
+      "chapterId": "analytic-geometry",
+      "label": "Norme, produit scalaire, orthogonalité et centres par perpendicularité",
+      "order": 2
+    },
+    {
+      "id": "GEO-F04",
+      "chapterId": "analytic-geometry",
+      "label": "Angles, longueurs et formule d’Al-Kashi",
+      "order": 3
+    },
+    {
+      "id": "GEO-F05",
+      "chapterId": "analytic-geometry",
+      "label": "Déterminant, colinéarité, alignement, parallélisme et quadrilatères",
+      "order": 4
+    },
+    {
+      "id": "INT-F01",
+      "chapterId": "primitives-integrals",
+      "label": "Primitives usuelles, combinaisons linéaires et condition initiale",
+      "order": 0
+    },
+    {
+      "id": "INT-F02",
+      "chapterId": "primitives-integrals",
+      "label": "Primitives par composition et condition initiale",
+      "order": 1
+    },
+    {
+      "id": "INT-F03",
+      "chapterId": "primitives-integrals",
+      "label": "Intégrales définies, Chasles et comparaison",
+      "order": 2
+    },
+    {
+      "id": "INT-F04",
+      "chapterId": "primitives-integrals",
+      "label": "Aire algébrique, aire géométrique et valeur moyenne",
+      "order": 3
+    },
+    {
+      "id": "MES-F01",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Périmètres et aires de figures planes, cercle inclus",
+      "order": 0
+    },
+    {
+      "id": "MES-F02",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Volumes de prismes, cylindres, pyramides et cônes",
+      "order": 1
+    },
+    {
+      "id": "MES-F03",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Surface et volume d’une sphère",
+      "order": 2
+    },
+    {
+      "id": "MES-F04",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Angles, classification et existence d’un triangle",
+      "order": 3
+    },
+    {
+      "id": "MES-F05",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Théorème de Pythagore et réciproque",
+      "order": 4
+    },
+    {
+      "id": "MES-F06",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Trigonométrie dans le triangle rectangle",
+      "order": 5
+    },
+    {
+      "id": "MES-F07",
+      "chapterId": "euclidean-geometry-measurements",
+      "label": "Triangles égaux et triangles semblables",
+      "order": 6
+    },
+    {
+      "id": "NUM-F01",
+      "chapterId": "numbers-arithmetic",
+      "label": "Calcul d’une expression puis classement dans les ensembles de nombres",
+      "order": 0
+    },
+    {
+      "id": "NUM-F02",
+      "chapterId": "numbers-arithmetic",
+      "label": "Divisibilité, parité, multiples et décomposition première",
+      "order": 1
+    },
+    {
+      "id": "NUM-F03",
+      "chapterId": "numbers-arithmetic",
+      "label": "Lois des puissances à base commune",
+      "order": 2
+    },
+    {
+      "id": "NUM-F04",
+      "chapterId": "numbers-arithmetic",
+      "label": "Simplification d’expressions à puissances, racines et substitutions",
+      "order": 3
+    },
+    {
+      "id": "PRO-F01",
+      "chapterId": "probabilities-statistics",
+      "label": "Équiprobabilité, contraire, union et intersection",
+      "order": 0
+    },
+    {
+      "id": "PRO-F02",
+      "chapterId": "probabilities-statistics",
+      "label": "Probabilité conditionnelle",
+      "order": 1
+    },
+    {
+      "id": "PRO-F03",
+      "chapterId": "probabilities-statistics",
+      "label": "Indépendance de deux événements",
+      "order": 2
+    },
+    {
+      "id": "PRO-F04",
+      "chapterId": "probabilities-statistics",
+      "label": "Arbres pondérés et formule des probabilités totales",
+      "order": 3
+    },
+    {
+      "id": "PRO-F05",
+      "chapterId": "probabilities-statistics",
+      "label": "Loi d’une variable aléatoire discrète et probabilités cumulées",
+      "order": 4
+    },
+    {
+      "id": "PRO-F06",
+      "chapterId": "probabilities-statistics",
+      "label": "Espérance et transformation affine d’une variable",
+      "order": 5
+    },
+    {
+      "id": "PRO-F07",
+      "chapterId": "probabilities-statistics",
+      "label": "Coefficients binomiaux et relation de Pascal",
+      "order": 6
+    },
+    {
+      "id": "PRO-F08",
+      "chapterId": "probabilities-statistics",
+      "label": "Probabilités d’une loi binomiale",
+      "order": 7
+    },
+    {
+      "id": "PRO-F09",
+      "chapterId": "probabilities-statistics",
+      "label": "Moyenne pondérée, variance et écart type d’une série",
+      "order": 8
+    },
+    {
+      "id": "PRO-F10",
+      "chapterId": "probabilities-statistics",
+      "label": "Statistiques à deux variables, ajustement affine et linéarisation",
+      "order": 9
+    },
+    {
+      "id": "SUI-F01",
+      "chapterId": "sequences",
+      "label": "Reconnaissance calculée d’une suite arithmétique, géométrique ou autre",
+      "order": 0
+    },
+    {
+      "id": "SUI-F02",
+      "chapterId": "sequences",
+      "label": "Conversion entre récurrence, forme explicite et rang",
+      "order": 1
+    },
+    {
+      "id": "SUI-F03",
+      "chapterId": "sequences",
+      "label": "Sens de variation d’une suite",
+      "order": 2
+    },
+    {
+      "id": "SUI-F04",
+      "chapterId": "sequences",
+      "label": "Termes, nombre de termes et sommes arithmétiques",
+      "order": 3
+    },
+    {
+      "id": "SUI-F05",
+      "chapterId": "sequences",
+      "label": "Termes, nombre de termes et sommes géométriques",
+      "order": 4
+    },
+    {
+      "id": "SUI-F06",
+      "chapterId": "sequences",
+      "label": "Moyennes arithmétique et géométrique de réels positifs",
+      "order": 5
+    },
+    {
+      "id": "TRI-F01",
+      "chapterId": "trigonometry",
+      "label": "Réduction d’angles, valeurs exactes et identité fondamentale",
+      "order": 0
+    },
+    {
+      "id": "TRI-F02",
+      "chapterId": "trigonometry",
+      "label": "Équations trigonométriques élémentaires et transformées",
+      "order": 1
+    },
+    {
+      "id": "TRI-F03",
+      "chapterId": "trigonometry",
+      "label": "Formules d’addition, de différence et d’angle double",
+      "order": 2
+    },
+    {
+      "id": "TRI-F04",
+      "chapterId": "trigonometry",
+      "label": "Transformations somme-produit, produit-somme et linéarisation",
+      "order": 3
+    },
+    {
+      "id": "TRI-F05",
+      "chapterId": "trigonometry",
+      "label": "Paramètres et représentation d’une fonction sinusoïdale",
+      "order": 4
+    }
+  ]
+}

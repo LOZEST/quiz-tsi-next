@@ -284,7 +284,7 @@ describe('RevisionExperienceProvider integration', () => {
     expect(screen.getByTestId('question')).toHaveTextContent('none');
   });
 
-  it('uses the real NUM production composition without controlled fixtures', async () => {
+  it('uses the real complete production composition without controlled fixtures', async () => {
     render(
       <AppServicesProvider>
         <WhiteboardProvider>
@@ -297,7 +297,9 @@ describe('RevisionExperienceProvider integration', () => {
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
     );
-    expect(screen.getByTestId('question')).toHaveTextContent(/^NUM-/);
+    expect(screen.getByTestId('question')).toHaveTextContent(
+      /^(?:ALG|AUTO6|DUNOD|EQI|LOT[1-5]|NUM)-/,
+    );
     expect(screen.getByTestId('state-message')).toBeEmptyDOMElement();
   });
   it('loads an initial static question with active filters', async () => {

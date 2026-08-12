@@ -1,12 +1,354 @@
 {
   "schemaVersion": 1,
-  "generatedFrom": "src/data/program/official-program-v1.json",
+  "generatedFrom": "src/data/program/official-program-v2.json",
   "notions": [
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F01",
+      "notionLabel": "Développement et réduction d’expressions"
+    },
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F02",
+      "notionLabel": "Développement par identités remarquables de degrés 2 et 3"
+    },
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F03",
+      "notionLabel": "Factorisation par facteur commun et regroupement"
+    },
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F04",
+      "notionLabel": "Factorisation par identités remarquables"
+    },
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F05",
+      "notionLabel": "Mise au même dénominateur et addition de fractions rationnelles"
+    },
+    {
+      "chapterId": "algebraic-calculus",
+      "chapterLabel": "Calcul algébrique",
+      "notionId": "ALG-F06",
+      "notionLabel": "Simplification et décomposition simple de fractions rationnelles"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F01",
+      "notionLabel": "Conditions et branchements"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F02",
+      "notionLabel": "Boucles bornées et boucles imbriquées"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F03",
+      "notionLabel": "Boucles conditionnelles while et condition d’arrêt"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F04",
+      "notionLabel": "Accumulateurs, produits et compteurs"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F05",
+      "notionLabel": "Manipulation de listes"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F06",
+      "notionLabel": "Simulation aléatoire et fréquences"
+    },
+    {
+      "chapterId": "algorithms-python",
+      "chapterLabel": "Algorithmique et Python",
+      "notionId": "ALGO-F07",
+      "notionLabel": "Fonctions Python : paramètres, retour et portée locale"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F01",
+      "notionLabel": "Calculs avec logarithmes et domaine"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F02",
+      "notionLabel": "Calculs exponentiels et lien exponentielle-logarithme"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F03",
+      "notionLabel": "Limites de polynômes et fractions rationnelles"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F04",
+      "notionLabel": "Limites avec logarithmes, exponentielles et croissances comparées"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F05",
+      "notionLabel": "Équations différentielles linéaires du premier ordre à coefficients constants"
+    },
+    {
+      "chapterId": "analysis-logarithms-exponentials",
+      "chapterLabel": "Analyse, logarithmes et exponentielles",
+      "notionId": "ANA-F06",
+      "notionLabel": "Équations différentielles du second ordre réductibles par z=y’"
+    },
+    {
+      "chapterId": "complex-numbers",
+      "chapterLabel": "Nombres complexes",
+      "notionId": "CPL-F01",
+      "notionLabel": "Calcul algébrique, conjugaison et quotient"
+    },
+    {
+      "chapterId": "complex-numbers",
+      "chapterLabel": "Nombres complexes",
+      "notionId": "CPL-F02",
+      "notionLabel": "Module, argument et conversion de formes"
+    },
+    {
+      "chapterId": "complex-numbers",
+      "chapterLabel": "Nombres complexes",
+      "notionId": "CPL-F03",
+      "notionLabel": "Produits, quotients et puissances en forme exponentielle"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F01",
+      "notionLabel": "Dérivées usuelles et combinaisons linéaires"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F02",
+      "notionLabel": "Dérivée d’un produit"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F03",
+      "notionLabel": "Dérivée d’un quotient"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F04",
+      "notionLabel": "Dérivée d’une fonction composée"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F05",
+      "notionLabel": "Équation d’une tangente en une abscisse donnée"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F06",
+      "notionLabel": "Approximation affine locale"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F07",
+      "notionLabel": "Tangentes de pente imposée"
+    },
+    {
+      "chapterId": "derivatives-function-study",
+      "chapterLabel": "Dérivation et étude de fonctions",
+      "notionId": "DER-F08",
+      "notionLabel": "Tableau de variations et extremums"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F01",
+      "notionLabel": "Équations factorisables et produit nul dans R"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F02",
+      "notionLabel": "Racines réelles et factorisation réelle d’un trinôme"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F03",
+      "notionLabel": "Signe d’un trinôme réel"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F04",
+      "notionLabel": "Signe d’un produit ou quotient factorisé"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F05",
+      "notionLabel": "Inéquations polynomiales et rationnelles"
+    },
+    {
+      "chapterId": "equations-signs-inequalities",
+      "chapterLabel": "Équations, signes et inéquations",
+      "notionId": "EQI-F06",
+      "notionLabel": "Systèmes d’inéquations et intersections"
+    },
+    {
+      "chapterId": "reference-functions-domains",
+      "chapterLabel": "Fonctions de référence et domaines",
+      "notionId": "FON-F01",
+      "notionLabel": "Ensemble de définition d’une expression fonctionnelle"
+    },
+    {
+      "chapterId": "reference-functions-domains",
+      "chapterLabel": "Fonctions de référence et domaines",
+      "notionId": "FON-F02",
+      "notionLabel": "Images et comparaisons par fonctions de référence"
+    },
+    {
+      "chapterId": "reference-functions-domains",
+      "chapterLabel": "Fonctions de référence et domaines",
+      "notionId": "FON-F03",
+      "notionLabel": "Valeur absolue : calcul, équations et inéquations"
+    },
+    {
+      "chapterId": "reference-functions-domains",
+      "chapterLabel": "Fonctions de référence et domaines",
+      "notionId": "FON-F04",
+      "notionLabel": "Test calculatoire de parité ou d’imparité"
+    },
+    {
+      "chapterId": "reference-functions-domains",
+      "chapterLabel": "Fonctions de référence et domaines",
+      "notionId": "FON-F05",
+      "notionLabel": "Composition et décomposition de fonctions"
+    },
+    {
+      "chapterId": "analytic-geometry",
+      "chapterLabel": "Géométrie analytique",
+      "notionId": "GEO-F01",
+      "notionLabel": "Coordonnées de vecteurs, milieux et centre de gravité"
+    },
+    {
+      "chapterId": "analytic-geometry",
+      "chapterLabel": "Géométrie analytique",
+      "notionId": "GEO-F02",
+      "notionLabel": "Distances entre points dans un repère orthonormé"
+    },
+    {
+      "chapterId": "analytic-geometry",
+      "chapterLabel": "Géométrie analytique",
+      "notionId": "GEO-F03",
+      "notionLabel": "Norme, produit scalaire, orthogonalité et centres par perpendicularité"
+    },
+    {
+      "chapterId": "analytic-geometry",
+      "chapterLabel": "Géométrie analytique",
+      "notionId": "GEO-F04",
+      "notionLabel": "Angles, longueurs et formule d’Al-Kashi"
+    },
+    {
+      "chapterId": "analytic-geometry",
+      "chapterLabel": "Géométrie analytique",
+      "notionId": "GEO-F05",
+      "notionLabel": "Déterminant, colinéarité, alignement, parallélisme et quadrilatères"
+    },
+    {
+      "chapterId": "primitives-integrals",
+      "chapterLabel": "Primitives et intégrales",
+      "notionId": "INT-F01",
+      "notionLabel": "Primitives usuelles, combinaisons linéaires et condition initiale"
+    },
+    {
+      "chapterId": "primitives-integrals",
+      "chapterLabel": "Primitives et intégrales",
+      "notionId": "INT-F02",
+      "notionLabel": "Primitives par composition et condition initiale"
+    },
+    {
+      "chapterId": "primitives-integrals",
+      "chapterLabel": "Primitives et intégrales",
+      "notionId": "INT-F03",
+      "notionLabel": "Intégrales définies, Chasles et comparaison"
+    },
+    {
+      "chapterId": "primitives-integrals",
+      "chapterLabel": "Primitives et intégrales",
+      "notionId": "INT-F04",
+      "notionLabel": "Aire algébrique, aire géométrique et valeur moyenne"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F01",
+      "notionLabel": "Périmètres et aires de figures planes, cercle inclus"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F02",
+      "notionLabel": "Volumes de prismes, cylindres, pyramides et cônes"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F03",
+      "notionLabel": "Surface et volume d’une sphère"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F04",
+      "notionLabel": "Angles, classification et existence d’un triangle"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F05",
+      "notionLabel": "Théorème de Pythagore et réciproque"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F06",
+      "notionLabel": "Trigonométrie dans le triangle rectangle"
+    },
+    {
+      "chapterId": "euclidean-geometry-measurements",
+      "chapterLabel": "Géométrie euclidienne et mesures",
+      "notionId": "MES-F07",
+      "notionLabel": "Triangles égaux et triangles semblables"
+    },
     {
       "chapterId": "numbers-arithmetic",
       "chapterLabel": "Nombres et arithmétique",
       "notionId": "NUM-F01",
-      "notionLabel": "Calcul d’une expression et classement dans les ensembles"
+      "notionLabel": "Calcul d’une expression puis classement dans les ensembles de nombres"
     },
     {
       "chapterId": "numbers-arithmetic",
@@ -24,7 +366,133 @@
       "chapterId": "numbers-arithmetic",
       "chapterLabel": "Nombres et arithmétique",
       "notionId": "NUM-F04",
-      "notionLabel": "Simplification à puissances, racines et substitutions"
+      "notionLabel": "Simplification d’expressions à puissances, racines et substitutions"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F01",
+      "notionLabel": "Équiprobabilité, contraire, union et intersection"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F02",
+      "notionLabel": "Probabilité conditionnelle"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F03",
+      "notionLabel": "Indépendance de deux événements"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F04",
+      "notionLabel": "Arbres pondérés et formule des probabilités totales"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F05",
+      "notionLabel": "Loi d’une variable aléatoire discrète et probabilités cumulées"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F06",
+      "notionLabel": "Espérance et transformation affine d’une variable"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F07",
+      "notionLabel": "Coefficients binomiaux et relation de Pascal"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F08",
+      "notionLabel": "Probabilités d’une loi binomiale"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F09",
+      "notionLabel": "Moyenne pondérée, variance et écart type d’une série"
+    },
+    {
+      "chapterId": "probabilities-statistics",
+      "chapterLabel": "Probabilités et statistiques",
+      "notionId": "PRO-F10",
+      "notionLabel": "Statistiques à deux variables, ajustement affine et linéarisation"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F01",
+      "notionLabel": "Reconnaissance calculée d’une suite arithmétique, géométrique ou autre"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F02",
+      "notionLabel": "Conversion entre récurrence, forme explicite et rang"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F03",
+      "notionLabel": "Sens de variation d’une suite"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F04",
+      "notionLabel": "Termes, nombre de termes et sommes arithmétiques"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F05",
+      "notionLabel": "Termes, nombre de termes et sommes géométriques"
+    },
+    {
+      "chapterId": "sequences",
+      "chapterLabel": "Suites numériques",
+      "notionId": "SUI-F06",
+      "notionLabel": "Moyennes arithmétique et géométrique de réels positifs"
+    },
+    {
+      "chapterId": "trigonometry",
+      "chapterLabel": "Trigonométrie",
+      "notionId": "TRI-F01",
+      "notionLabel": "Réduction d’angles, valeurs exactes et identité fondamentale"
+    },
+    {
+      "chapterId": "trigonometry",
+      "chapterLabel": "Trigonométrie",
+      "notionId": "TRI-F02",
+      "notionLabel": "Équations trigonométriques élémentaires et transformées"
+    },
+    {
+      "chapterId": "trigonometry",
+      "chapterLabel": "Trigonométrie",
+      "notionId": "TRI-F03",
+      "notionLabel": "Formules d’addition, de différence et d’angle double"
+    },
+    {
+      "chapterId": "trigonometry",
+      "chapterLabel": "Trigonométrie",
+      "notionId": "TRI-F04",
+      "notionLabel": "Transformations somme-produit, produit-somme et linéarisation"
+    },
+    {
+      "chapterId": "trigonometry",
+      "chapterLabel": "Trigonométrie",
+      "notionId": "TRI-F05",
+      "notionLabel": "Paramètres et représentation d’une fonction sinusoïdale"
     }
   ]
 }

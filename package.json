@@ -22,6 +22,8 @@
     "test:coverage": "vitest run --coverage",
     "test:browser": "playwright test",
     "bank:import:num": "node scripts/import-num-question-bank.mjs",
+    "bank:audit:full": "node scripts/full-bank-audit.mjs data/source/Base_Complete_Quiz_TSI_1765_Generateurs.json",
+    "bank:import:full": "node scripts/import-full-question-bank.mjs",
     "gpt:export-program-knowledge": "node scripts/export-gpt-program-knowledge.mjs",
     "supabase:start": "npx --yes supabase@2.110.0 start",
     "supabase:reset": "npx --yes supabase@2.110.0 db reset",

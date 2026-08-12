@@ -13,6 +13,8 @@ export type SafeSnapshotResult =
 
 export interface SafeSnapshotLimits {
   readonly maxTotalCharacters?: number;
+  readonly maxNodes?: number;
+  readonly maxTotalProperties?: number;
 }
 
 export function createSafeSnapshot(
@@ -27,7 +29,8 @@ export function createSafeSnapshot(
     const copy = (input: unknown, depth: number): unknown => {
       if (depth > MAX_SAFE_SNAPSHOT_DEPTH) throw new Error('depth');
       nodes += 1;
-      if (nodes > MAX_SAFE_SNAPSHOT_NODES) throw new Error('size');
+      if (nodes > (limits.maxNodes ?? MAX_SAFE_SNAPSHOT_NODES))
+        throw new Error('size');
       if (input === null || typeof input === 'boolean') return input;
       if (typeof input === 'string') {
         if (input.length > MAX_SAFE_SNAPSHOT_STRING_LENGTH)
@@ -60,7 +63,10 @@ export function createSafeSnapshot(
         if (key.length > MAX_SAFE_SNAPSHOT_PROPERTY_NAME_LENGTH)
           throw new Error('property-name-length');
         totalProperties += 1;
-        if (totalProperties > MAX_SAFE_SNAPSHOT_TOTAL_PROPERTIES)
+        if (
+          totalProperties >
+          (limits.maxTotalProperties ?? MAX_SAFE_SNAPSHOT_TOTAL_PROPERTIES)
+        )
           throw new Error('property-budget');
         totalCharacters += key.length;
         if (

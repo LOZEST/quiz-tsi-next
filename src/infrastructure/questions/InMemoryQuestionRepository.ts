@@ -26,6 +26,8 @@ const clone = <T>(value: T): Readonly<T> => {
   if (!copied.ok) throw new Error('Snapshot interne invalide.');
   return deepFreezeOwned(copied.value as T);
 };
+const cloneCollection = <T>(values: readonly T[]): readonly Readonly<T>[] =>
+  Object.freeze(values.map((value) => clone(value)));
 
 export class InMemoryQuestionRepository
   implements QuestionRepository, QuestionBankImportRepository
@@ -47,14 +49,14 @@ export class InMemoryQuestionRepository
     return found ? clone(found) : null;
   }
   listPublished(): readonly Readonly<Question>[] {
-    return clone(
+    return cloneCollection(
       this.#questions.filter(
         (item) => item.status === 'published' && item.validated,
       ),
     );
   }
   query(query: QuestionRepositoryQuery): readonly Readonly<Question>[] {
-    return clone(
+    return cloneCollection(
       this.#questions.filter((item) => {
         const classification = questionClassification(item);
         return (

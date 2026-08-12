@@ -3,6 +3,21 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('artefacts Import ChatGPT', () => {
+  it('publie les 82 notions du programme officiel V2 dans le Knowledge GPT', () => {
+    const knowledge: unknown = JSON.parse(
+      readFileSync(
+        'docs/integrations/chatgpt-import/generated/program-knowledge.json',
+        'utf8',
+      ),
+    );
+    expect(knowledge).toMatchObject({
+      schemaVersion: 1,
+      generatedFrom: 'src/data/program/official-program-v2.json',
+    });
+    expect((knowledge as { notions: readonly unknown[] }).notions).toHaveLength(
+      82,
+    );
+  });
   it('expose une seule action d’écriture privée et aucun secret', () => {
     const openapi = readFileSync(
       'docs/integrations/chatgpt-import/openapi.yaml',

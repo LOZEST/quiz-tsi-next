@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import bundle from '../../../src/data/question-banks/num-production-v1.json';
+import officialProgram from '../../../src/data/program/official-program-v1.json';
 import sourceTests from '../../fixtures/num-production-source-tests.json';
 import { calculateNumAnswer } from '../../../scripts/num-bank-audit.mjs';
 import { validateQuestionBankBundle } from '@domain/questions/QuestionBank';
@@ -8,14 +9,19 @@ import { validateParameterizedQuestion } from '@domain/questions/QuestionParamet
 import { generateParameterAssignment } from '@domain/questions/ParameterizedQuestionGenerator';
 import { instantiateQuestionVariant } from '@domain/questions/QuestionInstantiation';
 import { mathAstToLatex } from '@features/questions/math/MathAstToLatex';
-import {
-  productionProgramIndex,
-  productionQuestionRepository,
-} from '@infrastructure/session/ProductionRevisionServices';
+import { createProgramIndex, validateProgram } from '@domain/program/Program';
+import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQuestionRepository';
+
+const checkedProgram = validateProgram(officialProgram);
+if (!checkedProgram.ok) throw new Error('Programme officiel de test invalide.');
+const programIndex = createProgramIndex(checkedProgram.value);
+const questionRepository = new InMemoryQuestionRepository();
+const imported = questionRepository.importAndReplace(bundle, programIndex);
+if (imported.kind !== 'ready') throw new Error('Banque NUM de test invalide.');
 
 describe('banque NUM de production', () => {
   const question = (id: string) => {
-    const result = productionQuestionRepository.getLatestById(id);
+    const result = questionRepository.getLatestById(id);
     expect(result, id).toBeDefined();
     if (!result) throw new Error(`Question absente : ${id}`);
     return result;
@@ -226,16 +232,14 @@ describe('banque NUM de production', () => {
   });
 
   it('est validée contre le vrai programme avant son chargement atomique', () => {
-    const checked = validateQuestionBankBundle(bundle, productionProgramIndex);
+    const checked = validateQuestionBankBundle(bundle, programIndex);
     expect(checked.ok).toBe(true);
-    expect(productionQuestionRepository.getBankMetadata()).toMatchObject({
+    expect(questionRepository.getBankMetadata()).toMatchObject({
       bundleId: 'quiz-tsi-official-num-v1',
       questionCount: 60,
     });
-    expect(productionQuestionRepository.listPublished()).toHaveLength(60);
-    expect(
-      productionQuestionRepository.getLatestById('NUM-F02-P04'),
-    ).toMatchObject({
+    expect(questionRepository.listPublished()).toHaveLength(60);
+    expect(questionRepository.getLatestById('NUM-F02-P04')).toMatchObject({
       status: 'published',
       validated: true,
       parameterization: { validationVariantCount: 9 },
@@ -243,7 +247,7 @@ describe('banque NUM de production', () => {
   });
 
   it('conserve la provenance résolue de chaque question', () => {
-    for (const question of productionQuestionRepository.listPublished()) {
+    for (const question of questionRepository.listPublished()) {
       expect(question.provenance?.bundleId).toBe('quiz-tsi-official-num-v1');
       expect(question.provenance?.references.length).toBeGreaterThanOrEqual(2);
     }
@@ -251,7 +255,7 @@ describe('banque NUM de production', () => {
 
   it('instancie trois seeds de chacune des 60 questions et inspecte le prompt', () => {
     let promptsInspected = 0;
-    for (const question of productionQuestionRepository.listPublished()) {
+    for (const question of questionRepository.listPublished()) {
       for (const seed of ['audit-a', 'audit-b', 'audit-c']) {
         const generated = generateParameterAssignment(
           question.parameterization,
@@ -283,7 +287,7 @@ describe('banque NUM de production', () => {
   });
 
   it('valide exhaustivement les neuf variantes source de NUM-F02-P04', () => {
-    const question = productionQuestionRepository.getLatestById('NUM-F02-P04');
+    const question = questionRepository.getLatestById('NUM-F02-P04');
     const result = validateParameterizedQuestion(question, 'num-f02-p04-proof');
     expect(result.kind).toBe('ready');
     expect(

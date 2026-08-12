@@ -1,8 +1,8 @@
-import { mathParseError, type MathParseError } from './MathParseError';
+import { mathParseError, type MathParseError } from './MathParseError.ts';
 import {
   MATH_CONTROLLED_STANDALONE_SYMBOLS,
   MATH_GREEK_IDENTIFIER_SYMBOLS,
-} from './MathSyntaxRegistry';
+} from './MathSyntaxRegistry.ts';
 
 export const MAX_MATH_SOURCE_LENGTH = 2_048;
 export const MAX_MATH_TOKENS = 512;

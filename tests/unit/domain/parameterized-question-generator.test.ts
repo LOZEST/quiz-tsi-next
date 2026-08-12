@@ -45,6 +45,39 @@ describe('generateParameterVariants', () => {
         new Set(result.variants.map((entry) => JSON.stringify(entry))).size,
       ).toBe(10);
   });
+  it('calcule les variables dérivées avant les contraintes et le contenu', () => {
+    const derived: ParameterizedQuestionSpec = {
+      ...spec(3),
+      derivedVariables: [
+        {
+          id: 'double',
+          label: 'double',
+          expression: {
+            kind: 'binary',
+            operator: 'multiply',
+            left: { kind: 'variable', variableId: 'a' },
+            right: { kind: 'literal', value: 2 },
+          },
+        },
+      ],
+      constraints: [
+        {
+          kind: 'comparison',
+          operator: 'less-than-or-equal',
+          left: { kind: 'variable', variableId: 'double' },
+          right: { kind: 'literal', value: 4 },
+        },
+      ],
+    };
+    const result = generateParameterVariants(derived, 'derived-seed', 3);
+    expect(result.kind).toBe('ready');
+    if (result.kind === 'ready')
+      expect(
+        result.variants.every(
+          (entry) => entry.double === (entry.a as number) * 2,
+        ),
+      ).toBe(true);
+  });
   it('distingue capacité exhaustive et exploration réellement terminée', () => {
     const early = generateParameterVariants(spec(), 'seed', 1);
     expect(early.statistics).toMatchObject({

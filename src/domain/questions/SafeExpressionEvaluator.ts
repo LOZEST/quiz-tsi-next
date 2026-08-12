@@ -184,6 +184,38 @@ function evaluateValidated(
       );
       const failed = results.find((entry) => !entry.ok);
       if (failed && !failed.ok) return failed;
+      if (candidate.function === 'numeric-value') {
+        const value = results[0]?.ok ? results[0].value : null;
+        if (typeof value === 'number' && Number.isFinite(value))
+          return { ok: true, value };
+        if (typeof value !== 'string')
+          return error(
+            'invalid-type',
+            'La conversion numérique exige un nombre ou une chaîne mathématique.',
+          );
+        const normalized = value.replaceAll(' ', '');
+        const rational = /^(-?\d+)(?:\/(-?\d+))?$/.exec(normalized);
+        if (rational) {
+          const numerator = Number(rational[1]);
+          const denominator = Number(rational[2] ?? '1');
+          if (denominator === 0)
+            return error('invalid-operation', 'Division par zéro.');
+          return { ok: true, value: numerator / denominator };
+        }
+        const angle = /^(-?)(?:(\d+))?π(?:\/(-?\d+))?$/.exec(normalized);
+        if (angle) {
+          const numerator =
+            Number(angle[2] ?? '1') * (angle[1] === '-' ? -1 : 1);
+          const denominator = Number(angle[3] ?? '1');
+          if (denominator === 0)
+            return error('invalid-operation', 'Division par zéro.');
+          return { ok: true, value: (numerator * Math.PI) / denominator };
+        }
+        return error(
+          'invalid-operation',
+          `Valeur mathématique non numérique : ${value}.`,
+        );
+      }
       const numbers = results.map((entry) => (entry.ok ? entry.value : false));
       if (!numbers.every(finite))
         return error('invalid-type', 'La fonction exige des nombres finis.');
@@ -227,6 +259,56 @@ function evaluateValidated(
           result = left;
           break;
         }
+        case 'lcm': {
+          const left = numbers[0] as number;
+          const right = numbers[1] as number;
+          if (!Number.isSafeInteger(left) || !Number.isSafeInteger(right))
+            return error(
+              'invalid-operation',
+              'Le PPCM exige deux entiers sûrs.',
+            );
+          let a = Math.abs(left);
+          let b = Math.abs(right);
+          const product = a * b;
+          while (b !== 0) [a, b] = [b, a % b];
+          result = product === 0 ? 0 : product / a;
+          break;
+        }
+        case 'sign':
+          result = Math.sign(numbers[0] as number);
+          break;
+        case 'cos':
+          result = Math.cos(numbers[0] as number);
+          break;
+        case 'binomial': {
+          const n = numbers[0] as number;
+          const k = numbers[1] as number;
+          if (
+            !Number.isSafeInteger(n) ||
+            !Number.isSafeInteger(k) ||
+            n < 0 ||
+            k < 0 ||
+            k > n
+          )
+            return error(
+              'invalid-operation',
+              'Le coefficient binomial exige 0 ≤ k ≤ n entiers.',
+            );
+          let value = 1;
+          const reducedK = Math.min(k, n - k);
+          for (let index = 1; index <= reducedK; index += 1) {
+            value = (value * (n - reducedK + index)) / index;
+            if (!Number.isSafeInteger(value))
+              return error(
+                'invalid-operation',
+                'Le coefficient binomial dépasse les entiers sûrs.',
+              );
+          }
+          result = value;
+          break;
+        }
+        case 'is-integer':
+          return { ok: true, value: Number.isSafeInteger(numbers[0]) };
         case 'is-square': {
           const value = numbers[0] as number;
           return {

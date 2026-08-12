@@ -134,6 +134,7 @@ export function validateParameterizedQuestion(
     validationSeed,
     requested,
   );
+  let validationStatistics = generated.statistics;
   const officialFiniteExceptionRequested =
     question.source === 'static' &&
     question.status === 'published' &&
@@ -172,9 +173,7 @@ export function validateParameterizedQuestion(
     );
     if (
       generated.kind !== 'ready' ||
-      generated.variants.length !== statistics.validCombinations ||
-      generated.statistics.searchCompleted !== true ||
-      generated.statistics.exhaustive !== true
+      generated.variants.length !== statistics.validCombinations
     )
       return {
         kind: generated.kind === 'ready' ? 'invalid-question' : generated.kind,
@@ -191,6 +190,7 @@ export function validateParameterizedQuestion(
         unusedVariables: references.unusedVariables,
         statistics: generated.statistics,
       };
+    validationStatistics = statistics;
   }
   if (generated.kind !== 'ready')
     return {
@@ -236,6 +236,6 @@ export function validateParameterizedQuestion(
     variants,
     usedReferences: [...references.usedReferences],
     unusedVariables: [...references.unusedVariables],
-    statistics: generated.statistics,
+    statistics: validationStatistics,
   } satisfies ParameterizedQuestionValidation);
 }

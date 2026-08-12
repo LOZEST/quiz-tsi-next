@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const program = JSON.parse(
   await readFile(
-    resolve(root, 'src/data/program/official-program-v1.json'),
+    resolve(root, 'src/data/program/official-program-v2.json'),
     'utf8',
   ),
 );
@@ -17,7 +17,7 @@ const chapters = new Map(
 );
 const knowledge = {
   schemaVersion: 1,
-  generatedFrom: 'src/data/program/official-program-v1.json',
+  generatedFrom: 'src/data/program/official-program-v2.json',
   notions: program.notions.map((notion) => ({
     chapterId: notion.chapterId,
     chapterLabel: chapters.get(notion.chapterId)?.label ?? '',

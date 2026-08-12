@@ -40,7 +40,7 @@ Erreur réseau, combinaison paramétrée impossible, contenu absent/invalide ou 
 - [ ] registre mis à jour ; parser et rendu testés ; aide synchronisée ; migration de version idempotente testée ; erreurs pédagogiques testées ; aucune exécution dynamique arbitraire.
 
 ### Éditeur de question
-- [ ] brouillon restaurable ; source conservée après erreur ; clavier, tactile, navigation clavier et lecteur d'écran testés ; publication invalide impossible ; au moins dix variantes contrôlées.
+- [ ] brouillon restaurable ; source conservée après erreur ; clavier, tactile, navigation clavier et lecteur d'écran testés ; publication invalide impossible ; au moins dix variantes contrôlées, sauf domaine officiel statique fini inférieur à dix prouvé exhaustivement et contrôlé en totalité.
 
 ### Système de filtres
 - [ ] option Tout et cascade parent/enfant testées ; aucun résultat et protection du brouillon testés ; interactions Réflexe/difficulté testées.

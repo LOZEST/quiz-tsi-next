@@ -65,6 +65,12 @@ export interface VariableDefinition {
   readonly domain: VariableDomain;
 }
 
+export interface DerivedVariableDefinition {
+  readonly id: string;
+  readonly label: string;
+  readonly expression: SafeExpressionNode;
+}
+
 export type SafeExpressionNode =
   | Readonly<{ kind: 'literal'; value: ParameterPrimitive }>
   | Readonly<{ kind: 'variable'; variableId: string }>
@@ -102,6 +108,12 @@ export type SafeExpressionNode =
         | 'floor'
         | 'ceil'
         | 'gcd'
+        | 'lcm'
+        | 'sign'
+        | 'cos'
+        | 'binomial'
+        | 'is-integer'
+        | 'numeric-value'
         | 'is-square'
         | 'squarefree'
         | 'has-prime-factor-other-than-2-or-5';
@@ -117,6 +129,7 @@ export type SafeExpressionNode =
 export interface ParameterizedQuestionSpec {
   readonly schemaVersion: 1;
   readonly variables: readonly VariableDefinition[];
+  readonly derivedVariables?: readonly DerivedVariableDefinition[];
   readonly constraints: readonly SafeExpressionNode[];
   readonly validationVariantCount: number;
 }
@@ -379,6 +392,40 @@ function validateParameterization(
     }
     ids.add(variable.id);
   }
+  if (value.derivedVariables !== undefined) {
+    if (!Array.isArray(value.derivedVariables)) {
+      return [
+        issue(
+          'parameterization.derivedVariables',
+          'Liste de variables dérivées invalide.',
+        ),
+      ];
+    }
+    for (const [index, derived] of value.derivedVariables.entries()) {
+      if (
+        !isRecord(derived) ||
+        !isNonEmptyString(derived.id) ||
+        derived.id !== derived.id.trim() ||
+        !isNonEmptyString(derived.label) ||
+        ids.has(derived.id)
+      ) {
+        return [
+          issue(
+            `parameterization.derivedVariables.${index}`,
+            'Définition de variable dérivée invalide ou dupliquée.',
+          ),
+        ];
+      }
+      const expression = validateSafeExpression(derived.expression, ids);
+      if (!expression.ok) {
+        return expression.issues.map((entry) => ({
+          ...entry,
+          path: `parameterization.derivedVariables.${index}.${entry.path}`,
+        }));
+      }
+      ids.add(derived.id);
+    }
+  }
   for (const [index, constraint] of value.constraints.entries()) {
     const result = validateSafeExpression(
       constraint,
@@ -478,6 +525,12 @@ const mathFunctions = new Set([
   'floor',
   'ceil',
   'gcd',
+  'lcm',
+  'sign',
+  'cos',
+  'binomial',
+  'is-integer',
+  'numeric-value',
   'is-square',
   'squarefree',
   'has-prime-factor-other-than-2-or-5',
@@ -559,7 +612,9 @@ export function validateSafeExpression(
       const arityIsValid =
         node.function === 'min' || node.function === 'max'
           ? node.arguments.length >= 2
-          : node.function === 'gcd'
+          : node.function === 'gcd' ||
+              node.function === 'lcm' ||
+              node.function === 'binomial'
             ? node.arguments.length === 2
             : node.arguments.length === 1;
       if (!arityIsValid) {

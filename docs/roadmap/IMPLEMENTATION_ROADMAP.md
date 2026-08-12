@@ -110,7 +110,7 @@ Une PR dépendante ne commence pas avant fusion dans `main` de sa dépendance. C
 - **Sorties :** question compatible affichée uniquement lorsqu'un parcours possède un état `ready` et des données validées ; sinon état explicite sans ancienne question ni instance. Configuration de test validée sans démarrage.
 - **Fichiers probables :** domain/questions, features/session, import adapters.
 - **Historique concerné :** programme/concepts/pièges/générateurs/math/engine, uniquement après caractérisation. La banque historique auditée reste bloquée pour la production jusqu'à validation complète de licence, droits, provenance et conversions.
-- **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication, AST en liste blanche, XSS ; import initial versionné, validé, idempotent, traçable, avec rapport, quarantaine et conservation des entrées valides.
+- **Tests obligatoires :** convertisseurs, seed et contenu déterministes, domaines/contraintes, configurations impossibles, dix variantes avant publication ou totalité d'un domaine officiel statique fini inférieur à dix après preuve exhaustive, AST en liste blanche, XSS ; import initial versionné, validé, idempotent, traçable, avec rapport, quarantaine et conservation des entrées valides.
 - **Tests manuels :** filtres et protection brouillon.
 - **Risques :** qualité données/contenu.
 - **Critères de fusion :** SESSION et whiteboard concernés validés.

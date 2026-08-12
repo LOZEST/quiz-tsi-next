@@ -21,7 +21,11 @@ import { validateParameterizedQuestion } from './QuestionParameterValidation';
 export const QUESTION_BANK_SCHEMA_VERSION = 1 as const;
 export const MAX_QUESTION_BANK_ENTRIES = 10_000;
 export const MAX_QUESTION_BANK_BUNDLE_ID_LENGTH = 200;
-export const MAX_QUESTION_BANK_SNAPSHOT_CHARACTERS = 5_000_000;
+// The generated official 1,765-generator bundle is ~3 MB as compact JSON.
+// SafeSnapshot also counts object keys while cloning, so keep a bounded margin.
+export const MAX_QUESTION_BANK_SNAPSHOT_CHARACTERS = 20_000_000;
+export const MAX_QUESTION_BANK_SNAPSHOT_NODES = 500_000;
+export const MAX_QUESTION_BANK_SNAPSHOT_PROPERTIES = 250_000;
 
 export type QuestionBankEntryProvenance = Readonly<{
   mode: 'default' | 'extend' | 'replace';
@@ -72,6 +76,8 @@ export function validateQuestionBankBundle(
 ): ValidationResult<QuestionBankBundle> {
   const snapshot = createSafeSnapshot(input, {
     maxTotalCharacters: MAX_QUESTION_BANK_SNAPSHOT_CHARACTERS,
+    maxNodes: MAX_QUESTION_BANK_SNAPSHOT_NODES,
+    maxTotalProperties: MAX_QUESTION_BANK_SNAPSHOT_PROPERTIES,
   });
   if (!snapshot.ok) return invalid(issue('bundle', snapshot.message));
   const value = snapshot.value;
