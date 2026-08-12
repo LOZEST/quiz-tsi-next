@@ -108,7 +108,7 @@ export function ProgressPage() {
   );
 }
 
-function ProgressContent({
+export function ProgressContent({
   snapshot,
   programIndex,
 }: {

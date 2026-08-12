@@ -66,6 +66,19 @@ describe('magic shapes', () => {
     ).toBeLessThan(0.001);
   });
 
+  it('accepts a circular stroke containing one stationary sample', () => {
+    const points = Array.from({ length: 33 }, (_, index) => {
+      const angle = (index / 32) * Math.PI * 2;
+      return point(
+        100 + Math.cos(angle) * 50,
+        100 + Math.sin(angle) * 50,
+        index,
+      );
+    });
+    points.splice(12, 0, { ...points[11]!, timestamp: 11.5 });
+    expect(circleCandidate(points)).toBe(true);
+  });
+
   it('rejects an open arc and a highly curved line', () => {
     const arc = Array.from({ length: 20 }, (_, index) => {
       const angle = (index / 32) * Math.PI * 2;
@@ -73,5 +86,44 @@ describe('magic shapes', () => {
     });
     expect(circleCandidate(arc)).toBe(false);
     expect(straightCandidate(arc)).toBe(false);
+  });
+
+  it('rejects a full-size loop that remains open at the endpoint', () => {
+    const points = Array.from({ length: 33 }, (_, index) => {
+      const angle = (index / 32) * Math.PI * 2;
+      return point(
+        100 + Math.cos(angle) * 50,
+        100 + Math.sin(angle) * 50,
+        index,
+      );
+    });
+    points[32] = point(50, 100, 32);
+    expect(circleCandidate(points)).toBe(false);
+  });
+
+  it('rejects a closed loop with excessive radius variation', () => {
+    const points = Array.from({ length: 33 }, (_, index) => {
+      const angle = (index / 32) * Math.PI * 2;
+      const radius = index % 2 === 0 ? 50 : 32;
+      return point(
+        100 + Math.cos(angle) * radius,
+        100 + Math.sin(angle) * radius,
+        index,
+      );
+    });
+    expect(circleCandidate(points)).toBe(false);
+  });
+
+  it('rejects a circular loop that repeatedly reverses direction', () => {
+    const points = Array.from({ length: 33 }, (_, index) => {
+      let angle = (index / 32) * Math.PI * 2;
+      if (index === 8 || index === 16 || index === 24) angle -= 0.5;
+      return point(
+        100 + Math.cos(angle) * 50,
+        100 + Math.sin(angle) * 50,
+        index,
+      );
+    });
+    expect(circleCandidate(points)).toBe(false);
   });
 });
