@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
 import { WhiteboardToolbar } from '@features/whiteboard/components/WhiteboardToolbar';
 import { QuestionActions } from '@features/whiteboard/components/QuestionActions';
@@ -13,6 +13,17 @@ import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 vi.mock('@features/whiteboard/canvas/WhiteboardCanvas', () => ({
   WhiteboardCanvas: () => <div data-testid="whiteboard-canvas" />,
 }));
+
+const PRODUCTION_QUESTION_WITH_HELP_SEED =
+  '00000000-0000-4000-8000-000000000001';
+
+afterEach(() => vi.restoreAllMocks());
+
+function useProductionQuestionWithHelp() {
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue(
+    PRODUCTION_QUESTION_WITH_HELP_SEED,
+  );
+}
 
 describe('WhiteboardToolbar', () => {
   function ActiveToolProbe() {
@@ -141,7 +152,8 @@ describe('QuestionActions', () => {
       </output>
     );
   }
-  it('loads the production NUM action bar with real help content', async () => {
+  it('loads the production action bar with deterministic real help content', async () => {
+    useProductionQuestionWithHelp();
     render(
       <AppServicesProvider>
         <WhiteboardProvider>
@@ -207,6 +219,7 @@ describe('QuestionActions', () => {
   });
 
   it('keeps the after-correction phase after closing and closes an open hint', async () => {
+    useProductionQuestionWithHelp();
     const user = userEvent.setup();
     render(
       <AppServicesProvider>
