@@ -86,7 +86,7 @@ const questionRemoteGateway = {
       courses: [],
       chapters: [],
       notions: [],
-      rejectedRows: [],
+      rejectedRows: [] as { index: number; message: string }[],
     }),
   ),
 };
@@ -432,6 +432,28 @@ describe('QuestionsPage', () => {
     await waitFor(() =>
       expect(screen.queryByText(/Hors connexion/)).toBeNull(),
     );
+  });
+
+  it('signale les questions distantes rejetées sans bloquer la synchronisation', async () => {
+    questionRemoteGateway.pullRecent.mockResolvedValueOnce({
+      questions: [],
+      courses: [],
+      chapters: [],
+      notions: [],
+      rejectedRows: [
+        { index: 0, message: 'Question distante invalide : provenance.' },
+        { index: 2, message: 'Question distante invalide : timestamps.' },
+      ],
+    });
+
+    render(<QuestionsPage />);
+
+    expect(
+      await screen.findByText(
+        '2 questions distantes n’ont pas pu être chargées.',
+      ),
+    ).toBeInTheDocument();
+    expect(questionWorkspaceRepository.applyRemoteWorkspace).toHaveBeenCalled();
   });
 
   it('préserve indice structuré, étapes de correction, type et tags à l’édition', async () => {
