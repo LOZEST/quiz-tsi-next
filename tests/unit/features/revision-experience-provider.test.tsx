@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -14,7 +14,6 @@ import {
   RevisionExperienceProvider,
   useRevisionExperience,
 } from '@features/session/RevisionExperienceProvider';
-import { QuestionChangeDialog } from '@features/session/QuestionChangeDialog';
 import { createProgramIndex, validateProgram } from '@domain/program/Program';
 import { validateQuestionBankBundle } from '@domain/questions/QuestionBank';
 import type { Question } from '@domain/questions/Question';
@@ -228,7 +227,6 @@ function Harness({
         <DraftBinding draft={draft} clear={clear} />
         <RevisionExperienceProvider userId="test-user">
           <Probe />
-          <QuestionChangeDialog />
         </RevisionExperienceProvider>
       </WhiteboardProvider>
     </AppServicesProvider>
@@ -361,13 +359,7 @@ describe('RevisionExperienceProvider integration', () => {
     await screen.findByText('q1');
     const trigger = screen.getByText('Suivante');
     await user.click(trigger);
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Changer maintenant',
-      }),
-    );
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(trigger).toHaveFocus();
     expect(screen.getByTestId('question')).toHaveTextContent('q1');
     expect(screen.getByTestId('notice')).toHaveTextContent(
       'Aucune autre question compatible n’est disponible.',
@@ -389,7 +381,7 @@ describe('RevisionExperienceProvider integration', () => {
     );
   });
 
-  it('cancels a draft change without changing the active question', async () => {
+  it('changes a drafted question immediately without a dialog', async () => {
     const user = userEvent.setup();
     render(
       <Harness
@@ -402,16 +394,12 @@ describe('RevisionExperienceProvider integration', () => {
     );
     const initial = screen.getByTestId('question').textContent;
     await user.click(screen.getByText('Suivante'));
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Annuler',
-      }),
-    );
-    expect(screen.getByTestId('question')).toHaveTextContent(initial ?? '');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByTestId('question').textContent).not.toBe(initial);
     expect(screen.getByTestId('pending')).toHaveTextContent('false');
   });
 
-  it('confirms free-filter changes immediately and restores them on draft cancellation', async () => {
+  it('applies free-filter changes without a draft confirmation', async () => {
     const user = userEvent.setup();
     render(
       <Harness
@@ -420,26 +408,14 @@ describe('RevisionExperienceProvider integration', () => {
       />,
     );
     await screen.findByText('q1');
-    const initial = screen.getByTestId('question').textContent;
     await user.click(screen.getByText('Choisir Calcul'));
-    expect(
-      screen.getByRole('dialog', { name: 'Changer de question' }),
-    ).toBeVisible();
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(screen.getByTestId('visible-question-type')).toHaveTextContent(
       'calculation',
     );
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Annuler',
-      }),
-    );
-    expect(screen.getByTestId('question')).toHaveTextContent(initial ?? '');
-    expect(screen.getByTestId('visible-question-type')).toHaveTextContent(
-      'all',
-    );
   });
 
-  it('traps keyboard focus, cancels with Escape and restores the trigger', async () => {
+  it('never opens the obsolete change-question dialog', async () => {
     const user = userEvent.setup();
     render(
       <Harness
@@ -450,18 +426,8 @@ describe('RevisionExperienceProvider integration', () => {
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
     );
-    const trigger = screen.getByText('Suivante');
-    await user.click(trigger);
-    const dialog = screen.getByRole('dialog', { name: 'Changer de question' });
-    expect(dialog).toHaveAccessibleDescription(
-      'Changer de question effacera le travail en cours.',
-    );
-    expect(within(dialog).getByText('Annuler')).toHaveFocus();
-    await user.tab();
-    expect(within(dialog).getByText('Changer maintenant')).toHaveFocus();
-    await user.keyboard('{Escape}');
+    await user.click(screen.getByText('Suivante'));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(trigger).toHaveFocus();
   });
 
   it('atomically clears only after a replacement candidate is ready', async () => {
@@ -479,13 +445,11 @@ describe('RevisionExperienceProvider integration', () => {
     );
     const initial = screen.getByTestId('question').textContent;
     await user.click(screen.getByText('Suivante'));
-    expect(clear).not.toHaveBeenCalled();
-    await user.click(screen.getByText('Confirmer'));
     expect(clear).toHaveBeenCalledOnce();
     expect(screen.getByTestId('question').textContent).not.toBe(initial);
   });
 
-  it('protects a mode change with a draft and removes the old question after confirmation', async () => {
+  it('changes mode with a draft immediately and removes the old question', async () => {
     const clear = vi.fn();
     const user = userEvent.setup();
     const daily = {
@@ -504,9 +468,7 @@ describe('RevisionExperienceProvider integration', () => {
     );
     await screen.findByText('q1');
     await user.click(screen.getByText('Daily'));
-    expect(screen.getByTestId('pending')).toHaveTextContent('true');
-    expect(screen.getByTestId('question')).toHaveTextContent('q1');
-    await user.click(screen.getByText('Confirmer'));
+    expect(screen.getByTestId('pending')).toHaveTextContent('false');
     await waitFor(() =>
       expect(screen.getByTestId('kind')).toHaveTextContent('daily'),
     );

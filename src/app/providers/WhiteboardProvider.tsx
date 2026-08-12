@@ -16,11 +16,13 @@ export interface WhiteboardUiState {
   shapeKind: WhiteboardShapeKind;
   penWidth: number;
   gridEnabled: boolean;
+  magicShapesEnabled: boolean;
   handedness: 'left' | 'right';
   setActiveTool: (value: WhiteboardActiveTool) => void;
   setShapeKind: (value: WhiteboardShapeKind) => void;
   setPenWidth: (value: number) => void;
   setGridEnabled: (value: boolean) => void;
+  setMagicShapesEnabled: (value: boolean) => void;
   setHandedness: (value: 'left' | 'right') => void;
   undo: () => void;
   redo: () => void;
@@ -37,6 +39,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [shapeKind, setShapeKind] = useState<WhiteboardShapeKind>('line');
   const [penWidth, setPenWidth] = useState(3);
   const [gridEnabled, setGridEnabled] = useState(true);
+  const [magicShapesEnabled, setMagicShapesEnabled] = useState(true);
   const [handedness, setHandedness] = useState<'left' | 'right'>('right');
   const [history, setHistory] = useState<{
     undo(): void;
@@ -64,11 +67,13 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       shapeKind,
       penWidth,
       gridEnabled,
+      magicShapesEnabled,
       handedness,
       setActiveTool,
       setShapeKind,
       setPenWidth,
       setGridEnabled,
+      setMagicShapesEnabled,
       setHandedness,
       undo: () => history?.undo(),
       redo: () => history?.redo(),
@@ -86,6 +91,7 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       bindHistory,
       draft,
       gridEnabled,
+      magicShapesEnabled,
       handedness,
       hasDraft,
       history,

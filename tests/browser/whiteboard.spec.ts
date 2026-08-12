@@ -345,7 +345,7 @@ test('uses the production NUM bank and dependent free revision filters', async (
   await expect(page.getByLabel('Difficulté')).toHaveValue('');
 });
 
-test('protects a drawn draft and atomically changes the question', async ({
+test('clears a drawn draft and atomically changes the question without a dialog', async ({
   page,
 }) => {
   await login(page);
@@ -359,16 +359,13 @@ test('protects a drawn draft and atomically changes the question', async ({
   await page.mouse.up();
   await page.getByRole('button', { name: 'Passer' }).click();
   await page.getByRole('button', { name: 'Question suivante' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Annuler' }).click();
-  await expect(card).toHaveText(initial ?? '');
-  await page.getByRole('button', { name: 'Question suivante' }).click();
-  await dialog.getByRole('button', { name: 'Changer maintenant' }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Changer de question' }),
+  ).toHaveCount(0);
   await expect(card).not.toHaveText(initial ?? '');
 });
 
-test('restores focus to the filter that cancels a draft change', async ({
+test('applies a filter with a draft without showing a confirmation', async ({
   page,
 }) => {
   await login(page);
@@ -381,11 +378,10 @@ test('restores focus to the filter that cancels a draft change', async ({
   await openRevisionOptions(page);
   const filter = page.getByLabel('Type de question');
   await filter.selectOption('calculation');
-  const dialog = page.getByRole('dialog', { name: 'Changer de question' });
-  await expect(dialog).toBeVisible();
-  await dialog.getByRole('button', { name: 'Annuler' }).click();
-  await expect(filter).toHaveValue('');
-  await expect(filter).toBeFocused();
+  await expect(
+    page.getByRole('dialog', { name: 'Changer de question' }),
+  ).toHaveCount(0);
+  await expect(filter).toHaveValue('calculation');
 });
 
 test('keeps the question stable while reducing the card and navigating', async ({

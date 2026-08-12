@@ -48,9 +48,20 @@ export function QuestionCard({
         <button
           type="button"
           aria-expanded={!collapsed}
+          aria-label={
+            collapsed ? 'Afficher la question' : 'Réduire la question'
+          }
+          className={styles.collapseButton}
           onClick={() => setCollapsed((value) => !value)}
         >
-          {collapsed ? 'Afficher la question' : 'Réduire'}
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+            data-collapsed={collapsed}
+          >
+            <path d="m7 14 5-5 5 5" />
+          </svg>
         </button>
       </header>
       {question.type === 'reflex' ? (

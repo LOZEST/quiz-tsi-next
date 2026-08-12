@@ -66,7 +66,11 @@ function HelpPanel({
     return () => document.removeEventListener('keydown', escape);
   }, [onClose]);
   return (
-    <aside id={id} className={styles.helpPanel} aria-labelledby={`${id}-title`}>
+    <aside
+      id={id}
+      className={`${styles.helpPanel} ${title === 'Correction' ? styles.correctionBubble : ''}`}
+      aria-labelledby={`${id}-title`}
+    >
       <header>
         <h2 id={`${id}-title`}>{title}</h2>
         <button ref={close} type="button" onClick={onClose}>

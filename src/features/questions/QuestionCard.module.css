@@ -20,6 +20,31 @@
 .card button {
   min-block-size: var(--qtsi-touch-target);
 }
+.collapseButton {
+  display: grid;
+  min-inline-size: var(--qtsi-touch-target);
+  padding: 0;
+  place-items: center;
+  color: var(--qtsi-text-secondary);
+  background: transparent;
+  border: 0;
+}
+.collapseButton svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+.collapseButton svg[data-collapsed='true'] {
+  transform: rotate(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .collapseButton svg {
+    transition: none;
+  }
+}
 .prompt {
   margin-block: var(--qtsi-space-2);
 }

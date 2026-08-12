@@ -36,9 +36,13 @@ export function WhiteboardCanvas({
     )
       .then((stored) => {
         if (disposed) return;
-        const scene = stored
+        const restored = stored
           ? restoreWhiteboardScene(stored, sceneId).scene
-          : createEmptyScene(sceneId, questionInstanceId);
+          : null;
+        const scene =
+          restored?.questionInstanceId === questionInstanceId
+            ? restored
+            : createEmptyScene(sceneId, questionInstanceId);
         activeController = new CanvasController(canvas, scene, (next) => {
           const persistence = workspaceRepository.saveWhiteboardScene?.(
             next,
@@ -84,6 +88,10 @@ export function WhiteboardCanvas({
   useEffect(
     () => controller?.setGrid(settings.gridEnabled),
     [controller, settings.gridEnabled],
+  );
+  useEffect(
+    () => controller?.setMagicShapes(settings.magicShapesEnabled),
+    [controller, settings.magicShapesEnabled],
   );
   useEffect(() => {
     bindHistory(

@@ -127,16 +127,27 @@ function ProgressContent({
           progression affichée est partielle.
         </p>
       ) : null}
-      <section aria-labelledby="summary-title">
-        <h2 id="summary-title">Synthèse</h2>
+      <section className={styles.hero} aria-labelledby="summary-title">
+        <h2 id="summary-title" className={styles.visuallyHidden}>
+          Synthèse
+        </h2>
         <div className={styles.summary}>
           <div className={styles.primary} data-testid="primary-indicator">
+            <div
+              className={styles.ring}
+              style={
+                {
+                  '--progress': snapshot.globalMastery ?? 0,
+                } as React.CSSProperties
+              }
+            >
+              <strong>
+                {snapshot.globalMastery === null
+                  ? 'Calibration en cours'
+                  : `${snapshot.globalMastery} %`}
+              </strong>
+            </div>
             <span>Maîtrise globale</span>
-            <strong>
-              {snapshot.globalMastery === null
-                ? 'Calibration en cours'
-                : `${snapshot.globalMastery} %`}
-            </strong>
           </div>
           <dl className={styles.secondary} data-testid="secondary-indicators">
             <div>
@@ -158,7 +169,7 @@ function ProgressContent({
           </dl>
         </div>
       </section>
-      <section>
+      <section className={styles.today}>
         <h2>Travail du jour</h2>
         <DailySummary state={snapshot.dailyPlan} label={label} />
       </section>
@@ -181,6 +192,9 @@ function ProgressContent({
                     ? 'Pas encore de données'
                     : `${part.masteryScore} %`}
                 </strong>
+                <span className={styles.partTrack} aria-hidden="true">
+                  <span style={{ inlineSize: `${part.masteryScore ?? 0}%` }} />
+                </span>
               </button>
               {openPart === part.id ? (
                 <div className={styles.notionList}>
@@ -242,29 +256,46 @@ function ProgressContent({
           ))}
         </div>
       </section>
-      <section>
-        <h2>Calendrier — 28 derniers jours</h2>
+      <section className={styles.activity}>
+        <h2>Activité</h2>
+        <div className={styles.weekBars} aria-label="Activité sur 7 jours">
+          {snapshot.calendar.slice(-7).map((day) => (
+            <div key={day.date}>
+              <span
+                style={{
+                  blockSize: `${Math.max(8, Math.min(100, day.count * 20))}%`,
+                }}
+              />
+              <time dateTime={day.date}>
+                {new Intl.DateTimeFormat('fr-FR', { weekday: 'narrow' }).format(
+                  new Date(`${day.date}T12:00:00`),
+                )}
+              </time>
+            </div>
+          ))}
+        </div>
+        <h3>28 derniers jours</h3>
         <ol className={styles.calendar}>
           {snapshot.calendar.map((day) => (
             <li key={day.date}>
-              <time dateTime={day.date}>
-                {new Intl.DateTimeFormat('fr-FR', {
-                  day: '2-digit',
-                  month: '2-digit',
-                }).format(new Date(`${day.date}T12:00:00`))}
-              </time>
-              <strong>{day.count}</strong>
-              <span>évaluation{day.count > 1 ? 's' : ''}</span>
+              <span className={styles.visuallyHidden}>
+                {day.count} évaluation{day.count > 1 ? 's' : ''}
+              </span>
+              <span
+                className={styles.activityCell}
+                data-level={Math.min(4, day.count)}
+                title={`${day.date} · ${day.count}`}
+              />
             </li>
           ))}
         </ol>
       </section>
-      <section>
+      <section className={styles.weakPoints}>
         <h2>Points faibles prioritaires</h2>
         {snapshot.weakPoints.kind === 'calibrating' ? (
           <p>{snapshot.weakPoints.message}</p>
         ) : snapshot.weakPoints.kind === 'ready' ? (
-          <ol>
+          <ol className={styles.weakList}>
             {snapshot.weakPoints.items.map((item) => (
               <li key={item.notionId}>
                 {label(item.notionId)} — {item.rationale}
@@ -275,14 +306,16 @@ function ProgressContent({
           <p>{snapshot.weakPoints.message}</p>
         )}
       </section>
-      <section>
+      <section className={styles.recentActivity}>
         <h2>Activité récente</h2>
         {snapshot.recent.length ? (
-          <ol>
+          <ol className={styles.timeline}>
             {snapshot.recent.map((event) => (
               <li key={event.id}>
-                <strong>{label(event.notionId)}</strong> —{' '}
-                {resultLabels[event.result]}, {modeLabels[event.sessionMode]},{' '}
+                <strong>{label(event.notionId)}</strong>
+                <span>
+                  {resultLabels[event.result]} · {modeLabels[event.sessionMode]}
+                </span>
                 <time dateTime={event.occurredAt}>
                   {formatDate(event.occurredAt)}
                 </time>

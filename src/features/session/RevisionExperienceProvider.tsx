@@ -143,7 +143,7 @@ export function RevisionExperienceProvider({
     null,
   );
   const [helpTrigger, setHelpTrigger] = useState<HTMLElement | null>(null);
-  const [dialogTrigger, setDialogTrigger] = useState<HTMLElement | null>(null);
+  const dialogTrigger: HTMLElement | null = null;
   const request = useRef(0);
   const initialLoaded = useRef(false);
   const mounted = useRef(true);
@@ -432,16 +432,10 @@ export function RevisionExperienceProvider({
       excludeCurrent: boolean,
       trigger?: HTMLElement,
     ) => {
-      const activeHelp =
-        state.kind === 'ready' &&
-        state.attempt.evaluation === null &&
-        (state.attempt.hintUsed || state.attempt.correctionViewed);
-      if (board.hasDraft || activeHelp) {
-        setDialogTrigger(trigger ?? null);
-        setPending({ kind: 'free', filters, excludeCurrent });
-      } else attemptFree(filters, excludeCurrent);
+      void trigger;
+      attemptFree(filters, excludeCurrent, true);
     },
-    [attemptFree, board.hasDraft, state],
+    [attemptFree],
   );
 
   const setFreeFilters = useCallback(
@@ -455,19 +449,10 @@ export function RevisionExperienceProvider({
   const setMode = useCallback(
     (next: SessionMode, trigger?: HTMLElement) => {
       if (next === mode) return;
-      if (
-        state.kind === 'ready' &&
-        (board.hasDraft ||
-          (state.attempt.evaluation === null &&
-            (state.attempt.hintUsed || state.attempt.correctionViewed)))
-      ) {
-        setDialogTrigger(trigger ?? null);
-        setPending({ kind: 'mode', mode: next });
-        return;
-      }
-      enterMode(next);
+      void trigger;
+      enterMode(next, true);
     },
-    [board.hasDraft, enterMode, mode, state],
+    [enterMode, mode],
   );
 
   const cancelChange = useCallback(() => {
@@ -518,6 +503,7 @@ export function RevisionExperienceProvider({
             );
             if (moved === chapterTest) return;
             await services.chapterTestRepository.save(moved, userId);
+            board.clearDraft();
             setChapterTest(moved);
             await loadChapterQuestion(moved, moved.currentIndex);
           })();
@@ -609,6 +595,7 @@ export function RevisionExperienceProvider({
           updatedAt: now,
         };
         await services.chapterTestRepository.save(session, userId);
+        board.clearDraft();
         setChapterTest(session);
         const instance = blueprint.orderedQuestionInstances[0];
         if (!instance) return false;
@@ -626,6 +613,7 @@ export function RevisionExperienceProvider({
         const moved = moveChapterTest(chapterTest, index, now);
         if (moved === chapterTest) return;
         await services.chapterTestRepository.save(moved, userId);
+        board.clearDraft();
         setChapterTest(moved);
         await loadChapterQuestion(moved, index);
       },
@@ -646,6 +634,7 @@ export function RevisionExperienceProvider({
     }),
     [
       activeFilters,
+      board,
       cancelChange,
       confirmChange,
       dialogTrigger,

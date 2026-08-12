@@ -107,3 +107,12 @@
   overflow: auto;
   padding: var(--qtsi-space-4);
 }
+.correctionBubble {
+  position: static;
+  inline-size: min(38rem, 100%);
+  max-block-size: min(55vh, calc(100vh - 11rem));
+  pointer-events: auto;
+}
+.correctionBubble .helpPanelContent {
+  max-block-size: min(45vh, calc(100vh - 16rem));
+}

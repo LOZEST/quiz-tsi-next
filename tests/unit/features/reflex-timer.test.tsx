@@ -110,7 +110,9 @@ describe('ReflexTimer', () => {
     );
     act(() => clock.advance(5_100));
     expect(screen.getByText('55 s restantes')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Réduire' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Réduire la question' }),
+    );
     act(() => clock.advance(5_000));
     await user.click(
       screen.getByRole('button', { name: 'Afficher la question' }),
