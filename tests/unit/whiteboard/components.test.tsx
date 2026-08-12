@@ -139,6 +139,41 @@ describe('WhiteboardToolbar', () => {
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     await user.click(screen.getByRole('button', { name: 'Rétablir' }));
   });
+
+  it('exposes conservative Apple Pencil defaults and working preference setters', async () => {
+    const user = userEvent.setup();
+    function PreferenceProbe() {
+      const board = useWhiteboard();
+      return (
+        <div>
+          <output data-testid="scribble-enabled">
+            {String(board.scribbleEraseEnabled)}
+          </output>
+          <output data-testid="eraser-mode">{board.eraserMode}</output>
+          <button
+            type="button"
+            onClick={() => board.setScribbleEraseEnabled(false)}
+          >
+            Disable scribble
+          </button>
+          <button type="button" onClick={() => board.setEraserMode('pixel')}>
+            Use pixel
+          </button>
+        </div>
+      );
+    }
+    render(
+      <WhiteboardProvider>
+        <PreferenceProbe />
+      </WhiteboardProvider>,
+    );
+    expect(screen.getByTestId('scribble-enabled')).toHaveTextContent('true');
+    expect(screen.getByTestId('eraser-mode')).toHaveTextContent('object');
+    await user.click(screen.getByRole('button', { name: 'Disable scribble' }));
+    await user.click(screen.getByRole('button', { name: 'Use pixel' }));
+    expect(screen.getByTestId('scribble-enabled')).toHaveTextContent('false');
+    expect(screen.getByTestId('eraser-mode')).toHaveTextContent('pixel');
+  });
 });
 
 describe('QuestionActions', () => {

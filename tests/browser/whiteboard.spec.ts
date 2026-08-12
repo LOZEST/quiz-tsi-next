@@ -64,7 +64,49 @@ async function evidencePath(testInfo: TestInfo, file: string) {
 interface BrowserScene {
   logicalWidth: number;
   logicalHeight: number;
-  objects: Array<BrowserShape | { kind: string }>;
+  objects: Array<
+    | BrowserShape
+    | { kind: 'stroke'; points: Array<{ x: number; y: number }> }
+    | { kind: 'eraser-mask'; points: Array<{ x: number; y: number }> }
+  >;
+}
+
+async function dispatchPenPath(
+  page: Page,
+  points: Array<{ x: number; y: number }>,
+  holdMs = 0,
+) {
+  await page.evaluate(
+    async ({ path, hold }) => {
+      const canvas = document.querySelector<HTMLCanvasElement>(
+        '[data-testid="whiteboard-canvas"]',
+      );
+      if (!canvas) throw new Error('Whiteboard canvas missing.');
+      Object.defineProperties(canvas, {
+        setPointerCapture: { configurable: true, value: () => undefined },
+        hasPointerCapture: { configurable: true, value: () => true },
+        releasePointerCapture: { configurable: true, value: () => undefined },
+      });
+      const emit = (type: string, sample: { x: number; y: number }) =>
+        canvas.dispatchEvent(
+          new PointerEvent(type, {
+            bubbles: true,
+            cancelable: true,
+            clientX: sample.x,
+            clientY: sample.y,
+            pointerId: 91,
+            pointerType: 'pen',
+            pressure: 0.65,
+          }),
+        );
+      emit('pointerdown', path[0]!);
+      path.slice(1).forEach((sample) => emit('pointermove', sample));
+      if (hold > 0)
+        await new Promise((resolve) => window.setTimeout(resolve, hold));
+      emit('pointerup', path.at(-1)!);
+    },
+    { path: points, hold: holdMs },
+  );
 }
 
 async function readWhiteboardScene(page: Page): Promise<BrowserScene> {
@@ -150,6 +192,13 @@ test('shows a centered writable canvas and accessible controls', async ({
   await openPencilSettings(page);
   await expect(page.getByLabel('Épaisseur du stylo')).toBeVisible();
   await expect(page.getByLabel('Afficher la grille')).toBeChecked();
+  await expect(page.getByLabel('Formes magiques')).toBeChecked();
+  await expect(page.getByLabel('Effacer en griffonnant')).toBeChecked();
+  await expect(page.getByLabel('Objet')).toBeChecked();
+  await expect(page.getByLabel('Pixel')).not.toBeChecked();
+  await page.getByLabel('Pixel').check();
+  await expect(page.getByLabel('Pixel')).toBeChecked();
+  await page.getByLabel('Objet').check();
   await page.getByLabel('Afficher la grille').uncheck();
   await expect(page.getByLabel('Afficher la grille')).not.toBeChecked();
   await page.getByLabel('Gaucher').check();
@@ -183,6 +232,9 @@ test('shows a centered writable canvas and accessible controls', async ({
   await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
+  await expect(
+    page.getByRole('button', { name: /Pixel|Griffonn|Rectangle magique/ }),
+  ).toHaveCount(0);
 });
 
 test('draws with pointer events and restores the local scene after reload', async ({
@@ -386,6 +438,90 @@ test('the writing button changes the actual canvas tool immediately', async ({
   await expect
     .poll(async () => (await readWhiteboardScene(page)).objects.length)
     .toBe(1);
+});
+
+test('supports Pencil rectangle snap, scribble delete and both eraser modes', async ({
+  page,
+}) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  const initial = await readWhiteboardScene(page);
+  const screen = (point: { x: number; y: number }) =>
+    logicalToScreen(box!, initial, point);
+
+  const rectangle = [
+    ...Array.from({ length: 8 }, (_, i) =>
+      screen({ x: 260 + i * 25, y: 250 + (i % 2) }),
+    ),
+    ...Array.from({ length: 6 }, (_, i) =>
+      screen({ x: 435 + (i % 2), y: 250 + i * 25 }),
+    ),
+    ...Array.from({ length: 8 }, (_, i) =>
+      screen({ x: 435 - i * 25, y: 375 + (i % 2) }),
+    ),
+    ...Array.from({ length: 6 }, (_, i) =>
+      screen({ x: 260 + (i % 2), y: 375 - i * 25 }),
+    ),
+    screen({ x: 260, y: 250 }),
+  ];
+  await dispatchPenPath(page, rectangle, 550);
+  await expect
+    .poll(async () => {
+      const object = (await readWhiteboardScene(page)).objects[0];
+      return object?.kind === 'stroke' ? object.points.length : 0;
+    })
+    .toBe(5);
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(0);
+
+  const target = Array.from({ length: 12 }, (_, i) =>
+    screen({ x: 220 + i * 28, y: 500 }),
+  );
+  await dispatchPenPath(page, target);
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(1);
+  const scribble = Array.from({ length: 28 }, (_, i) =>
+    screen({ x: i % 2 === 0 ? 280 : 470, y: 465 + ((i * 17) % 70) }),
+  );
+  await dispatchPenPath(page, scribble);
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(0);
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(1);
+
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await openPencilSettings(page);
+  await page.getByLabel('Pixel').check();
+  await page.getByRole('button', { name: 'Fermer le menu' }).click();
+  await page.getByRole('button', { name: 'Stylo' }).click();
+  await dispatchPenPath(page, [
+    screen({ x: 300, y: 500 }),
+    screen({ x: 430, y: 500 }),
+  ]);
+  await expect
+    .poll(
+      async () =>
+        (await readWhiteboardScene(page)).objects.filter(
+          (object) => object.kind === 'stroke',
+        ).length,
+    )
+    .toBe(2);
+  await page.getByRole('button', { name: 'Annuler' }).click();
+  await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
+  await openPencilSettings(page);
+  await page.getByLabel('Objet').check();
+  await page.getByRole('button', { name: 'Fermer le menu' }).click();
+  await dispatchPenPath(page, [screen({ x: 350, y: 500 })]);
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(0);
 });
 
 test('captures the four-card palette and every placed reference shape', async ({

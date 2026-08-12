@@ -1,9 +1,13 @@
-import type { WhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
+import type {
+  WhiteboardScene,
+  WhiteboardStroke,
+} from '@domain/whiteboard/WhiteboardScene';
 import { pointFromPointerEvent, type PointerInput } from '../model/Point';
 import { snapshotScene } from '../model/WhiteboardSnapshot';
 import { CanvasCoordinates } from './CanvasCoordinates';
 import { CanvasRenderer } from './CanvasRenderer';
 import { EraserTool } from '../tools/EraserTool';
+import { PixelEraserTool } from '../tools/PixelEraserTool';
 import { PenTool } from '../tools/PenTool';
 import { ToolManager } from '../tools/ToolManager';
 import type { WhiteboardActiveTool } from '@app/providers/WhiteboardProvider';
@@ -21,19 +25,27 @@ import {
 } from '@domain/whiteboard/WhiteboardShape';
 import {
   circleCandidate,
+  rectangleCandidate,
   straightCandidate,
   toCircleStroke,
+  toRectangleStroke,
   toStraightStroke,
 } from '@domain/whiteboard/MagicShapes';
+import {
+  scribbleCandidate,
+  scribbleTargetIds,
+} from '@domain/whiteboard/ScribbleErase';
 
 export class CanvasController {
   private scene: WhiteboardScene;
   private renderer: CanvasRenderer;
   private coordinates = new CanvasCoordinates();
   private pen = new PenTool();
+  private objectEraser = new EraserTool();
+  private pixelEraser = new PixelEraserTool();
   private tools = new ToolManager({
     pen: this.pen,
-    eraser: new EraserTool(),
+    eraser: this.objectEraser,
   });
   private undoStack: WhiteboardScene[] = [];
   private redoStack: WhiteboardScene[] = [];
@@ -46,8 +58,10 @@ export class CanvasController {
   private currentPenWidth = 3;
   private transactionBaseline: WhiteboardScene | null = null;
   private magicShapesEnabled = true;
+  private scribbleEraseEnabled = true;
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
-  private snappedStroke: 'line' | 'circle' | null = null;
+  private snappedStroke: 'line' | 'circle' | 'rectangle' | null = null;
+  private activePenStrokeId: string | null = null;
 
   getScene(): WhiteboardScene {
     return this.scene;
@@ -166,6 +180,10 @@ export class CanvasController {
       return;
     }
     this.scene = this.tools.current.begin(this.scene, this.input(event)).scene;
+    if (this.activeTool === 'pen') {
+      const stroke = this.scene.objects.at(-1);
+      this.activePenStrokeId = stroke?.kind === 'stroke' ? stroke.id : null;
+    }
     this.renderer.schedule(this.scene);
     this.armMagicShapeHold();
   }
@@ -226,6 +244,7 @@ export class CanvasController {
       ).scene;
     }
     if (this.snappedStroke === 'line') this.snapActiveStroke('line');
+    if (this.snappedStroke === 'rectangle') this.snapActiveStroke('rectangle');
     if (this.snappedStroke !== 'circle') this.armMagicShapeHold();
     this.renderer.schedule(this.scene);
   }
@@ -244,7 +263,11 @@ export class CanvasController {
       this.finishTransaction();
       return;
     }
-    this.scene = this.tools.current.end(this.scene, this.input(event)).scene;
+    if (this.activeTool === 'pen' && this.snappedStroke) this.pen.cancel();
+    else
+      this.scene = this.tools.current.end(this.scene, this.input(event)).scene;
+    if (this.activeTool === 'pen') this.applyScribbleErase();
+    this.activePenStrokeId = null;
     this.finishPointer(event.pointerId, true);
     this.finishTransaction();
   }
@@ -253,15 +276,15 @@ export class CanvasController {
     if (!this.isActivePointer(event)) return;
     event.preventDefault();
     this.clearHoldTimer();
+    this.abortTransaction();
     this.finishPointer(event.pointerId, true);
-    this.finishTransaction();
   }
 
   lostPointerCapture(event: PointerEvent) {
     if (!this.isActivePointer(event)) return;
     this.clearHoldTimer();
+    this.abortTransaction();
     this.finishPointer(event.pointerId, false);
-    this.finishTransaction();
   }
 
   private isActivePointer(event: PointerEvent): boolean {
@@ -305,6 +328,15 @@ export class CanvasController {
     this.magicShapesEnabled = enabled;
     if (!enabled) this.clearHoldTimer();
   }
+  setScribbleErase(enabled: boolean) {
+    this.scribbleEraseEnabled = enabled;
+  }
+  setEraserMode(mode: 'object' | 'pixel') {
+    this.pixelEraser.cancel();
+    this.tools.replaceEraser(
+      mode === 'pixel' ? this.pixelEraser : this.objectEraser,
+    );
+  }
   replaceScene(scene: WhiteboardScene) {
     this.scene = scene;
     this.undoStack = [];
@@ -343,6 +375,8 @@ export class CanvasController {
   }
   destroy() {
     this.clearHoldTimer();
+    this.pen.cancel();
+    this.pixelEraser.cancel();
     this.activePointerId = null;
     this.activePointerType = null;
     this.resizeObserver?.disconnect();
@@ -352,9 +386,8 @@ export class CanvasController {
   cancelInteraction() {
     this.clearHoldTimer();
     if (this.transactionBaseline) {
-      this.scene = this.transactionBaseline;
-      this.transactionBaseline = null;
       const pointerId = this.activePointerId;
+      this.abortTransaction();
       this.activePointerId = null;
       this.activePointerType = null;
       if (pointerId !== null && this.canvas.hasPointerCapture(pointerId)) {
@@ -364,8 +397,6 @@ export class CanvasController {
           // Capture may already have been released by the browser.
         }
       }
-      this.clearGesture();
-      this.renderer.schedule(this.scene);
     }
   }
 
@@ -403,12 +434,13 @@ export class CanvasController {
         .reverse()
         .find((object) => object.kind === 'stroke');
       if (!stroke || this.activePointerId === null) return;
-      if (circleCandidate(stroke.points)) this.snapActiveStroke('circle');
+      if (rectangleCandidate(stroke.points)) this.snapActiveStroke('rectangle');
+      else if (circleCandidate(stroke.points)) this.snapActiveStroke('circle');
       else if (straightCandidate(stroke.points)) this.snapActiveStroke('line');
     }, 500);
   }
 
-  private snapActiveStroke(kind: 'line' | 'circle') {
+  private snapActiveStroke(kind: 'line' | 'circle' | 'rectangle') {
     let index = -1;
     for (
       let candidate = this.scene.objects.length - 1;
@@ -423,7 +455,11 @@ export class CanvasController {
     const stroke = this.scene.objects[index];
     if (!stroke || stroke.kind !== 'stroke') return;
     const snapped =
-      kind === 'circle' ? toCircleStroke(stroke) : toStraightStroke(stroke);
+      kind === 'circle'
+        ? toCircleStroke(stroke)
+        : kind === 'rectangle'
+          ? toRectangleStroke(stroke)
+          : toStraightStroke(stroke);
     this.scene = {
       ...this.scene,
       objects: this.scene.objects.map((object, objectIndex) =>
@@ -437,5 +473,41 @@ export class CanvasController {
   private clearHoldTimer() {
     if (this.holdTimer !== null) clearTimeout(this.holdTimer);
     this.holdTimer = null;
+  }
+
+  private applyScribbleErase() {
+    if (
+      !this.scribbleEraseEnabled ||
+      this.snappedStroke ||
+      !this.activePenStrokeId
+    )
+      return;
+    const scribble = this.scene.objects.find(
+      (object): object is WhiteboardStroke =>
+        object.kind === 'stroke' && object.id === this.activePenStrokeId,
+    );
+    if (!scribble || !scribbleCandidate(scribble.points)) return;
+    const targets = scribbleTargetIds(
+      scribble.points,
+      this.scene.objects.filter((object) => object.id !== scribble.id),
+    );
+    if (targets.length === 0) return;
+    const removed = new Set([scribble.id, ...targets]);
+    this.scene = {
+      ...this.scene,
+      objects: this.scene.objects.filter((object) => !removed.has(object.id)),
+    };
+    this.renderer.schedule(this.scene);
+  }
+
+  private abortTransaction() {
+    if (this.transactionBaseline) this.scene = this.transactionBaseline;
+    this.transactionBaseline = null;
+    this.activePenStrokeId = null;
+    this.snappedStroke = null;
+    this.pen.cancel();
+    this.pixelEraser.cancel();
+    this.clearGesture();
+    this.renderer.schedule(this.scene);
   }
 }

@@ -37,7 +37,7 @@ describe.each(WHITEBOARD_SHAPE_KINDS)('%s shape', (kind) => {
       style,
     );
     const restored = restoreWhiteboardScene({
-      schemaVersion: 3,
+      schemaVersion: 4,
       sceneId: 's',
       questionInstanceId: 'q',
       logicalWidth: 1024,
@@ -195,7 +195,7 @@ it('migrates V1 idempotently, preserves strokes and quarantines only an invalid 
     updatedAt: '2026-08-10T00:00:00.000Z',
   });
   const second = restoreWhiteboardScene(first.scene);
-  expect(first.scene.schemaVersion).toBe(3);
+  expect(first.scene.schemaVersion).toBe(4);
   expect(second.scene).toEqual(first.scene);
   expect(second.scene.objects).toEqual([stroke]);
   const mixed = restoreWhiteboardScene({
@@ -230,9 +230,35 @@ it('migrates a V2 scene idempotently and preserves every historical shape kind',
   });
   const second = restoreWhiteboardScene(first.scene);
   expect(first.quarantine).toEqual([]);
-  expect(first.scene.schemaVersion).toBe(3);
+  expect(first.scene.schemaVersion).toBe(4);
   expect(first.scene.objects).toEqual(historicalShapes);
   expect(second).toEqual({ scene: first.scene, quarantine: [] });
+});
+
+it('migrates a V3 scene to V4 without changing its content', () => {
+  const shape = createShape(
+    'v3-shape',
+    'trigonometric-circle',
+    { x: 10, y: 20 },
+    { x: 210, y: 220 },
+    style,
+  );
+  const source = {
+    schemaVersion: 3,
+    sceneId: 'legacy-v3',
+    questionInstanceId: 'q',
+    logicalWidth: 1024,
+    logicalHeight: 768,
+    objects: [shape],
+    updatedAt: '2026-08-11T00:00:00.000Z',
+  };
+  const migrated = restoreWhiteboardScene(source);
+  expect(migrated.scene.schemaVersion).toBe(4);
+  expect(migrated.scene.objects).toEqual(source.objects);
+  expect(restoreWhiteboardScene(migrated.scene)).toEqual({
+    scene: migrated.scene,
+    quarantine: [],
+  });
 });
 
 it('translates, resizes and rotates shapes without touching proportional invariants', () => {

@@ -63,6 +63,31 @@ export class CanvasRenderer {
     context: CanvasRenderingContext2D,
     object: WhiteboardObject,
   ) {
+    if (object.kind === 'eraser-mask') {
+      const first = object.points[0];
+      if (!first) return;
+      context.save();
+      context.globalCompositeOperation = 'destination-out';
+      context.strokeStyle = '#000000';
+      context.fillStyle = '#000000';
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      context.lineWidth = object.radius * 2;
+      if (object.points.length === 1) {
+        context.beginPath();
+        context.arc(first.x, first.y, object.radius, 0, Math.PI * 2);
+        context.fill();
+      } else {
+        context.beginPath();
+        context.moveTo(first.x, first.y);
+        object.points
+          .slice(1)
+          .forEach((point) => context.lineTo(point.x, point.y));
+        context.stroke();
+      }
+      context.restore();
+      return;
+    }
     if (object.kind === 'shape') {
       context.save();
       const { geometry, style } = object;

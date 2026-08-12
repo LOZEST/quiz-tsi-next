@@ -13,6 +13,10 @@ export class PenTool implements Tool {
     this.width = width;
   }
 
+  cancel() {
+    this.activeStrokeId = null;
+  }
+
   begin(scene: WhiteboardScene, input: PointerInput): ToolResult {
     const stroke = createStroke(input.point, this.width);
     this.activeStrokeId = stroke.id;

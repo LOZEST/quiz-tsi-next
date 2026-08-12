@@ -19,6 +19,90 @@ const bounds = (points: readonly WhiteboardPoint[]) => {
   };
 };
 
+interface RectangleFit {
+  angle: number;
+  center: { x: number; y: number };
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+}
+
+const rotate = (
+  point: Pick<WhiteboardPoint, 'x' | 'y'>,
+  angle: number,
+  center: { x: number; y: number },
+) => {
+  const dx = point.x - center.x;
+  const dy = point.y - center.y;
+  return {
+    x: Math.cos(angle) * dx - Math.sin(angle) * dy,
+    y: Math.sin(angle) * dx + Math.cos(angle) * dy,
+  };
+};
+
+const convexHull = (points: readonly WhiteboardPoint[]) => {
+  const unique = [
+    ...new Map(
+      points.map((point) => [`${point.x}:${point.y}`, point]),
+    ).values(),
+  ].sort((a, b) => a.x - b.x || a.y - b.y);
+  if (unique.length <= 2) return unique;
+  const cross = (a: WhiteboardPoint, b: WhiteboardPoint, c: WhiteboardPoint) =>
+    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  const lower: WhiteboardPoint[] = [];
+  for (const point of unique) {
+    while (lower.length >= 2 && cross(lower.at(-2)!, lower.at(-1)!, point) <= 0)
+      lower.pop();
+    lower.push(point);
+  }
+  const upper: WhiteboardPoint[] = [];
+  for (const point of [...unique].reverse()) {
+    while (upper.length >= 2 && cross(upper.at(-2)!, upper.at(-1)!, point) <= 0)
+      upper.pop();
+    upper.push(point);
+  }
+  return [...lower.slice(0, -1), ...upper.slice(0, -1)];
+};
+
+function fitRectangle(points: readonly WhiteboardPoint[]): RectangleFit | null {
+  if (points.length < 4) return null;
+  const sampled = points.filter(
+    (_, index) => index % Math.max(1, Math.ceil(points.length / 128)) === 0,
+  );
+  const hull = convexHull(sampled);
+  if (hull.length < 4) return null;
+  const center = points.reduce(
+    (sum, point) => ({
+      x: sum.x + point.x / points.length,
+      y: sum.y + point.y / points.length,
+    }),
+    { x: 0, y: 0 },
+  );
+  let best: (RectangleFit & { area: number }) | null = null;
+  for (let index = 0; index < hull.length; index += 1) {
+    const a = hull[index]!;
+    const b = hull[(index + 1) % hull.length]!;
+    const angle = -Math.atan2(b.y - a.y, b.x - a.x);
+    const rotated = sampled.map((point) => rotate(point, angle, center));
+    const xs = rotated.map((point) => point.x);
+    const ys = rotated.map((point) => point.y);
+    const candidate = {
+      angle,
+      center,
+      minX: Math.min(...xs),
+      minY: Math.min(...ys),
+      maxX: Math.max(...xs),
+      maxY: Math.max(...ys),
+      area:
+        (Math.max(...xs) - Math.min(...xs)) *
+        (Math.max(...ys) - Math.min(...ys)),
+    };
+    if (!best || candidate.area < best.area) best = candidate;
+  }
+  return best;
+}
+
 const segmentDistance = (
   point: WhiteboardPoint,
   a: WhiteboardPoint,
@@ -100,6 +184,84 @@ export function circleCandidate(points: readonly WhiteboardPoint[]): boolean {
   return travel >= Math.PI * 1.65 && travel <= Math.PI * 2.7 && reversals <= 2;
 }
 
+/**
+ * Fits a minimum-area oriented box, then requires a closed path that follows
+ * all four sides. Thresholds intentionally favour false negatives: mean edge
+ * error <= 7% of the short side, every side >= 12% of samples, and path length
+ * within 72–138% of the fitted perimeter.
+ */
+export function rectangleCandidate(
+  points: readonly WhiteboardPoint[],
+): boolean {
+  if (points.length < 12) return false;
+  const fit = fitRectangle(points);
+  if (!fit) return false;
+  const width = fit.maxX - fit.minX;
+  const height = fit.maxY - fit.minY;
+  const small = Math.min(width, height);
+  const large = Math.max(width, height);
+  if (small < 36 || large / small > 6) return false;
+  const diagonal = Math.hypot(width, height);
+  if (distance(points[0]!, points.at(-1)!) > Math.min(24, diagonal * 0.18))
+    return false;
+  const perimeter = 2 * (width + height);
+  const lengthRatio = pathLength(points) / perimeter;
+  if (lengthRatio < 0.72 || lengthRatio > 1.38) return false;
+
+  const sideCounts = [0, 0, 0, 0];
+  const edgeErrors: number[] = [];
+  const sideSequence: number[] = [];
+  for (const point of points) {
+    const local = rotate(point, fit.angle, fit.center);
+    const distances = [
+      Math.abs(local.y - fit.minY),
+      Math.abs(local.x - fit.maxX),
+      Math.abs(local.y - fit.maxY),
+      Math.abs(local.x - fit.minX),
+    ];
+    const edge = Math.min(...distances);
+    const side = distances.indexOf(edge);
+    edgeErrors.push(edge);
+    sideCounts[side] = (sideCounts[side] ?? 0) + 1;
+    if (sideSequence.at(-1) !== side) sideSequence.push(side);
+  }
+  const meanError =
+    edgeErrors.reduce((sum, error) => sum + error, 0) / edgeErrors.length;
+  if (meanError > Math.max(3.5, small * 0.07)) return false;
+  if (sideCounts.some((count) => count / points.length < 0.12)) return false;
+  const corners = [
+    { x: fit.minX, y: fit.minY },
+    { x: fit.maxX, y: fit.minY },
+    { x: fit.maxX, y: fit.maxY },
+    { x: fit.minX, y: fit.maxY },
+  ];
+  if (
+    corners.some(
+      (corner) =>
+        Math.min(
+          ...points.map((point) => {
+            const local = rotate(point, fit.angle, fit.center);
+            return Math.hypot(local.x - corner.x, local.y - corner.y);
+          }),
+        ) > Math.max(8, small * 0.13),
+    )
+  )
+    return false;
+
+  const compactSequence = sideSequence.filter(
+    (side, index) => index === 0 || side !== sideSequence[index - 1],
+  );
+  const changes = compactSequence.length - 1;
+  if (changes < 3 || changes > 7) return false;
+  for (let index = 1; index < compactSequence.length; index += 1) {
+    const delta = Math.abs(
+      compactSequence[index]! - compactSequence[index - 1]!,
+    );
+    if (delta === 2) return false;
+  }
+  return true;
+}
+
 export function toCircleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
   const box = bounds(stroke.points);
   const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -120,4 +282,65 @@ export function toCircleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
     };
   });
   return { ...stroke, points };
+}
+
+export function toRectangleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
+  const fit = fitRectangle(stroke.points);
+  if (!fit) return stroke;
+  const localCorners = [
+    { x: fit.minX, y: fit.minY },
+    { x: fit.maxX, y: fit.minY },
+    { x: fit.maxX, y: fit.maxY },
+    { x: fit.minX, y: fit.maxY },
+  ];
+  const toWorld = (point: { x: number; y: number }) => {
+    const angle = -fit.angle;
+    return {
+      x: Math.cos(angle) * point.x - Math.sin(angle) * point.y + fit.center.x,
+      y: Math.sin(angle) * point.x + Math.cos(angle) * point.y + fit.center.y,
+    };
+  };
+  const corners = localCorners.map(toWorld);
+  const first = stroke.points[0]!;
+  const last = stroke.points.at(-1)!;
+  const startIndex = corners.reduce(
+    (best, corner, index) =>
+      Math.hypot(corner.x - first.x, corner.y - first.y) <
+      Math.hypot(corners[best]!.x - first.x, corners[best]!.y - first.y)
+        ? index
+        : best,
+    0,
+  );
+  const signedArea = stroke.points
+    .slice(1)
+    .reduce(
+      (sum, point, index) =>
+        sum +
+        stroke.points[index]!.x * point.y -
+        point.x * stroke.points[index]!.y,
+      0,
+    );
+  const direction = signedArea >= 0 ? 1 : -1;
+  const ordered = Array.from(
+    { length: 5 },
+    (_, index) =>
+      corners[
+        (startIndex + direction * index + corners.length * 2) % corners.length
+      ]!,
+  );
+  return {
+    ...stroke,
+    points: ordered.map((corner, index) => {
+      const progress = index / 4;
+      return {
+        ...first,
+        ...corner,
+        pressure: first.pressure + (last.pressure - first.pressure) * progress,
+        tiltX: first.tiltX + (last.tiltX - first.tiltX) * progress,
+        tiltY: first.tiltY + (last.tiltY - first.tiltY) * progress,
+        timestamp:
+          first.timestamp + (last.timestamp - first.timestamp) * progress,
+      };
+    }),
+  };
 }
