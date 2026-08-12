@@ -243,6 +243,8 @@ type WhiteboardShapeKind =
   | "triangle"
   | "axes"
   | "coordinate-system"
+  | "grid-coordinate-system"
+  | "graduated-coordinate-system"
   | "trigonometric-circle"
   | "sign-chart";
 
@@ -266,6 +268,8 @@ interface AdvancedWhiteboardScene {
 ```
 
 Les coordonnées, positions et dimensions sont logiques, indépendantes des pixels et du tiroir. `id` reste stable. PR6 ajoute la sélection, le déplacement et le redimensionnement des objets vectoriels sans modifier les contrats manuscrits de PR3. `geometry.schemaVersion` permet de migrer la géométrie sans invalider toutes les scènes ; `rotation` est `null` quand elle n'est pas pertinente. `properties` est validé par forme et n'accepte que les clés documentées pour son `shapeKind`. Une restauration met en quarantaine les objets invalides sans perdre les objets sains.
+
+La scène courante porte `schemaVersion: 3`. La palette utilisateur est un sous-ensemble contractuel de `WhiteboardShapeKind` limité, dans cet ordre, à `grid-coordinate-system`, `graduated-coordinate-system`, `trigonometric-circle` et `sign-chart`. Les primitives vectorielles communes (segments, polylignes, ellipses pleines ou non et textes) produisent à la fois l'aperçu SVG et le rendu Canvas ; la sérialisation conserve seulement le type, le style et la géométrie, pas une image bitmap. Les types historiques `line`, `arrow`, `rectangle`, `square`, `circle`, `triangle`, `axes` et `coordinate-system` restent dans l'union pour restaurer sans perte les scènes V2, mais ne sont plus des choix de palette. La restauration V1/V2 vers V3 est structurelle, déterministe et idempotente : elle conserve chaque objet valide et met seulement les objets invalides en quarantaine.
 
 Toute nouvelle forme nécessite une évolution documentée du contrat, une migration de scène, un test de sérialisation, un test de restauration, un test de géométrie et un test de compatibilité avec les scènes précédentes.
 

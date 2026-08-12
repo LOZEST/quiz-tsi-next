@@ -16,10 +16,12 @@ import { restoreWhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 import { pointFromPointerEvent } from '@features/whiteboard/model/Point';
 import { snapshotScene } from '@features/whiteboard/model/WhiteboardSnapshot';
 import {
+  WHITEBOARD_PALETTE_SHAPE_KINDS,
   createShape,
   resizeHandlePosition,
   rotationHandlePosition,
   rotateShape,
+  shapePrimitives,
   shapeLocalPointToWorld,
   worldPointToShapeLocal,
   type Point2d,
@@ -373,6 +375,7 @@ describe('CanvasController', () => {
     controller.redo();
     expect(commits.at(-1)?.objects).toHaveLength(1);
     controller.selectTool('eraser');
+    expect(controller.getActiveTool()).toBe('eraser');
     controller.setGrid(true);
     controller.replaceScene(createEmptyScene());
     controller.destroy();
@@ -422,6 +425,76 @@ describe('CanvasController', () => {
     controller.destroy();
     vi.unstubAllGlobals();
   });
+
+  describe.each(WHITEBOARD_PALETTE_SHAPE_KINDS)(
+    '%s palette shape',
+    (shapeKind) => {
+      it('places, resizes, moves, undoes, redoes and round-trips identically', () => {
+        const { controller } = prepareController();
+        controller.selectTool('shape', shapeKind);
+        controller.pointerDown(pointerAt(70, { x: 100, y: 100 }));
+        controller.pointerMove(pointerAt(70, { x: 360, y: 300 }));
+        controller.pointerUp(pointerAt(70, { x: 360, y: 300 }));
+        const placed = controller.getScene().objects[0];
+        expect(placed).toMatchObject({ kind: 'shape', shapeKind });
+        if (placed?.kind !== 'shape') throw new Error('Forme attendue.');
+
+        const resizeHandle = resizeHandlePosition(placed);
+        const resizeTarget = shapeLocalPointToWorld(placed, {
+          x: placed.geometry.width + 40,
+          y: placed.geometry.height + 30,
+        });
+        controller.selectTool('select');
+        controller.pointerDown(pointerAt(71, resizeHandle));
+        controller.pointerMove(pointerAt(71, resizeTarget));
+        controller.pointerUp(pointerAt(71, resizeTarget));
+        const resized = controller.getScene().objects[0];
+        expect(
+          resized?.kind === 'shape' ? resized.geometry.width : 0,
+        ).toBeGreaterThan(placed.geometry.width);
+        controller.undo();
+        expect(controller.getScene().objects[0]).toEqual(placed);
+        controller.redo();
+        expect(controller.getScene().objects[0]).toEqual(resized);
+        if (resized?.kind !== 'shape') throw new Error('Forme attendue.');
+
+        const primitive = shapePrimitives(resized)[0]!;
+        const localPoint =
+          primitive.kind === 'line'
+            ? primitive.from
+            : primitive.kind === 'ellipse'
+              ? {
+                  x: primitive.center.x + primitive.radiusX,
+                  y: primitive.center.y,
+                }
+              : primitive.kind === 'polyline'
+                ? primitive.points[0]!
+                : primitive.position;
+        const body = shapeLocalPointToWorld(resized, localPoint);
+        const target = { x: body.x + 25, y: body.y + 15 };
+        controller.pointerDown(pointerAt(72, body));
+        controller.pointerMove(pointerAt(72, target));
+        controller.pointerUp(pointerAt(72, target));
+        const moved = controller.getScene().objects[0];
+        expect(moved?.kind === 'shape' ? moved.geometry.x : 0).toBeCloseTo(
+          resized.geometry.x + 25,
+        );
+        expect(moved?.kind === 'shape' ? moved.geometry.y : 0).toBeCloseTo(
+          resized.geometry.y + 15,
+        );
+        controller.undo();
+        expect(controller.getScene().objects[0]).toEqual(resized);
+        controller.redo();
+        expect(controller.getScene().objects[0]).toEqual(moved);
+
+        const restored = restoreWhiteboardScene(controller.getScene());
+        expect(restored.quarantine).toEqual([]);
+        expect(restored.scene).toEqual(controller.getScene());
+        controller.destroy();
+        vi.unstubAllGlobals();
+      });
+    },
+  );
 
   it('starts rotation from the visible handle outside the selected rectangle', () => {
     const { controller } = prepareController();
@@ -776,7 +849,7 @@ describe('scene restoration', () => {
     };
     const first = restoreWhiteboardScene(source);
     const second = restoreWhiteboardScene(first.scene);
-    expect(first.scene.schemaVersion).toBe(2);
+    expect(first.scene.schemaVersion).toBe(3);
     expect(first.scene.objects).toEqual([valid]);
     expect(first.quarantine).toHaveLength(1);
     expect(second.scene).toEqual(first.scene);

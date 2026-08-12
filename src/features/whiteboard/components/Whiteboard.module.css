@@ -101,17 +101,17 @@
   pointer-events: auto;
 }
 
-.toolPicker,
 .shapePicker {
   position: absolute;
   inset-inline-end: calc(100% + var(--qtsi-space-2));
   inset-block-start: 50%;
   display: grid;
-  inline-size: 15rem;
+  inline-size: min(23rem, calc(100vw - 7rem));
   max-block-size: calc(
     100dvh - var(--qtsi-safe-top) - var(--qtsi-safe-bottom) - 2rem
   );
-  padding: var(--qtsi-space-1);
+  gap: var(--qtsi-space-2);
+  padding: var(--qtsi-space-2);
   overflow-y: auto;
   background: var(--qtsi-surface);
   border: 1px solid var(--qtsi-border);
@@ -120,17 +120,66 @@
   transform: translateY(-50%);
 }
 
-.toolPicker button,
 .shapePicker button {
   justify-content: flex-start;
   text-align: start;
+}
+
+.selectionAction {
+  display: flex;
+  align-items: center;
+  gap: var(--qtsi-space-2);
+  border: 1px solid var(--qtsi-border) !important;
+}
+
+.selectionAction[aria-current='true'] {
+  color: var(--qtsi-accent);
+  background: var(--qtsi-accent-soft);
+  border-color: var(--qtsi-accent) !important;
+}
+
+.shapeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--qtsi-space-2);
+}
+
+.shapeCard {
+  display: grid;
+  min-inline-size: 0 !important;
+  block-size: 9rem;
+  padding: var(--qtsi-space-2) !important;
+  border: 1px solid var(--qtsi-border) !important;
+  border-radius: var(--qtsi-radius-2) !important;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: var(--qtsi-space-1);
+  place-items: stretch;
+}
+
+.shapeCard:hover,
+.shapeCard:focus-visible,
+.shapeCard[aria-checked='true'] {
+  color: var(--qtsi-accent);
+  background: var(--qtsi-accent-soft);
+  border-color: var(--qtsi-accent) !important;
+}
+
+.toolbar .shapeCard > svg {
+  inline-size: 100%;
+  block-size: 100%;
+  min-block-size: 0;
+}
+
+.shapeCard > span {
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.15;
 }
 
 .toolbar[data-handedness='left'] .toolPalette {
   inset-inline: calc(var(--qtsi-space-4) + var(--qtsi-safe-left)) auto;
 }
 
-.toolbar[data-handedness='left'] .toolPicker,
 .toolbar[data-handedness='left'] .shapePicker {
   inset-inline: calc(100% + var(--qtsi-space-2)) auto;
 }

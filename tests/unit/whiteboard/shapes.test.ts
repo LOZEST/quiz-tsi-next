@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { restoreWhiteboardScene } from '@domain/whiteboard/WhiteboardScene';
 import {
   WHITEBOARD_SHAPE_KINDS,
+  WHITEBOARD_PALETTE_SHAPE_KINDS,
   createShape,
   hitTestResizeHandle,
   hitTestRotationHandle,
@@ -36,7 +37,7 @@ describe.each(WHITEBOARD_SHAPE_KINDS)('%s shape', (kind) => {
       style,
     );
     const restored = restoreWhiteboardScene({
-      schemaVersion: 2,
+      schemaVersion: 3,
       sceneId: 's',
       questionInstanceId: 'q',
       logicalWidth: 1024,
@@ -56,18 +57,23 @@ describe.each(WHITEBOARD_SHAPE_KINDS)('%s shape', (kind) => {
           }
         : primitive.kind === 'ellipse'
           ? {
-              x: shape.geometry.x + shape.geometry.width,
-              y: shape.geometry.y + shape.geometry.height / 2,
+              x: shape.geometry.x + primitive.center.x + primitive.radiusX,
+              y: shape.geometry.y + primitive.center.y,
             }
-          : {
-              x: shape.geometry.x + primitive.points[0]!.x,
-              y: shape.geometry.y + primitive.points[0]!.y,
-            };
+          : primitive.kind === 'polyline'
+            ? {
+                x: shape.geometry.x + primitive.points[0]!.x,
+                y: shape.geometry.y + primitive.points[0]!.y,
+              }
+            : {
+                x: shape.geometry.x + primitive.position.x,
+                y: shape.geometry.y + primitive.position.y,
+              };
     expect(hitTestShape(shape, point)).toBe(true);
   });
 });
 
-it('renders a sign chart as a usable mathematical grid, not a rectangle', () => {
+it('renders the empty variation chart template without invented separators or values', () => {
   const shape = createShape(
     'sign-chart',
     'sign-chart',
@@ -79,14 +85,94 @@ it('renders a sign chart as a usable mathematical grid, not a rectangle', () => 
   expect(primitives).toHaveLength(7);
   expect(primitives).toContainEqual({
     kind: 'line',
-    from: { x: 66, y: 0 },
-    to: { x: 66, y: 180 },
+    from: { x: 81, y: 0 },
+    to: { x: 81, y: 180 },
   });
   expect(primitives).toContainEqual({
     kind: 'line',
-    from: { x: 0, y: 60 },
-    to: { x: 300, y: 60 },
+    from: { x: 0, y: 30.6 },
+    to: { x: 300, y: 30.6 },
   });
+  expect(primitives.filter(({ kind }) => kind === 'line')).toHaveLength(3);
+  expect(
+    primitives
+      .filter((primitive) => primitive.kind === 'text')
+      .map((primitive) => primitive.value),
+  ).toEqual(['x', "signe de f'(x)", 'variations de f']);
+  expect(JSON.stringify(primitives)).not.toMatch(/[+−-](?:∞|\d)|flèche/i);
+});
+
+it('defines exactly the four user-facing mathematical shapes', () => {
+  expect(WHITEBOARD_PALETTE_SHAPE_KINDS).toEqual([
+    'grid-coordinate-system',
+    'graduated-coordinate-system',
+    'trigonometric-circle',
+    'sign-chart',
+  ]);
+});
+
+it('builds a dense regular grid with centered arrowed axes and x/y labels', () => {
+  const primitives = shapePrimitives(
+    createShape(
+      'grid',
+      'grid-coordinate-system',
+      { x: 0, y: 0 },
+      { x: 320, y: 200 },
+      style,
+    ),
+  );
+  expect(
+    primitives.filter(
+      (primitive) => primitive.kind === 'line' && primitive.role === 'faint',
+    ),
+  ).toHaveLength(38);
+  expect(
+    primitives
+      .filter((primitive) => primitive.kind === 'text')
+      .map((primitive) => primitive.value),
+  ).toEqual(['x', 'y']);
+  expect(primitives.filter(({ kind }) => kind === 'polyline')).toHaveLength(4);
+});
+
+it('builds a graduated coordinate system with numeric axes and a dotted grid', () => {
+  const primitives = shapePrimitives(
+    createShape(
+      'graduated',
+      'graduated-coordinate-system',
+      { x: 0, y: 0 },
+      { x: 360, y: 220 },
+      style,
+    ),
+  );
+  expect(
+    primitives.filter(
+      (primitive) => primitive.kind === 'ellipse' && primitive.filled,
+    ).length,
+  ).toBeGreaterThanOrEqual(160);
+  const labels = primitives
+    .filter((primitive) => primitive.kind === 'text')
+    .map((primitive) => primitive.value);
+  expect(labels).toEqual(
+    expect.arrayContaining(['-6', '6', '-2.5', '2.5', 'O']),
+  );
+});
+
+it('builds a trigonometric circle with O, I, J and the direct direction', () => {
+  const primitives = shapePrimitives(
+    createShape(
+      'trigonometric',
+      'trigonometric-circle',
+      { x: 0, y: 0 },
+      { x: 240, y: 240 },
+      style,
+    ),
+  );
+  expect(primitives.some(({ kind }) => kind === 'ellipse')).toBe(true);
+  expect(
+    primitives
+      .filter((primitive) => primitive.kind === 'text')
+      .map((primitive) => primitive.value),
+  ).toEqual(['O', 'I', 'J', 'C', 'sens direct']);
 });
 
 it('migrates V1 idempotently, preserves strokes and quarantines only an invalid shape', () => {
@@ -109,7 +195,7 @@ it('migrates V1 idempotently, preserves strokes and quarantines only an invalid 
     updatedAt: '2026-08-10T00:00:00.000Z',
   });
   const second = restoreWhiteboardScene(first.scene);
-  expect(first.scene.schemaVersion).toBe(2);
+  expect(first.scene.schemaVersion).toBe(3);
   expect(second.scene).toEqual(first.scene);
   expect(second.scene.objects).toEqual([stroke]);
   const mixed = restoreWhiteboardScene({
@@ -118,6 +204,35 @@ it('migrates V1 idempotently, preserves strokes and quarantines only an invalid 
   });
   expect(mixed.scene.objects).toEqual([stroke]);
   expect(mixed.quarantine).toHaveLength(1);
+});
+
+it('migrates a V2 scene idempotently and preserves every historical shape kind', () => {
+  const historicalKinds = WHITEBOARD_SHAPE_KINDS.filter(
+    (kind) => !WHITEBOARD_PALETTE_SHAPE_KINDS.includes(kind as never),
+  );
+  const historicalShapes = historicalKinds.map((kind, index) =>
+    createShape(
+      `historical-${kind}`,
+      kind,
+      { x: index * 5, y: index * 4 },
+      { x: index * 5 + 120, y: index * 4 + 90 },
+      style,
+    ),
+  );
+  const first = restoreWhiteboardScene({
+    schemaVersion: 2,
+    sceneId: 'legacy-v2',
+    questionInstanceId: 'q',
+    logicalWidth: 1024,
+    logicalHeight: 768,
+    objects: historicalShapes,
+    updatedAt: '2026-08-10T00:00:00.000Z',
+  });
+  const second = restoreWhiteboardScene(first.scene);
+  expect(first.quarantine).toEqual([]);
+  expect(first.scene.schemaVersion).toBe(3);
+  expect(first.scene.objects).toEqual(historicalShapes);
+  expect(second).toEqual({ scene: first.scene, quarantine: [] });
 });
 
 it('translates, resizes and rotates shapes without touching proportional invariants', () => {

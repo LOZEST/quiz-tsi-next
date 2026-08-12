@@ -73,11 +73,29 @@ export class CanvasRenderer {
       context.rotate(geometry.rotation ?? 0);
       context.translate(-geometry.width / 2, -geometry.height / 2);
       context.strokeStyle = style.color;
-      context.globalAlpha = style.opacity;
-      context.lineWidth = style.width;
+      context.fillStyle = style.color;
       context.lineCap = style.lineCap;
       context.lineJoin = style.lineJoin;
       for (const primitive of shapePrimitives(object)) {
+        const roleOpacity =
+          primitive.role === 'faint'
+            ? 0.24
+            : primitive.role === 'secondary'
+              ? 0.58
+              : 1;
+        context.globalAlpha = style.opacity * roleOpacity;
+        context.lineWidth = style.width * (primitive.widthScale ?? 1);
+        if (primitive.kind === 'text') {
+          context.font = `${primitive.fontSize}px ui-sans-serif, system-ui, sans-serif`;
+          context.textAlign = primitive.align;
+          context.textBaseline = 'middle';
+          context.fillText(
+            primitive.value,
+            primitive.position.x,
+            primitive.position.y,
+          );
+          continue;
+        }
         context.beginPath();
         if (primitive.kind === 'line') {
           context.moveTo(primitive.from.x, primitive.from.y);
@@ -101,7 +119,8 @@ export class CanvasRenderer {
             .forEach((point) => context.lineTo(point.x, point.y));
           if (primitive.closed) context.closePath();
         }
-        context.stroke();
+        if (primitive.filled) context.fill();
+        else context.stroke();
       }
       context.restore();
       if (object.id === this.selectedShapeId)
