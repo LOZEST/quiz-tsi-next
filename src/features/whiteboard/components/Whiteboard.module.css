@@ -1,5 +1,6 @@
 .container {
   position: relative;
+  block-size: 100%;
   min-block-size: 100%;
   overflow: hidden;
   background: var(--qtsi-surface);
@@ -100,19 +101,26 @@
   pointer-events: auto;
 }
 
+.toolPicker,
 .shapePicker {
   position: absolute;
   inset-inline-end: calc(100% + var(--qtsi-space-2));
-  inset-block-start: 0;
+  inset-block-start: 50%;
   display: grid;
-  inline-size: 13rem;
+  inline-size: 15rem;
+  max-block-size: calc(
+    100dvh - var(--qtsi-safe-top) - var(--qtsi-safe-bottom) - 2rem
+  );
   padding: var(--qtsi-space-1);
+  overflow-y: auto;
   background: var(--qtsi-surface);
   border: 1px solid var(--qtsi-border);
   border-radius: var(--qtsi-radius-2);
   box-shadow: var(--qtsi-shadow-subtle);
+  transform: translateY(-50%);
 }
 
+.toolPicker button,
 .shapePicker button {
   justify-content: flex-start;
   text-align: start;
@@ -120,6 +128,11 @@
 
 .toolbar[data-handedness='left'] .toolPalette {
   inset-inline: calc(var(--qtsi-space-4) + var(--qtsi-safe-left)) auto;
+}
+
+.toolbar[data-handedness='left'] .toolPicker,
+.toolbar[data-handedness='left'] .shapePicker {
+  inset-inline: calc(100% + var(--qtsi-space-2)) auto;
 }
 
 .toolbar[data-handedness='left'] .historyControls {
@@ -132,6 +145,16 @@
   inset-block-start: 50%;
   flex-direction: column;
   transform: translateY(-50%);
+}
+
+.toolPalette > button {
+  display: grid;
+  min-inline-size: 4rem;
+  gap: 0.125rem;
+  padding: var(--qtsi-space-1);
+  place-items: center;
+  font-size: 0.6875rem;
+  line-height: 1.15;
 }
 
 .historyControls {

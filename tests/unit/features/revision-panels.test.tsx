@@ -92,6 +92,9 @@ describe('RevisionDrawerPanel', () => {
       'Type de question',
       'Difficulté',
     ]);
+    expect(screen.getByRole('group', { name: 'Partie 1' })).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Partie 2' })).toBeVisible();
+    expect(screen.queryByText('Partie 1 — Chapitre')).toBeNull();
     await user.selectOptions(sessionType, 'daily');
     expect(setMode).toHaveBeenCalledWith('daily', sessionType);
     mode = 'free';
@@ -100,7 +103,7 @@ describe('RevisionDrawerPanel', () => {
     filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
     view.rerender(<RevisionDrawerPanel />);
     expect(
-      screen.getByRole('option', { name: 'Partie 1 — Chapitre' }),
+      screen.getByRole('option', { name: 'Chapitre' }),
     ).toBeInTheDocument();
     await user.selectOptions(
       screen.getByLabelText('Type de question'),

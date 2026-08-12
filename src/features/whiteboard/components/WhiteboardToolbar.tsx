@@ -7,34 +7,51 @@ import {
 } from '@domain/whiteboard/WhiteboardShape';
 
 const labels: Record<WhiteboardShapeKind, string> = {
-  line: 'Ligne',
+  line: 'Droite',
   arrow: 'Flèche',
   rectangle: 'Rectangle',
   square: 'Carré',
   circle: 'Cercle',
   triangle: 'Triangle',
   axes: 'Axes',
-  'coordinate-system': 'Repère',
+  'coordinate-system': 'Repère orthonormé',
   'trigonometric-circle': 'Cercle trigonométrique',
+  'sign-chart': 'Tableau de signes',
 };
 
 export function WhiteboardToolbar() {
   const board = useWhiteboard();
-  const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLButtonElement>(null);
+  const [openMenu, setOpenMenu] = useState<'pen' | 'shapes' | null>(null);
+  const toolbar = useRef<HTMLDivElement>(null);
+  const penTrigger = useRef<HTMLButtonElement>(null);
+  const shapesTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    if (!open) return;
+    if (!openMenu) return;
     const close = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
-        trigger.current?.focus();
+        const activeTrigger =
+          openMenu === 'pen' ? penTrigger.current : shapesTrigger.current;
+        setOpenMenu(null);
+        activeTrigger?.focus();
       }
     };
+    const closeOutside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !toolbar.current?.contains(event.target)
+      )
+        setOpenMenu(null);
+    };
     document.addEventListener('keydown', close);
-    return () => document.removeEventListener('keydown', close);
-  }, [open]);
+    document.addEventListener('pointerdown', closeOutside);
+    return () => {
+      document.removeEventListener('keydown', close);
+      document.removeEventListener('pointerdown', closeOutside);
+    };
+  }, [openMenu]);
   return (
     <div
+      ref={toolbar}
       className={styles.toolbar}
       role="toolbar"
       aria-label="Outils du tableau blanc"
@@ -43,46 +60,69 @@ export function WhiteboardToolbar() {
       <div
         className={styles.toolPalette}
         role="group"
-        aria-label="Outils d’écriture"
+        aria-label="Outils principaux"
       >
         <button
+          ref={penTrigger}
           type="button"
           aria-label="Stylo"
-          aria-pressed={board.activeTool === 'pen'}
-          onClick={() => board.setActiveTool('pen')}
+          aria-expanded={openMenu === 'pen'}
+          aria-haspopup="menu"
+          aria-pressed={
+            board.activeTool === 'pen' || board.activeTool === 'eraser'
+          }
+          onClick={() =>
+            setOpenMenu((value) => (value === 'pen' ? null : 'pen'))
+          }
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="m14.5 4.5 5 5" />
             <path d="m4 20 4.3-1 10.8-10.8a1.8 1.8 0 0 0-2.6-2.6L5.7 16.4 4 20Z" />
           </svg>
+          <span>Stylo</span>
         </button>
+        {openMenu === 'pen' ? (
+          <div
+            className={styles.toolPicker}
+            role="menu"
+            aria-label="Choisir un outil"
+          >
+            {(['pen', 'eraser'] as const).map((tool) => (
+              <button
+                key={tool}
+                type="button"
+                role="menuitemradio"
+                aria-checked={board.activeTool === tool}
+                onClick={() => {
+                  board.setActiveTool(tool);
+                  setOpenMenu(null);
+                  penTrigger.current?.focus();
+                }}
+              >
+                {tool === 'pen' ? 'Stylo' : 'Gomme'}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <button
-          type="button"
-          aria-label="Gomme"
-          aria-pressed={board.activeTool === 'eraser'}
-          onClick={() => board.setActiveTool('eraser')}
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="m7 19 11-11 3 3-8 8H7Z" />
-            <path d="m5 17 7-7 3 3-6 6H5Z" />
-          </svg>
-        </button>
-        <button
-          ref={trigger}
+          ref={shapesTrigger}
           type="button"
           aria-label="Formes"
-          aria-expanded={open}
+          aria-expanded={openMenu === 'shapes'}
           aria-haspopup="menu"
           aria-pressed={
             board.activeTool === 'shape' || board.activeTool === 'select'
           }
-          onClick={() => setOpen((value) => !value)}
+          onClick={() =>
+            setOpenMenu((value) => (value === 'shapes' ? null : 'shapes'))
+          }
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M4 18 10 7l4 11H4ZM15 5h5v5h-5z" />
           </svg>
+          <span>Formes</span>
         </button>
-        {open ? (
+        {openMenu === 'shapes' ? (
           <div
             className={styles.shapePicker}
             role="menu"
@@ -94,8 +134,8 @@ export function WhiteboardToolbar() {
               aria-checked={board.activeTool === 'select'}
               onClick={() => {
                 board.setActiveTool('select');
-                setOpen(false);
-                trigger.current?.focus();
+                setOpenMenu(null);
+                shapesTrigger.current?.focus();
               }}
             >
               Sélection
@@ -111,8 +151,8 @@ export function WhiteboardToolbar() {
                 onClick={() => {
                   board.setShapeKind(kind);
                   board.setActiveTool('shape');
-                  setOpen(false);
-                  trigger.current?.focus();
+                  setOpenMenu(null);
+                  shapesTrigger.current?.focus();
                 }}
               >
                 {labels[kind]}

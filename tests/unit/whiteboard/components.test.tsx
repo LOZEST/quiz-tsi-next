@@ -14,29 +14,72 @@ vi.mock('@features/whiteboard/canvas/WhiteboardCanvas', () => ({
 }));
 
 describe('WhiteboardToolbar', () => {
-  it('exposes the PR6 shape picker without a main grid button', async () => {
+  it('exposes only the two main side tools and their compact menus', async () => {
     const user = userEvent.setup();
     render(
       <WhiteboardProvider>
         <WhiteboardToolbar />
       </WhiteboardProvider>,
     );
-    const pen = screen.getByRole('button', { name: 'Stylo' });
-    const eraser = screen.getByRole('button', { name: 'Gomme' });
-    const shapes = screen.getByRole('button', { name: 'Formes' });
+    const tools = screen.getByRole('group', { name: 'Outils principaux' });
+    expect(
+      within(tools)
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Stylo', 'Formes']);
+
+    const pen = within(tools).getByRole('button', { name: 'Stylo' });
+    const shapes = within(tools).getByRole('button', { name: 'Formes' });
     expect(pen).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.queryByRole('button', { name: 'Grille' })).toBeNull();
-    await user.click(eraser);
-    expect(eraser).toHaveAttribute('aria-pressed', 'true');
+    await user.click(pen);
+    const penMenu = screen.getByRole('menu', { name: 'Choisir un outil' });
+    expect(
+      within(penMenu)
+        .getAllByRole('menuitemradio')
+        .map((button) => button.textContent),
+    ).toEqual(['Stylo', 'Gomme']);
+    await user.click(
+      within(penMenu).getByRole('menuitemradio', { name: 'Gomme' }),
+    );
+    expect(pen).toHaveAttribute('aria-pressed', 'true');
+
     await user.click(shapes);
-    expect(screen.getByRole('menu')).toBeVisible();
+    const shapeMenu = screen.getByRole('menu', { name: 'Choisir une forme' });
+    expect(shapeMenu).toBeVisible();
     expect(
-      screen.getByRole('menuitemradio', { name: 'Sélection' }),
+      within(shapeMenu).getByRole('menuitemradio', { name: 'Sélection' }),
     ).toBeVisible();
+    for (const name of [
+      'Repère orthonormé',
+      'Axes',
+      'Cercle trigonométrique',
+      'Tableau de signes',
+      'Droite',
+      'Flèche',
+      'Rectangle',
+      'Carré',
+      'Triangle',
+      'Cercle',
+    ]) {
+      expect(
+        within(shapeMenu).getByRole('menuitemradio', { name }),
+      ).toBeVisible();
+    }
     expect(
-      screen.getByRole('menuitemradio', { name: 'Cercle trigonométrique' }),
-    ).toBeVisible();
-    await user.click(screen.getByRole('menuitemradio', { name: 'Rectangle' }));
+      within(shapeMenu).queryByRole('radio', { name: /taille/i }),
+    ).toBeNull();
+    expect(within(shapeMenu).queryByText(/petite|moyenne|grande/i)).toBeNull();
+    await user.click(document.body);
+    expect(
+      screen.queryByRole('menu', { name: 'Choisir une forme' }),
+    ).toBeNull();
+    await user.click(shapes);
+    await user.click(
+      within(screen.getByRole('menu', { name: 'Choisir une forme' })).getByRole(
+        'menuitemradio',
+        { name: 'Rectangle' },
+      ),
+    );
     expect(shapes).toHaveAttribute('aria-pressed', 'true');
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     await user.click(screen.getByRole('button', { name: 'Rétablir' }));

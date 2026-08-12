@@ -8,6 +8,7 @@ export const WHITEBOARD_SHAPE_KINDS = [
   'axes',
   'coordinate-system',
   'trigonometric-circle',
+  'sign-chart',
 ] as const;
 export type WhiteboardShapeKind = (typeof WHITEBOARD_SHAPE_KINDS)[number];
 
@@ -368,6 +369,32 @@ export function shapePrimitives(
         closed: true,
       },
     ];
+  if (shape.shapeKind === 'sign-chart') {
+    const separators = [0.22, 0.45, 0.65, 0.82].map((ratio) => ({
+      kind: 'line' as const,
+      from: { x: w * ratio, y: 0 },
+      to: { x: w * ratio, y: h },
+    }));
+    return [
+      {
+        kind: 'polyline',
+        points: [
+          { x: 0, y: 0 },
+          { x: w, y: 0 },
+          { x: w, y: h },
+          { x: 0, y: h },
+        ],
+        closed: true,
+      },
+      { kind: 'line', from: { x: 0, y: h / 3 }, to: { x: w, y: h / 3 } },
+      {
+        kind: 'line',
+        from: { x: 0, y: (h * 2) / 3 },
+        to: { x: w, y: (h * 2) / 3 },
+      },
+      ...separators,
+    ];
+  }
   const axes: ShapePrimitive[] = [
     { kind: 'line', from: { x: 0, y: h / 2 }, to: { x: w, y: h / 2 } },
     { kind: 'line', from: { x: w / 2, y: 0 }, to: { x: w / 2, y: h } },
