@@ -384,14 +384,14 @@ export function RevisionExperienceProvider({
   const enterMode = useCallback(
     (next: SessionMode, clearDraft = false) => {
       const id = ++request.current;
-      if (clearDraft) board.clearDraft();
-      setModeState(next);
-      setNotice(null);
       if (next === 'free') {
-        attemptFree(activeFilters);
+        attemptFree(activeFilters, false, clearDraft);
         return;
       }
       if (next === 'chapter-test') {
+        if (clearDraft) board.clearDraft();
+        setModeState(next);
+        setNotice(null);
         setState({ kind: 'chapter-test' });
         void services.chapterTestRepository.getActive(userId).then((saved) => {
           if (!saved || !mounted.current) return;
@@ -400,7 +400,6 @@ export function RevisionExperienceProvider({
         });
         return;
       }
-      setState({ kind: 'loading' });
       const source =
         next === 'daily'
           ? services.dailyPlanStateRepository.getState(userId)
@@ -408,6 +407,9 @@ export function RevisionExperienceProvider({
       void source
         .then((value) => {
           if (!mounted.current || id !== request.current) return;
+          if (clearDraft) board.clearDraft();
+          setModeState(next);
+          setNotice(null);
           setState(
             next === 'daily'
               ? { kind: 'daily', state: value as DailyPlanState }
@@ -415,7 +417,10 @@ export function RevisionExperienceProvider({
           );
         })
         .catch(() => {
-          if (mounted.current && id === request.current)
+          if (!mounted.current || id !== request.current) return;
+          if (state.kind === 'ready')
+            setNotice('Ces données sont indisponibles pour le moment.');
+          else
             setState({
               kind: 'error',
               code: 'state-unavailable',
@@ -423,7 +428,15 @@ export function RevisionExperienceProvider({
             });
         });
     },
-    [activeFilters, attemptFree, board, loadChapterQuestion, services, userId],
+    [
+      activeFilters,
+      attemptFree,
+      board,
+      loadChapterQuestion,
+      services,
+      state.kind,
+      userId,
+    ],
   );
 
   const requestFree = useCallback(
@@ -448,7 +461,10 @@ export function RevisionExperienceProvider({
 
   const setMode = useCallback(
     (next: SessionMode, trigger?: HTMLElement) => {
-      if (next === mode) return;
+      if (next === mode) {
+        request.current += 1;
+        return;
+      }
       void trigger;
       enterMode(next, true);
     },

@@ -476,6 +476,33 @@ describe('RevisionExperienceProvider integration', () => {
     expect(clear).toHaveBeenCalledOnce();
   });
 
+  it('keeps the current question and draft when a mode change fails', async () => {
+    const clear = vi.fn();
+    const user = userEvent.setup();
+    const daily = {
+      getState: vi.fn().mockRejectedValue(new Error('offline')),
+    };
+    render(
+      <Harness
+        services={baseServices([question('q1')], {
+          dailyPlanStateRepository: daily,
+        })}
+        draft
+        clear={clear}
+      />,
+    );
+    await screen.findByText('q1');
+    await user.click(screen.getByText('Daily'));
+    await waitFor(() =>
+      expect(screen.getByTestId('notice')).toHaveTextContent(
+        'Ces données sont indisponibles pour le moment.',
+      ),
+    );
+    expect(screen.getByTestId('kind')).toHaveTextContent('ready');
+    expect(screen.getByTestId('question')).toHaveTextContent('q1');
+    expect(clear).not.toHaveBeenCalled();
+  });
+
   it('ignores an obsolete Daily response after returning to free', async () => {
     let resolveDaily!: (value: DailyPlanState) => void;
     const daily = {

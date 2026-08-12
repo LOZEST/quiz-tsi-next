@@ -43,6 +43,11 @@ export function WhiteboardCanvas({
           restored?.questionInstanceId === questionInstanceId
             ? restored
             : createEmptyScene(sceneId, questionInstanceId);
+        if (restored?.questionInstanceId !== questionInstanceId) {
+          void workspaceRepository
+            .saveWhiteboardScene?.(scene, generation, user.id)
+            ?.catch(() => setStorageError(true));
+        }
         activeController = new CanvasController(canvas, scene, (next) => {
           const persistence = workspaceRepository.saveWhiteboardScene?.(
             next,
