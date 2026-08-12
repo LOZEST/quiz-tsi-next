@@ -67,6 +67,28 @@ describe.each(WHITEBOARD_SHAPE_KINDS)('%s shape', (kind) => {
   });
 });
 
+it('renders a sign chart as a usable mathematical grid, not a rectangle', () => {
+  const shape = createShape(
+    'sign-chart',
+    'sign-chart',
+    { x: 0, y: 0 },
+    { x: 300, y: 180 },
+    style,
+  );
+  const primitives = shapePrimitives(shape);
+  expect(primitives).toHaveLength(7);
+  expect(primitives).toContainEqual({
+    kind: 'line',
+    from: { x: 66, y: 0 },
+    to: { x: 66, y: 180 },
+  });
+  expect(primitives).toContainEqual({
+    kind: 'line',
+    from: { x: 0, y: 60 },
+    to: { x: 300, y: 60 },
+  });
+});
+
 it('migrates V1 idempotently, preserves strokes and quarantines only an invalid shape', () => {
   const stroke = {
     kind: 'stroke',

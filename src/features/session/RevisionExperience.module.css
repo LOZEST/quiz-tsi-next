@@ -6,6 +6,7 @@
 }
 
 .panel {
+  min-inline-size: 0;
   padding-block: var(--qtsi-space-1);
 }
 
@@ -19,6 +20,9 @@
 }
 
 .sessionType select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   min-block-size: var(--qtsi-touch-target);
   padding-inline: var(--qtsi-space-3);
   color: var(--qtsi-text);
@@ -27,6 +31,7 @@
   border-radius: var(--qtsi-radius-1);
   font: inherit;
   font-weight: 400;
+  text-overflow: ellipsis;
 }
 
 .panel fieldset {
@@ -50,6 +55,7 @@
 }
 
 .filters {
+  min-inline-size: 0;
   padding: var(--qtsi-space-4);
   background: var(--qtsi-surface-muted);
   border: 1px solid var(--qtsi-border);
@@ -58,6 +64,7 @@
 
 .filters label,
 .panel label {
+  min-inline-size: 0;
   display: grid;
   gap: var(--qtsi-space-1);
   min-block-size: var(--qtsi-touch-target);
@@ -69,12 +76,16 @@
 }
 
 .filters select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
   padding-inline: var(--qtsi-space-3);
   color: var(--qtsi-text);
   background: var(--qtsi-surface);
   border: 1px solid var(--qtsi-border-strong);
   border-radius: var(--qtsi-radius-1);
   font: inherit;
+  text-overflow: ellipsis;
 }
 .helpPanel {
   position: static;

@@ -3,10 +3,35 @@
 }
 
 .whiteboardShell {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  position: relative;
   block-size: 100dvh;
   overflow: hidden;
+}
+
+.whiteboardShell .topbar {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  min-block-size: 0;
+  padding: calc(var(--qtsi-space-2) + var(--qtsi-safe-top))
+    calc(var(--qtsi-space-3) + var(--qtsi-safe-right)) 0
+    calc(var(--qtsi-space-3) + var(--qtsi-safe-left));
+  background: transparent;
+  border: 0;
+  pointer-events: none;
+}
+
+.whiteboardShell .topbar > * {
+  pointer-events: auto;
+}
+
+.whiteboardShell .brand {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .topbar {
@@ -42,6 +67,19 @@
   text-align: center;
 }
 
+.whiteboardShell .offlineBanner {
+  position: absolute;
+  z-index: var(--qtsi-z-header);
+  inset-block-start: calc(var(--qtsi-safe-top) + var(--qtsi-space-2));
+  inset-inline-start: 50%;
+  inline-size: min(34rem, calc(100% - 10rem));
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  font-size: 0.8125rem;
+  transform: translateX(-50%);
+}
+
 .main {
   inline-size: min(calc(100% - var(--qtsi-space-8)), var(--qtsi-content-width));
   margin-inline: auto;
@@ -51,6 +89,7 @@
 
 .whiteboardShell .main {
   inline-size: 100%;
+  block-size: 100%;
   min-block-size: 0;
   margin: 0;
   padding: 0;

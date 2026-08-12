@@ -243,7 +243,8 @@ type WhiteboardShapeKind =
   | "triangle"
   | "axes"
   | "coordinate-system"
-  | "trigonometric-circle";
+  | "trigonometric-circle"
+  | "sign-chart";
 
 interface WhiteboardShapeGeometry {
   schemaVersion: number;

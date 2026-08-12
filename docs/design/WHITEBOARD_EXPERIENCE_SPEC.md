@@ -18,7 +18,9 @@ PR3 ne fournit aucune forme géométrique, ligne, rectangle, cercle, flèche ou 
 
 PR6, **Advanced Whiteboard Tools**, ajoute ces formes et objets vectoriels ainsi que leur sélection, leur déplacement et leur redimensionnement, en conservant la compatibilité avec les scènes manuscrites versionnées de PR3.
 
-La palette compacte de PR6 fournit droite, flèche, rectangle, carré, cercle, triangle, axes, repère orthonormé et cercle trigonométrique. La grille reste un réglage secondaire. Les formes magiques, activées par défaut dans les réglages Pencil, transforment après environ 500 ms de maintien un tracé admissible en droite ou cercle selon les seuils historiques déterministes ; la transformation reste annulable.
+La palette compacte de PR6 fournit droite, flèche, rectangle, carré, cercle, triangle, axes, repère orthonormé, cercle trigonométrique et tableau de signes. Le tableau de signes est une grille mathématique structurée avec lignes d'en-tête, colonnes et zones d'écriture ; il ne se réduit pas à un rectangle décoratif. La grille reste un réglage secondaire. Les formes magiques, activées par défaut dans les réglages Pencil, transforment après environ 500 ms de maintien un tracé admissible en droite ou cercle selon les seuils historiques déterministes ; la transformation reste annulable.
+
+Sur le côté du tableau, deux boutons principaux seulement sont visibles : **Stylo** et **Formes**. **Stylo** révèle uniquement Stylo et Gomme. **Formes** révèle la palette mathématique et l'accès à la sélection des objets, sans contrôle de taille prédéfinie ; les dimensions sont choisies naturellement lors du placement puis restent modifiables. Annuler et Rétablir restent disponibles dans un contrôle d'historique compact distinct.
 
 ## Question, Canvas et menu
 

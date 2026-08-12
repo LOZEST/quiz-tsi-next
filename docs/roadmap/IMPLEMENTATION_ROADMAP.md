@@ -134,7 +134,7 @@ PR5 commence la passation de `chapter-test` à partir de la configuration valid�
 
 ## PR6 — Advanced Whiteboard Tools et Mon parcours
 
-- **Objectif :** formes géométriques, lignes, rectangles, cercles, flèches et autres objets vectoriels ; sélection, déplacement et redimensionnement d'objets ; maîtrise, répétition, plan du jour, faibles, calendrier, progression et activité.
+- **Objectif :** formes géométriques et mathématiques, notamment lignes, rectangles, cercles, flèches et tableau de signes, ainsi que les autres objets vectoriels ; sélection, déplacement et redimensionnement d'objets ; maîtrise, répétition, plan du jour, faibles, calendrier, progression et activité.
 - **Précision parcours :** PR6 implémente les algorithmes définitifs qui produisent `DailyPlanState` et `WeakPointsState` : maîtrise, confiance, répétition espacée, échéances, planification du jour, classement, erreurs récurrentes et difficulté recommandée dérivée.
 - **Dépendances :** PR5 fusionnée.
 - **Entrées :** moteur manuscrit et scènes versionnées de PR3 ; MasteryEvent fiable.

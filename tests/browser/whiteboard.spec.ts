@@ -122,7 +122,7 @@ test('shows a centered writable canvas and accessible controls', async ({
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   expect(await canvas.boundingBox()).toEqual(canvasBeforeMenu);
   const leftTools = await page
-    .getByRole('group', { name: 'Outils d’écriture' })
+    .getByRole('group', { name: 'Outils principaux' })
     .boundingBox();
   const rightHistory = await page
     .getByRole('group', { name: 'Historique' })
@@ -134,16 +134,18 @@ test('shows a centered writable canvas and accessible controls', async ({
   await page.getByLabel('Droitier').check();
   await page.getByRole('button', { name: 'Fermer le menu' }).click();
   const rightTools = await page
-    .getByRole('group', { name: 'Outils d’écriture' })
+    .getByRole('group', { name: 'Outils principaux' })
     .boundingBox();
   expect(rightTools!.x).toBeGreaterThan(page.viewportSize()!.width * 0.7);
 
-  await page.getByRole('button', { name: 'Gomme' }).click();
-  await expect(page.getByRole('button', { name: 'Gomme' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Stylo' }).click();
+  const penMenu = page.getByRole('menu', { name: 'Choisir un outil' });
+  await expect(penMenu.getByRole('menuitemradio')).toHaveCount(2);
+  await penMenu.getByRole('menuitemradio', { name: 'Gomme' }).click();
+  await expect(page.getByRole('button', { name: 'Stylo' })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
-  await page.getByRole('button', { name: 'Stylo' }).click();
   await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
 });
@@ -194,7 +196,7 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   const viewport = page.viewportSize();
   const canvas = await page.getByTestId('whiteboard-canvas').boundingBox();
   const writingTools = await page
-    .getByRole('group', { name: 'Outils d’écriture' })
+    .getByRole('group', { name: 'Outils principaux' })
     .boundingBox();
   const history = await page
     .getByRole('group', { name: 'Historique' })
@@ -206,6 +208,8 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   expect(writingTools).not.toBeNull();
   expect(history).not.toBeNull();
   expect(canvas!.x).toBeGreaterThanOrEqual(0);
+  expect(canvas!.y).toBe(0);
+  expect(canvas!.height).toBeGreaterThanOrEqual(viewport!.height * 0.98);
   expect(canvas!.y + canvas!.height).toBeLessThanOrEqual(viewport!.height);
   expect(writingTools!.x).toBeGreaterThan(viewport!.width * 0.7);
   expect(writingTools!.x + writingTools!.width).toBeLessThanOrEqual(
@@ -221,9 +225,25 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
   ).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Passer' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Gomme' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
+  await expect(
+    page.getByRole('group', { name: 'Outils principaux' }).getByRole('button'),
+  ).toHaveCount(2);
+
+  await page.getByRole('button', { name: 'Formes' }).click();
+  const shapeMenu = page.getByRole('menu', { name: 'Choisir une forme' });
+  for (const name of [
+    'Repère orthonormé',
+    'Axes',
+    'Cercle trigonométrique',
+    'Tableau de signes',
+    'Droite',
+    'Carré',
+  ])
+    await expect(shapeMenu.getByRole('menuitemradio', { name })).toBeVisible();
+  await expect(shapeMenu.getByText(/petite|moyenne|grande/i)).toHaveCount(0);
 });
 
 test('places, rotates and resizes a shape with atomic history', async ({
@@ -338,10 +358,23 @@ test('uses the production NUM bank and dependent free revision filters', async (
   await expect(card).toBeVisible();
   await expect(card).toContainText(/Calcul/);
   await openRevisionOptions(page);
+  const drawerPanel = page.getByRole('dialog').locator(':scope > div');
+  expect(
+    await drawerPanel.evaluate((element) =>
+      Math.max(0, element.scrollWidth - element.clientWidth),
+    ),
+  ).toBe(0);
+  const chapterSelect = page.getByRole('combobox', {
+    name: 'Chapitre',
+    exact: true,
+  });
+  expect(
+    (await chapterSelect.locator('option').allTextContents()).some((label) =>
+      label.includes(' — '),
+    ),
+  ).toBe(false);
   await page.getByLabel('Partie').selectOption('numbers');
-  await page
-    .getByRole('combobox', { name: 'Chapitre', exact: true })
-    .selectOption('numbers-arithmetic');
+  await chapterSelect.selectOption('numbers-arithmetic');
   await page.getByLabel('Notion').selectOption('NUM-F01');
   await page.getByLabel('Type de question').selectOption('calculation');
   await expect(card).toContainText('Calcul');

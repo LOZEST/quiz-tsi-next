@@ -119,12 +119,26 @@ export function RevisionDrawerPanel() {
               }
             >
               <option value="">Tous les chapitres</option>
-              {chapters.map((chapter) => (
-                <option key={chapter.id} value={chapter.id}>
-                  {programIndex?.getPart(chapter.partId)?.label} —{' '}
-                  {chapter.label}
-                </option>
-              ))}
+              {filters.part.kind === 'all'
+                ? programIndex?.getAllParts().map((part) => {
+                    const partChapters = chapters.filter(
+                      (chapter) => chapter.partId === part.id,
+                    );
+                    return partChapters.length > 0 ? (
+                      <optgroup key={part.id} label={part.label}>
+                        {partChapters.map((chapter) => (
+                          <option key={chapter.id} value={chapter.id}>
+                            {chapter.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null;
+                  })
+                : chapters.map((chapter) => (
+                    <option key={chapter.id} value={chapter.id}>
+                      {chapter.label}
+                    </option>
+                  ))}
             </select>
           </label>
           <label>
