@@ -24,13 +24,48 @@ import {
   MATH_SYMBOL_REGISTRY_V1,
   MATH_SYNTAX_REGISTRY_V1,
 } from '@domain/math/MathSyntaxRegistry';
-import { parseMathSourceText } from '@domain/math/MathParser';
+import { parseMathSource, parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { ProgramIndex } from '@domain/program/Program';
 import styles from './QuestionsPage.module.css';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
+import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
+import { KatexMathRenderer } from '@features/questions/math/KatexMathRenderer';
+import type { InstantiatedContentSegment } from '@domain/questions/QuestionInstantiation';
+
+function RawContentPreview({
+  segments,
+}: {
+  segments: readonly ContentSegment[];
+}) {
+  return (
+    <>
+      {segments.map((segment, index) => {
+        switch (segment.kind) {
+          case 'text':
+            return <span key={index}>{segment.value}</span>;
+          case 'line-break':
+            return <br key={index} />;
+          case 'inline-math':
+          case 'display-math': {
+            const parsed = parseMathSource(segment.math);
+            if (!parsed.ok)
+              return <span key={index}>{segment.math.source}</span>;
+            return segment.kind === 'display-math' ? (
+              <div key={index}>
+                <KatexMathRenderer ast={parsed.ast} display />
+              </div>
+            ) : (
+              <KatexMathRenderer key={index} ast={parsed.ast} />
+            );
+          }
+        }
+      })}
+    </>
+  );
+}
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
   questions: [],
@@ -643,15 +678,7 @@ function QuestionPreview({
         </section>
       ) : null}
       <p>
-        {question.prompt
-          .map((segment) =>
-            segment.kind === 'text'
-              ? segment.value
-              : segment.kind === 'line-break'
-                ? '\n'
-                : segment.math.source,
-          )
-          .join(' ')}
+        <RawContentPreview segments={question.prompt} />
       </p>
       <p>
         {classification?.kind === 'official'
@@ -808,7 +835,9 @@ function QuestionEditor({
     notion: crypto.randomUUID(),
   });
   const [editorErrors, setEditorErrors] = useState<string[]>([]);
-  const [variantPreview, setVariantPreview] = useState<readonly string[]>([]);
+  const [variantPreview, setVariantPreview] = useState<
+    readonly (readonly InstantiatedContentSegment[])[]
+  >([]);
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const activeMath = useRef<HTMLInputElement | null>(null);
@@ -1549,17 +1578,7 @@ function QuestionEditor({
               setVariantPreview(
                 result.variants
                   .slice(0, 10)
-                  .map((variant) =>
-                    variant.content.prompt
-                      .map((segment) =>
-                        segment.kind === 'text'
-                          ? segment.value
-                          : segment.kind === 'line-break'
-                            ? '\n'
-                            : segment.mathSource.source,
-                      )
-                      .join(' '),
-                  ),
+                  .map((variant) => variant.content.prompt),
               );
             }}
           >
@@ -1567,8 +1586,10 @@ function QuestionEditor({
           </button>
           {variantPreview.length ? (
             <ol aria-label="Variantes générées">
-              {variantPreview.map((value, index) => (
-                <li key={`${index}:${value}`}>{value}</li>
+              {variantPreview.map((segments, index) => (
+                <li key={index}>
+                  <QuestionContentRenderer segments={segments} />
+                </li>
               ))}
             </ol>
           ) : null}
