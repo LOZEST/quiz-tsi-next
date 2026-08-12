@@ -32,6 +32,7 @@ export function objectCollides(
   y: number,
   radius = 12,
 ): boolean {
+  if (object.kind === 'eraser-mask') return false;
   if (object.kind === 'shape') return hitTestShape(object, { x, y }, radius);
   if (object.points.length === 1) {
     return (
@@ -60,7 +61,9 @@ export class EraserTool implements Tool {
 
   private erase(scene: WhiteboardScene, input: PointerInput): ToolResult {
     const objects = scene.objects.filter(
-      (object) => !objectCollides(object, input.point.x, input.point.y),
+      (object) =>
+        object.kind === 'eraser-mask' ||
+        !objectCollides(object, input.point.x, input.point.y),
     );
     return {
       scene: { ...scene, objects },

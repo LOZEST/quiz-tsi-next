@@ -3,7 +3,7 @@ import {
   type WhiteboardShape,
 } from './WhiteboardShape';
 
-export const WHITEBOARD_SCENE_VERSION = 3;
+export const WHITEBOARD_SCENE_VERSION = 4;
 
 export interface WhiteboardPoint {
   x: number;
@@ -24,10 +24,21 @@ export interface WhiteboardStroke {
   createdAt: string;
 }
 
-export type WhiteboardObject = WhiteboardStroke | WhiteboardShape;
+export interface WhiteboardEraserMask {
+  kind: 'eraser-mask';
+  id: string;
+  points: WhiteboardPoint[];
+  radius: number;
+  createdAt: string;
+}
+
+export type WhiteboardObject =
+  | WhiteboardStroke
+  | WhiteboardShape
+  | WhiteboardEraserMask;
 
 export interface WhiteboardScene {
-  schemaVersion: 3;
+  schemaVersion: 4;
   sceneId: string;
   questionInstanceId: string;
   logicalWidth: number;
@@ -68,6 +79,18 @@ function isPoint(value: unknown): value is WhiteboardPoint {
 function restoreObject(value: unknown): WhiteboardObject | null {
   if (!value || typeof value !== 'object') return null;
   const object = value as Record<string, unknown>;
+  if (
+    object.kind === 'eraser-mask' &&
+    typeof object.id === 'string' &&
+    Array.isArray(object.points) &&
+    object.points.length > 0 &&
+    object.points.every(isPoint) &&
+    finite(object.radius) &&
+    object.radius > 0 &&
+    typeof object.createdAt === 'string'
+  ) {
+    return object as unknown as WhiteboardEraserMask;
+  }
   if (
     object.kind === 'stroke' &&
     typeof object.id === 'string' &&

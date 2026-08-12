@@ -9,6 +9,8 @@ export interface WhiteboardState {
   activeTool: 'pen' | 'eraser' | 'select' | 'shape';
   penWidth: number;
   handedness: 'left' | 'right';
+  scribbleEraseEnabled: boolean;
+  eraserMode: 'object' | 'pixel';
 }
 
 export function createEmptyScene(
@@ -16,7 +18,7 @@ export function createEmptyScene(
   questionInstanceId = 'whiteboard',
 ): WhiteboardScene {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     sceneId,
     questionInstanceId,
     logicalWidth: 1024,

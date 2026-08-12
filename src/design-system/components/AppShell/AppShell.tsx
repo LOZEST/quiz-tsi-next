@@ -44,6 +44,37 @@ function WhiteboardDrawerSettings() {
         />
         Formes magiques
       </label>
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.scribbleEraseEnabled}
+          onChange={(event) =>
+            settings.setScribbleEraseEnabled(event.target.checked)
+          }
+        />
+        Effacer en griffonnant
+      </label>
+      <fieldset>
+        <legend>Mode de gomme</legend>
+        <label>
+          <input
+            type="radio"
+            name="whiteboard-eraser-mode"
+            checked={settings.eraserMode === 'object'}
+            onChange={() => settings.setEraserMode('object')}
+          />
+          Objet
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="whiteboard-eraser-mode"
+            checked={settings.eraserMode === 'pixel'}
+            onChange={() => settings.setEraserMode('pixel')}
+          />
+          Pixel
+        </label>
+      </fieldset>
       <fieldset>
         <legend>Main d’écriture</legend>
         <label>

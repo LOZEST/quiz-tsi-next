@@ -8,6 +8,11 @@ export class ToolManager {
   select(id: 'pen' | 'eraser') {
     this.active = this.tools[id];
   }
+  replaceEraser(tool: Tool) {
+    const eraserWasActive = this.active === this.tools.eraser;
+    this.tools.eraser = tool;
+    if (eraserWasActive) this.active = tool;
+  }
   get current(): Tool {
     return this.active;
   }

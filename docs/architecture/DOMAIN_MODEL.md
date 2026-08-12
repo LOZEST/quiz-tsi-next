@@ -265,7 +265,8 @@ interface WhiteboardShapeGeometry {
 }
 type WhiteboardObject =
   | WhiteboardStroke
-  | { kind: "shape"; id: string; shapeKind: WhiteboardShapeKind; style: WhiteboardStrokeStyle; geometry: WhiteboardShapeGeometry };
+  | { kind: "shape"; id: string; shapeKind: WhiteboardShapeKind; style: WhiteboardStrokeStyle; geometry: WhiteboardShapeGeometry }
+  | { kind: "eraser-mask"; id: string; points: WhiteboardPoint[]; radius: number; createdAt: string };
 interface AdvancedWhiteboardScene {
   schemaVersion: number; sceneId: string; questionInstanceId: string;
   logicalWidth: number; logicalHeight: number; objects: WhiteboardObject[];
@@ -275,7 +276,11 @@ interface AdvancedWhiteboardScene {
 
 Les coordonnées, positions et dimensions sont logiques, indépendantes des pixels et du tiroir. `id` reste stable. PR6 ajoute la sélection, le déplacement et le redimensionnement des objets vectoriels sans modifier les contrats manuscrits de PR3. `geometry.schemaVersion` permet de migrer la géométrie sans invalider toutes les scènes ; `rotation` est `null` quand elle n'est pas pertinente. `properties` est validé par forme et n'accepte que les clés documentées pour son `shapeKind`. Une restauration met en quarantaine les objets invalides sans perdre les objets sains.
 
-La scène courante porte `schemaVersion: 3`. La palette utilisateur est un sous-ensemble contractuel de `WhiteboardShapeKind` limité, dans cet ordre, à `grid-coordinate-system`, `graduated-coordinate-system`, `trigonometric-circle` et `sign-chart`. Les primitives vectorielles communes (segments, polylignes, ellipses pleines ou non et textes) produisent à la fois l'aperçu SVG et le rendu Canvas ; la sérialisation conserve seulement le type, le style et la géométrie, pas une image bitmap. Les types historiques `line`, `arrow`, `rectangle`, `square`, `circle`, `triangle`, `axes` et `coordinate-system` restent dans l'union pour restaurer sans perte les scènes V2, mais ne sont plus des choix de palette. La restauration V1/V2 vers V3 est structurelle, déterministe et idempotente : elle conserve chaque objet valide et met seulement les objets invalides en quarantaine.
+La scène courante porte `schemaVersion: 4`. La palette utilisateur est un sous-ensemble contractuel de `WhiteboardShapeKind` limité, dans cet ordre, à `grid-coordinate-system`, `graduated-coordinate-system`, `trigonometric-circle` et `sign-chart`. Les primitives vectorielles communes (segments, polylignes, ellipses pleines ou non et textes) produisent à la fois l'aperçu SVG et le rendu Canvas ; la sérialisation conserve seulement le type, le style et la géométrie, pas une image bitmap. Les types historiques `line`, `arrow`, `rectangle`, `square`, `circle`, `triangle`, `axes` et `coordinate-system` restent dans l'union pour restaurer sans perte les scènes V2, mais ne sont plus des choix de palette. La restauration V1/V2/V3 vers V4 est structurelle, déterministe et idempotente : elle conserve chaque objet valide et met seulement les objets invalides en quarantaine.
+
+Les formes magiques sont des `WhiteboardStroke` normalisés après exactement 500 ms de maintien. La classification déterministe essaie rectangle, cercle puis droite. Le rectangle est ajusté à une boîte orientée d'aire minimale et doit être fermé, longer les quatre côtés et passer près des quatre coins ; le snap produit cinq points dont le dernier ferme exactement le tracé. Le griffonnage est classé au relâchement par un service de domaine pur et borné ; il ne supprime que des objets réellement intersectés et ne devient jamais une commande en l'absence de cible.
+
+La gomme **Objet** conserve la suppression historique d'un `WhiteboardObject` entier. La gomme **Pixel** découpe géométriquement un `WhiteboardStroke` en zéro, un ou plusieurs fragments. Lorsqu'elle traverse une forme vectorielle, elle ajoute un `eraser-mask` dans l'ordre de la scène. Ce masque est rendu en composition d'effacement, n'est ni sélectionnable ni une cible d'effacement objet ou de griffonnage, et n'affecte donc jamais un objet dessiné après lui. Un geste de gomme, un griffonnage reconnu ou un snap magique correspond chacun à une transaction d'historique unique.
 
 Toute nouvelle forme nécessite une évolution documentée du contrat, une migration de scène, un test de sérialisation, un test de restauration, un test de géométrie et un test de compatibilité avec les scènes précédentes.
 
@@ -296,7 +301,7 @@ Les événements sont append-only. `sessionId` relie la séance ou le test réel
 ## Compte et synchronisation
 
 ```ts
-interface PencilPreferences { schemaVersion: number; handedness: "left" | "right"; pressureEnabled: boolean; scribbleEraseEnabled: boolean; gridEnabled: boolean; }
+interface PencilPreferences { schemaVersion: number; handedness: "left" | "right"; pressureEnabled: boolean; magicShapesEnabled: boolean; scribbleEraseEnabled: boolean; eraserMode: "object" | "pixel"; gridEnabled: boolean; }
 interface UserPreferences { schemaVersion: number; accountId: string; appearance: "system" | "light"; pencil: PencilPreferences; }
 interface AccountProfile { id: string; displayName: string; email: string; role: UserRole; avatarUrl: string | null; updatedAt: string; }
 interface SyncOperation { id: string; accountId: string; entity: string; entityId: string; kind: "create" | "update" | "delete"; baseVersion: number | null; payload: unknown; createdAt: string; attempts: number; }

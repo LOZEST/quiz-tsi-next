@@ -712,13 +712,14 @@ describe('CanvasController', () => {
     controller.pointerCancel(pointer(99, 'touch'));
     expect(commits).toEqual([]);
     controller.pointerCancel(pointer(8, 'pen'));
-    expect(commits).toHaveLength(1);
+    expect(commits).toHaveLength(0);
+    expect(controller.getScene().objects).toEqual([]);
     expect(pointerCapture.releasePointerCapture).toHaveBeenCalledWith(8);
 
     controller.pointerDown(pointer(9, 'mouse'));
     controller.pointerUp(pointer(9, 'mouse'));
-    expect(commits).toHaveLength(2);
-    expect(commits[1]?.objects).toHaveLength(2);
+    expect(commits).toHaveLength(1);
+    expect(commits[0]?.objects).toHaveLength(1);
     controller.destroy();
     vi.unstubAllGlobals();
   });
@@ -733,7 +734,8 @@ describe('CanvasController', () => {
     controller.lostPointerCapture(pointer(13, 'pen'));
     expect(commits).toEqual([]);
     controller.lostPointerCapture(pointer(12, 'pen'));
-    expect(commits).toHaveLength(1);
+    expect(commits).toHaveLength(0);
+    expect(controller.getScene().objects).toEqual([]);
     expect(pointerCapture.releasePointerCapture).not.toHaveBeenCalled();
     controller.pointerDown(pointer(14, 'mouse'));
     expect(pointerCapture.setPointerCapture).toHaveBeenLastCalledWith(14);
@@ -837,6 +839,226 @@ describe('CanvasController', () => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
   });
+
+  it('snaps a held rectangle at 500 ms, not at 499 ms, as one undo action', () => {
+    vi.useFakeTimers();
+    const { controller } = prepareController();
+    const corners = [
+      { x: 120, y: 140 },
+      { x: 280, y: 145 },
+      { x: 275, y: 250 },
+      { x: 118, y: 248 },
+      { x: 120, y: 140 },
+    ];
+    const samples = corners.flatMap((start, side) => {
+      const end = corners[side + 1];
+      if (!end) return [];
+      return Array.from({ length: 7 }, (_, index) => ({
+        x: start.x + ((end.x - start.x) * index) / 7,
+        y: start.y + ((end.y - start.y) * index) / 7 + (index % 2 ? 1 : -1),
+      }));
+    });
+    controller.pointerDown(
+      pointer(80, 'pen', { clientX: samples[0]!.x, clientY: samples[0]!.y }),
+    );
+    samples.slice(1).forEach((sample, index) =>
+      controller.pointerMove(
+        pointer(80, 'pen', {
+          clientX: sample.x,
+          clientY: sample.y,
+          timeStamp: index + 2,
+        }),
+      ),
+    );
+    vi.advanceTimersByTime(499);
+    const rough = controller.getScene().objects[0];
+    expect(rough?.kind === 'stroke' ? rough.points.length : 0).toBeGreaterThan(
+      5,
+    );
+    vi.advanceTimersByTime(1);
+    const snapped = controller.getScene().objects[0];
+    expect(snapped?.kind === 'stroke' ? snapped.points : []).toHaveLength(5);
+    controller.pointerUp(
+      pointer(80, 'pen', {
+        clientX: samples.at(-1)!.x,
+        clientY: samples.at(-1)!.y,
+      }),
+    );
+    const committed = controller.getScene().objects[0];
+    expect(committed?.kind === 'stroke' ? committed.points : []).toHaveLength(
+      5,
+    );
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([]);
+    controller.destroy();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it('applies scribble delete atomically, supports undo/redo, and keeps empty scribbles', () => {
+    const { controller } = prepareController();
+    const target = createStroke(input(0, 70).point, 4, 'target');
+    target.points = [input(0, 70).point, input(170, 70).point];
+    const secondTarget = createStroke(input(0, 90).point, 4, 'second-target');
+    secondTarget.points = [input(0, 90).point, input(170, 90).point];
+    controller.replaceScene({
+      ...createEmptyScene(),
+      objects: [target, secondTarget],
+    });
+    controller.setMagicShapes(false);
+    const gesture = Array.from({ length: 28 }, (_, index) => ({
+      x: index % 2 === 0 ? 20 : 140,
+      y: 35 + ((index * 17) % 70),
+    }));
+    controller.pointerDown(
+      pointer(81, 'pen', { clientX: gesture[0]!.x, clientY: gesture[0]!.y }),
+    );
+    gesture.slice(1).forEach((sample, index) =>
+      controller.pointerMove(
+        pointer(81, 'pen', {
+          clientX: sample.x,
+          clientY: sample.y,
+          timeStamp: index + 2,
+        }),
+      ),
+    );
+    controller.pointerUp(
+      pointer(81, 'pen', {
+        clientX: gesture.at(-1)!.x,
+        clientY: gesture.at(-1)!.y,
+      }),
+    );
+    expect(controller.getScene().objects).toEqual([]);
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([target, secondTarget]);
+    controller.redo();
+    expect(controller.getScene().objects).toEqual([]);
+
+    const emptyGesture = gesture.map((sample) => ({
+      ...sample,
+      y: sample.y + 300,
+    }));
+    controller.pointerDown(
+      pointer(82, 'pen', {
+        clientX: emptyGesture[0]!.x,
+        clientY: emptyGesture[0]!.y,
+      }),
+    );
+    emptyGesture.slice(1).forEach((sample, index) =>
+      controller.pointerMove(
+        pointer(82, 'pen', {
+          clientX: sample.x,
+          clientY: sample.y,
+          timeStamp: index + 40,
+        }),
+      ),
+    );
+    controller.pointerUp(
+      pointer(82, 'pen', {
+        clientX: emptyGesture.at(-1)!.x,
+        clientY: emptyGesture.at(-1)!.y,
+      }),
+    );
+    expect(controller.getScene().objects).toHaveLength(1);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('keeps scribble ink when the feature is disabled', () => {
+    const { controller } = prepareController();
+    const target = createStroke(input(0, 70).point, 4, 'target');
+    target.points = [input(0, 70).point, input(170, 70).point];
+    controller.replaceScene({ ...createEmptyScene(), objects: [target] });
+    controller.setScribbleErase(false);
+    controller.setMagicShapes(false);
+    const gesture = Array.from({ length: 28 }, (_, index) => ({
+      x: index % 2 ? 140 : 20,
+      y: 35 + ((index * 17) % 70),
+    }));
+    controller.pointerDown(
+      pointer(83, 'pen', { clientX: gesture[0]!.x, clientY: gesture[0]!.y }),
+    );
+    gesture
+      .slice(1)
+      .forEach((sample) =>
+        controller.pointerMove(
+          pointer(83, 'pen', { clientX: sample.x, clientY: sample.y }),
+        ),
+      );
+    controller.pointerUp(
+      pointer(83, 'pen', {
+        clientX: gesture.at(-1)!.x,
+        clientY: gesture.at(-1)!.y,
+      }),
+    );
+    expect(controller.getScene().objects).toHaveLength(2);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('uses object and pixel eraser modes with atomic undo/redo', () => {
+    const { controller } = prepareController();
+    const target = createStroke(input(0, 100).point, 4, 'long');
+    target.points = [input(0, 100).point, input(400, 100).point];
+    controller.replaceScene({ ...createEmptyScene(), objects: [target] });
+    controller.selectTool('eraser');
+    controller.pointerDown(pointer(84, 'pen', { clientX: 200, clientY: 100 }));
+    controller.pointerUp(pointer(84, 'pen', { clientX: 200, clientY: 100 }));
+    expect(controller.getScene().objects).toEqual([]);
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([target]);
+
+    controller.setEraserMode('pixel');
+    controller.pointerDown(pointer(85, 'pen', { clientX: 100, clientY: 100 }));
+    controller.pointerMove(pointer(85, 'pen', { clientX: 300, clientY: 100 }));
+    controller.pointerUp(pointer(85, 'pen', { clientX: 300, clientY: 100 }));
+    const fragments = controller
+      .getScene()
+      .objects.filter((object) => object.kind === 'stroke');
+    expect(fragments).toHaveLength(2);
+    expect(fragments[0]!.points.at(-1)!.x).toBeLessThan(90);
+    expect(fragments[1]!.points[0]!.x).toBeGreaterThan(310);
+    controller.undo();
+    expect(controller.getScene().objects).toEqual([target]);
+    controller.redo();
+    expect(
+      controller
+        .getScene()
+        .objects.filter((object) => object.kind === 'stroke'),
+    ).toHaveLength(2);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
+
+  it('persists an ordered non-selectable pixel mask for vector shapes only', () => {
+    const { controller } = prepareController();
+    const shape = rectangle();
+    controller.replaceScene({ ...createEmptyScene(), objects: [shape] });
+    controller.setEraserMode('pixel');
+    controller.selectTool('eraser');
+    controller.pointerDown(pointer(86, 'pen', { clientX: 100, clientY: 140 }));
+    controller.pointerMove(pointer(86, 'pen', { clientX: 220, clientY: 140 }));
+    controller.pointerUp(pointer(86, 'pen', { clientX: 220, clientY: 140 }));
+    expect(controller.getScene().objects[0]).toEqual(shape);
+    expect(controller.getScene().objects[1]).toMatchObject({
+      kind: 'eraser-mask',
+      radius: 12,
+    });
+    expect(restoreWhiteboardScene(controller.getScene())).toEqual({
+      scene: controller.getScene(),
+      quarantine: [],
+    });
+    controller.selectTool('pen');
+    controller.pointerDown(pointer(87, 'pen', { clientX: 150, clientY: 140 }));
+    controller.pointerUp(pointer(87, 'pen', { clientX: 170, clientY: 140 }));
+    expect(controller.getScene().objects.map((object) => object.kind)).toEqual([
+      'shape',
+      'eraser-mask',
+      'stroke',
+    ]);
+    controller.destroy();
+    vi.unstubAllGlobals();
+  });
 });
 
 describe('scene restoration', () => {
@@ -849,7 +1071,7 @@ describe('scene restoration', () => {
     };
     const first = restoreWhiteboardScene(source);
     const second = restoreWhiteboardScene(first.scene);
-    expect(first.scene.schemaVersion).toBe(3);
+    expect(first.scene.schemaVersion).toBe(4);
     expect(first.scene.objects).toEqual([valid]);
     expect(first.quarantine).toHaveLength(1);
     expect(second.scene).toEqual(first.scene);

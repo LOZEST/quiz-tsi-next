@@ -10,6 +10,7 @@ import {
 import type { WhiteboardShapeKind } from '@domain/whiteboard/WhiteboardShape';
 
 export type WhiteboardActiveTool = 'pen' | 'eraser' | 'select' | 'shape';
+export type WhiteboardEraserMode = 'object' | 'pixel';
 
 export interface WhiteboardUiState {
   activeTool: WhiteboardActiveTool;
@@ -17,12 +18,16 @@ export interface WhiteboardUiState {
   penWidth: number;
   gridEnabled: boolean;
   magicShapesEnabled: boolean;
+  scribbleEraseEnabled: boolean;
+  eraserMode: WhiteboardEraserMode;
   handedness: 'left' | 'right';
   setActiveTool: (value: WhiteboardActiveTool) => void;
   setShapeKind: (value: WhiteboardShapeKind) => void;
   setPenWidth: (value: number) => void;
   setGridEnabled: (value: boolean) => void;
   setMagicShapesEnabled: (value: boolean) => void;
+  setScribbleEraseEnabled: (value: boolean) => void;
+  setEraserMode: (value: WhiteboardEraserMode) => void;
   setHandedness: (value: 'left' | 'right') => void;
   undo: () => void;
   redo: () => void;
@@ -42,6 +47,8 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [penWidth, setPenWidth] = useState(3);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [magicShapesEnabled, setMagicShapesEnabled] = useState(true);
+  const [scribbleEraseEnabled, setScribbleEraseEnabled] = useState(true);
+  const [eraserMode, setEraserMode] = useState<WhiteboardEraserMode>('object');
   const [handedness, setHandedness] = useState<'left' | 'right'>('right');
   const [history, setHistory] = useState<{
     undo(): void;
@@ -70,12 +77,16 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       penWidth,
       gridEnabled,
       magicShapesEnabled,
+      scribbleEraseEnabled,
+      eraserMode,
       handedness,
       setActiveTool,
       setShapeKind,
       setPenWidth,
       setGridEnabled,
       setMagicShapesEnabled,
+      setScribbleEraseEnabled,
+      setEraserMode,
       setHandedness,
       undo: () => history?.undo(),
       redo: () => history?.redo(),
@@ -93,7 +104,9 @@ export function WhiteboardProvider({ children }: { children: ReactNode }) {
       bindHistory,
       draft,
       gridEnabled,
+      eraserMode,
       magicShapesEnabled,
+      scribbleEraseEnabled,
       handedness,
       hasDraft,
       history,

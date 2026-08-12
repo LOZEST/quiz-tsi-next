@@ -98,6 +98,14 @@ export function WhiteboardCanvas({
     () => controller?.setMagicShapes(settings.magicShapesEnabled),
     [controller, settings.magicShapesEnabled],
   );
+  useEffect(
+    () => controller?.setScribbleErase(settings.scribbleEraseEnabled),
+    [controller, settings.scribbleEraseEnabled],
+  );
+  useEffect(
+    () => controller?.setEraserMode(settings.eraserMode),
+    [controller, settings.eraserMode],
+  );
   useEffect(() => {
     bindHistory(
       controller

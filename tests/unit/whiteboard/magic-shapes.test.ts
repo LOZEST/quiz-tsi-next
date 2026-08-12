@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   circleCandidate,
+  rectangleCandidate,
   straightCandidate,
   toCircleStroke,
+  toRectangleStroke,
   toStraightStroke,
 } from '@domain/whiteboard/MagicShapes';
 import type {
@@ -29,6 +31,42 @@ const stroke = (points: WhiteboardPoint[]): WhiteboardStroke => ({
 });
 
 describe('magic shapes', () => {
+  const rectanglePoints = (clockwise = true, rotation = 0.08) => {
+    const corners = [
+      { x: -70, y: -45 },
+      { x: 70, y: -45 },
+      { x: 70, y: 45 },
+      { x: -70, y: 45 },
+      { x: -70, y: -45 },
+    ];
+    const ordered = clockwise
+      ? corners
+      : [corners[0]!, corners[3]!, corners[2]!, corners[1]!, corners[0]!];
+    return ordered
+      .flatMap((start, side) => {
+        const end = ordered[side + 1];
+        if (!end) return [];
+        return Array.from({ length: 8 }, (_, index) => {
+          const progress = index / 8;
+          const x = start.x + (end.x - start.x) * progress;
+          const y =
+            start.y + (end.y - start.y) * progress + (index % 2 ? 1.2 : -0.8);
+          return point(
+            200 + Math.cos(rotation) * x - Math.sin(rotation) * y,
+            180 + Math.sin(rotation) * x + Math.cos(rotation) * y,
+            side * 80 + index * 10,
+          );
+        });
+      })
+      .concat(
+        point(
+          200 + Math.cos(rotation) * -70 - Math.sin(rotation) * -45,
+          180 + Math.sin(rotation) * -70 + Math.cos(rotation) * -45,
+          400,
+        ),
+      );
+  };
+
   it('recognises and converts a long nearly straight stroke', () => {
     const points = Array.from({ length: 12 }, (_, index) =>
       point(index * 10, index % 2 ? 1 : 0),
@@ -79,6 +117,68 @@ describe('magic shapes', () => {
     expect(circleCandidate(points)).toBe(true);
   });
 
+  it.each([true, false])(
+    'recognises and converts an imperfect oriented rectangle (clockwise=%s)',
+    (clockwise) => {
+      const points = rectanglePoints(clockwise);
+      expect(rectangleCandidate(points)).toBe(true);
+      expect(circleCandidate(points)).toBe(false);
+      const converted = toRectangleStroke(stroke(points));
+      expect(converted.points).toHaveLength(5);
+      expect(converted.points[0]).toMatchObject({ pressure: 0.5 });
+      expect(converted.width).toBe(3);
+      expect(
+        distanceBetween(converted.points[0]!, converted.points.at(-1)!),
+      ).toBeLessThan(0.001);
+      const edges = converted.points.slice(1).map((candidate, index) => ({
+        x: candidate.x - converted.points[index]!.x,
+        y: candidate.y - converted.points[index]!.y,
+      }));
+      expect(
+        Math.abs(edges[0]!.x * edges[1]!.x + edges[0]!.y * edges[1]!.y),
+      ).toBeLessThan(0.01);
+    },
+  );
+
+  it('rejects rectangle false positives', () => {
+    const circle = Array.from({ length: 33 }, (_, index) => {
+      const angle = (index / 32) * Math.PI * 2;
+      return point(
+        100 + Math.cos(angle) * 50,
+        100 + Math.sin(angle) * 50,
+        index,
+      );
+    });
+    const triangle = [
+      point(20, 100),
+      point(100, 20),
+      point(180, 100),
+      point(20, 100),
+    ];
+    const open = rectanglePoints().slice(0, -6);
+    const small = rectanglePoints().map((candidate) =>
+      point(candidate.x / 8, candidate.y / 8),
+    );
+    const ellipse = Array.from({ length: 33 }, (_, index) => {
+      const angle = (index / 32) * Math.PI * 2;
+      return point(
+        150 + Math.cos(angle) * 110,
+        100 + Math.sin(angle) * 28,
+        index,
+      );
+    });
+    const letter = Array.from({ length: 18 }, (_, index) =>
+      point(
+        index < 6 ? 20 : index < 12 ? 20 + (index - 6) * 18 : 110,
+        index < 6 ? 20 + index * 18 : index < 12 ? 20 : 20 + (index - 12) * 18,
+        index,
+      ),
+    );
+    for (const candidate of [circle, triangle, open, small, ellipse, letter])
+      expect(rectangleCandidate(candidate)).toBe(false);
+    expect(rectangleCandidate([point(0, 0), point(140, 0)])).toBe(false);
+  });
+
   it('rejects an open arc and a highly curved line', () => {
     const arc = Array.from({ length: 20 }, (_, index) => {
       const angle = (index / 32) * Math.PI * 2;
@@ -127,3 +227,6 @@ describe('magic shapes', () => {
     expect(circleCandidate(points)).toBe(false);
   });
 });
+
+const distanceBetween = (a: WhiteboardPoint, b: WhiteboardPoint) =>
+  Math.hypot(a.x - b.x, a.y - b.y);
