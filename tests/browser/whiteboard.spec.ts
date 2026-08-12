@@ -1,4 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
 
 async function login(page: Page) {
   await page.goto('login');
@@ -17,6 +19,7 @@ async function openPencilSettings(page: Page) {
 
 interface BrowserShape {
   kind: 'shape';
+  shapeKind: string;
   geometry: {
     x: number;
     y: number;
@@ -24,6 +27,38 @@ interface BrowserShape {
     height: number;
     rotation: number | null;
   };
+}
+
+const paletteShapes = [
+  {
+    label: 'Repère quadrillé',
+    kind: 'grid-coordinate-system',
+    slug: 'repere-quadrille',
+  },
+  {
+    label: 'Repère gradué',
+    kind: 'graduated-coordinate-system',
+    slug: 'repere-gradue',
+  },
+  {
+    label: 'Cercle trigonométrique',
+    kind: 'trigonometric-circle',
+    slug: 'cercle-trigonometrique',
+  },
+  {
+    label: 'Tableau de signes/variations',
+    kind: 'sign-chart',
+    slug: 'tableau-variations',
+  },
+] as const;
+
+async function evidencePath(testInfo: TestInfo, file: string) {
+  const directory = join(
+    process.cwd(),
+    'docs/quality/evidence/whiteboard-tools',
+  );
+  await mkdir(directory, { recursive: true });
+  return join(directory, `${testInfo.project.name}-${file}.png`);
 }
 
 interface BrowserScene {
@@ -138,14 +173,14 @@ test('shows a centered writable canvas and accessible controls', async ({
     .boundingBox();
   expect(rightTools!.x).toBeGreaterThan(page.viewportSize()!.width * 0.7);
 
-  await page.getByRole('button', { name: 'Stylo' }).click();
-  const penMenu = page.getByRole('menu', { name: 'Choisir un outil' });
-  await expect(penMenu.getByRole('menuitemradio')).toHaveCount(2);
-  await penMenu.getByRole('menuitemradio', { name: 'Gomme' }).click();
-  await expect(page.getByRole('button', { name: 'Stylo' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  const writingTool = page.getByRole('button', { name: 'Stylo' });
+  await writingTool.click();
+  await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
+  await expect(
+    page.getByRole('menu', { name: 'Choisir un outil' }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Gomme' }).click();
+  await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Formes' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grille' })).toHaveCount(0);
 });
@@ -234,54 +269,57 @@ test('keeps the toolbar and canvas within the viewport', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Formes' }).click();
   const shapeMenu = page.getByRole('menu', { name: 'Choisir une forme' });
-  for (const name of [
-    'Repère orthonormé',
-    'Axes',
-    'Cercle trigonométrique',
-    'Tableau de signes',
-    'Droite',
-    'Carré',
-  ])
+  await expect(shapeMenu.getByTestId('shape-option')).toHaveCount(4);
+  for (const { label: name } of paletteShapes)
     await expect(shapeMenu.getByRole('menuitemradio', { name })).toBeVisible();
+  for (const name of [
+    'Droite',
+    'Flèche',
+    'Rectangle',
+    'Carré',
+    'Cercle',
+    'Triangle',
+    'Axes',
+  ])
+    await expect(
+      shapeMenu.getByRole('menuitemradio', { name, exact: true }),
+    ).toHaveCount(0);
   await expect(shapeMenu.getByText(/petite|moyenne|grande/i)).toHaveCount(0);
 });
 
-test('places, rotates and resizes a shape with atomic history', async ({
+test('places, moves and resizes a mathematical shape with atomic history', async ({
   page,
 }) => {
   await login(page);
   const canvas = page.getByTestId('whiteboard-canvas');
   const box = await canvas.boundingBox();
   await page.getByRole('button', { name: 'Formes' }).click();
-  await page.getByRole('menuitemradio', { name: 'Rectangle' }).click();
+  await page
+    .getByRole('menuitemradio', { name: 'Tableau de signes/variations' })
+    .click();
   await page.mouse.move(box!.x + 220, box!.y + 220);
   await page.mouse.down();
   await page.mouse.move(box!.x + 380, box!.y + 320, { steps: 4 });
   await page.mouse.up();
   await page.getByRole('button', { name: 'Formes' }).click();
-  await page.getByRole('menuitemradio', { name: 'Sélection' }).click();
+  await page
+    .getByRole('menuitem', { name: 'Sélectionner et modifier une forme' })
+    .click();
 
   let scene = await readWhiteboardScene(page);
   let shape = shapeFrom(scene);
-  const rotationHandle = logicalToScreen(
+  const body = logicalToScreen(
     box!,
     scene,
-    localToWorld(shape, shape.geometry.width / 2, -24),
+    localToWorld(shape, 0, shape.geometry.height / 2),
   );
-  const center = logicalToScreen(
-    box!,
-    scene,
-    localToWorld(shape, shape.geometry.width / 2, shape.geometry.height / 2),
-  );
-  await page.mouse.move(rotationHandle.x, rotationHandle.y);
+  await page.mouse.move(body.x, body.y);
   await page.mouse.down();
-  await page.mouse.move(center.x + 70, center.y + 20, { steps: 4 });
+  await page.mouse.move(body.x + 40, body.y + 30, { steps: 4 });
   await page.mouse.up();
   await expect
-    .poll(
-      async () => shapeFrom(await readWhiteboardScene(page)).geometry.rotation,
-    )
-    .not.toBe(0);
+    .poll(async () => shapeFrom(await readWhiteboardScene(page)).geometry.x)
+    .toBeGreaterThan(shape.geometry.x + 30);
 
   scene = await readWhiteboardScene(page);
   shape = shapeFrom(scene);
@@ -315,6 +353,87 @@ test('places, rotates and resizes a shape with atomic history', async ({
   await expect
     .poll(async () => shapeFrom(await readWhiteboardScene(page)).geometry.width)
     .toBeCloseTo(afterResize.width, 5);
+});
+
+test('the writing button changes the actual canvas tool immediately', async ({
+  page,
+}) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + 180, box!.y + 300);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 320, box!.y + 300, { steps: 6 });
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(1);
+
+  await page.getByRole('button', { name: 'Stylo' }).click();
+  await expect(page.getByRole('button', { name: 'Gomme' })).toBeVisible();
+  await page.mouse.click(box!.x + 250, box!.y + 300);
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(0);
+
+  await page.getByRole('button', { name: 'Gomme' }).click();
+  await expect(page.getByRole('button', { name: 'Stylo' })).toBeVisible();
+  await page.mouse.move(box!.x + 180, box!.y + 340);
+  await page.mouse.down();
+  await page.mouse.move(box!.x + 320, box!.y + 340, { steps: 6 });
+  await page.mouse.up();
+  await expect
+    .poll(async () => (await readWhiteboardScene(page)).objects.length)
+    .toBe(1);
+});
+
+test('captures the four-card palette and every placed reference shape', async ({
+  page,
+}, testInfo) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  const initialScene = await readWhiteboardScene(page);
+  const start = logicalToScreen(box!, initialScene, { x: 190, y: 230 });
+  const end = logicalToScreen(box!, initialScene, { x: 790, y: 610 });
+
+  await page.getByRole('button', { name: 'Formes' }).click();
+  const menu = page.getByRole('menu', { name: 'Choisir une forme' });
+  await expect(menu.getByTestId('shape-option')).toHaveCount(4);
+  await page.screenshot({
+    path: await evidencePath(testInfo, 'palette'),
+    fullPage: true,
+  });
+
+  for (const reference of paletteShapes) {
+    await menu.getByRole('menuitemradio', { name: reference.label }).click();
+    const placementEnd =
+      reference.kind === 'trigonometric-circle'
+        ? logicalToScreen(box!, initialScene, { x: 650, y: 610 })
+        : end;
+    await page.mouse.move(start.x, start.y);
+    await page.mouse.down();
+    await page.mouse.move(placementEnd.x, placementEnd.y, { steps: 6 });
+    await page.mouse.up();
+    await expect
+      .poll(async () => shapeFrom(await readWhiteboardScene(page)).shapeKind)
+      .toBe(reference.kind);
+    await page.getByRole('button', { name: 'Stylo' }).click();
+    await page.screenshot({
+      path: await evidencePath(testInfo, reference.slug),
+      fullPage: true,
+    });
+    await page.getByRole('button', { name: 'Annuler' }).click();
+    await expect
+      .poll(async () => (await readWhiteboardScene(page)).objects.length)
+      .toBe(0);
+    if (reference !== paletteShapes.at(-1)) {
+      await page.getByRole('button', { name: 'Formes' }).click();
+      await expect(menu).toBeVisible();
+    }
+  }
 });
 
 test('opens the local progress summary and voluntary disclosure', async ({

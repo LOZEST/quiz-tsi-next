@@ -3,7 +3,7 @@ import {
   type WhiteboardShape,
 } from './WhiteboardShape';
 
-export const WHITEBOARD_SCENE_VERSION = 2;
+export const WHITEBOARD_SCENE_VERSION = 3;
 
 export interface WhiteboardPoint {
   x: number;
@@ -27,7 +27,7 @@ export interface WhiteboardStroke {
 export type WhiteboardObject = WhiteboardStroke | WhiteboardShape;
 
 export interface WhiteboardScene {
-  schemaVersion: 2;
+  schemaVersion: 3;
   sceneId: string;
   questionInstanceId: string;
   logicalWidth: number;
@@ -106,6 +106,8 @@ function restoreObject(value: unknown): WhiteboardObject | null {
       'circle',
       'axes',
       'coordinate-system',
+      'grid-coordinate-system',
+      'graduated-coordinate-system',
       'trigonometric-circle',
     ].includes(object.shapeKind as string);
     if (

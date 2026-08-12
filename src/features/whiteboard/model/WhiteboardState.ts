@@ -16,7 +16,7 @@ export function createEmptyScene(
   questionInstanceId = 'whiteboard',
 ): WhiteboardScene {
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sceneId,
     questionInstanceId,
     logicalWidth: 1024,

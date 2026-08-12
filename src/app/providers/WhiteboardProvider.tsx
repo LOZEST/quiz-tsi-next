@@ -36,7 +36,9 @@ const WhiteboardContext = createContext<WhiteboardUiState | null>(null);
 
 export function WhiteboardProvider({ children }: { children: ReactNode }) {
   const [activeTool, setActiveTool] = useState<WhiteboardActiveTool>('pen');
-  const [shapeKind, setShapeKind] = useState<WhiteboardShapeKind>('line');
+  const [shapeKind, setShapeKind] = useState<WhiteboardShapeKind>(
+    'grid-coordinate-system',
+  );
   const [penWidth, setPenWidth] = useState(3);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [magicShapesEnabled, setMagicShapesEnabled] = useState(true);

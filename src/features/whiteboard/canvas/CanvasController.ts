@@ -38,7 +38,7 @@ export class CanvasController {
   private undoStack: WhiteboardScene[] = [];
   private redoStack: WhiteboardScene[] = [];
   private activeTool: WhiteboardActiveTool = 'pen';
-  private shapeKind: WhiteboardShapeKind = 'line';
+  private shapeKind: WhiteboardShapeKind = 'grid-coordinate-system';
   private selectedShapeId: string | null = null;
   private gestureStart: Point2d | null = null;
   private gestureShape: WhiteboardShape | null = null;
@@ -51,6 +51,9 @@ export class CanvasController {
 
   getScene(): WhiteboardScene {
     return this.scene;
+  }
+  getActiveTool(): WhiteboardActiveTool {
+    return this.activeTool;
   }
   private activePointerId: number | null = null;
   private activePointerType: string | null = null;
