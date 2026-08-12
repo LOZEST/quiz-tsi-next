@@ -1,5 +1,5 @@
-import { CHATGPT_IMPORT_LIMITS } from '../../domain/questions/import/ChatGptImportPolicy';
-import { handleQuizTsiMcpRequest } from './QuizTsiMcpProtocol';
+import { CHATGPT_IMPORT_LIMITS } from '../../domain/questions/import/ChatGptImportPolicy.ts';
+import { handleQuizTsiMcpRequest } from './QuizTsiMcpProtocol.ts';
 
 const MCP_ENVELOPE_CHARACTERS = 50_000;
 const DEFAULT_ALLOWED_ORIGINS = [

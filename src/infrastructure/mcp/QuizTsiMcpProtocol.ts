@@ -1,4 +1,4 @@
-import { CHATGPT_IMPORT_FORBIDDEN_FIELDS } from '../../domain/questions/import/ChatGptImportPolicy';
+import { CHATGPT_IMPORT_FORBIDDEN_FIELDS } from '../../domain/questions/import/ChatGptImportPolicy.ts';
 
 export const QUIZ_TSI_MCP_PROTOCOL_VERSION = '2025-06-18';
 export const QUIZ_TSI_IMPORT_TOOL_NAME = 'import_question_drafts';
