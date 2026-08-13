@@ -41,7 +41,7 @@ select throws_ok($$select public.owner_set_profile_role('dddddddd-dddd-4ddd-8ddd
 select set_config('request.jwt.claim.sub','ffffffff-ffff-4fff-8fff-ffffffffffff',true);
 select set_config('request.jwt.claims','{"sub":"ffffffff-ffff-4fff-8fff-ffffffffffff"}',true);
 select lives_ok($$select public.owner_set_profile_role('dddddddd-dddd-4ddd-8ddd-dddddddddddd','admin')$$,'F (owner) promeut D');
-select is((select role from public.profiles where user_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'),'admin','D est désormais admin');
+select is((select role from public.admin_list_profiles() where user_id='dddddddd-dddd-4ddd-8ddd-dddddddddddd'),'admin','D est désormais admin');
 select throws_ok($$select public.owner_set_profile_role('ffffffff-ffff-4fff-8fff-ffffffffffff','admin')$$,'42501',null,'F ne peut pas changer son propre rôle');
 select throws_ok($$select public.owner_set_profile_role('dddddddd-dddd-4ddd-8ddd-dddddddddddd','superadmin')$$,'22023',null,'un rôle invalide est refusé');
 
