@@ -4,7 +4,11 @@ import {
   parseRelations,
   supportedRelationOperators,
 } from '../../../scripts/full-bank/parse-relations.mjs';
-import { compileContent } from '../../../scripts/full-bank/content-compiler.mjs';
+import {
+  compileContent,
+  insertImplicitMultiplication,
+  translateLatexToGrammar,
+} from '../../../scripts/full-bank/content-compiler.mjs';
 import {
   parseParameterSpecification,
   SUPPORTED_SCHEMA_VERSIONS,
@@ -289,6 +293,67 @@ describe('pipeline générique de banque complète', () => {
     const compiled = compileContent('Calculer {a}+\\frac{1}{2}.', ['a']);
     expect(compiled.segments).toEqual([
       { kind: 'text', value: 'Calculer @a+\\frac{1}{2}.' },
+    ]);
+  });
+
+  describe('translateLatexToGrammar', () => {
+    it.each([
+      ['\\dfrac{k}{a x+b}', '(k)/(a x+b)'],
+      ['\\frac{1}{2}', '(1)/(2)'],
+      ['\\sqrt{x^{k}}', 'sqrt(x^k)'],
+      ['2\\cdot x', '2* x'],
+      ['x\\ne0', 'x≠0'],
+      ['x\\ge a', 'x≥ a'],
+      ['x\\le b', 'x≤ b'],
+      ['x\\in\\mathbb{R}', 'x∈ℝ'],
+      ['\\ln|ax+b|', 'ln(abs(ax+b))'],
+      ['|x-2|', 'abs(x-2)'],
+      ['\\left(x+1\\right)', '(x+1)'],
+      ['\\alpha+\\beta', 'α+β'],
+    ])('translates %s to %s', (source, expected) => {
+      expect(translateLatexToGrammar(source)).toBe(expected);
+    });
+  });
+
+  describe('insertImplicitMultiplication', () => {
+    it.each([
+      ['ax+b', 'a*x+b'],
+      ['3x', '3*x'],
+      ['2(x+1)', '2*(x+1)'],
+      ['(x+1)(x-1)', '(x+1)*(x-1)'],
+      ['2sqrt(x)', '2*sqrt(x)'],
+      ['12', '12'],
+    ])('normalizes %s to %s', (source, expected) => {
+      expect(insertImplicitMultiplication(source)).toBe(expected);
+    });
+
+    it('does not treat a function-application letter as multiplication', () => {
+      expect(insertImplicitMultiplication('f(x)')).toBe('f(x)');
+    });
+
+    it('never loops on a literal space in the input', () => {
+      expect(insertImplicitMultiplication('2* a(x+1)')).toBe('2* a(x+1)');
+    });
+  });
+
+  it('compiles a real DUNOD-style LaTeX fraction into real math', () => {
+    const compiled = compileContent('Résoudre \\(a x+b\\ne0\\).', ['a', 'b']);
+    expect(compiled.structured).toBe(1);
+    expect(compiled.segments).toContainEqual({
+      kind: 'inline-math',
+      math: { syntaxVersion: 1, source: '@a* x+@b≠0' },
+    });
+  });
+
+  it('keeps an unsupported f(x)= definition as a safe text fallback instead of guessing', () => {
+    const compiled = compileContent('\\(f(x)=\\dfrac{k}{a x+b}\\)', [
+      'a',
+      'b',
+      'k',
+    ]);
+    expect(compiled.fallback).toBe(1);
+    expect(compiled.segments).toEqual([
+      { kind: 'text', value: '\\(f(x)=\\dfrac@k*{@a x+@b}\\)' },
     ]);
   });
 });

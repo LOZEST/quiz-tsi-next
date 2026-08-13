@@ -8,3 +8,7 @@ export function compileContent(
   structured: number;
   fallback: number;
 }>;
+
+export function translateLatexToGrammar(source: string): string;
+
+export function insertImplicitMultiplication(source: string): string;
