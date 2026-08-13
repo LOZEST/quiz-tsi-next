@@ -51,7 +51,12 @@ function RawContentPreview({
           case 'inline-math':
           case 'display-math': {
             const parsed = parseMathSource(segment.math);
-            if (!parsed.ok)
+            // KatexMathRenderer only renders resolved parameters (real
+            // instantiated values); a bank preview shows the template
+            // before any variant is generated, so an unresolved `@a`
+            // reference falls back to the readable grammar source rather
+            // than crashing mathAstToLatex's "Paramètre non résolu." guard.
+            if (!parsed.ok || parsed.parameterReferences.length > 0)
               return <span key={index}>{segment.math.source}</span>;
             return segment.kind === 'display-math' ? (
               <div key={index}>
