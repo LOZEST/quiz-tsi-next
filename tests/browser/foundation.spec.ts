@@ -106,9 +106,10 @@ for (const [role, label] of [
         page.getByRole('heading', { name: 'Administration' }),
       ).toBeVisible();
       await page.getByRole('button', { name: 'Ouvrir le menu' }).click();
-      await expect(page.getByText(label)).toBeVisible();
+      const menu = page.getByRole('dialog', { name: 'Menu' });
+      await expect(menu.getByText(label)).toBeVisible();
       await expect(
-        page.getByRole('link', { name: 'Administration' }),
+        menu.getByRole('link', { name: 'Administration' }),
       ).toBeVisible();
     }
   });

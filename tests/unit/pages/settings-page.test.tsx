@@ -1,0 +1,156 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { Question } from '@domain/questions/Question';
+import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
+
+const question: Question = {
+  id: 'shared-1',
+  version: 1,
+  source: 'private',
+  ownerId: 'user-1',
+  status: 'draft',
+  validated: false,
+  provenance: null,
+  classification: {
+    kind: 'official',
+    partId: 'numbers',
+    chapterId: 'numbers-arithmetic',
+    notionId: 'NUM-F01',
+  },
+  type: 'course',
+  difficulty: 'standard',
+  parameterization: null,
+  prompt: [{ kind: 'text', value: 'Calculer la somme' }],
+  hint: [],
+  correction: [
+    { id: 'step-1', title: null, content: [{ kind: 'text', value: 'Deux' }] },
+  ],
+  tags: [],
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+};
+
+let snapshot: QuestionWorkspaceSnapshot;
+const load = vi.fn(() => Promise.resolve(snapshot));
+const saveQuestion = vi.fn(() => Promise.resolve());
+
+vi.mock('@app/providers/AuthProvider', () => ({
+  useAuth: () => ({
+    state: {
+      status: 'authenticated',
+      session: { user: { id: 'user-1', role: 'user' } },
+    },
+  }),
+}));
+vi.mock('@app/providers/AppServicesProvider', () => ({
+  useAppServices: () => ({
+    questionWorkspaceRepository: { load, saveQuestion },
+  }),
+}));
+
+import { SettingsPage } from '@pages/SettingsPage/SettingsPage';
+import { ThemeProvider } from '@app/providers/ThemeProvider';
+import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
+
+function renderSettings() {
+  return render(
+    <ThemeProvider>
+      <WhiteboardProvider>
+        <SettingsPage />
+      </WhiteboardProvider>
+    </ThemeProvider>,
+  );
+}
+
+describe('SettingsPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    snapshot = {
+      questions: [question],
+      courses: [],
+      chapters: [],
+      notions: [],
+      pendingOperationCount: 2,
+      conflicts: [
+        {
+          id: 'conflict-1',
+          userId: 'user-1',
+          entityId: question.id,
+          operationId: 'op-1',
+          local: question,
+          remote: question,
+          detectedAt: '2026-02-01T00:00:00.000Z',
+        },
+      ],
+    };
+    window.localStorage.removeItem('qtsi-theme');
+    document.documentElement.removeAttribute('data-theme');
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: true,
+    });
+  });
+
+  it('switches the theme and persists the choice', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user.click(screen.getByRole('radio', { name: 'Sombre' }));
+    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    expect(window.localStorage.getItem('qtsi-theme')).toBe('dark');
+    await user.click(screen.getByRole('radio', { name: 'Système' }));
+    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
+    expect(window.localStorage.getItem('qtsi-theme')).toBeNull();
+  });
+
+  it('shows local data counts, pending sync and conflicts', async () => {
+    renderSettings();
+    await user_openDisclosures();
+    expect(await screen.findByText('1')).toBeInTheDocument();
+    expect(screen.getByText('2 opération(s) en attente.')).toBeInTheDocument();
+    expect(screen.getByText(/Conflit sur la question/)).toBeInTheDocument();
+  });
+
+  it('reflects offline status', async () => {
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      value: false,
+    });
+    renderSettings();
+    await user_openDisclosures();
+    expect(screen.getAllByText('Hors connexion').length).toBeGreaterThan(0);
+  });
+
+  it('exports a backup as a downloadable file', async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.fn(() => 'blob:mock');
+    const revokeObjectURL = vi.fn();
+    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL });
+    renderSettings();
+    await user_openDisclosures();
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Exporter mes données' }),
+      ).not.toBeDisabled(),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Exporter mes données' }),
+    );
+    expect(createObjectURL).toHaveBeenCalled();
+    expect(
+      await screen.findByText('Sauvegarde téléchargée.'),
+    ).toBeInTheDocument();
+  });
+
+  async function user_openDisclosures() {
+    const user = userEvent.setup();
+    for (const label of [
+      'Données locales',
+      'Synchronisation',
+      'Sauvegardes',
+      'Hors connexion',
+    ]) {
+      await user.click(screen.getByRole('button', { name: label }));
+    }
+  }
+});
