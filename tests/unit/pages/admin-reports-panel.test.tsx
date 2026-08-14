@@ -72,7 +72,9 @@ describe('AdminPage reports panel', () => {
     const user = userEvent.setup();
     render(<AdminPage />);
     await screen.findByText('question-open'.slice(0, 8) + ' · v1');
-    expect(screen.getByText('question-in-progress'.slice(0, 8) + ' · v2')).toBeInTheDocument();
+    expect(
+      screen.getByText('question-in-progress'.slice(0, 8) + ' · v2'),
+    ).toBeInTheDocument();
 
     await user.selectOptions(
       screen.getByLabelText('Filtrer par statut'),

@@ -30,7 +30,8 @@ export function ReportQuestionDialog({
 
   const trimmedComment = comment.trim();
   const commentRequired = reason === 'other';
-  const canSubmit = reason !== null && (!commentRequired || trimmedComment !== '');
+  const canSubmit =
+    reason !== null && (!commentRequired || trimmedComment !== '');
 
   const reset = () => {
     setReason(null);
@@ -106,7 +107,11 @@ export function ReportQuestionDialog({
           {status === 'error' ? (
             <p role="alert">Le signalement n’a pas pu être envoyé.</p>
           ) : null}
-          <Button type="submit" busy={status === 'submitting'} disabled={!canSubmit}>
+          <Button
+            type="submit"
+            busy={status === 'submitting'}
+            disabled={!canSubmit}
+          >
             Envoyer
           </Button>
         </form>

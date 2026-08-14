@@ -71,6 +71,7 @@ export class SupabaseQuestionReportGateway implements QuestionReportGateway {
       'admin_set_question_report_status',
       { p_report_id: reportId, p_status: status },
     );
-    if (error) throw new Error('Le statut du signalement n’a pas pu être modifié.');
+    if (error)
+      throw new Error('Le statut du signalement n’a pas pu être modifié.');
   }
 }

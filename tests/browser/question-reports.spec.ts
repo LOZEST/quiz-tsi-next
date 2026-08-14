@@ -40,7 +40,9 @@ test('lets a user report a question and an admin resolve it from the admin page'
   await logout(page);
   await login(page, 'owner@example.test');
   await page.goto('admin');
-  await expect(page.getByText('La correction s’arrête trop tôt.')).toBeVisible();
+  await expect(
+    page.getByText('La correction s’arrête trop tôt.'),
+  ).toBeVisible();
   await expect(page.getByText('Correction incomplète')).toBeVisible();
 
   const statusSelect = page.getByLabel(/Statut du signalement/);
@@ -52,11 +54,11 @@ test('lets a user report a question and an admin resolve it from the admin page'
     page.getByText('Aucun signalement pour ce statut.'),
   ).toBeVisible();
   await page.getByLabel('Filtrer par statut').selectOption('all');
-  await expect(page.getByText('La correction s’arrête trop tôt.')).toBeVisible();
+  await expect(
+    page.getByText('La correction s’arrête trop tôt.'),
+  ).toBeVisible();
 
-  await page
-    .context()
-    .grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByRole('button', { name: 'Copier pour l’IA' }).click();
   await expect(page.getByText('Copié dans le presse-papiers.')).toBeVisible();
   const clipboardText = await page.evaluate(() =>
