@@ -1,32 +1,8 @@
-create table public.question_reports (
-  id uuid primary key default gen_random_uuid(),
-  question_id text not null,
-  question_version integer not null check (question_version > 0),
-  reporter_id uuid not null references auth.users(id) on delete cascade,
-  reason text not null check (
-    reason in (
-      'math_rendering',
-      'question_incorrect',
-      'correction_incomplete',
-      'hint_unclear',
-      'other'
-    )
-  ),
-  comment text,
-  status text not null default 'open' check (status in ('open', 'in_progress', 'resolved', 'dismissed')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
-);
+alter table public.question_reports
+  alter column question_id type text using question_id::text;
 
-alter table public.question_reports enable row level security;
-
-create policy question_reports_insert_own on public.question_reports
-  for insert
-  with check (reporter_id = (select auth.uid()));
-
-revoke all on table public.question_reports from anon;
-revoke all on table public.question_reports from authenticated;
-grant insert on table public.question_reports to authenticated;
+drop function if exists public.create_question_report(uuid, integer, text, text);
+drop function if exists public.admin_list_question_reports();
 
 create or replace function public.create_question_report(
   p_question_id text,
@@ -111,42 +87,7 @@ revoke all on function public.admin_list_question_reports() from public;
 revoke all on function public.admin_list_question_reports() from anon;
 grant execute on function public.admin_list_question_reports() to authenticated;
 
-create or replace function public.admin_set_question_report_status(
-  p_report_id uuid,
-  p_status text
-)
-returns void
-language plpgsql
-security definer
-set search_path = ''
-as $$
-begin
-  if not exists (
-    select 1 from public.profiles
-    where user_id = (select auth.uid()) and role in ('admin', 'owner')
-  ) then
-    raise exception 'Seuls les administrateurs modifient les signalements.'
-      using errcode = '42501';
-  end if;
-  if p_status not in ('open', 'in_progress', 'resolved', 'dismissed') then
-    raise exception 'Statut invalide.' using errcode = '22023';
-  end if;
-  update public.question_reports
-  set status = p_status, updated_at = now()
-  where id = p_report_id;
-  if not found then
-    raise exception 'Signalement introuvable.' using errcode = 'P0002';
-  end if;
-end;
-$$;
-
-revoke all on function public.admin_set_question_report_status(uuid, text) from public;
-revoke all on function public.admin_set_question_report_status(uuid, text) from anon;
-grant execute on function public.admin_set_question_report_status(uuid, text) to authenticated;
-
 comment on function public.create_question_report(text, integer, text, text) is
   'Lets an authenticated user file a report against a question version.';
 comment on function public.admin_list_question_reports() is
   'Read-only question report queue restricted to admin and owner callers.';
-comment on function public.admin_set_question_report_status(uuid, text) is
-  'Report status transition restricted to admin and owner callers.';
