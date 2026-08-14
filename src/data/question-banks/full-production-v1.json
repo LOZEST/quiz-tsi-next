@@ -735,7 +735,14 @@
             "id": "ALG-F01-N01-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "E=(ac+eg)x²+(ad+bc+eh+fg)x+(bd+fh)." }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=(@a*@c+@e*@g)*x^2+(@a*@d+@b*@c+@e*@h+@f*@g)*x+(@b*@d+@f*@h)"
+                }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -1027,10 +1034,15 @@
           "validationVariantCount": 10
         },
         "prompt": [
+          { "kind": "text", "value": "Développer et réduire " },
           {
-            "kind": "text",
-            "value": "Développer et réduire E=(@a*x+@b)(@c*x²+@d*x+@e)."
-          }
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=(@a*x+@b)*(@c*x^2+@d*x+@e)"
+            }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -1193,7 +1205,13 @@
             "id": "ALG-F01-N04-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "E=(ac/p)x²+(ad/p+bc/q)x+bd/q" },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=(@a*@c/@p)*x^2+(@a*@d/@p+@b*@c/@q)*x+@b*@d/@q"
+                }
+              },
               { "kind": "text", "value": ". " },
               {
                 "kind": "text",
@@ -2040,7 +2058,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Développer E=(x+@a)²." }],
+        "prompt": [
+          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=(x+@a)^2" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : a non nul." }
         ],
@@ -2048,7 +2073,13 @@
           {
             "id": "ALG-F02-F01-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=x²+2ax+a²." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "E=x^2+2*@a*x+@a^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F02-F01-correction",
@@ -2280,7 +2311,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Développer E=(x+@a)³." }],
+        "prompt": [
+          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=(x+@a)^3" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : a non nul." }
         ],
@@ -2288,7 +2326,16 @@
           {
             "id": "ALG-F02-F04-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=x³+3ax²+3a²x+a³." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=x^3+3*@a*x^2+3*@a^2*x+@a^3"
+                }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F02-F04-correction",
@@ -2453,7 +2500,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Développer E=(@a*x+@b)²." }],
+        "prompt": [
+          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=(@a*x+@b)^2" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           {
             "kind": "text",
@@ -2851,7 +2905,13 @@
           {
             "id": "ALG-F02-N05-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=2x³+6a²x." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "E=2*x^3+6*@a^2*x" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F02-N05-correction",
@@ -3319,7 +3379,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Développer E=(@a/@p*x+@b)²." }],
+        "prompt": [
+          { "kind": "text", "value": "Développer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=(@a/@p*x+@b)^2" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : " },
           {
@@ -3334,7 +3401,13 @@
             "id": "ALG-F02-P05-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "E=(a²/p²)x²+(2ab/p)x+b²" },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=(@a^2/@p^2)*x^2+(2*@a*@b/@p)*x+@b^2"
+                }
+              },
               { "kind": "text", "value": ". " },
               {
                 "kind": "text",
@@ -4162,7 +4235,16 @@
           {
             "id": "ALG-F03-N01-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=kx^m(ax²+bx+c)." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=@k*x^@m*(@a*x^2+@b*x+@c)"
+                }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F03-N01-correction",
@@ -4377,7 +4459,15 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Factoriser E=@a*x²+@b*y+@a*xy+@b*x." }
+          { "kind": "text", "value": "Factoriser " },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@a*x^2+@b*y+@a*x*y+@b*x"
+            }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -5097,7 +5187,16 @@
           {
             "id": "ALG-F03-P04-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=x^m y^n(ax²y+by³+cx)." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=x^@m* y^@n*(@a*x^2*y+@b*y^3+@c*x)"
+                }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F03-P04-correction",
@@ -5285,7 +5384,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Factoriser E=x²+2·@a*x+@a²." }],
+        "prompt": [
+          { "kind": "text", "value": "Factoriser " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=x^2+2*@a*x+@a^2" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : a non nul." }
         ],
@@ -5293,7 +5399,13 @@
           {
             "id": "ALG-F04-F01-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=(x+a)²." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "E=(x+@a)^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F04-F01-correction",
@@ -5525,7 +5637,14 @@
           "constraints": [],
           "validationVariantCount": 10
         },
-        "prompt": [{ "kind": "text", "value": "Factoriser dans R E=x³+@a³." }],
+        "prompt": [
+          { "kind": "text", "value": "Factoriser dans " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "R* E=x^3+@a^3" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : a non nul." }
         ],
@@ -5896,7 +6015,15 @@
           "validationVariantCount": 10
         },
         "prompt": [
-          { "kind": "text", "value": "Factoriser E=@a²x⁴+2·@a·@b*x²y³+@b²y⁶." }
+          { "kind": "text", "value": "Factoriser " },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "E=@a^2*x^4+2*@a*@b*x^2*y^3+@b^2*y^6"
+            }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -5908,7 +6035,13 @@
           {
             "id": "ALG-F04-N03-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "E=(ax²+by³)²." }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "E=(@a*x^2+@b*y^3)^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "ALG-F04-N03-correction",
@@ -5916,8 +6049,13 @@
             "content": [
               {
                 "kind": "text",
-                "value": "Les termes extrêmes sont (ax²)² et (by³)²."
-              }
+                "value": "Les termes extrêmes sont (ax²)² et "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@b*y^3)^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -6168,10 +6306,12 @@
           "validationVariantCount": 8
         },
         "prompt": [
+          { "kind": "text", "value": "Factoriser dans R, si possible, " },
           {
-            "kind": "text",
-            "value": "Factoriser dans R, si possible, E=x²+@a²."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=x^2+@a^2" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : " },
@@ -6576,10 +6716,15 @@
           "validationVariantCount": 10
         },
         "prompt": [
+          { "kind": "text", "value": "Pour a=@a et b=@b, factoriser dans " },
           {
-            "kind": "text",
-            "value": "Pour a=@a et b=@b, factoriser dans R E=x⁴+(a²+b²)x²+a²b²."
-          }
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "R* E=x^4+(@a^2+@b^2)*x^2+@a^2*@b^2"
+            }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -6592,7 +6737,13 @@
             "id": "ALG-F04-P05-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "E=(x²+a²)(x²+b²)" },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=(x^2+@a^2)*(x^2+@b^2)"
+                }
+              },
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
@@ -6897,7 +7048,10 @@
             "id": "ALG-F05-F02-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "S=(ax+b)/x²" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "S=(@a*x+@b)/x^2" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "D=R\\{0}." }
             ]
@@ -6906,7 +7060,11 @@
             "id": "ALG-F05-F02-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "Le PPCM de x et x² est x²" },
+              { "kind": "text", "value": "Le PPCM de x et x² est " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2" }
+              },
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
@@ -24544,10 +24702,12 @@
           "validationVariantCount": 8
         },
         "prompt": [
+          { "kind": "text", "value": "Calculer lim_{x→−∞} " },
           {
-            "kind": "text",
-            "value": "Calculer lim_{x→−∞} (@a·x^{2·@n+1}+@b·x²)."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "(@a*x^(2*@n+1)+@b*x^2)" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           { "kind": "text", "value": "Contraintes de génération : a>0 et " },
@@ -24678,7 +24838,11 @@
             "content": [
               {
                 "kind": "text",
-                "value": "Diviser numérateur et dénominateur par x²"
+                "value": "Diviser numérateur et dénominateur par "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2" }
               },
               { "kind": "text", "value": " ; " },
               {
@@ -24749,7 +24913,12 @@
           "validationVariantCount": 4
         },
         "prompt": [
-          { "kind": "text", "value": "Calculer lim_{x→+∞} (@a·x+@b)/(x²+1)." }
+          { "kind": "text", "value": "Calculer lim_{x→+∞} " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "(@a*x+@b)/(x^2+1)" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -25328,10 +25497,13 @@
           "validationVariantCount": 4
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer l’asymptote en +∞ de " },
+          { "kind": "text", "value": "f(x) = " },
           {
-            "kind": "text",
-            "value": "Déterminer l’asymptote en +∞ de f(x)=(@a·x²+@b·x+1)/x."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "(@a*x^2+@b*x+1)/x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -29033,7 +29205,13 @@
           {
             "id": "LOT3-0092-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "y(x)=(@a/2)x²+C1·x+C2" }]
+            "content": [
+              { "kind": "text", "value": "y(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a/2)*x^2+C1*x+C2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0092-correction",
@@ -30159,7 +30337,13 @@
           {
             "id": "LOT3-0103-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "y(x)=(@c/2)x²+C1·x+C2" }]
+            "content": [
+              { "kind": "text", "value": "y(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@c/2)*x^2+C1*x+C2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0103-correction",
@@ -30623,7 +30807,11 @@
         "hint": [
           {
             "kind": "text",
-            "value": "Contraintes de génération : a,b,c,d∈Z et c²+d²≠0"
+            "value": "Contraintes de génération : a,b,c,d∈Z et "
+          },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@c^2+@d^2≠0" }
           }
         ],
         "correction": [
@@ -31336,7 +31524,14 @@
           {
             "id": "LOT4-0007-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "z·conj(z)=@a²+@b²" }]
+            "content": [
+              { "kind": "text", "value": "z·con" },
+              { "kind": "text", "value": "j(z) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a^2+@b^2" }
+              }
+            ]
           },
           {
             "id": "LOT4-0007-correction",
@@ -31450,10 +31645,12 @@
           "validationVariantCount": 10
         },
         "prompt": [
+          { "kind": "text", "value": "Simplifier (@a+@b*i)/(@c+@d*i), avec " },
           {
-            "kind": "text",
-            "value": "Simplifier (@a+@b*i)/(@c+@d*i), avec c²+d²≠0."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@c^2+@d^2≠0" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -31461,7 +31658,12 @@
             "value": "Contraintes de génération : Paramètres choisis dans les enums du JSON"
           },
           { "kind": "text", "value": ".\n" },
-          { "kind": "text", "value": "Valeurs interdites : c²+d²≠0." }
+          { "kind": "text", "value": "Valeurs interdites : " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@c^2+@d^2≠0" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "correction": [
           {
@@ -31480,8 +31682,13 @@
             "content": [
               {
                 "kind": "text",
-                "value": "Multiplier par c−di puis diviser par c²+d²."
-              }
+                "value": "Multiplier par c−di puis diviser par "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2+@d^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -36287,7 +36494,10 @@
             "id": "LOT2-0012-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "x⁰=1" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^0=1" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "sa dérivée est nulle." }
             ]
@@ -42855,7 +43065,12 @@
         "prompt": [
           { "kind": "text", "value": "Approcher " },
           { "kind": "text", "value": "\\(√(@k^2+0.1)\\)" },
-          { "kind": "text", "value": " près de @k²." }
+          { "kind": "text", "value": " près de " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k^2" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -43239,7 +43454,12 @@
         "prompt": [
           { "kind": "text", "value": "Approcher " },
           { "kind": "text", "value": "\\(√(@k^2-0.1)\\)" },
-          { "kind": "text", "value": " près de @k²." }
+          { "kind": "text", "value": " près de " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k^2" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -43885,7 +44105,12 @@
           {
             "id": "LOT2-0077-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(1/@k-0.01/@k²\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/@k-0.01/@k^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0077-correction",
@@ -44171,7 +44396,10 @@
             "math": { "syntaxVersion": 1, "source": "1/@k" }
           },
           { "kind": "text", "value": " et " },
-          { "kind": "text", "value": "\\(-1/@k²\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "-1/@k^2" }
+          },
           { "kind": "text", "value": " exacts jusqu’à la fin." }
         ],
         "hint": [
@@ -44191,7 +44419,12 @@
           {
             "id": "LOT2-0080-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(1/@k-0.03/@k²\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/@k-0.03/@k^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0080-correction",
@@ -45888,7 +46121,10 @@
               { "kind": "text", "value": ", croissante sur " },
               { "kind": "text", "value": "\\([@k/2,+∞)\\)" },
               { "kind": "text", "value": ", minimum " },
-              { "kind": "text", "value": "\\(-@k²/4\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k^2/4" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -46768,7 +47004,10 @@
             "title": "Réponse attendue",
             "content": [
               { "kind": "text", "value": "Minimum " },
-              { "kind": "text", "value": "\\(-@k²/4\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k^2/4" }
+              },
               { "kind": "text", "value": " en " },
               {
                 "kind": "inline-math",
@@ -48035,7 +48274,11 @@
             "id": "EQI-F01-N02-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Dans R, x²+t²>0" },
+              { "kind": "text", "value": "Dans R, " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2+@t^2>0" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "S={r;s} trié." }
             ]
@@ -48484,7 +48727,11 @@
             "id": "EQI-F01-P01-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "L’équation devient x²=b²" },
+              { "kind": "text", "value": "L’équation devient " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2=@b^2" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "S={−b;b}." }
             ]
@@ -49146,7 +49393,12 @@
             "id": "EQI-F02-F02-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "Développer : A=a, B=−2ar, C=ar²." }
+              { "kind": "text", "value": "Développer : A=a, B=−2ar, " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "C=@a*@r^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -50101,7 +50353,10 @@
             "id": "EQI-F02-N05-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Δ=4mn²" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "Δ=4*@m*@n^2" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "racines ±n√m" },
               { "kind": "text", "value": " ; " },
@@ -69976,7 +70231,11 @@
             "id": "LOT5-0038-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "Résoudre MA²=MB²" },
+              { "kind": "text", "value": "Résoudre " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "M*A^2=M*B^2" }
+              },
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
@@ -71178,7 +71437,12 @@
             "id": "LOT5-0050-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Rectangle ssi @c²=@a²+@b²." }
+              { "kind": "text", "value": "Rectangle ssi " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2=@a^2+@b^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -73121,7 +73385,12 @@
             "id": "LOT5-0069-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Losange ssi @a²+@b²=@c²+@d²." }
+              { "kind": "text", "value": "Losange ssi " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a^2+@b^2=@c^2+@d^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -74274,10 +74543,13 @@
           "validationVariantCount": 8
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer les primitives de " },
+          { "kind": "text", "value": "f(x) = " },
           {
-            "kind": "text",
-            "value": "Déterminer les primitives de f(x)=@a·x²+@b·x+@c."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@a*x^2+@b*x+@c" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -74292,7 +74564,14 @@
             "id": "LOT3-0001-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "F(x)=(@a/3)x³+(@b/2)x²+@c·x+C" }
+              { "kind": "text", "value": "F(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/3)*x^3+(@b/2)*x^2+@c*x+C"
+                }
+              }
             ]
           },
           {
@@ -74523,7 +74802,14 @@
             "id": "LOT3-0003-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "F(x)=(@a/(3·@b))x³+x/@b+C" }
+              { "kind": "text", "value": "F(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/(3*@b))*x^3+x/@b+C"
+                }
+              }
             ]
           },
           {
@@ -74978,10 +75264,13 @@
           "validationVariantCount": 2
         },
         "prompt": [
+          { "kind": "text", "value": "Donner toutes les primitives de " },
+          { "kind": "text", "value": "f(x) = " },
           {
-            "kind": "text",
-            "value": "Donner toutes les primitives de f(x)=@a*x²."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@a*x^2" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -75196,8 +75485,13 @@
             "content": [
               {
                 "kind": "text",
-                "value": "La constante ne peut être déterminée qu’après avoir écrit F=(a/2)x²+C."
-              }
+                "value": "La constante ne peut être déterminée qu’après avoir écrit "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "F=(@a/2)*x^2+C" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -76082,10 +76376,15 @@
           "validationVariantCount": 8
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer les primitives de " },
           {
-            "kind": "text",
-            "value": "Déterminer les primitives de (2x+@a)(x²+@a*x+@b)^@n."
-          }
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "(2*x+@a)*(x^2+@a*x+@b)^@n"
+            }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -76100,7 +76399,14 @@
             "id": "LOT3-0014-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "F(x)=(x²+@a*x+@b)^(@n+1)/(@n+1)+C" }
+              { "kind": "text", "value": "F(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(x^2+@a*x+@b)^(@n+1)/(@n+1)+C"
+                }
+              }
             ]
           },
           {
@@ -76186,13 +76492,27 @@
             "value": "Contraintes de génération : Paramètres choisis dans les enums du JSON et respectant les relations indiquées"
           },
           { "kind": "text", "value": ".\n" },
-          { "kind": "text", "value": "Valeurs interdites : x²+@a*x+@b≠0." }
+          { "kind": "text", "value": "Valeurs interdites : " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x^2+@a*x+@b≠0" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "correction": [
           {
             "id": "LOT3-0015-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "F(x)=ln|x²+@a*x+@b|+C" }]
+            "content": [
+              { "kind": "text", "value": "F(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "l*n*abs(x^2+@a*x+@b)+C"
+                }
+              }
+            ]
           },
           {
             "id": "LOT3-0015-correction",
@@ -77483,7 +77803,12 @@
           {
             "id": "LOT3-0024-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "@a²/2+@a·@b" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a^2/2+@a*@b" }
+              }
+            ]
           },
           {
             "id": "LOT3-0024-correction",
@@ -77742,7 +78067,11 @@
             "id": "LOT3-0025-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "L’intégrale vaut (a/2)t²" },
+              { "kind": "text", "value": "L’intégrale vaut " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a/2)*t^2" }
+              },
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
@@ -78050,7 +78379,12 @@
           {
             "id": "LOT3-0028-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "(@a²+@b²)/2" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a^2+@b^2)/2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0028-correction",
@@ -78162,7 +78496,11 @@
             "id": "LOT3-0029-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "Une primitive est x³/3" },
+              { "kind": "text", "value": "Une primitive est " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^3/3" }
+              },
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
@@ -78652,7 +78990,12 @@
           {
             "id": "LOT3-0034-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@a·@b²/2" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@a*@b^2/2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0034-correction",
@@ -78742,7 +79085,12 @@
           {
             "id": "LOT3-0035-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@a·@b²/2" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@a*@b^2/2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0035-correction",
@@ -78836,7 +79184,12 @@
           {
             "id": "LOT3-0036-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@a²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@a^2" }
+              }
+            ]
           },
           {
             "id": "LOT3-0036-correction",
@@ -78846,8 +79199,13 @@
               { "kind": "text", "value": " ; " },
               {
                 "kind": "text",
-                "value": "les deux triangles ont chacun aire a²/2."
-              }
+                "value": "les deux triangles ont chacun aire "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a^2/2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -79041,7 +79399,12 @@
           {
             "id": "LOT3-0038-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "@a²/3" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a^2/3" }
+              }
+            ]
           },
           {
             "id": "LOT3-0038-correction",
@@ -79133,7 +79496,12 @@
           {
             "id": "LOT3-0039-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@a³/6" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@a^3/6" }
+              }
+            ]
           },
           {
             "id": "LOT3-0039-correction",
@@ -79224,7 +79592,12 @@
           {
             "id": "LOT3-0040-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=4·@a³/3" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=4*@a^3/3" }
+              }
+            ]
           },
           {
             "id": "LOT3-0040-correction",
@@ -79834,20 +80207,38 @@
           {
             "id": "LOT3-0046-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@a³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@a^3" }
+              }
+            ]
           },
           {
             "id": "LOT3-0046-correction",
             "title": "Correction",
             "content": [
-              { "kind": "text", "value": "Sur [0,a], ax≥x²" },
+              { "kind": "text", "value": "Sur [0,a], " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a*x≥x^2" }
+              },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "sur [a,2a], x²≥ax" },
+              { "kind": "text", "value": "sur [a,2a], " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2≥@a*x" }
+              },
               { "kind": "text", "value": ". " },
               {
                 "kind": "text",
-                "value": "Les deux contributions valent a³/6 et 5a³/6."
-              }
+                "value": "Les deux contributions valent a³/6 et "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "5*@a^3/6" }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -80227,7 +80618,12 @@
           {
             "id": "LOT5-0077-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@b\\cdot@h/2 cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@b*@h/2* c*m^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0077-correction",
@@ -80324,7 +80720,12 @@
           {
             "id": "LOT5-0078-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@b\\cdot@h cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@b*@h* c*m^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0078-correction",
@@ -80426,7 +80827,15 @@
           {
             "id": "LOT5-0079-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=(@B+@b)\\cdot@h/2 cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "A=(@B+@b)*@h/2* c*m^2"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0079-correction",
@@ -80524,7 +80933,10 @@
                 "math": { "syntaxVersion": 1, "source": "P=2*π*@r* c*m" }
               },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "A=π\\cdot@r² cm²" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=π*@r^2* c*m^2" }
+              }
             ]
           },
           {
@@ -80733,7 +81145,13 @@
             "id": "LOT5-0082-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "A=@L\\cdot@l+@b\\cdot@h/2 cm²" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "A=@L*@l+@b*@h/2* c*m^2"
+                }
+              }
             ]
           },
           {
@@ -80836,7 +81254,11 @@
             "id": "LOT5-0083-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "A=@L\\cdot@l−π\\cdot@r² cm²" }
+              { "kind": "text", "value": "A=@L\\cdot@l−π\\cdot@r² " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*m^2" }
+              }
             ]
           },
           {
@@ -80936,7 +81358,13 @@
             "content": [
               { "kind": "text", "value": "ℓ=(@a/360)\\cdot2π\\cdot@r cm" },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "A=(@a/360)\\cdotπ\\cdot@r² cm²" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "A=(@a/360)*π*@r^2* c*m^2"
+                }
+              }
             ]
           },
           {
@@ -81038,7 +81466,15 @@
           {
             "id": "LOT5-0085-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@m\\cdot(@cm/100) m²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "A=@m*(c*@m/100)* @m^2"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0085-correction",
@@ -81130,7 +81566,12 @@
           {
             "id": "LOT5-0086-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=π\\cdot(@d/2)² cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=π*(@d/2)^2* c*m^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0086-correction",
@@ -81198,7 +81639,14 @@
           "constraints": [],
           "validationVariantCount": 2
         },
-        "prompt": [{ "kind": "text", "value": "Convertir @a m² en cm²." }],
+        "prompt": [
+          { "kind": "text", "value": "Convertir @a m² en " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "c*m^2" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           {
             "kind": "text",
@@ -81211,7 +81659,15 @@
           {
             "id": "LOT5-0087-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "@a m²=@a\\cdot10000 cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a* m^2=@a*10000* c*m^2"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0087-correction",
@@ -81313,7 +81769,12 @@
           {
             "id": "LOT5-0088-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "A=@b\\cdot@h cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "A=@b*@h* @c*m^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0088-correction",
@@ -81510,9 +81971,17 @@
             "id": "LOT5-0090-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "A_exact=π\\cdot@r² cm²" },
+              { "kind": "text", "value": "A_exact=π\\cdot@r² " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*m^2" }
+              },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "A_approx=@p\\cdot@r² cm²" }
+              { "kind": "text", "value": "A_approx=@p\\cdot@r² " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*m^2" }
+              }
             ]
           },
           {
@@ -81612,7 +82081,12 @@
           {
             "id": "LOT5-0091-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=@L\\cdot@l\\cdot@h cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=@L*@l*@h* c*m^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0091-correction",
@@ -81706,7 +82180,12 @@
           {
             "id": "LOT5-0092-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=@A\\cdot@h cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=@A*@h* c*m^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0092-correction",
@@ -81803,7 +82282,12 @@
           {
             "id": "LOT5-0093-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=π\\cdot@r²\\cdot@h cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=π*@r^2*@h* c*m^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0093-correction",
@@ -81900,7 +82384,12 @@
           {
             "id": "LOT5-0094-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=@A\\cdot@h/3 cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=@A*@h/3* c*m^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0094-correction",
@@ -82000,7 +82489,10 @@
             "id": "LOT5-0095-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=π\\cdot@r²\\cdot@h/3 cm³" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=π*@r^2*@h/3* c*m^3" }
+              }
             ]
           },
           {
@@ -82077,7 +82569,11 @@
         "prompt": [
           {
             "kind": "text",
-            "value": "Un prisme de volume @V cm³ a une aire de base @A cm²"
+            "value": "Un prisme de volume @V cm³ a une aire de base "
+          },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@A* c*m^2" }
           },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Déterminer sa hauteur." }
@@ -82302,8 +82798,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "V=@L\\cdot@l\\cdot@h+π\\cdot@r²\\cdot@H cm³"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=@L*@l*@h+π*@r^2*@H* c*m^3"
+                }
               }
             ]
           },
@@ -82456,7 +82955,11 @@
             "id": "LOT5-0099-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=π\\cdot(@R²−@r²)\\cdot@h cm³" }
+              { "kind": "text", "value": "V=π\\cdot(@R²−@r²)\\cdot@h " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*m^3" }
+              }
             ]
           },
           {
@@ -82538,7 +83041,12 @@
           {
             "id": "LOT5-0100-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "@v m³=@v\\cdot1000 L" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@v* m^3=@v*1000* L" }
+              }
+            ]
           },
           {
             "id": "LOT5-0100-correction",
@@ -82643,7 +83151,12 @@
           {
             "id": "LOT5-0101-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=@A\\cdot@h/3 cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=@A*@h/3* c*m^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0101-correction",
@@ -82749,7 +83262,10 @@
             "id": "LOT5-0102-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=(@L\\cdot@l)\\cdot@h cm³" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=(@L*@l)*@h* c*m^3" }
+              }
             ]
           },
           {
@@ -82845,7 +83361,13 @@
             "id": "LOT5-0103-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=π\\cdot(@d/2)²\\cdot@h cm³" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=π*(@d/2)^2*@h* c*m^3"
+                }
+              }
             ]
           },
           {
@@ -82914,7 +83436,14 @@
           "constraints": [],
           "validationVariantCount": 2
         },
-        "prompt": [{ "kind": "text", "value": "Convertir @v m³ en cm³." }],
+        "prompt": [
+          { "kind": "text", "value": "Convertir @v m³ en " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "c*m^3" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           {
             "kind": "text",
@@ -82928,7 +83457,13 @@
             "id": "LOT5-0104-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "@v m³=@v\\cdot1000000 cm³" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@v* m^3=@v*1000000* c*m^3"
+                }
+              }
             ]
           },
           {
@@ -83087,7 +83622,10 @@
             "id": "LOT5-0105-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=π\\cdot@r²\\cdot@h/3 cm³" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=π*@r^2*@h/3* c*m^3" }
+              }
             ]
           },
           {
@@ -83177,12 +83715,24 @@
           {
             "id": "LOT5-0106-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "S=4π\\cdot@r² cm²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "S=4*π*@r^2* c*m^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0106-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "Appliquer S=4πr²." }]
+            "content": [
+              { "kind": "text", "value": "Appliquer " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "S=4*π*@r^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -83261,12 +83811,27 @@
           {
             "id": "LOT5-0107-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=(4/3)π\\cdot@r³ cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=(4/3)*π*@r^3* c*m^3"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0107-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "Appliquer V=4πr³/3." }]
+            "content": [
+              { "kind": "text", "value": "Appliquer " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=4*π*@r^3/3" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -83346,9 +83911,15 @@
             "id": "LOT5-0108-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "S=4π\\cdot(@d/2)²" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "S=4*π*(@d/2)^2" }
+              },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "V=(4/3)π\\cdot(@d/2)³" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "V=(4/3)*π*(@d/2)^3" }
+              }
             ]
           },
           {
@@ -83420,7 +83991,11 @@
           "validationVariantCount": 2
         },
         "prompt": [
-          { "kind": "text", "value": "Une sphère a une surface @kπ cm²" },
+          { "kind": "text", "value": "Une sphère a une surface " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k*π* c*m^2" }
+          },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Déterminer son rayon positif." }
         ],
@@ -83507,7 +84082,11 @@
           "validationVariantCount": 2
         },
         "prompt": [
-          { "kind": "text", "value": "Une sphère a un volume (@k/3)π cm³" },
+          { "kind": "text", "value": "Une sphère a un volume " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "(@k/3)*π* c*m^3" }
+          },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Déterminer son rayon positif." }
         ],
@@ -83528,7 +84107,14 @@
           {
             "id": "LOT5-0110-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "Résoudre 4πr³/3=kπ/3." }]
+            "content": [
+              { "kind": "text", "value": "Résoudre " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "4*π*r^3/3=@k*π/3" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -83614,7 +84200,12 @@
           {
             "id": "LOT5-0111-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "S_R/S_r=(@R/@r)²" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "S_R/S_r=(@R/@r)^2" }
+              }
+            ]
           },
           {
             "id": "LOT5-0111-correction",
@@ -83709,7 +84300,13 @@
           {
             "id": "LOT5-0112-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "Facteur @k³" }]
+            "content": [
+              { "kind": "text", "value": "Facteur " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k^3" }
+              }
+            ]
           },
           {
             "id": "LOT5-0112-correction",
@@ -83800,7 +84397,15 @@
           {
             "id": "LOT5-0113-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=(2/3)π\\cdot@r³ cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=(2/3)*π*@r^3* c*m^3"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0113-correction",
@@ -83894,7 +84499,11 @@
             "content": [
               {
                 "kind": "text",
-                "value": "S=2π\\cdot@r²+π\\cdot@r²=3π\\cdot@r² cm²"
+                "value": "S=2π\\cdot@r²+π\\cdot@r²=3π\\cdot@r² "
+              },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*m^2" }
               }
             ]
           },
@@ -83986,7 +84595,13 @@
             "id": "LOT5-0115-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "V=(4/3)π\\cdot@r³\\cdot1000 L" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=(4/3)*π*@r^3*1000* L"
+                }
+              }
             ]
           },
           {
@@ -84079,9 +84694,18 @@
             "id": "LOT5-0116-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Disque : π\\cdot@r²" },
+              { "kind": "text", "value": "Disque : " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "π*@r^2" }
+              },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "sphère : 4π\\cdot@r²." }
+              { "kind": "text", "value": "sphère : " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "4*π*@r^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -84169,9 +84793,18 @@
             "id": "LOT5-0117-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Surface en @r²" },
+              { "kind": "text", "value": "Surface en " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@r^2" }
+              },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "volume en @r³." }
+              { "kind": "text", "value": "volume en " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@r^3" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -84260,12 +84893,27 @@
           {
             "id": "LOT5-0118-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "V=(4/3)π\\cdot@r³ cm³" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "V=(4/3)*π*@r^3* c*m^3"
+                }
+              }
+            ]
           },
           {
             "id": "LOT5-0118-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "Le volume n’est pas πr³." }]
+            "content": [
+              { "kind": "text", "value": "Le volume n’est pas " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "π*@r^3" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -84421,7 +85069,11 @@
         "prompt": [
           {
             "kind": "text",
-            "value": "Pour une sphère de rayon @r, on inverse S=4πr² ou V=4πr³/3"
+            "value": "Pour une sphère de rayon @r, on inverse S=4πr² ou "
+          },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "V=4*π*@r^3/3" }
           },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Quelle racine utiliser ?" }
@@ -85214,11 +85866,20 @@
             "id": "LOT5-0128-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Aigu si @c²<@a²+@b²" },
+              { "kind": "text", "value": "Aigu si " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2<@a^2+@b^2" }
+              },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "rectangle si égalité" },
               { "kind": "text", "value": " ; " },
-              { "kind": "text", "value": "obtus si @c²>@a²+@b²." }
+              { "kind": "text", "value": "obtus si " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2>@a^2+@b^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -86189,7 +86850,14 @@
           {
             "id": "LOT5-0138-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "Oui ssi @c²=@a²+@b²." }]
+            "content": [
+              { "kind": "text", "value": "Oui ssi " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2=@a^2+@b^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "LOT5-0138-correction",
@@ -86283,7 +86951,12 @@
             "id": "LOT5-0139-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Rectangle ssi @c²=@a²+@b²." }
+              { "kind": "text", "value": "Rectangle ssi " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2=@a^2+@b^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -86673,7 +87346,14 @@
           {
             "id": "LOT5-0143-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "Résoudre x²+b²=c²." }]
+            "content": [
+              { "kind": "text", "value": "Résoudre " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^2+@b^2=@c^2" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -86760,7 +87440,12 @@
             "id": "LOT5-0144-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "Non rectangle si @c²≠@a²+@b²." }
+              { "kind": "text", "value": "Non rectangle si " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c^2≠@a^2+@b^2" }
+              },
+              { "kind": "text", "value": "." }
             ]
           },
           {
@@ -86839,7 +87524,11 @@
         "prompt": [
           {
             "kind": "text",
-            "value": "Deux triangles rectangles successifs donnent d1²=@a²+@b² puis d2²=d1²+@c²"
+            "value": "Deux triangles rectangles successifs donnent d1²=@a²+@b² puis "
+          },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "d2^2=d1^2+@c^2" }
           },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Exprimer " },
@@ -97186,8 +97875,13 @@
         "prompt": [
           {
             "kind": "text",
-            "value": "Avec U=a x^m et V=b x^n, substituer puis réduire E=U²V."
+            "value": "Avec U=a x^m et V=b x^n, substituer puis réduire "
           },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "E=U^2*V" }
+          },
+          { "kind": "text", "value": "." },
           {
             "kind": "text",
             "value": " Paramètres de cette variante : a = @a, b = @b, m = @m, n = @n, x = @x."
@@ -97213,10 +97907,12 @@
             "id": "NUM-F04-F04-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "E=a²b " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "@x^(2*@m+@n)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "E=@a^2*@b* @x^(2*@m+@n)"
+                }
               },
               { "kind": "text", "value": "." }
             ]
@@ -112220,7 +112916,11 @@
         "prompt": [
           {
             "kind": "text",
-            "value": "Une variable mesurée en mètres a variance @a m²"
+            "value": "Une variable mesurée en mètres a variance "
+          },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@a* m^2" }
           },
           { "kind": "text", "value": ". " },
           { "kind": "text", "value": "Quelle est l’unité de son écart type ?" }
@@ -126728,10 +127428,15 @@
             "id": "LOT2-0147-correction",
             "title": "Correction",
             "content": [
+              { "kind": "text", "value": "Développer le carré puis utiliser " },
               {
-                "kind": "text",
-                "value": "Développer le carré puis utiliser sin²x+cos²x=1."
-              }
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "s*i*n^2*x+c*o*s^2*x=1"
+                }
+              },
+              { "kind": "text", "value": "." }
             ]
           }
         ],
@@ -146796,7 +147501,12 @@
           "validationVariantCount": 2
         },
         "prompt": [
-          { "kind": "text", "value": "Sachant cos x=@c, calculer sin²x." }
+          { "kind": "text", "value": "Sachant cos x=@c, calculer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "s*i*n^2*x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -146876,7 +147586,12 @@
           "validationVariantCount": 2
         },
         "prompt": [
-          { "kind": "text", "value": "Sachant sin x=@s, calculer cos²x." }
+          { "kind": "text", "value": "Sachant sin x=@s, calculer " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "c*o*@s^2*x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -147034,7 +147749,14 @@
         "type": "reflex",
         "difficulty": null,
         "parameterization": null,
-        "prompt": [{ "kind": "text", "value": "Simplifier 1+tan²x." }],
+        "prompt": [
+          { "kind": "text", "value": "Simplifier " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "1+t*a*n^2*x" }
+          },
+          { "kind": "text", "value": "." }
+        ],
         "hint": [
           {
             "kind": "text",
@@ -147045,7 +147767,12 @@
           {
             "id": "AUTO6-0171-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "1/cos²x" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/c*o*s^2*x" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0171-correction",
@@ -175540,7 +176267,12 @@
         "difficulty": null,
         "parameterization": null,
         "prompt": [
-          { "kind": "text", "value": "Déterminer une primitive de cos²x." }
+          { "kind": "text", "value": "Déterminer une primitive de " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "c*o*s^2*x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -175619,10 +176351,12 @@
           "validationVariantCount": 3
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer une primitive de " },
           {
-            "kind": "text",
-            "value": "Déterminer une primitive de @k\\cdot(cos²x)."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k*(c*o*s^2*x)" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -175694,7 +176428,12 @@
         "difficulty": null,
         "parameterization": null,
         "prompt": [
-          { "kind": "text", "value": "Déterminer une primitive de sin²x." }
+          { "kind": "text", "value": "Déterminer une primitive de " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "s*i*n^2*x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -175773,10 +176512,12 @@
           "validationVariantCount": 3
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer une primitive de " },
           {
-            "kind": "text",
-            "value": "Déterminer une primitive de @k\\cdot(sin²x)."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k*(s*i*n^2*x)" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [],
         "correction": [
@@ -175858,7 +176599,12 @@
           {
             "id": "AUTO6-0502-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "cos²x/2+C" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "c*o*s^2*x/2+C" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0502-correction",
@@ -175937,7 +176683,12 @@
           {
             "id": "AUTO6-0503-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "@k\\cdot(cos²x/2)+C" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k*(c*o*s^2*x/2)+C" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0503-correction",
@@ -175994,7 +176745,12 @@
         "difficulty": null,
         "parameterization": null,
         "prompt": [
-          { "kind": "text", "value": "Déterminer une primitive de tan²x." }
+          { "kind": "text", "value": "Déterminer une primitive de " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "t*a*n^2*x" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -176073,10 +176829,12 @@
           "validationVariantCount": 3
         },
         "prompt": [
+          { "kind": "text", "value": "Déterminer une primitive de " },
           {
-            "kind": "text",
-            "value": "Déterminer une primitive de @k\\cdot(tan²x)."
-          }
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k*(t*a*n^2*x)" }
+          },
+          { "kind": "text", "value": "." }
         ],
         "hint": [
           {
@@ -177183,7 +177941,13 @@
             "id": "AUTO6-0518-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "x arctan x-(1/2)ln(1+x²)+C" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "x* a*r*c*t*a*n* x-(1/2)*ln(1+x^2)+C"
+                }
+              }
             ]
           },
           {
@@ -177265,8 +178029,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "@k\\cdot(x arctan x-(1/2)ln(1+x²))+C"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*(x* a*r*c*t*a*n* x-(1/2)*ln(1+x^2))+C"
+                }
               }
             ]
           },
@@ -177350,8 +178117,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "@k\\cdot(x arctan x-(1/2)ln(1+x²))+C"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*(x* a*r*c*t*a*n* x-(1/2)*ln(1+x^2))+C"
+                }
               }
             ]
           },

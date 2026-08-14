@@ -303,6 +303,9 @@ describe('pipeline générique de banque complète', () => {
 
   describe('translateLatexToGrammar', () => {
     it.each([
+      ['x²', 'x^2'],
+      ['a²x²+b²y²', 'a^2x^2+b^2y^2'],
+      ['x¹⁰', 'x^10'],
       ['\\dfrac{k}{a x+b}', '(k)/(a x+b)'],
       ['\\frac{1}{2}', '(1)/(2)'],
       ['\\sqrt{x^{k}}', 'sqrt(x^k)'],

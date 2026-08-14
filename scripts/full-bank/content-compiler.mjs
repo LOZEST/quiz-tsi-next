@@ -132,6 +132,25 @@ function consumeAtom(str, index) {
 // between, so a comma inside a set or an argument list is never touched.
 const intervalComma = /([[\]])([^[\]{}()]*),([^[\]{}()]*)([[\]])/g;
 
+// Many AUTOMATISME answers write powers as literal Unicode superscript
+// digits ("x²", "abx³") instead of "^2"/"^3" — unambiguous, so every run
+// of them converts to this grammar's own "^" notation up front.
+const SUPERSCRIPT_DIGITS = {
+  '⁰': '0',
+  '¹': '1',
+  '²': '2',
+  '³': '3',
+  '⁴': '4',
+  '⁵': '5',
+  '⁶': '6',
+  '⁷': '7',
+  '⁸': '8',
+  '⁹': '9',
+};
+const superscriptRun = /[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g;
+const toSuperscriptPower = (run) =>
+  `^${[...run].map((digit) => SUPERSCRIPT_DIGITS[digit]).join('')}`;
+
 /**
  * Translates the LaTeX vocabulary actually used by the 1765-generator
  * source (\dfrac, \sqrt, \ln, \cdot, comparison/set symbols, |abs| bars…)
@@ -143,7 +162,8 @@ const intervalComma = /([[\]])([^[\]{}()]*),([^[\]{}()]*)([[\]])/g;
 export function translateLatexToGrammar(rawSource) {
   const source = rawSource
     .replace(SPACING_COMMANDS_ANYWHERE, '')
-    .replace(intervalComma, '$1$2;$3$4');
+    .replace(intervalComma, '$1$2;$3$4')
+    .replace(superscriptRun, toSuperscriptPower);
   let out = '';
   let index = 0;
   while (index < source.length) {
@@ -492,7 +512,7 @@ function compileMathSpan(rawMath, isDisplay, parameterIds) {
 // letters that isn't a recognized function name or a declared parameter —
 // genuine math in this dataset never chains that many bare letters
 // without an operator, a digit, or a backslash between them.
-const mathSignal = /[0-9{}\\^√±@]/;
+const mathSignal = /[0-9{}\\^√±@²³⁴⁵⁶⁷⁸⁹⁰¹]/;
 // Not preceded by "\": a run right after a backslash is a LaTeX command
 // name (cdot, circ, left…), not a bare word, and is handled elsewhere.
 // Matches either a whole "\command" (group 1, always ignored below — it's
