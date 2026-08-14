@@ -53,13 +53,7 @@
     {
       "calculId": "LOT2-0113",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0115",
-      "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -167,7 +161,7 @@
     {
       "calculId": "LOT2-0008",
       "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -203,7 +197,7 @@
     {
       "calculId": "LOT2-0013",
       "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -425,7 +419,7 @@
     {
       "calculId": "LOT2-0039",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -569,7 +563,7 @@
     {
       "calculId": "LOT2-0053",
       "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -598,12 +592,6 @@
     },
     {
       "calculId": "LOT2-0071",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0072",
       "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
@@ -743,19 +731,19 @@
     {
       "calculId": "LOT2-0103",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 2
     },
     {
       "calculId": "LOT2-0104",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 2
     },
     {
       "calculId": "LOT2-0105",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -821,7 +809,7 @@
     {
       "calculId": "LOT1-0095",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -845,7 +833,7 @@
     {
       "calculId": "LOT1-0100",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -1006,12 +994,6 @@
     },
     {
       "calculId": "LOT1-0135",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-014",
       "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 1
@@ -1529,7 +1511,7 @@
     {
       "calculId": "LOT2-0135",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -1673,7 +1655,7 @@
     {
       "calculId": "LOT2-0164",
       "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -1728,12 +1710,6 @@
       "calculId": "DUNOD-REEL-022",
       "field": "Correction",
       "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-023",
-      "field": "Reponse_generale",
-      "structured": 0,
       "fallback": 1
     },
     {
@@ -9626,8 +9602,8 @@
       "exhaustive": true
     }
   ],
-  "mathSegmentsStructured": 1053,
-  "mathSegmentsFallbackToText": 317,
+  "mathSegmentsStructured": 2738,
+  "mathSegmentsFallbackToText": 313,
   "fallbackCalculIds": [
     "DUNOD-REEL-006",
     "DUNOD-REEL-011",
@@ -9639,7 +9615,6 @@
     "DUNOD-REEL-020",
     "DUNOD-REEL-021",
     "DUNOD-REEL-022",
-    "DUNOD-REEL-023",
     "DUNOD-REEL-024",
     "DUNOD-REEL-025",
     "DUNOD-REEL-026",
@@ -9806,7 +9781,6 @@
     "LOT2-0062",
     "LOT2-0067",
     "LOT2-0071",
-    "LOT2-0072",
     "LOT2-0073",
     "LOT2-0074",
     "LOT2-0075",
@@ -9831,7 +9805,6 @@
     "LOT2-0105",
     "LOT2-0110",
     "LOT2-0113",
-    "LOT2-0115",
     "LOT2-0117",
     "LOT2-0121",
     "LOT2-0129",
@@ -9864,15 +9837,22 @@
     { "calculId": "DUNOD-REEL-068", "parameterIds": ["x0", "y0"] },
     { "calculId": "DUNOD-REEL-069", "parameterIds": ["x0", "y0"] },
     { "calculId": "LOT3-0105", "parameterIds": ["bx"] },
+    { "calculId": "LOT4-0016", "parameterIds": ["alpha"] },
+    { "calculId": "LOT4-0018", "parameterIds": ["alpha"] },
     { "calculId": "DUNOD-REEL-006", "parameterIds": ["alpha", "beta"] },
+    { "calculId": "LOT4-0025", "parameterIds": ["alpha", "beta"] },
+    { "calculId": "LOT4-0030", "parameterIds": ["alpha", "beta"] },
+    { "calculId": "LOT4-0038", "parameterIds": ["alpha"] },
     { "calculId": "LOT2-0088", "parameterIds": ["kx"] },
     { "calculId": "EQI-F03-P03", "parameterIds": ["r", "s"] },
     { "calculId": "EQI-F04-P04", "parameterIds": ["k"] },
     { "calculId": "EQI-F05-P05", "parameterIds": ["k"] },
-    { "calculId": "EQI-F06-N04", "parameterIds": ["k"] },
+    { "calculId": "LOT5-0033", "parameterIds": ["theta"] },
     { "calculId": "LOT3-0016", "parameterIds": ["ax"] },
     { "calculId": "DUNOD-REEL-044", "parameterIds": ["a", "b"] },
     { "calculId": "DUNOD-REEL-045", "parameterIds": ["a", "u"] },
+    { "calculId": "LOT3-0032", "parameterIds": ["a", "b"] },
+    { "calculId": "LOT5-0085", "parameterIds": ["cm"] },
     { "calculId": "NUM-F01-F01", "parameterIds": ["a", "b"] },
     { "calculId": "NUM-F01-F02", "parameterIds": ["a", "b"] },
     { "calculId": "NUM-F01-F03", "parameterIds": ["a", "k"] },
@@ -9888,7 +9868,7 @@
     { "calculId": "NUM-F01-P03", "parameterIds": ["p", "q"] },
     { "calculId": "NUM-F01-P04", "parameterIds": ["r", "a"] },
     { "calculId": "NUM-F01-P05", "parameterIds": ["a", "b"] },
-    { "calculId": "NUM-F02-F01", "parameterIds": ["N", "d"] },
+    { "calculId": "NUM-F02-F01", "parameterIds": ["N"] },
     { "calculId": "NUM-F02-F02", "parameterIds": ["a", "b"] },
     { "calculId": "NUM-F02-F03", "parameterIds": ["d", "L", "U"] },
     { "calculId": "NUM-F02-F04", "parameterIds": ["a", "b", "c"] },
@@ -9918,11 +9898,6 @@
     { "calculId": "NUM-F03-N02", "parameterIds": ["a", "m", "n", "p"] },
     { "calculId": "NUM-F03-N03", "parameterIds": ["a", "t"] },
     { "calculId": "NUM-F03-N04", "parameterIds": ["a", "m", "n"] },
-    {
-      "calculId": "NUM-F03-N05",
-      "parameterIds": ["a", "c", "d", "e", "m", "n", "p"]
-    },
-    { "calculId": "NUM-F03-P01", "parameterIds": ["a", "m", "r"] },
     { "calculId": "NUM-F03-P02", "parameterIds": ["a", "m", "n"] },
     { "calculId": "NUM-F03-P03", "parameterIds": ["a", "n"] },
     { "calculId": "NUM-F03-P04", "parameterIds": ["a", "b", "m", "n", "p"] },
@@ -9964,7 +9939,13 @@
     { "calculId": "DUNOD-REEL-020", "parameterIds": ["omega", "alpha"] },
     { "calculId": "DUNOD-REEL-016", "parameterIds": ["alpha", "beta"] },
     { "calculId": "DUNOD-REEL-021", "parameterIds": ["k"] },
-    { "calculId": "DUNOD-REEL-022", "parameterIds": ["a", "b"] }
+    { "calculId": "DUNOD-REEL-022", "parameterIds": ["a", "b"] },
+    { "calculId": "AUTO6-0242", "parameterIds": ["base"] },
+    { "calculId": "AUTO6-0243", "parameterIds": ["base"] },
+    { "calculId": "AUTO6-0244", "parameterIds": ["base"] },
+    { "calculId": "AUTO6-0396", "parameterIds": ["base"] },
+    { "calculId": "AUTO6-0397", "parameterIds": ["base"] },
+    { "calculId": "AUTO6-0398", "parameterIds": ["base"] }
   ],
   "nonParameterizedGenerators": [
     "LOT1-0115",
@@ -44198,6 +44179,6 @@
       ]
     }
   ],
-  "generatedBundleBytes": 3045895,
+  "generatedBundleBytes": 3269632,
   "sourceBytes": 2862887
 }

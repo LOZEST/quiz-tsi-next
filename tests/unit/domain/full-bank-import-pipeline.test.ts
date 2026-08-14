@@ -289,10 +289,15 @@ describe('pipeline générique de banque complète', () => {
     );
   });
 
-  it('ne remplace que les accolades d’un paramètre déclaré', () => {
+  it('recognizes math even outside \\(...\\) delimiters, as the AUTOMATISME generators write it', () => {
     const compiled = compileContent('Calculer {a}+\\frac{1}{2}.', ['a']);
     expect(compiled.segments).toEqual([
-      { kind: 'text', value: 'Calculer @a+\\frac{1}{2}.' },
+      { kind: 'text', value: 'Calculer ' },
+      {
+        kind: 'inline-math',
+        math: { syntaxVersion: 1, source: '@a+(1)/(2)' },
+      },
+      { kind: 'text', value: '.' },
     ]);
   });
 
@@ -319,6 +324,8 @@ describe('pipeline générique de banque complète', () => {
       ['[-\\pi/2,\\pi/2]', '[-π/2;π/2]'],
       ['\\arcsin(x)', 'arcsin(x)'],
       ['\\arccos(1/k)', 'arccos(1/k)'],
+      ['\\ln\\!((x+k)/(x-k))', 'ln((x+k)/(x-k))'],
+      ['e^{(k·0.01)}', 'e^((k*0.01))'],
     ])('translates %s to %s', (source, expected) => {
       expect(translateLatexToGrammar(source)).toBe(expected);
     });
@@ -410,5 +417,99 @@ describe('pipeline générique de banque complète', () => {
     expect(compiled.segments).toEqual([
       { kind: 'text', value: '\\(g(f(@x))\\)' },
     ]);
+  });
+
+  describe('AUTOMATISME-style bare math (no \\(...\\) delimiters at all)', () => {
+    it('splits a bare f(x)= definition the same way as a delimited one', () => {
+      const compiled = compileContent(
+        "Donner l'ensemble de définition de f(x)=e^x.",
+        [],
+      );
+      expect(compiled.segments).toEqual([
+        { kind: 'text', value: "Donner l'ensemble de définition de " },
+        { kind: 'text', value: 'f(x) = ' },
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: 'e^x' } },
+        { kind: 'text', value: '.' },
+      ]);
+    });
+
+    it('extracts a trailing bare expression after a French lead-in verb', () => {
+      const compiled = compileContent('Résoudre x^2={q}.', ['q']);
+      expect(compiled.segments).toEqual([
+        { kind: 'text', value: 'Résoudre ' },
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x^2=@q' } },
+        { kind: 'text', value: '.' },
+      ]);
+    });
+
+    it('never chops a plain French word into single-letter "variables"', () => {
+      // "Calculer" is 8 unaccented Latin letters — every one of them a
+      // legal math identifier char — so only a dedicated guard stops
+      // insertImplicitMultiplication from reading it as c*a*l*c*u*l*e*r.
+      const compiled = compileContent('Calculer {a}\\cdot{t}+{b}.', [
+        'a',
+        't',
+        'b',
+      ]);
+      expect(compiled.segments).toEqual([
+        { kind: 'text', value: 'Calculer ' },
+        {
+          kind: 'inline-math',
+          math: { syntaxVersion: 1, source: '@a*@t+@b' },
+        },
+        { kind: 'text', value: '.' },
+      ]);
+    });
+
+    it('never misreads the French conjunction "et" as e*t', () => {
+      const compiled = compileContent('Comparer e^{t} et e^({t}+1).', ['t']);
+      const mathSources = compiled.segments
+        .filter((segment) => segment.kind === 'inline-math')
+        .map((segment) => segment.math.source);
+      expect(mathSources.some((source) => source.includes('e*t'))).toBe(false);
+    });
+
+    it('leaves an untranslatable bare expression exactly as-is', () => {
+      const compiled = compileContent('Résoudre x^2=-1.', []);
+      expect(compiled.structured).toBe(1);
+      const compiled2 = compileContent('Convertir {d}° en radians.', ['d']);
+      expect(compiled2.fallback).toBe(0);
+      expect(compiled2.structured).toBe(0);
+      expect(compiled2.segments).toEqual([
+        { kind: 'text', value: 'Convertir @d° en radians.' },
+      ]);
+    });
+
+    it('converts a formula clause even when a joined domain clause (set difference) cannot', () => {
+      const compiled = compileContent('S=(a*x+b)/x^2 ; D=R\\{0}.', ['a', 'b']);
+      expect(compiled.segments).toEqual([
+        {
+          kind: 'inline-math',
+          math: { syntaxVersion: 1, source: 'S=(@a*x+@b)/x^2' },
+        },
+        { kind: 'text', value: ' ; ' },
+        { kind: 'text', value: 'D=R\\{0}.' },
+      ]);
+    });
+
+    it('compiles each sentence of a multi-sentence bare prompt independently', () => {
+      const compiled = compileContent('Résoudre x^2={q}. Calculer {a}+{b}.', [
+        'q',
+        'a',
+        'b',
+      ]);
+      expect(compiled.structured).toBe(2);
+      expect(compiled.segments).toEqual([
+        { kind: 'text', value: 'Résoudre ' },
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x^2=@q' } },
+        { kind: 'text', value: '. ' },
+        { kind: 'text', value: 'Calculer ' },
+        {
+          kind: 'inline-math',
+          math: { syntaxVersion: 1, source: '@a+@b' },
+        },
+        { kind: 'text', value: '.' },
+      ]);
+    });
   });
 });
