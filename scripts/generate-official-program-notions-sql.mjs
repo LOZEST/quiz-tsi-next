@@ -8,7 +8,9 @@ const outputPath = process.argv[2]
   : null;
 
 const program = JSON.parse(await readFile(programPath, 'utf8'));
-const chaptersById = new Map(program.chapters.map((chapter) => [chapter.id, chapter]));
+const chaptersById = new Map(
+  program.chapters.map((chapter) => [chapter.id, chapter]),
+);
 
 const escape = (value) => value.replace(/'/g, "''");
 
@@ -16,7 +18,9 @@ const rows = program.notions
   .map((notion) => {
     const chapter = chaptersById.get(notion.chapterId);
     if (!chapter) {
-      throw new Error(`Notion "${notion.id}" references unknown chapter "${notion.chapterId}"`);
+      throw new Error(
+        `Notion "${notion.id}" references unknown chapter "${notion.chapterId}"`,
+      );
     }
     return {
       notionId: notion.id,
