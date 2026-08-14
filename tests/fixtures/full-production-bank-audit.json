@@ -99,46 +99,16 @@
       "fallback": 2
     },
     {
-      "calculId": "DUNOD-REEL-067",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "DUNOD-REEL-068",
       "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 2
     },
     {
-      "calculId": "DUNOD-REEL-068",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "DUNOD-REEL-069",
       "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 2
-    },
-    {
-      "calculId": "DUNOD-REEL-069",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-004",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-005",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-006",
@@ -154,19 +124,7 @@
     },
     {
       "calculId": "LOT2-0001",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0001",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0002",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -178,19 +136,7 @@
     },
     {
       "calculId": "LOT2-0003",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0003",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0004",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -202,31 +148,13 @@
     },
     {
       "calculId": "LOT2-0005",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0005",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0006",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0006",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0007",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -250,19 +178,7 @@
     },
     {
       "calculId": "LOT2-0009",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0009",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0010",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -274,19 +190,7 @@
     },
     {
       "calculId": "LOT2-0011",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0011",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0012",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -310,31 +214,13 @@
     },
     {
       "calculId": "LOT2-0014",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0014",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0015",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0015",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-025",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -352,12 +238,6 @@
     },
     {
       "calculId": "DUNOD-REEL-026",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-026",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
@@ -366,12 +246,6 @@
       "calculId": "DUNOD-REEL-026",
       "field": "Correction",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-027",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -388,19 +262,7 @@
     },
     {
       "calculId": "LOT2-0016",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0016",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0017",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -424,19 +286,7 @@
     },
     {
       "calculId": "LOT2-0019",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0019",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0020",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -448,152 +298,80 @@
     },
     {
       "calculId": "LOT2-0021",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0021",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0022",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0022",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0023",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0023",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0024",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0024",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0025",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0025",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0026",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0026",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0027",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0027",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0028",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0028",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0029",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0029",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0030",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0030",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0031",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0031",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0032",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0032",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-031",
       "field": "Enonce_parametrique",
       "structured": 1,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0022",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0023",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0024",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0025",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0026",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0027",
+      "field": "Reponse_generale",
+      "structured": 1,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0028",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0029",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0030",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0031",
+      "field": "Reponse_generale",
+      "structured": 0,
+      "fallback": 1
+    },
+    {
+      "calculId": "LOT2-0032",
+      "field": "Reponse_generale",
+      "structured": 0,
       "fallback": 1
     },
     {
@@ -610,19 +388,7 @@
     },
     {
       "calculId": "LOT2-0033",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0033",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0034",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -634,43 +400,19 @@
     },
     {
       "calculId": "LOT2-0035",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0035",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0036",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0036",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0037",
-      "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0037",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0038",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -682,19 +424,7 @@
     },
     {
       "calculId": "LOT2-0039",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0039",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0040",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -706,20 +436,8 @@
     },
     {
       "calculId": "LOT2-0041",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0041",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "DUNOD-REEL-028",
-      "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -731,8 +449,8 @@
     {
       "calculId": "DUNOD-REEL-029",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 2
+      "structured": 2,
+      "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-029",
@@ -743,12 +461,6 @@
     {
       "calculId": "DUNOD-REEL-029",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-030",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -772,19 +484,7 @@
     },
     {
       "calculId": "LOT2-0043",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0043",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0044",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -796,19 +496,7 @@
     },
     {
       "calculId": "LOT2-0045",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0045",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0046",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -820,19 +508,7 @@
     },
     {
       "calculId": "LOT2-0047",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0047",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0048",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -845,8 +521,8 @@
     {
       "calculId": "DUNOD-REEL-032",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-032",
@@ -862,20 +538,8 @@
     },
     {
       "calculId": "DUNOD-REEL-033",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-033",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-034",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -892,78 +556,18 @@
     },
     {
       "calculId": "LOT2-0049",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0049",
       "field": "Reponse_generale",
       "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0050",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0050",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0051",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0052",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0053",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0054",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0054",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0055",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0056",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0057",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0058",
       "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
@@ -975,18 +579,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0060",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0061",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT2-0061",
       "field": "Reponse_generale",
       "structured": 0,
@@ -994,31 +586,7 @@
     },
     {
       "calculId": "LOT2-0062",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0062",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0063",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0064",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0065",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1036,12 +604,6 @@
     },
     {
       "calculId": "LOT2-0072",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0073",
       "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
@@ -1108,55 +670,19 @@
     },
     {
       "calculId": "LOT2-0081",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0081",
       "field": "Reponse_generale",
       "structured": 2,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0082",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0082",
       "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0083",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0084",
-      "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0084",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0085",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0086",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1169,67 +695,19 @@
     {
       "calculId": "LOT2-0087",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT2-0087",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0088",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0089",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0090",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0091",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0092",
-      "field": "Enonce_parametrique",
       "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0093",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0094",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0095",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0096",
-      "field": "Enonce_parametrique",
-      "structured": 0,
       "fallback": 1
     },
     {
@@ -1240,31 +718,7 @@
     },
     {
       "calculId": "LOT2-0097",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0097",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0098",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0099",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0100",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1276,21 +730,9 @@
     },
     {
       "calculId": "LOT2-0101",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0101",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0102",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
     },
     {
       "calculId": "LOT2-0102",
@@ -1300,21 +742,9 @@
     },
     {
       "calculId": "LOT2-0103",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0103",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0104",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
     },
     {
       "calculId": "LOT2-0104",
@@ -1324,43 +754,7 @@
     },
     {
       "calculId": "LOT2-0105",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0105",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0106",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0107",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0108",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0109",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0110",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1372,20 +766,8 @@
     },
     {
       "calculId": "LOT1-0086",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0086",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0087",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -1396,20 +778,8 @@
     },
     {
       "calculId": "LOT1-0088",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0088",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0089",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -1420,20 +790,8 @@
     },
     {
       "calculId": "LOT1-0090",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0090",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0091",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -1444,19 +802,7 @@
     },
     {
       "calculId": "LOT1-0092",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0092",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0093",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1468,20 +814,8 @@
     },
     {
       "calculId": "LOT1-0094",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0094",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0095",
-      "field": "Enonce_parametrique",
-      "structured": 2,
       "fallback": 1
     },
     {
@@ -1492,19 +826,7 @@
     },
     {
       "calculId": "LOT1-0096",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0096",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0097",
-      "field": "Enonce_parametrique",
       "structured": 0,
       "fallback": 1
     },
@@ -1516,26 +838,8 @@
     },
     {
       "calculId": "LOT1-0098",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0098",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0099",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0100",
-      "field": "Enonce_parametrique",
-      "structured": 3,
       "fallback": 1
     },
     {
@@ -1547,8 +851,8 @@
     {
       "calculId": "LOT1-0101",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0101",
@@ -1559,8 +863,8 @@
     {
       "calculId": "LOT1-0102",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 2
+      "structured": 2,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0102",
@@ -1571,8 +875,8 @@
     {
       "calculId": "LOT1-0103",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0103",
@@ -1583,8 +887,8 @@
     {
       "calculId": "LOT1-0104",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 2
+      "structured": 2,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0104",
@@ -1679,32 +983,32 @@
     {
       "calculId": "LOT1-0131",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0132",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0133",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 4
+      "structured": 1,
+      "fallback": 3
     },
     {
       "calculId": "LOT1-0134",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0135",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-014",
@@ -1727,8 +1031,8 @@
     {
       "calculId": "LOT1-0136",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0136",
@@ -1739,20 +1043,14 @@
     {
       "calculId": "LOT1-0137",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0137",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 2,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0138",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0138",
@@ -1763,20 +1061,14 @@
     {
       "calculId": "LOT1-0139",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 4
+      "structured": 1,
+      "fallback": 3
     },
     {
       "calculId": "LOT1-0140",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0141",
-      "field": "Enonce_parametrique",
       "structured": 1,
-      "fallback": 1
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0141",
@@ -1787,19 +1079,13 @@
     {
       "calculId": "LOT1-0142",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0142",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0143",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -1811,91 +1097,49 @@
     {
       "calculId": "LOT1-0144",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0145",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0145",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 2,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0146",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0146",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 2,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0147",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0147",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 2,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0148",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 2,
+      "fallback": 1
     },
     {
-      "calculId": "LOT1-0148",
-      "field": "Reponse_generale",
+      "calculId": "LOT1-0149",
+      "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0149",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT1-0149",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 2
     },
     {
       "calculId": "LOT1-0150",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 4
-    },
-    {
-      "calculId": "LOT1-0151",
-      "field": "Enonce_parametrique",
-      "structured": 1,
+      "structured": 3,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0151",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0152",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -1907,44 +1151,26 @@
     {
       "calculId": "LOT1-0153",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 4
-    },
-    {
-      "calculId": "LOT1-0153",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 3,
       "fallback": 2
     },
     {
       "calculId": "LOT1-0154",
-      "field": "Enonce_parametrique",
-      "structured": 0,
+      "field": "Reponse_generale",
+      "structured": 3,
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0154",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 4
-    },
-    {
       "calculId": "LOT1-0155",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 4
-    },
-    {
-      "calculId": "LOT1-0155",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 2,
       "fallback": 2
     },
     {
       "calculId": "LOT1-0156",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 3
+      "structured": 2,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0156",
@@ -1955,43 +1181,13 @@
     {
       "calculId": "LOT1-0157",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0157",
-      "field": "Reponse_generale",
-      "structured": 1,
+      "structured": 3,
       "fallback": 1
     },
     {
       "calculId": "LOT1-0158",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 3
-    },
-    {
-      "calculId": "LOT1-0159",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0159",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-035",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-035",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 3,
       "fallback": 1
     },
     {
@@ -2002,62 +1198,14 @@
     },
     {
       "calculId": "DUNOD-REEL-036",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-036",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-036",
       "field": "Correction",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-037",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-037",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-038",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-038",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-039",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-039",
       "field": "hint",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-039",
-      "field": "Reponse_generale",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -2069,37 +1217,13 @@
     {
       "calculId": "DUNOD-REEL-040",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "DUNOD-REEL-040",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-042",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-042",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-043",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "DUNOD-REEL-043",
-      "field": "Reponse_generale",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -2134,12 +1258,6 @@
     },
     {
       "calculId": "DUNOD-REEL-060",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-060",
       "field": "Correction",
       "structured": 0,
       "fallback": 1
@@ -2147,12 +1265,6 @@
     {
       "calculId": "DUNOD-REEL-059",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-059",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -2184,18 +1296,6 @@
       "calculId": "LOT1-0004",
       "field": "Reponse_generale",
       "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0006",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0007",
-      "field": "Enonce_parametrique",
-      "structured": 2,
       "fallback": 1
     },
     {
@@ -2229,12 +1329,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0013",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT1-0014",
       "field": "Enonce_parametrique",
       "structured": 1,
@@ -2247,16 +1341,10 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0025",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT1-0027",
       "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 2
+      "structured": 2,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0032",
@@ -2303,8 +1391,8 @@
     {
       "calculId": "LOT1-0039",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 2
+      "structured": 1,
+      "fallback": 1
     },
     {
       "calculId": "LOT1-0040",
@@ -2337,27 +1425,9 @@
       "fallback": 2
     },
     {
-      "calculId": "LOT1-0048",
-      "field": "Enonce_parametrique",
-      "structured": 2,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT1-0049",
       "field": "Enonce_parametrique",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0050",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-065",
-      "field": "Enonce_parametrique",
-      "structured": 2,
       "fallback": 1
     },
     {
@@ -2373,135 +1443,15 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0053",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0053",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-051",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-051",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0054",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0054",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0056",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT1-0059",
       "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0060",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0061",
-      "field": "Enonce_parametrique",
-      "structured": 2,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0062",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-066",
-      "field": "Enonce_parametrique",
-      "structured": 2,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT1-0063",
       "field": "Enonce_parametrique",
       "structured": 2,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0063",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0065",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0066",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-057",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0067",
-      "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0068",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0069",
-      "field": "Enonce_parametrique",
-      "structured": 2,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0069",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT1-0070",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -2555,8 +1505,8 @@
     {
       "calculId": "LOT1-0085",
       "field": "Enonce_parametrique",
-      "structured": 3,
-      "fallback": 4
+      "structured": 5,
+      "fallback": 2
     },
     {
       "calculId": "LOT1-0085",
@@ -2565,20 +1515,8 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT1-0085",
-      "field": "Correction",
-      "structured": 3,
-      "fallback": 2
-    },
-    {
       "calculId": "DUNOD-REEL-015",
       "field": "Correction",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-024",
-      "field": "Enonce_parametrique",
       "structured": 1,
       "fallback": 1
     },
@@ -2811,93 +1749,9 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0185",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0186",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0187",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0188",
-      "field": "Enonce_parametrique",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT2-0189",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0190",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0191",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0192",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0193",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0194",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0195",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0196",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0197",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0198",
-      "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0199",
-      "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     }
   ],
@@ -10772,11 +9626,9 @@
       "exhaustive": true
     }
   ],
-  "mathSegmentsStructured": 800,
-  "mathSegmentsFallbackToText": 570,
+  "mathSegmentsStructured": 1053,
+  "mathSegmentsFallbackToText": 317,
   "fallbackCalculIds": [
-    "DUNOD-REEL-004",
-    "DUNOD-REEL-005",
     "DUNOD-REEL-006",
     "DUNOD-REEL-011",
     "DUNOD-REEL-013",
@@ -10801,34 +9653,24 @@
     "DUNOD-REEL-034",
     "DUNOD-REEL-035",
     "DUNOD-REEL-036",
-    "DUNOD-REEL-037",
-    "DUNOD-REEL-038",
     "DUNOD-REEL-039",
     "DUNOD-REEL-040",
-    "DUNOD-REEL-042",
     "DUNOD-REEL-043",
     "DUNOD-REEL-044",
     "DUNOD-REEL-045",
-    "DUNOD-REEL-051",
-    "DUNOD-REEL-057",
     "DUNOD-REEL-059",
     "DUNOD-REEL-060",
     "DUNOD-REEL-065",
-    "DUNOD-REEL-066",
     "DUNOD-REEL-067",
     "DUNOD-REEL-068",
     "DUNOD-REEL-069",
     "LOT1-0003",
     "LOT1-0004",
-    "LOT1-0006",
-    "LOT1-0007",
     "LOT1-0008",
     "LOT1-0009",
     "LOT1-0010",
     "LOT1-0012",
-    "LOT1-0013",
     "LOT1-0014",
-    "LOT1-0025",
     "LOT1-0027",
     "LOT1-0032",
     "LOT1-0033",
@@ -10840,23 +9682,9 @@
     "LOT1-0041",
     "LOT1-0043",
     "LOT1-0044",
-    "LOT1-0048",
     "LOT1-0049",
-    "LOT1-0050",
-    "LOT1-0053",
-    "LOT1-0054",
-    "LOT1-0056",
     "LOT1-0059",
-    "LOT1-0060",
-    "LOT1-0061",
-    "LOT1-0062",
     "LOT1-0063",
-    "LOT1-0065",
-    "LOT1-0066",
-    "LOT1-0067",
-    "LOT1-0068",
-    "LOT1-0069",
-    "LOT1-0070",
     "LOT1-0073",
     "LOT1-0077",
     "LOT1-0078",
@@ -10876,7 +9704,6 @@
     "LOT1-0096",
     "LOT1-0097",
     "LOT1-0098",
-    "LOT1-0099",
     "LOT1-0100",
     "LOT1-0101",
     "LOT1-0102",
@@ -10923,7 +9750,6 @@
     "LOT1-0156",
     "LOT1-0157",
     "LOT1-0158",
-    "LOT1-0159",
     "LOT2-0001",
     "LOT2-0002",
     "LOT2-0003",
@@ -10974,21 +9800,10 @@
     "LOT2-0048",
     "LOT2-0049",
     "LOT2-0050",
-    "LOT2-0051",
-    "LOT2-0052",
     "LOT2-0053",
-    "LOT2-0054",
-    "LOT2-0055",
-    "LOT2-0056",
-    "LOT2-0057",
-    "LOT2-0058",
     "LOT2-0059",
-    "LOT2-0060",
     "LOT2-0061",
     "LOT2-0062",
-    "LOT2-0063",
-    "LOT2-0064",
-    "LOT2-0065",
     "LOT2-0067",
     "LOT2-0071",
     "LOT2-0072",
@@ -11002,33 +9817,18 @@
     "LOT2-0080",
     "LOT2-0081",
     "LOT2-0082",
-    "LOT2-0083",
     "LOT2-0084",
-    "LOT2-0085",
     "LOT2-0086",
     "LOT2-0087",
-    "LOT2-0088",
     "LOT2-0089",
-    "LOT2-0090",
-    "LOT2-0091",
-    "LOT2-0092",
-    "LOT2-0093",
-    "LOT2-0094",
-    "LOT2-0095",
     "LOT2-0096",
     "LOT2-0097",
-    "LOT2-0098",
-    "LOT2-0099",
     "LOT2-0100",
     "LOT2-0101",
     "LOT2-0102",
     "LOT2-0103",
     "LOT2-0104",
     "LOT2-0105",
-    "LOT2-0106",
-    "LOT2-0107",
-    "LOT2-0108",
-    "LOT2-0109",
     "LOT2-0110",
     "LOT2-0113",
     "LOT2-0115",
@@ -11054,21 +9854,7 @@
     "LOT2-0171",
     "LOT2-0178",
     "LOT2-0183",
-    "LOT2-0185",
-    "LOT2-0186",
-    "LOT2-0187",
-    "LOT2-0188",
-    "LOT2-0189",
-    "LOT2-0190",
-    "LOT2-0191",
-    "LOT2-0192",
-    "LOT2-0193",
-    "LOT2-0194",
-    "LOT2-0195",
-    "LOT2-0196",
-    "LOT2-0197",
-    "LOT2-0198",
-    "LOT2-0199"
+    "LOT2-0189"
   ],
   "appendedParameterDeclarations": [
     { "calculId": "LOT5-0280", "parameterIds": ["a", "b"] },
@@ -11078,24 +9864,13 @@
     { "calculId": "DUNOD-REEL-068", "parameterIds": ["x0", "y0"] },
     { "calculId": "DUNOD-REEL-069", "parameterIds": ["x0", "y0"] },
     { "calculId": "LOT3-0105", "parameterIds": ["bx"] },
-    { "calculId": "DUNOD-REEL-004", "parameterIds": ["b"] },
     { "calculId": "DUNOD-REEL-006", "parameterIds": ["alpha", "beta"] },
-    { "calculId": "DUNOD-REEL-025", "parameterIds": ["a", "b", "d"] },
-    { "calculId": "DUNOD-REEL-026", "parameterIds": ["a", "b", "k"] },
-    { "calculId": "DUNOD-REEL-027", "parameterIds": ["a", "b"] },
-    { "calculId": "DUNOD-REEL-031", "parameterIds": ["a"] },
-    { "calculId": "DUNOD-REEL-028", "parameterIds": ["a", "b"] },
-    { "calculId": "DUNOD-REEL-030", "parameterIds": ["b"] },
-    { "calculId": "DUNOD-REEL-033", "parameterIds": ["m"] },
     { "calculId": "LOT2-0088", "parameterIds": ["kx"] },
     { "calculId": "EQI-F03-P03", "parameterIds": ["r", "s"] },
     { "calculId": "EQI-F04-P04", "parameterIds": ["k"] },
     { "calculId": "EQI-F05-P05", "parameterIds": ["k"] },
     { "calculId": "EQI-F06-N04", "parameterIds": ["k"] },
-    { "calculId": "DUNOD-REEL-037", "parameterIds": ["a"] },
-    { "calculId": "DUNOD-REEL-038", "parameterIds": ["a", "k"] },
     { "calculId": "LOT3-0016", "parameterIds": ["ax"] },
-    { "calculId": "DUNOD-REEL-043", "parameterIds": ["a", "b"] },
     { "calculId": "DUNOD-REEL-044", "parameterIds": ["a", "b"] },
     { "calculId": "DUNOD-REEL-045", "parameterIds": ["a", "u"] },
     { "calculId": "NUM-F01-F01", "parameterIds": ["a", "b"] },
@@ -11183,8 +9958,8 @@
     { "calculId": "LOT1-0022", "parameterIds": ["n"] },
     { "calculId": "DUNOD-REEL-064", "parameterIds": ["u0", "n"] },
     { "calculId": "DUNOD-REEL-065", "parameterIds": ["u0"] },
-    { "calculId": "DUNOD-REEL-051", "parameterIds": ["a"] },
     { "calculId": "DUNOD-REEL-066", "parameterIds": ["u0"] },
+    { "calculId": "DUNOD-REEL-024", "parameterIds": ["alpha"] },
     { "calculId": "DUNOD-REEL-019", "parameterIds": ["alpha"] },
     { "calculId": "DUNOD-REEL-020", "parameterIds": ["omega", "alpha"] },
     { "calculId": "DUNOD-REEL-016", "parameterIds": ["alpha", "beta"] },
@@ -45423,6 +44198,6 @@
       ]
     }
   ],
-  "generatedBundleBytes": 3033117,
+  "generatedBundleBytes": 3045895,
   "sourceBytes": 2862887
 }

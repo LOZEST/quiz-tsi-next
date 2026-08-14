@@ -85,4 +85,7 @@ export type MathFunctionName =
   | 'cos'
   | 'tan'
   | 'ln'
-  | 'exp';
+  | 'exp'
+  | 'arcsin'
+  | 'arccos'
+  | 'arctan';

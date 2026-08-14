@@ -10,7 +10,19 @@ const MATHBB_COMMAND = /^\\mathbb\{([A-Za-z])\}/;
 const MATHBB_BARE_COMMAND = /^\\mathbb\s*([A-Za-z])/;
 const MATHBB_GLYPHS = { N: 'ℕ', Z: 'ℤ', Q: 'ℚ', R: 'ℝ', C: 'ℂ' };
 
-const FUNCTION_NAMES = ['sqrt', 'abs', 'vec', 'sin', 'cos', 'tan', 'ln', 'exp'];
+const FUNCTION_NAMES = [
+  'sqrt',
+  'abs',
+  'vec',
+  'sin',
+  'cos',
+  'tan',
+  'ln',
+  'exp',
+  'arcsin',
+  'arccos',
+  'arctan',
+];
 const functionBraceRegex = new RegExp(`^\\\\(${FUNCTION_NAMES.join('|')})\\{`);
 const functionBarRegex = new RegExp(`^\\\\(${FUNCTION_NAMES.join('|')})\\|`);
 const functionParenRegex = new RegExp(
@@ -41,6 +53,8 @@ const SIMPLE_SYMBOLS = [
   ['\\exists', '∃'],
   ['\\cdot', '*'],
   ['\\times', '*'],
+  ['\\sum', '∑'],
+  ['\\prod', '∏'],
   ['\\neq', '≠'],
   ['\\ne', '≠'],
   ['\\geq', '≥'],
@@ -284,7 +298,19 @@ function nextNonSpace(str, fromIndex) {
  * could itself contain (unlike a sentinel/placeholder scheme, which a
  * literal space in the input — e.g. "\cdot a" — would corrupt).
  */
-export function insertImplicitMultiplication(source) {
+export function insertImplicitMultiplication(source, parameterIds = []) {
+  // A declared parameter ("a" in "a(x-x0)") is confidently a coefficient,
+  // never a function name, so it's exempt from the letterThenParen
+  // exclusion below — matched longest-first so e.g. "alpha" isn't cut
+  // short by a shorter unrelated id.
+  const parameterHeadAt = parameterIds.length
+    ? new RegExp(
+        `^(${[...parameterIds]
+          .sort((a, b) => b.length - a.length)
+          .map((id) => id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          .join('|')})(?![A-Za-z0-9_])(?=\\()`,
+      )
+    : null;
   let out = '';
   let index = 0;
   while (index < source.length) {
@@ -294,6 +320,15 @@ export function insertImplicitMultiplication(source) {
       if (previous !== undefined && boundaryChar.test(previous)) out += '*';
       out += functionHead[1];
       index += functionHead[1].length;
+      continue;
+    }
+
+    const parameterHead = parameterHeadAt?.exec(source.slice(index));
+    if (parameterHead) {
+      const previous = lastNonSpace(out);
+      if (previous !== undefined && boundaryChar.test(previous)) out += '*';
+      out += `${parameterHead[1]}*`;
+      index += parameterHead[1].length;
       continue;
     }
 
@@ -309,7 +344,9 @@ export function insertImplicitMultiplication(source) {
       // "f(" / "u(" reads as a function application (f(x) = …), not a
       // multiplication — this grammar has no user-defined functions, so
       // leaving it alone means it correctly fails to parse and falls back
-      // to text instead of silently becoming "f * (x)".
+      // to text instead of silently becoming "f * (x)". A declared
+      // parameter immediately before "(" is handled above instead, since
+      // that case is never ambiguous.
       const letterThenParen = letterChar.test(current) && next === '(';
       if (
         boundaryChar.test(current) &&
@@ -363,6 +400,65 @@ function canUseMathSource(source) {
   );
 }
 
+// "f(x)=…" / "(g\circ h)(x)=…": this grammar has no user-defined functions
+// or function composition (see insertImplicitMultiplication above), so the
+// whole span would otherwise fall back to raw LaTeX text just because of
+// this prefix, even when the right-hand side is perfectly translatable on
+// its own. Splitting off the label as plain text and compiling only the
+// remainder lets the definition read naturally while still rendering the
+// actual formula.
+const namedFunctionDefinition =
+  /^([A-Za-z](?:_[A-Za-z0-9]+)?)\(([A-Za-z])\)\s*=\s*(.+)$/su;
+const compositionDefinition =
+  /^\(([A-Za-z](?:\\circ ?[A-Za-z])+)\)\(([A-Za-z])\)\s*=\s*(.+)$/su;
+
+function extractDefinitionLabel(rawMath) {
+  const composition = compositionDefinition.exec(rawMath);
+  if (composition) {
+    const [, chain, variable, rest] = composition;
+    return [`(${chain.replace(/\\circ ?/g, '∘')})(${variable}) = `, rest];
+  }
+  const named = namedFunctionDefinition.exec(rawMath);
+  if (named) {
+    const [, name, variable, rest] = named;
+    return [`${name}(${variable}) = `, rest];
+  }
+  return null;
+}
+
+function compileMathSpan(rawMath, isDisplay, parameterIds) {
+  const translated = insertImplicitMultiplication(
+    translateLatexToGrammar(rawMath),
+    parameterIds,
+  );
+  const compiled = replaceMathIdentifiers(translated, parameterIds);
+  if (canUseMathSource(compiled)) {
+    return {
+      segments: [
+        {
+          kind: isDisplay ? 'display-math' : 'inline-math',
+          math: { syntaxVersion: 1, source: compiled },
+        },
+      ],
+      structured: 1,
+      fallback: 0,
+    };
+  }
+  const fallbackCompiled = replaceMathIdentifiers(rawMath, parameterIds);
+  return {
+    segments: [
+      {
+        kind: 'text',
+        value: `${isDisplay ? '\\[' : '\\('}${fallbackCompiled}${
+          isDisplay ? '\\]' : '\\)'
+        }`,
+      },
+    ],
+    structured: 0,
+    fallback: 1,
+  };
+}
+
 export function compileContent(source, parameterIds) {
   const segments = [];
   let cursor = 0;
@@ -379,25 +475,20 @@ export function compileContent(source, parameterIds) {
         ),
       });
     const rawMath = match[1] ?? match[2] ?? '';
-    const translated = insertImplicitMultiplication(
-      translateLatexToGrammar(rawMath),
-    );
-    const compiled = replaceMathIdentifiers(translated, parameterIds);
-    if (canUseMathSource(compiled)) {
-      segments.push({
-        kind: match[2] === undefined ? 'inline-math' : 'display-math',
-        math: { syntaxVersion: 1, source: compiled },
-      });
-      structured += 1;
+    const isDisplay = match[2] !== undefined;
+    const definition = extractDefinitionLabel(rawMath);
+    if (definition) {
+      const [label, rest] = definition;
+      segments.push({ kind: 'text', value: label });
+      const compiled = compileMathSpan(rest, isDisplay, parameterIds);
+      segments.push(...compiled.segments);
+      structured += compiled.structured;
+      fallback += compiled.fallback;
     } else {
-      const fallbackCompiled = replaceMathIdentifiers(rawMath, parameterIds);
-      segments.push({
-        kind: 'text',
-        value: `${match[2] === undefined ? '\\(' : '\\['}${fallbackCompiled}${
-          match[2] === undefined ? '\\)' : '\\]'
-        }`,
-      });
-      fallback += 1;
+      const compiled = compileMathSpan(rawMath, isDisplay, parameterIds);
+      segments.push(...compiled.segments);
+      structured += compiled.structured;
+      fallback += compiled.fallback;
     }
     cursor = start + match[0].length;
   }

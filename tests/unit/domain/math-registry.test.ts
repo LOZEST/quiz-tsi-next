@@ -25,6 +25,9 @@ describe('MathSyntaxRegistry V1', () => {
       'tan',
       'ln',
       'exp',
+      'arcsin',
+      'arccos',
+      'arctan',
     ]);
   });
 
