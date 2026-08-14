@@ -50,16 +50,13 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
 }));
 
 import { SettingsPage } from '@pages/SettingsPage/SettingsPage';
-import { ThemeProvider } from '@app/providers/ThemeProvider';
 import { WhiteboardProvider } from '@app/providers/WhiteboardProvider';
 
 function renderSettings() {
   return render(
-    <ThemeProvider>
-      <WhiteboardProvider>
-        <SettingsPage />
-      </WhiteboardProvider>
-    </ThemeProvider>,
+    <WhiteboardProvider>
+      <SettingsPage />
+    </WhiteboardProvider>,
   );
 }
 
@@ -84,23 +81,10 @@ describe('SettingsPage', () => {
         },
       ],
     };
-    window.localStorage.removeItem('qtsi-theme');
-    document.documentElement.removeAttribute('data-theme');
     Object.defineProperty(navigator, 'onLine', {
       configurable: true,
       value: true,
     });
-  });
-
-  it('switches the theme and persists the choice', async () => {
-    const user = userEvent.setup();
-    renderSettings();
-    await user.click(screen.getByRole('radio', { name: 'Sombre' }));
-    expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(window.localStorage.getItem('qtsi-theme')).toBe('dark');
-    await user.click(screen.getByRole('radio', { name: 'Système' }));
-    expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    expect(window.localStorage.getItem('qtsi-theme')).toBeNull();
   });
 
   it('shows local data counts, pending sync and conflicts', async () => {

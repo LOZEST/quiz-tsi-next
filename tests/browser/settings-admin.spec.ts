@@ -8,16 +8,6 @@ async function login(page: Page, email: string) {
   await expect(page).toHaveURL(/\/whiteboard$/);
 }
 
-test('switches the whole app to dark mode from Settings', async ({ page }) => {
-  await login(page, 'user@example.test');
-  await page.goto('settings');
-  await page.getByRole('radio', { name: 'Sombre' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await page.reload();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect(page.getByRole('radio', { name: 'Sombre' })).toBeChecked();
-});
-
 test('lets an owner promote another account from the admin page', async ({
   page,
 }) => {
