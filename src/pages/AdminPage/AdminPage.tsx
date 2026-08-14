@@ -8,6 +8,14 @@ import { userRoleLabels, userRoles } from '@domain/auth/UserRole';
 import type { ManagedAccount } from '@domain/account/AccountManagementGateway';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
+import {
+  questionReportReasonLabels,
+  questionReportStatuses,
+  questionReportStatusLabels,
+  type QuestionReport,
+  type QuestionReportStatus,
+} from '@domain/questions/QuestionReport';
+import styles from './AdminPage.module.css';
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
   questions: [],
@@ -187,6 +195,169 @@ function ContentPanel({ userId }: { userId: string }) {
   );
 }
 
+const reportStatusFilters = ['all', ...questionReportStatuses] as const;
+type ReportStatusFilter = (typeof reportStatusFilters)[number];
+const reportStatusFilterLabels: Record<ReportStatusFilter, string> = {
+  all: 'Tous les statuts',
+  ...questionReportStatusLabels,
+};
+
+function formatReportsForAi(reports: readonly QuestionReport[]): string {
+  return reports
+    .map((report) => {
+      const lines = [
+        `Question ${report.questionId} (version ${report.questionVersion})`,
+        `Motif : ${questionReportReasonLabels[report.reason]}`,
+        `Remarque : ${report.comment ?? 'Aucune remarque'}`,
+      ];
+      return lines.join('\n');
+    })
+    .join('\n\n');
+}
+
+function ReportsPanel() {
+  const { questionReportGateway } = useAppServices();
+  const [reports, setReports] = useState<readonly QuestionReport[] | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [pendingReportId, setPendingReportId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ReportStatusFilter>('all');
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'error'>(
+    'idle',
+  );
+
+  const reload = () => {
+    questionReportGateway
+      .listReports()
+      .then(setReports)
+      .catch(() => setError('Les signalements n’ont pas pu être chargés.'));
+  };
+  useEffect(reload, [questionReportGateway]);
+
+  const changeStatus = async (
+    reportId: string,
+    status: QuestionReportStatus,
+  ) => {
+    setPendingReportId(reportId);
+    setError(null);
+    try {
+      await questionReportGateway.setReportStatus(reportId, status);
+      reload();
+    } catch {
+      setError('Le statut du signalement n’a pas pu être modifié.');
+    } finally {
+      setPendingReportId(null);
+    }
+  };
+
+  const filteredReports = (reports ?? []).filter(
+    (report) => statusFilter === 'all' || report.status === statusFilter,
+  );
+
+  const copyForAi = async () => {
+    setCopyState('idle');
+    try {
+      await navigator.clipboard.writeText(formatReportsForAi(filteredReports));
+      setCopyState('copied');
+    } catch {
+      setCopyState('error');
+    }
+  };
+
+  return (
+    <Surface>
+      <h2>Signalements</h2>
+      {error ? <p role="alert">{error}</p> : null}
+      {reports !== null && reports.length > 0 ? (
+        <div className={styles.reportsToolbar}>
+          <label>
+            Filtrer par statut
+            <select
+              value={statusFilter}
+              onChange={(event) =>
+                setStatusFilter(event.target.value as ReportStatusFilter)
+              }
+            >
+              {reportStatusFilters.map((filter) => (
+                <option key={filter} value={filter}>
+                  {reportStatusFilterLabels[filter]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={filteredReports.length === 0}
+            onClick={() => void copyForAi()}
+          >
+            Copier pour l’IA
+          </Button>
+          {copyState === 'copied' ? (
+            <span role="status">Copié dans le presse-papiers.</span>
+          ) : null}
+          {copyState === 'error' ? (
+            <span role="alert">La copie a échoué.</span>
+          ) : null}
+        </div>
+      ) : null}
+      {reports === null ? (
+        <p>Chargement des signalements…</p>
+      ) : reports.length === 0 ? (
+        <p>Aucun signalement pour le moment.</p>
+      ) : filteredReports.length === 0 ? (
+        <p>Aucun signalement pour ce statut.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Question</th>
+              <th scope="col">Motif</th>
+              <th scope="col">Remarque</th>
+              <th scope="col">Signalé par</th>
+              <th scope="col">Date</th>
+              <th scope="col">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredReports.map((report) => (
+              <tr key={report.id}>
+                <td>
+                  {report.questionId.slice(0, 8)} · v{report.questionVersion}
+                </td>
+                <td>{questionReportReasonLabels[report.reason]}</td>
+                <td>{report.comment ?? '—'}</td>
+                <td>{report.reporterEmail}</td>
+                <td>{new Date(report.createdAt).toLocaleString('fr-FR')}</td>
+                <td>
+                  <select
+                    aria-label={`Statut du signalement ${report.id}`}
+                    value={report.status}
+                    disabled={pendingReportId === report.id}
+                    onChange={(event) =>
+                      void changeStatus(
+                        report.id,
+                        event.target.value as QuestionReportStatus,
+                      )
+                    }
+                  >
+                    {questionReportStatuses.map((status) => (
+                      <option key={status} value={status}>
+                        {questionReportStatusLabels[status]}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Surface>
+  );
+}
+
 export function AdminPage() {
   const { state } = useAuth();
   if (state.status !== 'authenticated') return null;
@@ -199,6 +370,7 @@ export function AdminPage() {
       />
       <AccountsPanel currentUserId={userId} />
       <ContentPanel userId={userId} />
+      <ReportsPanel />
     </>
   );
 }

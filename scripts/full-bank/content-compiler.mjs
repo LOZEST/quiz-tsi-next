@@ -4,6 +4,13 @@ const delimiters = /\\\((.*?)\\\)|\\\[(.*?)\\\]/gs;
 
 const SPACING_COMMANDS =
   /^\\(left|right|displaystyle|!|,|;|:|quad|qquad|mathrm|operatorname)/;
+// Same set, but global and unanchored: purely typographic spacing commands
+// (\ln\!(...), a\,b) are safe to elide wherever they land, including right
+// between a function name and its argument — where the main per-position
+// scan below never gets a chance to strip them, since \ln is consumed as
+// one atomic token before \! is ever reached.
+const SPACING_COMMANDS_ANYWHERE =
+  /\\(left|right|displaystyle|!|,|;|:|quad|qquad|mathrm|operatorname)/g;
 
 const FRACTION_COMMANDS = /^\\(dfrac|frac|tfrac)/;
 const MATHBB_COMMAND = /^\\mathbb\{([A-Za-z])\}/;
@@ -134,7 +141,9 @@ const intervalComma = /([[\]])([^[\]{}()]*),([^[\]{}()]*)([[\]])/g;
  * this never trades a safe fallback for a guessed-wrong formula.
  */
 export function translateLatexToGrammar(rawSource) {
-  const source = rawSource.replace(intervalComma, '$1$2;$3$4');
+  const source = rawSource
+    .replace(SPACING_COMMANDS_ANYWHERE, '')
+    .replace(intervalComma, '$1$2;$3$4');
   let out = '';
   let index = 0;
   while (index < source.length) {
@@ -231,6 +240,15 @@ export function translateLatexToGrammar(rawSource) {
       }
     }
     if (matchedSymbol) continue;
+
+    // The bare Unicode middle dot ("·", U+00B7) is used as a multiplication
+    // sign throughout the source outside of \(...\) LaTeX spans too — this
+    // is not a backslash command, so SIMPLE_SYMBOLS above never sees it.
+    if (source[index] === '·') {
+      out += '*';
+      index += 1;
+      continue;
+    }
 
     if (source[index] === '|') {
       const barEnd = source.indexOf('|', index + 1);
@@ -459,6 +477,187 @@ function compileMathSpan(rawMath, isDisplay, parameterIds) {
   };
 }
 
+// About a quarter of the bank (the AUTOMATISME/"reflex" generators) never
+// wraps its formulas in \(...\) at all — "Calculer {a}\cdot{t}+{b}." rather
+// than "Calculer \({a}\cdot{t}+{b}\)". compileContent's delimiter loop above
+// never sees these, so they'd otherwise show the raw grammar-ish source
+// (asterisks, backslashes and all) verbatim.
+//
+// canUseMathSource's parse check alone isn't a safe enough net here: an
+// unaccented French word ("Calculer", "dans") has no character this
+// grammar's tokenizer rejects, and insertImplicitMultiplication would
+// happily chop it into single-letter "variables" ("Calculer" ->
+// "C*a*l*c*u*l*e*r*…") that then parse as bogus-but-valid math. So a
+// candidate is rejected outright if it contains a run of 3+ plain Latin
+// letters that isn't a recognized function name or a declared parameter —
+// genuine math in this dataset never chains that many bare letters
+// without an operator, a digit, or a backslash between them.
+const mathSignal = /[0-9{}\\^√±@]/;
+// Not preceded by "\": a run right after a backslash is a LaTeX command
+// name (cdot, circ, left…), not a bare word, and is handled elsewhere.
+// Matches either a whole "\command" (group 1, always ignored below — it's
+// a LaTeX command name, not a word) or a bare letter run (group 2, the one
+// actually checked). A lookbehind alone isn't enough here: it only blocks a
+// match from starting right after "\", so "\cdot" would still leave "dot"
+// matchable as its own run starting at the second letter.
+const commandOrLetterRun = /\\[A-Za-z]+|([A-Za-z]+)/g;
+const namedFunctionOrCompositionSearch =
+  /(?:\(([A-Za-z](?:\\circ ?[A-Za-z])+)\)\(([A-Za-z])\)|([A-Za-z](?:_[A-Za-z0-9]+)?)\(([A-Za-z])\))\s*=\s*/su;
+
+// Short French connector words this dataset's prose actually uses as
+// standalone tokens ("e^{t} et e^({t}+1)") — a 3-letter threshold alone
+// would let "et", "ou", "un"… through as bogus 1-letter-variable products.
+const FRENCH_STOPWORDS = new Set([
+  'et',
+  'ou',
+  'de',
+  'du',
+  'un',
+  'une',
+  'la',
+  'le',
+  'les',
+  'des',
+  'en',
+  'sur',
+  'par',
+  'or',
+  'ni',
+  'au',
+  'aux',
+  'à',
+  'est',
+  'on',
+  'ne',
+  'si',
+]);
+
+function hasUnrecognizedWord(candidate, parameterIds) {
+  const known = new Set([...FUNCTION_NAMES, ...parameterIds]);
+  for (const match of candidate.matchAll(commandOrLetterRun)) {
+    const word = match[1];
+    if (word === undefined || known.has(word)) continue;
+    if (word.length > 2) return true;
+    if (FRENCH_STOPWORDS.has(word.toLowerCase())) return true;
+  }
+  return false;
+}
+
+function tryBareCandidate(candidate, parameterIds) {
+  if (!mathSignal.test(candidate)) return null;
+  if (hasUnrecognizedWord(candidate, parameterIds)) return null;
+  const translated = insertImplicitMultiplication(
+    translateLatexToGrammar(candidate),
+    parameterIds,
+  );
+  const compiled = replaceMathIdentifiers(translated, parameterIds);
+  return canUseMathSource(compiled) ? compiled : null;
+}
+
+function longestValidTrailingMath(text, parameterIds) {
+  const starts = [0];
+  for (let index = 0; index < text.length; index += 1)
+    if (text[index] === ' ') starts.push(index + 1);
+  for (const start of starts) {
+    const compiled = tryBareCandidate(text.slice(start), parameterIds);
+    if (compiled !== null) return [text.slice(0, start), compiled];
+  }
+  return null;
+}
+
+// "S=(ax+b)/x² ; D=R\{0}." pairs a formula with a domain clause this
+// grammar can't express (set difference). Splitting on " ; " first lets
+// the formula still convert even though the domain clause never will.
+// Splits bare (non-\(...\)) text into independently-compilable clauses on
+// " ; " and on a sentence-ending ". " followed by a capital letter (never
+// inside a decimal like "0.01", which has no space after the digits) —
+// "La droite fournie est y=ax+b. Trouver x pour y=7." has two unrelated
+// formulas that would otherwise have to validate as a single, unparseable
+// two-sentence blob.
+const bareClauseSeparator = /( ; |\.\s+(?=[A-ZÀ-Ý]))/;
+
+function compileBareText(rawText, parameterIds) {
+  const parts = rawText.split(bareClauseSeparator);
+  if (parts.length === 1) return compileBareClause(rawText, parameterIds);
+  const segments = [];
+  let structured = 0;
+  let fallback = 0;
+  for (const part of parts) {
+    if (part === ' ; ' || /^\.\s+$/.test(part)) {
+      segments.push({ kind: 'text', value: part });
+      continue;
+    }
+    const compiled = compileBareClause(part, parameterIds);
+    segments.push(...compiled.segments);
+    structured += compiled.structured;
+    fallback += compiled.fallback;
+  }
+  return { segments, structured, fallback };
+}
+
+function compileBareClause(rawText, parameterIds) {
+  const trailingPeriod = /[.]\s*$/.exec(rawText);
+  const body = trailingPeriod
+    ? rawText.slice(0, trailingPeriod.index)
+    : rawText;
+  const suffix = trailingPeriod ? trailingPeriod[0] : '';
+
+  const definitionMatch = namedFunctionOrCompositionSearch.exec(body);
+  if (definitionMatch) {
+    const [, chain, compVar, name, fnVar] = definitionMatch;
+    const label =
+      chain !== undefined
+        ? `(${chain.replace(/\\circ ?/g, '∘')})(${compVar}) = `
+        : `${name}(${fnVar}) = `;
+    const rest = body.slice(definitionMatch.index + definitionMatch[0].length);
+    const compiled = tryBareCandidate(rest, parameterIds);
+    if (compiled !== null) {
+      const segments = [];
+      const prefix = body.slice(0, definitionMatch.index);
+      if (prefix)
+        segments.push({
+          kind: 'text',
+          value: replaceDeclaredPlaceholders(prefix, parameterIds),
+        });
+      segments.push({ kind: 'text', value: label });
+      segments.push({
+        kind: 'inline-math',
+        math: { syntaxVersion: 1, source: compiled },
+      });
+      if (suffix) segments.push({ kind: 'text', value: suffix });
+      return { segments, structured: 1, fallback: 0 };
+    }
+  }
+
+  const trailing = longestValidTrailingMath(body, parameterIds);
+  if (trailing) {
+    const [prefix, compiled] = trailing;
+    const segments = [];
+    if (prefix)
+      segments.push({
+        kind: 'text',
+        value: replaceDeclaredPlaceholders(prefix, parameterIds),
+      });
+    segments.push({
+      kind: 'inline-math',
+      math: { syntaxVersion: 1, source: compiled },
+    });
+    if (suffix) segments.push({ kind: 'text', value: suffix });
+    return { segments, structured: 1, fallback: 0 };
+  }
+
+  return {
+    segments: [
+      {
+        kind: 'text',
+        value: replaceDeclaredPlaceholders(rawText, parameterIds),
+      },
+    ],
+    structured: 0,
+    fallback: 0,
+  };
+}
+
 export function compileContent(source, parameterIds) {
   const segments = [];
   let cursor = 0;
@@ -466,14 +665,12 @@ export function compileContent(source, parameterIds) {
   let fallback = 0;
   for (const match of source.matchAll(delimiters)) {
     const start = match.index;
-    if (start > cursor)
-      segments.push({
-        kind: 'text',
-        value: replaceDeclaredPlaceholders(
-          source.slice(cursor, start),
-          parameterIds,
-        ),
-      });
+    if (start > cursor) {
+      const bare = compileBareText(source.slice(cursor, start), parameterIds);
+      segments.push(...bare.segments);
+      structured += bare.structured;
+      fallback += bare.fallback;
+    }
     const rawMath = match[1] ?? match[2] ?? '';
     const isDisplay = match[2] !== undefined;
     const definition = extractDefinitionLabel(rawMath);
@@ -492,10 +689,11 @@ export function compileContent(source, parameterIds) {
     }
     cursor = start + match[0].length;
   }
-  if (cursor < source.length || segments.length === 0)
-    segments.push({
-      kind: 'text',
-      value: replaceDeclaredPlaceholders(source.slice(cursor), parameterIds),
-    });
+  if (cursor < source.length || segments.length === 0) {
+    const bare = compileBareText(source.slice(cursor), parameterIds);
+    segments.push(...bare.segments);
+    structured += bare.structured;
+    fallback += bare.fallback;
+  }
   return { segments, structured, fallback };
 }
