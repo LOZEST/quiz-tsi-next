@@ -1,8 +1,11 @@
 import type {
   WhiteboardObject,
   WhiteboardScene,
+  WhiteboardStroke,
 } from '@domain/whiteboard/WhiteboardScene';
 import { GridRenderer } from './GridRenderer';
+import { drawStrokeOutline, strokeOutline } from './strokeOutline';
+import type { Vec2 } from 'perfect-freehand';
 import {
   resizeHandlePosition,
   rotationHandlePosition,
@@ -13,6 +16,7 @@ import {
 export class CanvasRenderer {
   private frame: number | null = null;
   private selectedShapeId: string | null = null;
+  private strokeOutlineCache = new WeakMap<WhiteboardStroke, Vec2[]>();
   constructor(
     private readonly canvas: HTMLCanvasElement,
     private readonly grid = new GridRenderer(),
@@ -152,31 +156,31 @@ export class CanvasRenderer {
         this.drawSelection(context, object);
       return;
     }
+    if (!object.points.length) return;
     context.save();
-    context.strokeStyle = object.color;
-    context.lineCap = 'round';
-    context.lineJoin = 'round';
-    const first = object.points[0];
-    if (!first) return;
-    context.beginPath();
-    context.moveTo(first.x, first.y);
-    for (let index = 1; index < object.points.length; index += 1) {
-      const previous = object.points[index - 1]!;
-      const point = object.points[index]!;
-      context.lineWidth =
-        object.width * (0.55 + Math.max(point.pressure, 0.1) * 0.9);
+    if (object.snap) {
+      context.strokeStyle = object.color;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      context.lineWidth = object.width;
       context.beginPath();
-      context.moveTo(previous.x, previous.y);
-      context.lineTo(point.x, point.y);
+      const [first, ...rest] = object.points;
+      context.moveTo(first!.x, first!.y);
+      rest.forEach((point) => context.lineTo(point.x, point.y));
       context.stroke();
-    }
-    if (object.points.length === 1) {
+    } else {
       context.fillStyle = object.color;
-      context.beginPath();
-      context.arc(first.x, first.y, object.width / 2, 0, Math.PI * 2);
-      context.fill();
+      drawStrokeOutline(context, this.strokeOutline(object));
     }
     context.restore();
+  }
+
+  private strokeOutline(object: WhiteboardStroke): Vec2[] {
+    const cached = this.strokeOutlineCache.get(object);
+    if (cached) return cached;
+    const outline = strokeOutline(object);
+    this.strokeOutlineCache.set(object, outline);
+    return outline;
   }
 
   private drawSelection(

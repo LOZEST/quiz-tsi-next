@@ -143,7 +143,11 @@ export function straightCandidate(points: readonly WhiteboardPoint[]): boolean {
 }
 
 export function toStraightStroke(stroke: WhiteboardStroke): WhiteboardStroke {
-  return { ...stroke, points: [stroke.points[0]!, stroke.points.at(-1)!] };
+  return {
+    ...stroke,
+    points: [stroke.points[0]!, stroke.points.at(-1)!],
+    snap: 'line',
+  };
 }
 
 export function circleCandidate(points: readonly WhiteboardPoint[]): boolean {
@@ -281,7 +285,7 @@ export function toCircleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
         first.timestamp + (last.timestamp - first.timestamp) * progress,
     };
   });
-  return { ...stroke, points };
+  return { ...stroke, points, snap: 'circle' };
 }
 
 export function toRectangleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
@@ -342,5 +346,6 @@ export function toRectangleStroke(stroke: WhiteboardStroke): WhiteboardStroke {
           first.timestamp + (last.timestamp - first.timestamp) * progress,
       };
     }),
+    snap: 'rectangle',
   };
 }
