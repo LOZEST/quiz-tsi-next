@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import type { PreparedQuestion } from '@domain/questions/PreparedQuestion';
 import {
@@ -6,7 +6,9 @@ import {
   type Question,
 } from '@domain/questions/Question';
 import { QuestionContentRenderer } from './QuestionContentRenderer';
+import { ReportQuestionDialog } from './ReportQuestionDialog';
 import { ReflexTimer } from '@features/session/ReflexTimer';
+import { IconButton } from '@design-system/components/IconButton/IconButton';
 import styles from './QuestionCard.module.css';
 
 const typeLabels = {
@@ -27,6 +29,8 @@ export function QuestionCard({
   onReflexExceeded?: () => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const reportTriggerRef = useRef<HTMLButtonElement>(null);
   const { clock, programIndex } = useAppServices();
   const classification = questionClassification(question);
   const notion =
@@ -45,24 +49,42 @@ export function QuestionCard({
           {contextLabel ? `${contextLabel} · ` : ''}
           {typeLabels[question.type]}
         </span>
-        <button
-          type="button"
-          aria-expanded={!collapsed}
-          aria-label={
-            collapsed ? 'Afficher la question' : 'Réduire la question'
-          }
-          className={styles.collapseButton}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            focusable="false"
-            data-collapsed={collapsed}
+        <div className={styles.actions}>
+          <IconButton
+            ref={reportTriggerRef}
+            type="button"
+            label="Signaler un problème sur cette question"
+            onClick={() => setReportOpen(true)}
           >
-            <path d="m7 14 5-5 5 5" />
-          </svg>
-        </button>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path
+                d="M5 21V4h13l-3 4 3 4H5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </IconButton>
+          <button
+            type="button"
+            aria-expanded={!collapsed}
+            aria-label={
+              collapsed ? 'Afficher la question' : 'Réduire la question'
+            }
+            className={styles.collapseButton}
+            onClick={() => setCollapsed((value) => !value)}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+              data-collapsed={collapsed}
+            >
+              <path d="m7 14 5-5 5 5" />
+            </svg>
+          </button>
+        </div>
       </header>
       {question.type === 'reflex' ? (
         <div hidden={collapsed}>
@@ -80,6 +102,13 @@ export function QuestionCard({
           <QuestionContentRenderer segments={prepared.content.prompt} />
         </div>
       ) : null}
+      <ReportQuestionDialog
+        open={reportOpen}
+        triggerRef={reportTriggerRef}
+        questionId={prepared.questionId}
+        questionVersion={prepared.questionVersion}
+        onClose={() => setReportOpen(false)}
+      />
     </article>
   );
 }

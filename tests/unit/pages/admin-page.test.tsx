@@ -55,6 +55,8 @@ const load = vi.fn(() => Promise.resolve(snapshot));
 const saveQuestion = vi.fn(() => Promise.resolve());
 const listAccounts = vi.fn(() => Promise.resolve(accounts));
 const setAccountRole = vi.fn(() => Promise.resolve());
+const listReports = vi.fn(() => Promise.resolve([]));
+const setReportStatus = vi.fn(() => Promise.resolve());
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -68,6 +70,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
     questionWorkspaceRepository: { load, saveQuestion },
     accountManagementGateway: { listAccounts, setAccountRole },
+    questionReportGateway: { listReports, setReportStatus },
   }),
 }));
 

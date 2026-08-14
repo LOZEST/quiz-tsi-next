@@ -20,6 +20,11 @@
 .card button {
   min-block-size: var(--qtsi-touch-target);
 }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--qtsi-space-1);
+}
 .collapseButton {
   display: grid;
   min-inline-size: var(--qtsi-touch-target);
