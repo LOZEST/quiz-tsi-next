@@ -170,20 +170,24 @@ function createRenderingFixture() {
     setTransform: vi.fn(),
     lineTo: vi.fn(),
     arc: vi.fn(),
+    quadraticCurveTo: vi.fn(),
+    fill: vi.fn(),
   };
   const context = {
     save: vi.fn(),
     restore: vi.fn(),
     beginPath: vi.fn(),
+    closePath: vi.fn(),
     moveTo: vi.fn(),
     lineTo: calls.lineTo,
+    quadraticCurveTo: calls.quadraticCurveTo,
     stroke: vi.fn(),
     clearRect: vi.fn(),
     setTransform: calls.setTransform,
     translate: vi.fn(),
     scale: vi.fn(),
     arc: calls.arc,
-    fill: vi.fn(),
+    fill: calls.fill,
     set strokeStyle(_: string) {},
     set fillStyle(_: string) {},
     set lineWidth(_: number) {},
@@ -237,8 +241,8 @@ describe('CanvasRenderer', () => {
     };
     renderer.render(scene);
     expect(calls.setTransform).toHaveBeenCalled();
-    expect(calls.lineTo).toHaveBeenCalledWith(20, 30);
-    expect(calls.arc).toHaveBeenCalled();
+    expect(calls.quadraticCurveTo).toHaveBeenCalled();
+    expect(calls.fill).toHaveBeenCalledTimes(2);
   });
 
   it('schedules, replaces and cancels animation frames', () => {

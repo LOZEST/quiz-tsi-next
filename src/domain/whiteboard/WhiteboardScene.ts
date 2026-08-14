@@ -22,6 +22,11 @@ export interface WhiteboardStroke {
   width: number;
   color: string;
   createdAt: string;
+  /** Set when a magic-shape snap replaced the freehand points with a perfect
+   * geometric outline; the renderer draws these as crisp uniform-width lines
+   * instead of textured ink since perfect-freehand's cap logic breaks on the
+   * sharp, low-point-count corners of a closed rectangle/circle path. */
+  snap?: 'line' | 'circle' | 'rectangle';
 }
 
 export interface WhiteboardEraserMask {
@@ -101,7 +106,11 @@ function restoreObject(value: unknown): WhiteboardObject | null {
     finite(object.width) &&
     object.width > 0 &&
     typeof object.color === 'string' &&
-    typeof object.createdAt === 'string'
+    typeof object.createdAt === 'string' &&
+    (object.snap === undefined ||
+      object.snap === 'line' ||
+      object.snap === 'circle' ||
+      object.snap === 'rectangle')
   ) {
     return object as unknown as WhiteboardStroke;
   }
