@@ -25,6 +25,7 @@
     "bank:audit:full": "node scripts/full-bank-audit.mjs data/source/Base_Complete_Quiz_TSI_1765_Generateurs.json",
     "bank:import:full": "node scripts/import-full-question-bank.mjs",
     "gpt:export-program-knowledge": "node scripts/export-gpt-program-knowledge.mjs",
+    "supabase:sync-official-notions": "node scripts/generate-official-program-notions-sql.mjs",
     "supabase:start": "npx --yes supabase@2.110.0 start",
     "supabase:reset": "npx --yes supabase@2.110.0 db reset",
     "test:rls": "npx --yes supabase@2.110.0 test db",
