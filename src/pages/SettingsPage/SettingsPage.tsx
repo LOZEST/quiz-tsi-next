@@ -3,45 +3,12 @@ import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { Surface } from '@design-system/components/Surface/Surface';
 import { Button } from '@design-system/components/Button/Button';
-import { useTheme, type ThemePreference } from '@app/providers/ThemeProvider';
 import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import { useOnlineStatus } from '@shared/useOnlineStatus';
 import { validateQuestion } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
-
-const themeOptions: readonly Readonly<{
-  value: ThemePreference;
-  label: string;
-}>[] = [
-  { value: 'system', label: 'Système' },
-  { value: 'light', label: 'Clair' },
-  { value: 'dark', label: 'Sombre' },
-];
-
-function AppearanceSection() {
-  const { theme, setTheme } = useTheme();
-  return (
-    <Surface>
-      <h2>Apparence</h2>
-      <fieldset>
-        <legend>Thème</legend>
-        {themeOptions.map((option) => (
-          <label key={option.value}>
-            <input
-              type="radio"
-              name="theme"
-              checked={theme === option.value}
-              onChange={() => setTheme(option.value)}
-            />
-            {option.label}
-          </label>
-        ))}
-      </fieldset>
-    </Surface>
-  );
-}
 
 function PencilSection() {
   const settings = useWhiteboard();
@@ -320,9 +287,8 @@ export function SettingsPage() {
     <>
       <PageHeader
         title="Réglages"
-        description="Apparence, Apple Pencil, données locales, synchronisation, sauvegardes et hors connexion."
+        description="Apple Pencil, données locales, synchronisation, sauvegardes et hors connexion."
       />
-      <AppearanceSection />
       <Surface>
         <PencilSection />
         <LocalDataSection />
