@@ -20349,14 +20349,22 @@
           {
             "id": "DUNOD-REEL-007-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(@m\\ln @p\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@m*ln(@p)" }
+              }
+            ]
           },
           {
             "id": "DUNOD-REEL-007-correction",
             "title": "Correction",
             "content": [
               { "kind": "text", "value": "Appliquer " },
-              { "kind": "text", "value": "\\(\\ln(u^@m)=@m\\ln u\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ln(u^@m)=@m*ln(u)" }
+              },
               { "kind": "text", "value": " pour " },
               {
                 "kind": "inline-math",
@@ -20497,7 +20505,13 @@
         },
         "prompt": [
           { "kind": "text", "value": "Réduire : " },
-          { "kind": "text", "value": "\\(\\ln(@p^@m @q^@n)-@r\\ln @p\\)" },
+          {
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "ln(@p^@m* @q^@n)-@r*ln(@p)"
+            }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -20511,7 +20525,13 @@
             "id": "DUNOD-REEL-008-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\((@m-@r)\\ln @p+@n\\ln @q\\)" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@m-@r)*ln(@p)+@n*ln(@q)"
+                }
+              }
             ]
           },
           {
@@ -20522,7 +20542,10 @@
                 "kind": "text",
                 "value": "Décomposer le logarithme du produit puis regrouper les coefficients de "
               },
-              { "kind": "text", "value": "\\(\\ln @p\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ln(@p)" }
+              },
               { "kind": "text", "value": "." }
             ]
           }
@@ -20599,7 +20622,12 @@
           {
             "id": "LOT2-0111-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(\\ln(@k)-\\ln x\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ln(@k)-ln(x)" }
+              }
+            ]
           },
           {
             "id": "LOT2-0111-correction",
@@ -20842,7 +20870,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Pour x>0, condenser " },
-          { "kind": "text", "value": "\\(2\\ln x-\\ln(@k)\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "2*ln(x)-ln(@k)" }
+          },
           { "kind": "text", "value": " en un seul logarithme." }
         ],
         "hint": [
@@ -21213,7 +21244,12 @@
           {
             "id": "LOT2-0118-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\((@k/2)\\ln x\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@k/2)*ln(x)" }
+              }
+            ]
           },
           {
             "id": "LOT2-0118-correction",
@@ -21314,9 +21350,11 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre : " },
-          { "kind": "text", "value": "\\(\\ln(ax+@b)=\\ln @c\\)" },
-          { "kind": "text", "value": ", en contrôlant le domaine." },
-          { "kind": "text", "value": " Paramètres de cette variante : a = @a." }
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ln(@a*x+@b)=ln(@c)" }
+          },
+          { "kind": "text", "value": ", en contrôlant le domaine." }
         ],
         "hint": [
           {
@@ -21419,7 +21457,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Pour x>0, décider si " },
-          { "kind": "text", "value": "\\(\\ln(x+@k)=\\ln x+\\ln(@k)\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ln(x+@k)=ln(x)+ln(@k)" }
+          },
           { "kind": "text", "value": ", puis donner la forme correcte." }
         ],
         "hint": [
@@ -21713,7 +21754,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Pour x>0, condenser " },
-          { "kind": "text", "value": "\\(@k\\ln x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "@k*ln(x)" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -22314,7 +22358,12 @@
           {
             "id": "DUNOD-REEL-010-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(\\dfrac pq\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@p)/(@q)" }
+              }
+            ]
           },
           {
             "id": "DUNOD-REEL-010-correction",
@@ -22329,7 +22378,10 @@
                 "math": { "syntaxVersion": 1, "source": "ln(e^x)=x" }
               },
               { "kind": "text", "value": " sur " },
-              { "kind": "text", "value": "\\(\\mathbb R\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ℝ" }
+              },
               { "kind": "text", "value": "." }
             ]
           }
@@ -22401,7 +22453,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Simplifier : " },
-          { "kind": "text", "value": "\\(e^{-\\ln @u}\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "e^(-ln(@u))" }
+          },
           { "kind": "text", "value": ", avec " },
           {
             "kind": "inline-math",
@@ -22416,7 +22471,12 @@
           {
             "id": "DUNOD-REEL-011-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(\\dfrac1u\\)" }]
+            "content": [
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(1)/(@u)" }
+              }
+            ]
           },
           {
             "id": "DUNOD-REEL-011-correction",
@@ -22791,7 +22851,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre dans " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": " : " },
           {
             "kind": "inline-math",
@@ -22820,7 +22883,10 @@
             "id": "DUNOD-REEL-012-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(x\\ge\\dfrac{\\ln @c-@b}@a\\)" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x≥(ln(@c)-@b)/(@a)" }
+              }
             ]
           },
           {
@@ -22831,7 +22897,10 @@
                 "kind": "text",
                 "value": "La fonction logarithme est croissante : "
               },
-              { "kind": "text", "value": "\\(ax+@b\\ge\\ln @c\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a*x+@b≥ln(@c)" }
+              },
               { "kind": "text", "value": ", puis isoler " },
               {
                 "kind": "inline-math",
@@ -30875,7 +30944,13 @@
             "id": "DUNOD-REEL-005-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(@a\\sqrt2\\,e^{-i\\pi/4}\\)" }
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a*sqrt(2)*e^(-i*π/4)"
+                }
+              }
             ]
           },
           {
@@ -30883,7 +30958,10 @@
             "title": "Correction",
             "content": [
               { "kind": "text", "value": "Le module vaut " },
-              { "kind": "text", "value": "\\(@a\\sqrt2\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a*sqrt(2)" }
+              },
               { "kind": "text", "value": " et un argument est " },
               {
                 "kind": "inline-math",
@@ -31399,7 +31477,13 @@
               { "kind": "text", "value": "Factoriser par " },
               { "kind": "text", "value": "\\(e^{i(\\@alpha+\\@beta)/2}\\)" },
               { "kind": "text", "value": " puis utiliser " },
-              { "kind": "text", "value": "\\(e^{iu}+e^{-iu}=2\\cos u\\)" },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "e^i*u+e^(-i*u)=2*cos(u)"
+                }
+              },
               { "kind": "text", "value": "." }
             ]
           }
@@ -34694,7 +34778,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Dériver sur " },
-          { "kind": "text", "value": "\\(]@c,+\\infty[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "]@c;+∞[" }
+          },
           { "kind": "text", "value": " : " },
           { "kind": "text", "value": "\\(f(x)=(ax^2+bx)\\ln(x-@c)\\)" },
           { "kind": "text", "value": "." },
@@ -36265,7 +36352,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Dériver sur " },
-          { "kind": "text", "value": "\\(]0,+\\infty[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "]0;+∞[" }
+          },
           { "kind": "text", "value": " : " },
           { "kind": "text", "value": "\\(f(x)=\\dfrac{\\sqrt x}{ax+@b}\\)" },
           { "kind": "text", "value": "." },
@@ -37276,7 +37366,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Dériver sur " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": " : " },
           { "kind": "text", "value": "\\(f(x)=\\ln(ax^2+@c)\\)" },
           { "kind": "text", "value": ", avec " },
@@ -37288,7 +37381,10 @@
             "kind": "text",
             "value": "Contraintes de génération : a,c∈N*\nValeurs interdites : Aucune — domaine "
           },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -38191,7 +38287,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Dériver sur " },
-          { "kind": "text", "value": "\\(]0,+\\infty[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "]0;+∞[" }
+          },
           { "kind": "text", "value": " la fonction " },
           { "kind": "text", "value": "\\(f(x)=x^{mx}\\)" },
           { "kind": "text", "value": "." },
@@ -38221,7 +38320,13 @@
             "title": "Correction",
             "content": [
               { "kind": "text", "value": "Écrire " },
-              { "kind": "text", "value": "\\(x^{mx}=e^{mx\\ln x}\\)" },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "x^@m*x=e^(@m*x*ln(x))"
+                }
+              },
               { "kind": "text", "value": ", puis dériver l’exposant." }
             ]
           }
@@ -38294,7 +38399,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Dériver sur " },
-          { "kind": "text", "value": "\\(]-1,1[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "]-1;1[" }
+          },
           { "kind": "text", "value": " : " },
           { "kind": "text", "value": "\\(f(x)=\\arcsin(x^@n)\\)" },
           { "kind": "text", "value": "." }
@@ -38304,7 +38412,10 @@
             "kind": "text",
             "value": "Contraintes de génération : |x|<1 et n∈N*\nValeurs interdites : Domaine de dérivabilité retenu : "
           },
-          { "kind": "text", "value": "\\(x\\in]-1,1[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈]-1;1[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -56959,7 +57070,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre dans " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": " l’équation " },
           {
             "kind": "inline-math",
@@ -57060,7 +57174,10 @@
             "math": { "syntaxVersion": 1, "source": "@a^2<@b^2" }
           },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": " ? Tester avec " },
           { "kind": "text", "value": "\\(@a< @b<0\\)" },
           { "kind": "text", "value": "." }
@@ -57246,7 +57363,10 @@
             "math": { "syntaxVersion": 1, "source": "sqrt(-@a)" }
           },
           { "kind": "text", "value": " dans " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": ", avec " },
           {
             "kind": "inline-math",
@@ -57266,7 +57386,10 @@
                 "kind": "text",
                 "value": "L’expression n’est pas définie dans "
               },
-              { "kind": "text", "value": "\\(\\mathbb R\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ℝ" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -57343,7 +57466,10 @@
             "math": { "syntaxVersion": 1, "source": "x^2=@a" }
           },
           { "kind": "text", "value": " dans " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": ", avec " },
           {
             "kind": "inline-math",
@@ -57425,7 +57551,10 @@
             "math": { "syntaxVersion": 1, "source": "sqrt(x^2)" }
           },
           { "kind": "text", "value": " pour " },
-          { "kind": "text", "value": "\\(x\\in\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈ℝ" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [],
@@ -59512,7 +59641,10 @@
             "value": "\\(f_A(x)=\\ln\\!\\left(\\dfrac{@A+x}{@A-x}\\right)\\)"
           },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\(]-@A,@A[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "]-@A;@A[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -59520,7 +59652,10 @@
             "kind": "text",
             "value": "Contraintes de génération : A∈N*, x∈]-A,A[\nValeurs interdites : Domaine : "
           },
-          { "kind": "text", "value": "\\(x\\in]-@A,@A[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈]-@A;@A[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -60055,7 +60190,10 @@
           { "kind": "text", "value": "Pour " },
           { "kind": "text", "value": "\\(f(x)=0\\)" },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\(\\mathbb R\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℝ" }
+          },
           { "kind": "text", "value": ", calculer les deux tests de parité." }
         ],
         "hint": [],
@@ -108972,7 +109110,10 @@
             "math": { "syntaxVersion": 1, "source": "@b" }
           },
           { "kind": "text", "value": ", s’il existe dans " },
-          { "kind": "text", "value": "\\(\\mathbb N\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℕ" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -109827,7 +109968,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre dans " },
-          { "kind": "text", "value": "\\(\\mathbb N\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℕ" }
+          },
           { "kind": "text", "value": " l’équation " },
           {
             "kind": "inline-math",
@@ -109851,7 +109995,10 @@
                 "math": { "syntaxVersion": 1, "source": "n=(@b-@a)/@r" }
               },
               { "kind": "text", "value": ", à conserver uniquement dans " },
-              { "kind": "text", "value": "\\(\\mathbb N\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ℕ" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -110094,7 +110241,10 @@
                 "kind": "text",
                 "value": " ; la suite est strictement croissante sur "
               },
-              { "kind": "text", "value": "\\(\\mathbb N\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "ℕ" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -110321,7 +110471,10 @@
             "math": { "syntaxVersion": 1, "source": "u_(n+1)-u_n" }
           },
           { "kind": "text", "value": " et conclure sur " },
-          { "kind": "text", "value": "\\(\\mathbb N\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "ℕ" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -117154,7 +117307,10 @@
           { "kind": "text", "value": "Calculer exactement " },
           { "kind": "text", "value": "\\(\\arcsin(\\sin\\@alpha)\\)" },
           { "kind": "text", "value": ", avec " },
-          { "kind": "text", "value": "\\(\\@alpha\\in[-\\pi/2,\\pi/2]\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "α∈[-π/2;π/2]" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -117337,7 +117493,10 @@
           { "kind": "text", "value": " et " },
           { "kind": "text", "value": "\\(\\cos α=√(@k+1)/√(@k+2)\\)" },
           { "kind": "text", "value": ", calculer " },
-          { "kind": "text", "value": "\\(\\tan α\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "tan(α)" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -117422,7 +117581,10 @@
           { "kind": "text", "value": "Dans le deuxième quadrant, " },
           { "kind": "text", "value": "\\(\\sin α=1/√(@k)\\)" },
           { "kind": "text", "value": ". Calculer " },
-          { "kind": "text", "value": "\\(\\cos α\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(α)" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -117510,7 +117672,10 @@
             "math": { "syntaxVersion": 1, "source": "-(@k+1)*π/2" }
           },
           { "kind": "text", "value": " dans " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -118270,7 +118435,10 @@
                 "math": { "syntaxVersion": 1, "source": "θ=π/3" }
               },
               { "kind": "text", "value": " et " },
-              { "kind": "text", "value": "\\(\\sin\\theta=\\sqrt3/2\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "sin(θ)=sqrt(3)/2" }
+              },
               { "kind": "text", "value": " ; si " },
               {
                 "kind": "inline-math",
@@ -118282,7 +118450,10 @@
                 "math": { "syntaxVersion": 1, "source": "θ=π/2" }
               },
               { "kind": "text", "value": " et " },
-              { "kind": "text", "value": "\\(\\sin\\theta=1\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "sin(θ)=1" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -118354,9 +118525,15 @@
         },
         "prompt": [
           { "kind": "text", "value": "Sachant " },
-          { "kind": "text", "value": "\\(\\sin x\\cos x=1/@k\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(x)*cos(x)=1/@k" }
+          },
           { "kind": "text", "value": ", calculer " },
-          { "kind": "text", "value": "\\((\\sin x+\\cos x)^2\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "(sin(x)+cos(x))^2" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -118444,7 +118621,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre " },
-          { "kind": "text", "value": "\\(\\sin x=0\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(x)=0" }
+          },
           { "kind": "text", "value": " sur " },
           { "kind": "text", "value": "\\([0,@kπ]\\)" },
           { "kind": "text", "value": "." }
@@ -118537,7 +118717,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre " },
-          { "kind": "text", "value": "\\(\\cos x=0\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(x)=0" }
+          },
           { "kind": "text", "value": " sur " },
           { "kind": "text", "value": "\\([0,@kπ]\\)" },
           { "kind": "text", "value": "." }
@@ -118628,7 +118811,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur R " },
-          { "kind": "text", "value": "\\(\\sin x=\\sin(π/@k)\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(x)=sin(π/@k)" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -118727,7 +118913,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur R " },
-          { "kind": "text", "value": "\\(\\cos x=\\cos(π/@k)\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(x)=cos(π/@k)" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -118818,7 +119007,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre " },
-          { "kind": "text", "value": "\\(\\tan x=\\tan(π/(@k+1))\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "tan(x)=tan(π/(@k+1))" }
+          },
           { "kind": "text", "value": " sur R." }
         ],
         "hint": [
@@ -118942,7 +119134,10 @@
                 }
               },
               { "kind": "text", "value": ", " },
-              { "kind": "text", "value": "\\(j\\in\\mathbb Z\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "j∈ℤ" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -119019,7 +119214,10 @@
             "math": { "syntaxVersion": 1, "source": "cos(@k*x)=0" }
           },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -119108,9 +119306,15 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": " : " },
-          { "kind": "text", "value": "\\(\\sin x(@k\\cos x-1)=0\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(x)*(@k*cos(x)-1)=0" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -119201,7 +119405,10 @@
           { "kind": "text", "value": "Résoudre " },
           { "kind": "text", "value": "\\(\\sin(x+2π@k)=√3/2\\)" },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -119289,7 +119496,10 @@
             "math": { "syntaxVersion": 1, "source": "sin(@k*x)=0" }
           },
           { "kind": "text", "value": " possède-t-elle sur " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": " ?" }
         ],
         "hint": [
@@ -119406,9 +119616,15 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur " },
-          { "kind": "text", "value": "\\([0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": " : " },
-          { "kind": "text", "value": "\\(\\cos x=\\cos\\@alpha\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(x)=cos(α)" }
+          },
           { "kind": "text", "value": ", avec " },
           { "kind": "text", "value": "\\(0<\\@alpha<\\pi\\)" },
           { "kind": "text", "value": "." }
@@ -119418,7 +119634,10 @@
             "kind": "text",
             "value": "Contraintes de génération : α∈]0,π[\nValeurs interdites : Résolution demandée sur "
           },
-          { "kind": "text", "value": "\\(x\\in[0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -119544,17 +119763,30 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur " },
-          { "kind": "text", "value": "\\([0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": " : " },
-          { "kind": "text", "value": "\\(\\sin x=\\sin\\@alpha\\)" },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(x)=sin(α)" }
+          },
+          { "kind": "text", "value": "." },
+          {
+            "kind": "text",
+            "value": " Paramètres de cette variante : alpha = @alpha."
+          }
         ],
         "hint": [
           {
             "kind": "text",
             "value": "Contraintes de génération : α∈]-π/2,π/2[ et α≠0\nValeurs interdites : Résolution demandée sur "
           },
-          { "kind": "text", "value": "\\(x\\in[0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -119572,7 +119804,10 @@
                 "math": { "syntaxVersion": 1, "source": "x=π-α+2*k*π" }
               },
               { "kind": "text", "value": ", puis filtrage sur " },
-              { "kind": "text", "value": "\\([0,2\\pi[\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -119660,17 +119895,30 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre sur " },
-          { "kind": "text", "value": "\\([0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": " : " },
-          { "kind": "text", "value": "\\(\\cos(\\@omega x)=\\cos\\@alpha\\)" },
-          { "kind": "text", "value": "." }
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(ω* x)=cos(α)" }
+          },
+          { "kind": "text", "value": "." },
+          {
+            "kind": "text",
+            "value": " Paramètres de cette variante : omega = @omega, alpha = @alpha."
+          }
         ],
         "hint": [
           {
             "kind": "text",
             "value": "Contraintes de génération : ω∈{2,3}, α angle remarquable\nValeurs interdites : Résolution demandée sur "
           },
-          { "kind": "text", "value": "\\(x\\in[0,2\\pi[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "x∈[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "correction": [
@@ -119683,7 +119931,10 @@
                 "value": "\\(x=\\dfrac{2k\\pi\\pm\\@alpha}{\\@omega}\\)"
               },
               { "kind": "text", "value": ", avec sélection des valeurs dans " },
-              { "kind": "text", "value": "\\([0,2\\pi[\\)" },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -119762,9 +120013,15 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre " },
-          { "kind": "text", "value": "\\(\\tan x=\\tan(π/(@k+1))\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "tan(x)=tan(π/(@k+1))" }
+          },
           { "kind": "text", "value": " sur " },
-          { "kind": "text", "value": "\\([0,2π[\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "[0;2*π[" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -119854,7 +120111,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre dans R " },
-          { "kind": "text", "value": "\\(\\cos x=@k\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(x)=@k" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -119969,8 +120229,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\cos\\@alpha\\cos\\@beta-\\sin\\@alpha\\sin\\@beta\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "cos(α)*cos(β)-sin(α)*sin(β)"
+                }
               }
             ]
           },
@@ -120060,8 +120323,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\sin x\\cos(π/@k)+\\cos x\\sin(π/@k)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "sin(x)*cos(π/@k)+cos(x)*sin(π/@k)"
+                }
               }
             ]
           },
@@ -120151,8 +120417,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\sin x\\cos(π/@k)-\\cos x\\sin(π/@k)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "sin(x)*cos(π/@k)-cos(x)*sin(π/@k)"
+                }
               }
             ]
           },
@@ -120242,8 +120511,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\cos x\\cos(π/@k)+\\sin x\\sin(π/@k)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "cos(x)*cos(π/@k)+sin(x)*sin(π/@k)"
+                }
               }
             ]
           },
@@ -120694,7 +120966,10 @@
             "id": "LOT2-0167-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(2\\sin x\\cos(π/@k)\\)" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "2*sin(x)*cos(π/@k)" }
+              }
             ]
           },
           {
@@ -120766,8 +121041,11 @@
         "prompt": [
           { "kind": "text", "value": "Vérifier en développant que " },
           {
-            "kind": "text",
-            "value": "\\(\\cos(x+π/@k)+\\cos(x-π/@k)=2\\cos x\\cos(π/@k)\\)"
+            "kind": "inline-math",
+            "math": {
+              "syntaxVersion": 1,
+              "source": "cos(x+π/@k)+cos(x-π/@k)=2*cos(x)*cos(π/@k)"
+            }
           },
           { "kind": "text", "value": "." }
         ],
@@ -120976,7 +121254,10 @@
             "id": "LOT2-0169-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(-2\\sin x\\sin(π/@k)\\)" }
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-2*sin(x)*sin(π/@k)" }
+              }
             ]
           },
           {
@@ -121352,8 +121633,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\dfrac{3\\cos(kx)+\\cos(3kx)}4\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(3*cos(@k*x)+cos(3*@k*x))/(4)"
+                }
               }
             ]
           },
@@ -121471,8 +121755,11 @@
             "title": "Réponse attendue",
             "content": [
               {
-                "kind": "text",
-                "value": "\\(\\dfrac12\\cos(ax)-\\dfrac14\\cos((@a+2b)x)-\\dfrac14\\cos((@a-2b)x)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(1)/(2)*cos(@a*x)-(1)/(4)*cos((@a+2*@b)*x)-(1)/(4)*cos((@a-2*@b)*x)"
+                }
               }
             ]
           },
@@ -121548,7 +121835,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\cos(@k*x)\\sin x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(@k*x)*sin(x)" }
+          },
           { "kind": "text", "value": " en somme." }
         ],
         "hint": [
@@ -121639,7 +121929,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\cos(@k*x)\\cos x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(@k*x)*cos(x)" }
+          },
           { "kind": "text", "value": " en somme." }
         ],
         "hint": [
@@ -121730,7 +122023,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\sin(@k*x)\\sin x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(@k*x)*sin(x)" }
+          },
           { "kind": "text", "value": " en somme." }
         ],
         "hint": [
@@ -121928,7 +122224,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\sin(@k*x)+\\sin x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(@k*x)+sin(x)" }
+          },
           { "kind": "text", "value": " en produit." }
         ],
         "hint": [
@@ -122016,7 +122315,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\sin(@k*x)-\\sin x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(@k*x)-sin(x)" }
+          },
           { "kind": "text", "value": " en produit." }
         ],
         "hint": [
@@ -122292,7 +122594,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer exactement " },
-          { "kind": "text", "value": "\\(\\cos(@k*x)\\cos x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(@k*x)*cos(x)" }
+          },
           { "kind": "text", "value": " en somme en conservant le facteur." }
         ],
         "hint": [
@@ -122383,7 +122688,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\sin(@k*x)\\sin x\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "sin(@k*x)*sin(x)" }
+          },
           {
             "kind": "text",
             "value": " en somme en contrôlant l’ordre des cosinus."
@@ -122477,7 +122785,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Transformer " },
-          { "kind": "text", "value": "\\(\\cos x\\sin(@k*x)\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(x)*sin(@k*x)" }
+          },
           { "kind": "text", "value": " en somme sans inverser a−b." }
         ],
         "hint": [
@@ -122659,7 +122970,10 @@
         },
         "prompt": [
           { "kind": "text", "value": "Résoudre " },
-          { "kind": "text", "value": "\\(\\cos(@k*x)+\\cos x=0\\)" },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "cos(@k*x)+cos(x)=0" }
+          },
           {
             "kind": "text",
             "value": " en transformant d’abord la somme en produit."

@@ -310,8 +310,20 @@ describe('pipeline générique de banque complète', () => {
       ['|x-2|', 'abs(x-2)'],
       ['\\left(x+1\\right)', '(x+1)'],
       ['\\alpha+\\beta', 'α+β'],
+      ['\\dfrac pq', '(p)/(q)'],
+      ['\\dfrac{n(n-1)}2', '(n(n-1))/(2)'],
+      ['m\\ln p', 'mln(p)'],
+      ['\\sqrt2', 'sqrt(2)'],
+      ['\\mathbb R', 'ℝ'],
+      [']c,+\\infty[', ']c;+∞['],
+      ['[-\\pi/2,\\pi/2]', '[-π/2;π/2]'],
     ])('translates %s to %s', (source, expected) => {
       expect(translateLatexToGrammar(source)).toBe(expected);
+    });
+
+    it('leaves \\cos^3(kx) untouched rather than misreading the exponent as the argument', () => {
+      const translated = translateLatexToGrammar('\\cos^3(kx)');
+      expect(translated).toContain('\\');
     });
   });
 
