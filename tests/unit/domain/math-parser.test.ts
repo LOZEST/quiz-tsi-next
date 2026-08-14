@@ -223,10 +223,20 @@ describe('MathParser V1', () => {
     if (!result.ok) expect(result.errors[0]?.message).toContain('(a/b)/c');
   });
 
-  it.each(['sqrt', 'abs', 'vec', 'sin', 'cos', 'tan', 'ln', 'exp'])(
-    'parses the registered function %s',
-    (name) =>
-      expect(ast(`${name}(x)`)).toMatchObject({ kind: 'function', name }),
+  it.each([
+    'sqrt',
+    'abs',
+    'vec',
+    'sin',
+    'cos',
+    'tan',
+    'ln',
+    'exp',
+    'arcsin',
+    'arccos',
+    'arctan',
+  ])('parses the registered function %s', (name) =>
+    expect(ast(`${name}(x)`)).toMatchObject({ kind: 'function', name }),
   );
 
   it('requires lowercase function calls with parentheses', () => {

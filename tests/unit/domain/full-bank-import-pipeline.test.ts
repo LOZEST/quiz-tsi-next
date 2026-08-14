@@ -310,8 +310,30 @@ describe('pipeline générique de banque complète', () => {
       ['|x-2|', 'abs(x-2)'],
       ['\\left(x+1\\right)', '(x+1)'],
       ['\\alpha+\\beta', 'α+β'],
+      ['\\dfrac pq', '(p)/(q)'],
+      ['\\dfrac{n(n-1)}2', '(n(n-1))/(2)'],
+      ['m\\ln p', 'mln(p)'],
+      ['\\sqrt2', 'sqrt(2)'],
+      ['\\mathbb R', 'ℝ'],
+      [']c,+\\infty[', ']c;+∞['],
+      ['[-\\pi/2,\\pi/2]', '[-π/2;π/2]'],
+      ['\\arcsin(x)', 'arcsin(x)'],
+      ['\\arccos(1/k)', 'arccos(1/k)'],
     ])('translates %s to %s', (source, expected) => {
       expect(translateLatexToGrammar(source)).toBe(expected);
+    });
+
+    it('translates \\sum with braced bounds into a bounded-operator expression', () => {
+      expect(
+        insertImplicitMultiplication(
+          translateLatexToGrammar('S=\\sum_{k=0}^{n}u_k'),
+        ),
+      ).toBe('S=∑_(k=0)^n*u_k');
+    });
+
+    it('leaves \\cos^3(kx) untouched rather than misreading the exponent as the argument', () => {
+      const translated = translateLatexToGrammar('\\cos^3(kx)');
+      expect(translated).toContain('\\');
     });
   });
 
@@ -345,15 +367,48 @@ describe('pipeline générique de banque complète', () => {
     });
   });
 
-  it('keeps an unsupported f(x)= definition as a safe text fallback instead of guessing', () => {
+  it('splits an f(x)= definition into a text label and a real formula for the right-hand side', () => {
     const compiled = compileContent('\\(f(x)=\\dfrac{k}{a x+b}\\)', [
       'a',
       'b',
       'k',
     ]);
+    expect(compiled.structured).toBe(1);
+    expect(compiled.segments).toEqual([
+      { kind: 'text', value: 'f(x) = ' },
+      {
+        kind: 'inline-math',
+        math: { syntaxVersion: 1, source: '(@k)/(@a* x+@b)' },
+      },
+    ]);
+  });
+
+  it('splits a (g∘h)(x)= composition definition the same way', () => {
+    const compiled = compileContent('\\((g\\circ h)(x)=a^2x^6\\)', ['a']);
+    expect(compiled.structured).toBe(1);
+    expect(compiled.segments).toEqual([
+      { kind: 'text', value: '(g∘h)(x) = ' },
+      {
+        kind: 'inline-math',
+        math: { syntaxVersion: 1, source: '@a^2*x^6' },
+      },
+    ]);
+  });
+
+  it('keeps the right-hand side as a safe text fallback when it is genuinely unsupported', () => {
+    const compiled = compileContent('\\(f(x)=\\arcsin(x)\\circ g(x)\\)', []);
     expect(compiled.fallback).toBe(1);
     expect(compiled.segments).toEqual([
-      { kind: 'text', value: '\\(f(x)=\\dfrac@k*{@a x+@b}\\)' },
+      { kind: 'text', value: 'f(x) = ' },
+      { kind: 'text', value: '\\(\\arcsin(x)\\circ g(x)\\)' },
+    ]);
+  });
+
+  it('does not multiply a declared parameter into a following named-function call', () => {
+    const compiled = compileContent('\\(g(f(x))\\)', ['x']);
+    expect(compiled.fallback).toBe(1);
+    expect(compiled.segments).toEqual([
+      { kind: 'text', value: '\\(g(f(@x))\\)' },
     ]);
   });
 });

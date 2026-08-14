@@ -178,6 +178,9 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
           case 'tan':
           case 'ln':
           case 'exp':
+          case 'arcsin':
+          case 'arccos':
+          case 'arctan':
             return `\\${node.name}\\left(${argument}\\right)`;
           default:
             throw new Error('Fonction inconnue.');

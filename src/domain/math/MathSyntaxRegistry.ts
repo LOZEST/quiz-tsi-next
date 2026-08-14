@@ -78,18 +78,31 @@ export const MATH_SYNTAX_REGISTRY_V1: readonly MathSyntaxCommand[] =
       unicodeAliases: [],
       suggestion: 'Un indice composé doit être entouré de parenthèses.',
     }),
-    ...(['sqrt', 'abs', 'vec', 'sin', 'cos', 'tan', 'ln', 'exp'] as const).map(
-      (name) =>
-        command({
-          id: `function-${name}`,
-          category: name === 'vec' ? 'vectors' : 'functions',
-          syntax: `${name}(x)`,
-          description: `Fonction ${name}`,
-          example: `${name}(x)`,
-          reservedWord: name,
-          unicodeAliases: [],
-          suggestion: `Utilise \`${name}(x)\`.`,
-        }),
+    ...(
+      [
+        ['sqrt', 'Racine carrée'],
+        ['abs', 'Valeur absolue'],
+        ['vec', 'Vecteur'],
+        ['sin', 'Sinus'],
+        ['cos', 'Cosinus'],
+        ['tan', 'Tangente'],
+        ['ln', 'Logarithme népérien'],
+        ['exp', 'Exponentielle'],
+        ['arcsin', 'Arc sinus'],
+        ['arccos', 'Arc cosinus'],
+        ['arctan', 'Arc tangente'],
+      ] as const
+    ).map(([name, description]) =>
+      command({
+        id: `function-${name}`,
+        category: name === 'vec' ? 'vectors' : 'functions',
+        syntax: `${name}(x)`,
+        description,
+        example: `${name}(x)`,
+        reservedWord: name,
+        unicodeAliases: [],
+        suggestion: `Utilise \`${name}(x)\`.`,
+      }),
     ),
     command({
       id: 'comparison',

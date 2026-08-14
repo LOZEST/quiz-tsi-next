@@ -29,6 +29,9 @@ Le langage est versionné, déterministe et facile à taper. Une fraction compos
 | `tan(x)` | tangente |
 | `ln(x)` | logarithme népérien |
 | `exp(x)` | exponentielle |
+| `arcsin(x)` | arc sinus |
+| `arccos(x)` | arc cosinus |
+| `arctan(x)` | arc tangente |
 | `a<=b` | inférieur ou égal |
 | `a>=b` | supérieur ou égal |
 | `a!=b` | différent |
@@ -47,7 +50,7 @@ Cette grammaire est suffisamment précise pour que deux implémentations indépe
 
 Un identifiant ordinaire commence par une lettre latine ou grecque supportée par le registre ; les caractères suivants peuvent être des lettres latines ou grecques supportées ou des chiffres. Il ne peut pas contenir `_` : ce caractère est toujours réservé à l'opérateur d'indice dans les expressions mathématiques ordinaires. Le tokenizer termine donc un identifiant ordinaire avant `_`. Aucun mécanisme d'échappement ou de délimitation permettant d'inclure littéralement `_` dans un identifiant ordinaire n'existe en version 1 ; un tel identifiant est hors syntaxe.
 
-Les commandes réservées sont `sqrt`, `abs`, `vec`, `sin`, `cos`, `tan`, `ln` et `exp`. Elles sont obligatoirement écrites en minuscules ; une autre casse est refusée.
+Les commandes réservées sont `sqrt`, `abs`, `vec`, `sin`, `cos`, `tan`, `ln`, `exp`, `arcsin`, `arccos` et `arctan`. Elles sont obligatoirement écrites en minuscules ; une autre casse est refusée.
 
 ### 5.3 Variables paramétrées
 
@@ -75,7 +78,7 @@ L'ordre exact est : (1) parenthèses et appels de fonctions ; (2) indices et pui
 
 ### 5.9 Fonctions
 
-Les parenthèses sont obligatoires : `sqrt(x)`, `abs(x)`, `vec(u)`, `sin(x)`, `cos(x)`, `tan(x)`, `ln(x)` et `exp(x)`. `sqrt x` et `sin x` sont invalides ; le message montre la syntaxe correcte.
+Les parenthèses sont obligatoires : `sqrt(x)`, `abs(x)`, `vec(u)`, `sin(x)`, `cos(x)`, `tan(x)`, `ln(x)`, `exp(x)`, `arcsin(x)`, `arccos(x)` et `arctan(x)`. `sqrt x` et `sin x` sont invalides ; le message montre la syntaxe correcte.
 
 ### 5.10 Comparaisons
 

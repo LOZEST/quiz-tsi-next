@@ -98,9 +98,20 @@ describe('safe math rendering', () => {
         left: id,
         right: number,
       })),
-      ...(['abs', 'vec', 'sin', 'cos', 'tan', 'ln', 'exp'] as const).map(
-        (name) => ({ kind: 'function', name, argument: id }),
-      ),
+      ...(
+        [
+          'abs',
+          'vec',
+          'sin',
+          'cos',
+          'tan',
+          'ln',
+          'exp',
+          'arcsin',
+          'arccos',
+          'arctan',
+        ] as const
+      ).map((name) => ({ kind: 'function', name, argument: id })),
       ...(
         [
           'equal',
