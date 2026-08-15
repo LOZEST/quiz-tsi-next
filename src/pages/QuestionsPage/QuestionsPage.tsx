@@ -104,8 +104,6 @@ export function QuestionsPage() {
     programIndex,
   } = useAppServices();
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
-  const canPublishShared =
-    state.status === 'authenticated' && state.session.user.role !== 'user';
   const chatGptImportUrl = readChatGptImportUrl();
   const [workspace, setWorkspace] =
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
@@ -255,62 +253,61 @@ export function QuestionsPage() {
     );
     if (!targets.length) return;
     setBulkBusy({ done: 0, total: targets.length });
+    const failures: { path: string; message: string }[] = [];
     for (const [index, question] of targets.entries()) {
-      await questionWorkspaceRepository.saveQuestion(
-        userId,
-        updater(question),
-        kind,
-        crypto.randomUUID(),
-      );
+      try {
+        await questionWorkspaceRepository.saveQuestion(
+          userId,
+          updater(question),
+          kind,
+          crypto.randomUUID(),
+        );
+      } catch (reason) {
+        failures.push({
+          path: question.id,
+          message:
+            reason instanceof Error ? reason.message : 'Échec inattendu.',
+        });
+      }
       setBulkBusy({ done: index + 1, total: targets.length });
     }
     setBulkBusy(null);
+    setReviewErrors(failures);
     clearSelection();
     await reload();
   };
-  const onBulkDraft = () =>
-    runBulkAction('update', (question) => ({
-      ...question,
-      version: question.version + 1,
-      status: 'draft',
-      updatedAt: new Date().toISOString(),
-    }));
-  const onBulkArchive = () =>
+  const onBulkEdit = () => {
+    if (selectedIds.size !== 1) return;
+    const only = selectableResults.find((question) =>
+      selectedIds.has(question.id),
+    );
+    if (!only) return;
+    setSelectedId(only.id);
+    setEditing(true);
+  };
+  const onBulkValidate = () =>
+    runBulkAction(
+      'update',
+      (question) => {
+        const prepared = prepareQuestionForReview(question);
+        if (prepared.issues.length)
+          throw new Error(prepared.issues[0]?.message ?? 'Validation échouée.');
+        return {
+          ...prepared.normalizedQuestion,
+          version: question.version + 1,
+          validated: true,
+          updatedAt: new Date().toISOString(),
+        };
+      },
+      (question) => !question.validated,
+    );
+  const onBulkDelete = () =>
     runBulkAction('archive', (question) => ({
       ...question,
       version: question.version + 1,
       status: 'archived',
       updatedAt: new Date().toISOString(),
     }));
-  const onBulkPublish = () =>
-    runBulkAction(
-      'publish',
-      (question) => ({
-        ...question,
-        version: question.version + 1,
-        source: 'shared',
-        status: 'published',
-        updatedAt: new Date().toISOString(),
-      }),
-      (question) =>
-        question.validated &&
-        questionClassification(question)?.kind === 'official',
-    );
-  const onBulkDuplicate = () =>
-    runBulkAction('create', (question) => {
-      const now = new Date().toISOString();
-      return {
-        ...question,
-        id: crypto.randomUUID(),
-        version: 1,
-        source: 'private',
-        ownerId: userId,
-        status: 'draft',
-        validated: false,
-        createdAt: now,
-        updatedAt: now,
-      };
-    });
   const onBulkMove = () =>
     runBulkAction('update', (question) => ({
       ...question,
@@ -735,7 +732,7 @@ export function QuestionsPage() {
               <BulkActionBar
                 count={selectedIds.size}
                 busy={bulkBusy}
-                canPublishShared={canPublishShared}
+                canEdit={selectedIds.size === 1}
                 courses={workspace.courses}
                 chapters={workspace.chapters}
                 notions={workspace.notions}
@@ -752,10 +749,9 @@ export function QuestionsPage() {
                   setBulkMoveNotionId('');
                 }}
                 onMoveNotionChange={setBulkMoveNotionId}
-                onDraft={() => void onBulkDraft()}
-                onArchive={() => void onBulkArchive()}
-                onPublish={() => void onBulkPublish()}
-                onDuplicate={() => void onBulkDuplicate()}
+                onEdit={onBulkEdit}
+                onValidate={() => void onBulkValidate()}
+                onDelete={() => void onBulkDelete()}
                 onMove={() => void onBulkMove()}
                 onClear={clearSelection}
               />
@@ -765,26 +761,11 @@ export function QuestionsPage() {
             {selected ? (
               <QuestionPreview
                 question={selected}
-                canPublishShared={canPublishShared}
+                courses={workspace.courses}
+                chapters={workspace.chapters}
+                notions={workspace.notions}
                 onEdit={() => setEditing(true)}
-                onDuplicate={() => {
-                  const now = new Date().toISOString();
-                  void mutate(
-                    {
-                      ...selected,
-                      id: crypto.randomUUID(),
-                      version: 1,
-                      source: 'private',
-                      ownerId: userId,
-                      status: 'draft',
-                      validated: false,
-                      createdAt: now,
-                      updatedAt: now,
-                    },
-                    'create',
-                  );
-                }}
-                onReview={() => {
+                onValidate={() => {
                   const prepared = prepareQuestionForReview(selected);
                   setReviewErrors(prepared.issues);
                   if (!prepared.issues.length)
@@ -798,32 +779,7 @@ export function QuestionsPage() {
                       'update',
                     );
                 }}
-                onPublish={() => {
-                  const prepared = prepareQuestionForReview(selected);
-                  const errors =
-                    questionClassification(selected)?.kind !== 'official'
-                      ? [
-                          {
-                            path: 'question.classification',
-                            message:
-                              'Seule une classification officielle peut être partagée.',
-                          },
-                        ]
-                      : prepared.issues;
-                  setReviewErrors(errors);
-                  if (canPublishShared && !errors.length)
-                    void mutate(
-                      {
-                        ...prepared.normalizedQuestion,
-                        version: selected.version + 1,
-                        source: 'shared',
-                        status: 'published',
-                        updatedAt: new Date().toISOString(),
-                      },
-                      'publish',
-                    );
-                }}
-                onArchive={() =>
+                onDelete={() =>
                   void mutate(
                     {
                       ...selected,
@@ -832,6 +788,22 @@ export function QuestionsPage() {
                       updatedAt: new Date().toISOString(),
                     },
                     'archive',
+                  )
+                }
+                onMove={(courseId, chapterId, notionId) =>
+                  void mutate(
+                    {
+                      ...selected,
+                      version: selected.version + 1,
+                      classification: {
+                        kind: 'personal',
+                        courseId,
+                        chapterId,
+                        notionId,
+                      },
+                      updatedAt: new Date().toISOString(),
+                    },
+                    'update',
                   )
                 }
               />
@@ -935,23 +907,32 @@ export function QuestionsPage() {
 
 function QuestionPreview({
   question,
-  canPublishShared,
+  courses,
+  chapters,
+  notions,
   onEdit,
-  onDuplicate,
-  onReview,
-  onPublish,
-  onArchive,
+  onValidate,
+  onDelete,
+  onMove,
 }: {
   question: Readonly<Question>;
-  canPublishShared: boolean;
+  courses: readonly PersonalCourse[];
+  chapters: readonly PersonalChapter[];
+  notions: readonly PersonalNotion[];
   onEdit: () => void;
-  onDuplicate: () => void;
-  onReview: () => void;
-  onPublish: () => void;
-  onArchive: () => void;
+  onValidate: () => void;
+  onDelete: () => void;
+  onMove: (
+    courseId: string,
+    chapterId: string | null,
+    notionId: string | null,
+  ) => void;
 }) {
   const classification = questionClassification(question);
   const imported = question.provenance?.chatGptImport;
+  const [moveCourseId, setMoveCourseId] = useState('');
+  const [moveChapterId, setMoveChapterId] = useState('');
+  const [moveNotionId, setMoveNotionId] = useState('');
   return (
     <>
       <h2>
@@ -991,29 +972,91 @@ function QuestionPreview({
             Modifier
           </button>
         ) : null}
-        <button type="button" onClick={onDuplicate}>
-          Dupliquer
-        </button>
-        {question.source !== 'static' && question.status !== 'archived' ? (
-          <button type="button" onClick={onArchive}>
-            Archiver
-          </button>
-        ) : null}
         {question.source !== 'static' && !question.validated ? (
-          <button type="button" onClick={onReview}>
-            Valider la relecture
+          <button type="button" onClick={onValidate}>
+            Valider
           </button>
         ) : null}
-        {question.source === 'private' &&
-        question.status === 'draft' &&
-        question.validated &&
-        canPublishShared &&
-        classification?.kind === 'official' ? (
-          <button type="button" onClick={onPublish}>
-            Partager
+        {question.source !== 'static' && question.status !== 'archived' ? (
+          <button type="button" onClick={onDelete}>
+            Supprimer
           </button>
         ) : null}
       </div>
+      {question.source !== 'static' ? (
+        <div className={styles.actions}>
+          <label>
+            Déplacer vers
+            <select
+              value={moveCourseId}
+              onChange={(event) => {
+                setMoveCourseId(event.target.value);
+                setMoveChapterId('');
+                setMoveNotionId('');
+              }}
+            >
+              <option value="">Choisir un cours</option>
+              {courses.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {moveCourseId ? (
+            <label>
+              Chapitre
+              <select
+                value={moveChapterId}
+                onChange={(event) => {
+                  setMoveChapterId(event.target.value);
+                  setMoveNotionId('');
+                }}
+              >
+                <option value="">Aucun</option>
+                {chapters
+                  .filter((item) => item.courseId === moveCourseId)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
+          {moveCourseId ? (
+            <label>
+              Notion
+              <select
+                value={moveNotionId}
+                onChange={(event) => setMoveNotionId(event.target.value)}
+              >
+                <option value="">Aucune</option>
+                {notions
+                  .filter(
+                    (item) =>
+                      item.courseId === moveCourseId &&
+                      (!moveChapterId || item.chapterId === moveChapterId),
+                  )
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
+          <button
+            type="button"
+            disabled={!moveCourseId}
+            onClick={() =>
+              onMove(moveCourseId, moveChapterId || null, moveNotionId || null)
+            }
+          >
+            Déplacer
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -1021,7 +1064,7 @@ function QuestionPreview({
 function BulkActionBar({
   count,
   busy,
-  canPublishShared,
+  canEdit,
   courses,
   chapters,
   notions,
@@ -1031,16 +1074,15 @@ function BulkActionBar({
   onMoveCourseChange,
   onMoveChapterChange,
   onMoveNotionChange,
-  onDraft,
-  onArchive,
-  onPublish,
-  onDuplicate,
+  onEdit,
+  onValidate,
+  onDelete,
   onMove,
   onClear,
 }: {
   count: number;
   busy: { done: number; total: number } | null;
-  canPublishShared: boolean;
+  canEdit: boolean;
   courses: readonly PersonalCourse[];
   chapters: readonly PersonalChapter[];
   notions: readonly PersonalNotion[];
@@ -1050,10 +1092,9 @@ function BulkActionBar({
   onMoveCourseChange: (value: string) => void;
   onMoveChapterChange: (value: string) => void;
   onMoveNotionChange: (value: string) => void;
-  onDraft: () => void;
-  onArchive: () => void;
-  onPublish: () => void;
-  onDuplicate: () => void;
+  onEdit: () => void;
+  onValidate: () => void;
+  onDelete: () => void;
   onMove: () => void;
   onClear: () => void;
 }) {
@@ -1074,19 +1115,18 @@ function BulkActionBar({
         </span>
       ) : (
         <>
-          <button type="button" disabled={disabled} onClick={onDraft}>
-            Marquer brouillon
+          <button
+            type="button"
+            disabled={disabled || !canEdit}
+            onClick={onEdit}
+          >
+            Modifier
           </button>
-          <button type="button" disabled={disabled} onClick={onArchive}>
-            Archiver
+          <button type="button" disabled={disabled} onClick={onValidate}>
+            Valider
           </button>
-          {canPublishShared ? (
-            <button type="button" disabled={disabled} onClick={onPublish}>
-              Publier
-            </button>
-          ) : null}
-          <button type="button" disabled={disabled} onClick={onDuplicate}>
-            Dupliquer
+          <button type="button" disabled={disabled} onClick={onDelete}>
+            Supprimer
           </button>
           <label>
             Déplacer vers

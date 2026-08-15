@@ -223,7 +223,7 @@ describe('QuestionsPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('recherche, filtre, relit, partage et archive un brouillon', async () => {
+  it('recherche, filtre, valide et supprime un brouillon', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
     expect(await screen.findByText('1 en attente')).toBeInTheDocument();
@@ -233,33 +233,17 @@ describe('QuestionsPage', () => {
     await user.selectOptions(screen.getByLabelText('Difficulté'), 'standard');
     await user.selectOptions(screen.getByLabelText('Statut'), 'draft');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
-    await user.click(
-      screen.getByRole('button', { name: 'Valider la relecture' }),
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
+    expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).validated).toBe(
+      true,
     );
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
-    expect(
-      await screen.findByRole('button', { name: 'Partager' }),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Partager' }));
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
-    await user.selectOptions(screen.getByLabelText('Source'), 'shared');
-    await user.selectOptions(screen.getByLabelText('Statut'), 'published');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
-    await user.click(screen.getByRole('button', { name: 'Archiver' }));
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(3));
-  });
-
-  it('masque le partage à un user', async () => {
-    currentRole = 'user';
-    snapshot = { ...snapshot, questions: [question({ validated: true })] };
-    const user = userEvent.setup();
-    render(<QuestionsPage />);
-    await user.click(
-      (await screen.findAllByRole('button', { name: /Calculer la somme/ }))[0]!,
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).status).toBe(
+      'archived',
     );
-    expect(
-      screen.queryByRole('button', { name: 'Partager' }),
-    ).not.toBeInTheDocument();
   });
 
   it('persiste dix variantes prouvées lors de la relecture d’un import paramétré', async () => {
@@ -301,18 +285,11 @@ describe('QuestionsPage', () => {
     await user.click(
       (await screen.findAllByRole('button', { name: /Calculer/ }))[0]!,
     );
-    await user.click(
-      screen.getByRole('button', { name: 'Valider la relecture' }),
-    );
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
     const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
     expect(saved.parameterization?.validationVariantCount).toBe(10);
     expect(saved.validated).toBe(true);
-    await user.click(await screen.findByRole('button', { name: 'Partager' }));
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
-    expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).status).toBe(
-      'published',
-    );
   });
 
   it('efface une notion existante lorsqu’un nouveau chapitre est saisi', async () => {
@@ -682,7 +659,7 @@ describe('QuestionsPage', () => {
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     expect(screen.getByText(/Analyse incomplète/)).toBeInTheDocument();
     expect(screen.getByText(/Schéma illisible/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Dupliquer' }));
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
     await user.click(
       screen.getByRole('button', { name: 'Conserver ma version' }),
@@ -696,7 +673,7 @@ describe('QuestionsPage', () => {
     expect(resolveConflict).toHaveBeenCalledTimes(3);
   });
 
-  it('archive en masse les questions sélectionnées puis vide la sélection', async () => {
+  it('supprime en masse les questions sélectionnées puis vide la sélection', async () => {
     snapshot = {
       ...snapshot,
       questions: [
@@ -719,7 +696,7 @@ describe('QuestionsPage', () => {
       screen.getByRole('toolbar', { name: 'Actions groupées' }),
     ).toBeInTheDocument();
     expect(screen.getByText('2 sélectionnées')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Archiver' }));
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
     expect(saveQuestion.mock.calls.map((call) => call[2])).toEqual([
       'archive',
@@ -862,5 +839,89 @@ describe('QuestionsPage', () => {
     expect(
       await screen.findByRole('button', { name: /MRU/ }),
     ).toBeInTheDocument();
+  });
+
+  it('valide en masse les brouillons sélectionnés', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-2',
+          prompt: [{ kind: 'text', value: 'Deux' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    expect(
+      saveQuestion.mock.calls.every((call) => call[1].validated === true),
+    ).toBe(true);
+  });
+
+  it('déplace une seule question depuis l’aperçu', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+      ],
+      courses: [
+        {
+          id: 'course-y',
+          ownerId: 'user-1',
+          title: 'Cours Y',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(await screen.findByRole('button', { name: /^Un/ }));
+    await user.selectOptions(
+      screen.getByLabelText('Déplacer vers'),
+      'course-y',
+    );
+    await user.click(screen.getByRole('button', { name: 'Déplacer' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.classification).toMatchObject({
+      kind: 'personal',
+      courseId: 'course-y',
+    });
+  });
+
+  it('n’interrompt pas une action groupée si une question échoue, et le signale', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-2',
+          prompt: [{ kind: 'text', value: 'Deux' }],
+        }),
+      ],
+    };
+    saveQuestion.mockImplementationOnce(() =>
+      Promise.reject(new Error('Échec réseau simulé')),
+    );
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByText('private-1 — Échec réseau simulé'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('toolbar', { name: 'Actions groupées' }),
+    ).not.toBeInTheDocument();
   });
 });
