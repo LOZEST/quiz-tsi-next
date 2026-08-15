@@ -645,11 +645,11 @@ export function QuestionsPage() {
                   setBulkMoveNotionId('');
                 }}
                 onMoveNotionChange={setBulkMoveNotionId}
-                onDraft={onBulkDraft}
-                onArchive={onBulkArchive}
-                onPublish={onBulkPublish}
-                onDuplicate={onBulkDuplicate}
-                onMove={onBulkMove}
+                onDraft={() => void onBulkDraft()}
+                onArchive={() => void onBulkArchive()}
+                onPublish={() => void onBulkPublish()}
+                onDuplicate={() => void onBulkDuplicate()}
+                onMove={() => void onBulkMove()}
                 onClear={clearSelection}
               />
             ) : null}

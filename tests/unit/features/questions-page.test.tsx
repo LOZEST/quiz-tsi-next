@@ -687,9 +687,7 @@ describe('QuestionsPage', () => {
       'archive',
     ]);
     expect(
-      saveQuestion.mock.calls.every(
-        (call) => (call[1] as Question).status === 'archived',
-      ),
+      saveQuestion.mock.calls.every((call) => call[1].status === 'archived'),
     ).toBe(true);
     expect(
       screen.queryByRole('toolbar', { name: 'Actions groupées' }),
