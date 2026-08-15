@@ -42,17 +42,7 @@ export function QuestionsFolderGrid({
     let count = 0;
     for (const question of questions) {
       const classification = questionClassification(question);
-      if (!classification) {
-        if (
-          predicate({
-            kind: 'source',
-            source: question.source as 'static' | 'shared',
-          })
-        )
-          count += 1;
-        continue;
-      }
-      if (classification.kind !== 'personal') {
+      if (classification?.kind !== 'personal') {
         if (
           predicate({
             kind: 'source',

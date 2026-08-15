@@ -819,10 +819,12 @@ describe('QuestionsPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('crée un cours puis un chapitre depuis la vue Dossiers', async () => {
+  it('crée un cours, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('button', { name: /Partagée/ }));
+    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
     await user.type(
       screen.getByPlaceholderText('Nouveau cours'),
       'Cinématique',
@@ -842,5 +844,23 @@ describe('QuestionsPage', () => {
       title: 'Vitesse',
       courseId: createdCourse.id,
     });
+    expect(
+      await screen.findByPlaceholderText('Nouvelle notion'),
+    ).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText('Nouvelle notion'), 'MRU');
+    await user.click(screen.getByRole('button', { name: 'Créer' }));
+    await waitFor(() => expect(saveNotion).toHaveBeenCalledTimes(1));
+    const createdNotion = saveNotion.mock.calls[0]?.[1] as PersonalNotion;
+    expect(createdNotion).toMatchObject({
+      title: 'MRU',
+      courseId: createdCourse.id,
+      chapterId: createdChapter.id,
+    });
+    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
+    await user.click(screen.getByRole('button', { name: /Cinématique/ }));
+    await user.click(screen.getByRole('button', { name: /Vitesse/ }));
+    expect(
+      await screen.findByRole('button', { name: /MRU/ }),
+    ).toBeInTheDocument();
   });
 });
