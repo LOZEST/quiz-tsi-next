@@ -36,7 +36,14 @@ const question = (overrides: Partial<Question> = {}): Question => ({
 let snapshot: QuestionWorkspaceSnapshot;
 let currentRole: 'user' | 'admin' | 'owner' = 'owner';
 const load = vi.fn(() => Promise.resolve(snapshot));
-const saveQuestion = vi.fn((_userId, next: Question) => {
+const saveQuestion = vi.fn<
+  (
+    userId: string,
+    next: Question,
+    kind: string,
+    operationId: string,
+  ) => Promise<void>
+>((_userId, next) => {
   snapshot = {
     ...snapshot,
     questions: [
