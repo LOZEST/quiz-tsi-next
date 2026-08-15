@@ -135,6 +135,9 @@ class ConfigurationMissingGateway implements AuthGateway {
   signInWithPassword(): Promise<never> {
     return Promise.reject(this.error());
   }
+  signUp(): Promise<never> {
+    return Promise.reject(this.error());
+  }
   signOut(): Promise<void> {
     return Promise.resolve();
   }
