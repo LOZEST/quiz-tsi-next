@@ -63,6 +63,13 @@ function createClient(options?: {
             data: { session: rawSession },
             error: null,
           }),
+      signUp: vi.fn().mockResolvedValue({
+        data: {
+          user: { id: 'account-a', identities: [{ id: 'identity-a' }] },
+          session: rawSession,
+        },
+        error: null,
+      }),
       signOut: vi.fn().mockResolvedValue({ error: null }),
       onAuthStateChange: vi.fn().mockImplementation((handler) => {
         authHandler = handler as typeof authHandler;
@@ -116,6 +123,64 @@ describe('SupabaseAuthGateway', () => {
     await expect(
       new SupabaseAuthGateway(missing.client).getCurrentSession(),
     ).rejects.toMatchObject({ code: 'profile-missing' });
+  });
+
+  it('signs up and maps the created session', async () => {
+    const { client } = createClient();
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', 'secret1'),
+    ).resolves.toMatchObject({
+      status: 'signed-in',
+      session: { user: { id: 'account-a', role: 'user' } },
+    });
+  });
+
+  it('reports confirmation-required when sign-up returns no session', async () => {
+    const { client } = createClient();
+    (
+      client.auth.signUp as unknown as {
+        mockResolvedValue: (v: unknown) => void;
+      }
+    ).mockResolvedValue({
+      data: {
+        user: { id: 'account-a', identities: [{ id: 'identity-a' }] },
+        session: null,
+      },
+      error: null,
+    });
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', 'secret1'),
+    ).resolves.toEqual({ status: 'confirmation-required' });
+  });
+
+  it('rejects sign-up for an email that is already registered', async () => {
+    const { client } = createClient();
+    (
+      client.auth.signUp as unknown as {
+        mockResolvedValue: (v: unknown) => void;
+      }
+    ).mockResolvedValue({
+      data: { user: { id: 'account-a', identities: [] }, session: null },
+      error: null,
+    });
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', 'secret1'),
+    ).rejects.toMatchObject({ code: 'email-already-registered' });
+  });
+
+  it('maps a rejected sign-up error', async () => {
+    const { client } = createClient();
+    (
+      client.auth.signUp as unknown as {
+        mockResolvedValue: (v: unknown) => void;
+      }
+    ).mockResolvedValue({
+      data: { user: null, session: null },
+      error: new Error('Password should be at least 6 characters.'),
+    });
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', '1'),
+    ).rejects.toMatchObject({ code: 'weak-password' });
   });
 
   it('subscribes to sign-out events and unsubscribes', () => {

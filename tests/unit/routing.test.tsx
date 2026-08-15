@@ -10,6 +10,7 @@ import {
 import { normalizeBasename } from '@app/routing/basename';
 import { safeRedirectTarget } from '@app/routing/redirect';
 import { mainNavigation } from '@app/routes';
+import { AuthError } from '@domain/auth/AuthError';
 import type { AuthGateway } from '@domain/auth/AuthGateway';
 import type { AuthSession } from '@domain/auth/AuthSession';
 import type { WorkspaceRepository } from '@domain/workspace/WorkspaceRepository';
@@ -135,6 +136,139 @@ describe('application routing', () => {
       'test-password',
       expect.any(AbortSignal),
     );
+  });
+
+  it('validates and submits the accessible register form', async () => {
+    const user = userEvent.setup();
+    const testServices = services(null);
+    vi.mocked(
+      // The test gateway is a Vitest mock behind the domain interface.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      testServices.authGateway.signUp,
+    ).mockResolvedValue({ status: 'signed-in', session: sessions.user });
+    render(
+      <AppServicesProvider services={testServices}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/register']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </AppServicesProvider>,
+    );
+    await screen.findByRole('heading', { name: 'Créer un compte' });
+    const submit = screen.getByRole('button', { name: 'Créer mon compte' });
+    await user.click(submit);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Saisis ton adresse email.',
+    );
+    expect(screen.getByLabelText('Email')).toHaveFocus();
+    await user.type(screen.getByLabelText('Email'), 'user@example.test');
+    await user.click(submit);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Ton mot de passe doit contenir au moins 6 caractères.',
+    );
+    expect(screen.getByLabelText('Mot de passe')).toHaveFocus();
+    await user.type(screen.getByLabelText('Mot de passe'), 'test-password');
+    await user.click(submit);
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Les mots de passe ne correspondent pas.',
+    );
+    expect(screen.getByLabelText('Confirme le mot de passe')).toHaveFocus();
+    await user.type(
+      screen.getByLabelText('Confirme le mot de passe'),
+      'test-password',
+    );
+    await user.click(submit);
+    expect(
+      await screen.findByRole('heading', { name: 'Tableau blanc' }),
+    ).toBeInTheDocument();
+    expect(
+      // The test gateway is a Vitest mock behind the domain interface.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      testServices.authGateway.signUp,
+    ).toHaveBeenCalledWith(
+      'user@example.test',
+      'test-password',
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('shows a confirmation message when the account needs email verification', async () => {
+    const user = userEvent.setup();
+    const testServices = services(null);
+    vi.mocked(
+      // The test gateway is a Vitest mock behind the domain interface.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      testServices.authGateway.signUp,
+    ).mockResolvedValue({ status: 'confirmation-required' });
+    render(
+      <AppServicesProvider services={testServices}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/register']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </AppServicesProvider>,
+    );
+    await screen.findByRole('heading', { name: 'Créer un compte' });
+    await user.type(screen.getByLabelText('Email'), 'user@example.test');
+    await user.type(screen.getByLabelText('Mot de passe'), 'test-password');
+    await user.type(
+      screen.getByLabelText('Confirme le mot de passe'),
+      'test-password',
+    );
+    await user.click(screen.getByRole('button', { name: 'Créer mon compte' }));
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Vérifie ta boîte email',
+    );
+  });
+
+  it('surfaces a sign-up failure and clears the password fields', async () => {
+    const user = userEvent.setup();
+    const testServices = services(null);
+    vi.mocked(
+      // The test gateway is a Vitest mock behind the domain interface.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      testServices.authGateway.signUp,
+    ).mockRejectedValue(
+      new AuthError('email-already-registered', 'Email already registered.'),
+    );
+    render(
+      <AppServicesProvider services={testServices}>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/register']}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </AppServicesProvider>,
+    );
+    await screen.findByRole('heading', { name: 'Créer un compte' });
+    await user.type(screen.getByLabelText('Email'), 'user@example.test');
+    await user.type(screen.getByLabelText('Mot de passe'), 'test-password');
+    await user.type(
+      screen.getByLabelText('Confirme le mot de passe'),
+      'test-password',
+    );
+    await user.click(screen.getByRole('button', { name: 'Créer mon compte' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Un compte existe déjà avec cet email.',
+    );
+    expect(screen.getByLabelText('Mot de passe')).toHaveValue('');
+    expect(screen.getByLabelText('Mot de passe')).toHaveFocus();
+  });
+
+  it('navigates between login and register via the account links', async () => {
+    const user = userEvent.setup();
+    renderRoute('/login', null);
+    await screen.findByRole('heading', { name: 'Connexion' });
+    await user.click(
+      screen.getByRole('link', { name: 'Pas encore de compte ? En créer un' }),
+    );
+    await screen.findByRole('heading', { name: 'Créer un compte' });
+    await user.click(
+      screen.getByRole('link', { name: 'Déjà un compte ? Se connecter' }),
+    );
+    await screen.findByRole('heading', { name: 'Connexion' });
   });
 
   it('redirects root and login to whiteboard with a session', async () => {
