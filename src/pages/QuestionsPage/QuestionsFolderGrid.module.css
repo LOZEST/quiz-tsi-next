@@ -1,0 +1,83 @@
+.folderGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qtsi-space-3);
+  padding: var(--qtsi-space-3);
+}
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qtsi-space-1);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.85rem;
+}
+.breadcrumb button {
+  padding: 0;
+  color: var(--qtsi-accent);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--qtsi-space-3);
+}
+.card {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  padding: var(--qtsi-space-3);
+  text-align: center;
+  background: var(--qtsi-surface-muted);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-2);
+  cursor: pointer;
+}
+.card:hover {
+  background: var(--qtsi-surface-hover);
+}
+.card span:nth-child(2) {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cardIcon {
+  font-size: 2rem;
+}
+.card small {
+  color: var(--qtsi-text-secondary);
+}
+.newFolder {
+  display: flex;
+  align-items: end;
+  gap: var(--qtsi-space-2);
+}
+.newFolder label {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  flex: 1;
+  color: var(--qtsi-text-secondary);
+  font-size: 0.85rem;
+}
+.newFolder input {
+  min-height: var(--qtsi-touch-target);
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-1);
+  font: inherit;
+}
+.newFolder button {
+  min-height: var(--qtsi-touch-target);
+  padding: 0 var(--qtsi-space-3);
+}
+@media (max-width: 900px) {
+  .cards {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+@media (max-width: 520px) {
+  .newFolder {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

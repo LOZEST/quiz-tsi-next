@@ -441,4 +441,90 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       (await repository.load(ownerId)).questions.map((item) => item.id),
     ).toEqual(['baseline']);
   });
+
+  it('crée un dossier (cours/chapitre/notion) indépendamment de toute question', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const ownerId = 'folder-owner';
+    const now = '2026-01-01T00:00:00.000Z';
+    const course = {
+      id: 'course-folder',
+      ownerId,
+      title: 'Cours',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveCourse(ownerId, course, 'op-course');
+    const chapter = {
+      id: 'chapter-folder',
+      ownerId,
+      courseId: 'course-folder',
+      title: 'Chapitre',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveChapter(ownerId, chapter, 'op-chapter');
+    const notion = {
+      id: 'notion-folder',
+      ownerId,
+      courseId: 'course-folder',
+      chapterId: 'chapter-folder',
+      title: 'Notion',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveNotion(ownerId, notion, 'op-notion');
+    const snapshot = await repository.load(ownerId);
+    expect(snapshot.courses).toEqual([course]);
+    expect(snapshot.chapters).toEqual([chapter]);
+    expect(snapshot.notions).toEqual([notion]);
+    expect(snapshot.pendingOperationCount).toBe(3);
+    expect((await repository.load('other-owner')).courses).toEqual([]);
+  });
+
+  it('refuse un chapitre ou une notion rattachés à un cours inexistant ou étranger', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const ownerId = 'guard-owner';
+    const now = '2026-01-01T00:00:00.000Z';
+    await expect(
+      repository.saveChapter(
+        ownerId,
+        {
+          id: 'orphan-chapter',
+          ownerId,
+          courseId: 'missing-course',
+          title: 'X',
+          createdAt: now,
+          updatedAt: now,
+        },
+        'op-orphan-chapter',
+      ),
+    ).rejects.toThrow('Taxonomie incohérente');
+    const otherOwnerCourse = {
+      id: 'foreign-course',
+      ownerId: 'someone-else',
+      title: 'Cours étranger',
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveCourse(
+      'someone-else',
+      otherOwnerCourse,
+      'op-foreign-course',
+    );
+    await expect(
+      repository.saveNotion(
+        ownerId,
+        {
+          id: 'orphan-notion',
+          ownerId,
+          courseId: 'foreign-course',
+          chapterId: null,
+          title: 'Y',
+          createdAt: now,
+          updatedAt: now,
+        },
+        'op-orphan-notion',
+      ),
+    ).rejects.toThrow('Taxonomie incohérente');
+  });
 });

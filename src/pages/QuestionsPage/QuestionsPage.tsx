@@ -6,7 +6,9 @@ import { EmptyState } from '@design-system/components/EmptyState/EmptyState';
 import { StatusBadge } from '@design-system/components/StatusBadge/StatusBadge';
 import {
   searchAndFilterQuestions,
+  questionsInFolder,
   type QuestionBankFilters,
+  type FolderLocation,
 } from '@domain/questions/QuestionBankSearch';
 import {
   officialClassification,
@@ -35,6 +37,7 @@ import type {
   PersonalNotion,
 } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 import styles from './QuestionsPage.module.css';
+import { QuestionsFolderGrid } from './QuestionsFolderGrid';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
@@ -131,6 +134,10 @@ export function QuestionsPage() {
   const [bulkMoveChapterId, setBulkMoveChapterId] = useState('');
   const [bulkMoveNotionId, setBulkMoveNotionId] = useState('');
   const selectAllRef = useRef<HTMLInputElement>(null);
+  const [view, setView] = useState<'list' | 'folders'>('list');
+  const [folderLocation, setFolderLocation] = useState<FolderLocation>({
+    kind: 'root',
+  });
   const reload = useCallback(async () => {
     try {
       if (userId) setWorkspace(await questionWorkspaceRepository.load(userId));
@@ -209,7 +216,9 @@ export function QuestionsPage() {
     setSelectedId(question.id);
     await reload();
   };
-  const selectableResults = results.filter(
+  const displayedQuestions =
+    view === 'folders' ? questionsInFolder(results, folderLocation) : results;
+  const selectableResults = displayedQuestions.filter(
     (question) => question.source !== 'static',
   );
   const allSelected =
@@ -314,6 +323,71 @@ export function QuestionsPage() {
       },
       updatedAt: new Date().toISOString(),
     }));
+  const onCreateCourse = async (title: string) => {
+    const now = new Date().toISOString();
+    const course = {
+      id: crypto.randomUUID(),
+      ownerId: userId,
+      title,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await questionWorkspaceRepository.saveCourse(
+      userId,
+      course,
+      crypto.randomUUID(),
+    );
+    await reload();
+    setFolderLocation({ kind: 'course', courseId: course.id });
+  };
+  const onCreateChapter = async (title: string) => {
+    if (folderLocation.kind !== 'course') return;
+    const now = new Date().toISOString();
+    const chapter = {
+      id: crypto.randomUUID(),
+      ownerId: userId,
+      courseId: folderLocation.courseId,
+      title,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await questionWorkspaceRepository.saveChapter(
+      userId,
+      chapter,
+      crypto.randomUUID(),
+    );
+    await reload();
+    setFolderLocation({
+      kind: 'chapter',
+      courseId: folderLocation.courseId,
+      chapterId: chapter.id,
+    });
+  };
+  const onCreateNotion = async (title: string) => {
+    if (folderLocation.kind !== 'chapter') return;
+    const now = new Date().toISOString();
+    const notion = {
+      id: crypto.randomUUID(),
+      ownerId: userId,
+      courseId: folderLocation.courseId,
+      chapterId: folderLocation.chapterId,
+      title,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await questionWorkspaceRepository.saveNotion(
+      userId,
+      notion,
+      crypto.randomUUID(),
+    );
+    await reload();
+    setFolderLocation({
+      kind: 'notion',
+      courseId: folderLocation.courseId,
+      chapterId: folderLocation.chapterId,
+      notionId: notion.id,
+    });
+  };
 
   return (
     <div className={styles.page}>
@@ -340,6 +414,26 @@ export function QuestionsPage() {
         <button type="button" onClick={() => setEditing(true)}>
           Créer une question
         </button>
+        <div
+          role="group"
+          aria-label="Mode d’affichage"
+          className={styles.viewToggle}
+        >
+          <button
+            type="button"
+            aria-pressed={view === 'list'}
+            onClick={() => setView('list')}
+          >
+            Liste
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === 'folders'}
+            onClick={() => setView('folders')}
+          >
+            Dossiers
+          </button>
+        </div>
         {chatGptImportUrl ? (
           <a
             className="qtsi-text-link"
@@ -567,6 +661,19 @@ export function QuestionsPage() {
       ) : (
         <div className={styles.layout}>
           <div className={styles.listColumn}>
+            {view === 'folders' ? (
+              <QuestionsFolderGrid
+                location={folderLocation}
+                onLocationChange={setFolderLocation}
+                courses={workspace.courses}
+                chapters={workspace.chapters}
+                notions={workspace.notions}
+                questions={results}
+                onCreateCourse={(title) => void onCreateCourse(title)}
+                onCreateChapter={(title) => void onCreateChapter(title)}
+                onCreateNotion={(title) => void onCreateNotion(title)}
+              />
+            ) : null}
             <div className={styles.listHeader}>
               <label>
                 <input
@@ -587,7 +694,7 @@ export function QuestionsPage() {
               ) : null}
             </div>
             <ul className={styles.list}>
-              {results.map((question) => {
+              {displayedQuestions.map((question) => {
                 const promptLabel =
                   question.prompt.find((segment) => segment.kind === 'text')
                     ?.value ?? 'Question mathématique';
