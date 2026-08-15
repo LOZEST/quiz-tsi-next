@@ -587,13 +587,13 @@
     {
       "calculId": "LOT2-0067",
       "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
       "calculId": "LOT2-0071",
       "field": "Enonce_parametrique",
-      "structured": 0,
+      "structured": 1,
       "fallback": 1
     },
     {
@@ -627,12 +627,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0077",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT2-0078",
       "field": "Enonce_parametrique",
       "structured": 0,
@@ -641,18 +635,6 @@
     {
       "calculId": "LOT2-0079",
       "field": "Enonce_parametrique",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0080",
-      "field": "Enonce_parametrique",
-      "structured": 2,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0080",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -701,8 +683,8 @@
     {
       "calculId": "LOT2-0096",
       "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 3
+      "structured": 1,
+      "fallback": 2
     },
     {
       "calculId": "LOT2-0097",
@@ -739,12 +721,6 @@
       "field": "Reponse_generale",
       "structured": 1,
       "fallback": 2
-    },
-    {
-      "calculId": "LOT2-0105",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
     },
     {
       "calculId": "LOT2-0110",
@@ -9602,8 +9578,8 @@
       "exhaustive": true
     }
   ],
-  "mathSegmentsStructured": 2738,
-  "mathSegmentsFallbackToText": 313,
+  "mathSegmentsStructured": 2888,
+  "mathSegmentsFallbackToText": 308,
   "fallbackCalculIds": [
     "DUNOD-REEL-006",
     "DUNOD-REEL-011",
@@ -9785,10 +9761,8 @@
     "LOT2-0074",
     "LOT2-0075",
     "LOT2-0076",
-    "LOT2-0077",
     "LOT2-0078",
     "LOT2-0079",
-    "LOT2-0080",
     "LOT2-0081",
     "LOT2-0082",
     "LOT2-0084",
@@ -9802,7 +9776,6 @@
     "LOT2-0102",
     "LOT2-0103",
     "LOT2-0104",
-    "LOT2-0105",
     "LOT2-0110",
     "LOT2-0113",
     "LOT2-0117",
@@ -44179,6 +44152,6 @@
       ]
     }
   ],
-  "generatedBundleBytes": 3269632,
+  "generatedBundleBytes": 3279008,
   "sourceBytes": 2862887
 }
