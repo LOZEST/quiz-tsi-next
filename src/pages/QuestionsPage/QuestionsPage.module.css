@@ -21,6 +21,13 @@
 .editor button {
   min-height: 44px;
 }
+.viewToggle {
+  display: flex;
+  gap: 4px;
+}
+.viewToggle button[aria-pressed='true'] {
+  background: var(--qtsi-accent-soft);
+}
 .filters {
   display: grid;
   grid-template-columns: repeat(4, minmax(150px, 1fr));

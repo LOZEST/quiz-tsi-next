@@ -95,6 +95,21 @@ export interface QuestionWorkspaceRepository {
       notion: string | null;
     }>,
   ): Promise<void>;
+  saveCourse(
+    userId: string,
+    course: Readonly<PersonalCourse>,
+    operationId: string,
+  ): Promise<void>;
+  saveChapter(
+    userId: string,
+    chapter: Readonly<PersonalChapter>,
+    operationId: string,
+  ): Promise<void>;
+  saveNotion(
+    userId: string,
+    notion: Readonly<PersonalNotion>,
+    operationId: string,
+  ): Promise<void>;
   resolveConflict(
     userId: string,
     conflictId: string,

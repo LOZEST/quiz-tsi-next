@@ -4,6 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
+import type {
+  PersonalChapter,
+  PersonalCourse,
+  PersonalNotion,
+} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 
 const question = (overrides: Partial<Question> = {}): Question => ({
   id: 'private-1',
@@ -75,10 +80,37 @@ const saveQuestionDraftWithPersonalTaxonomy = vi.fn(
   },
 );
 const listOutbox = vi.fn(() => Promise.resolve([]));
+const saveCourse = vi.fn((_userId: string, course: PersonalCourse) => {
+  snapshot = {
+    ...snapshot,
+    courses: [...snapshot.courses, course],
+    pendingOperationCount: snapshot.pendingOperationCount + 1,
+  };
+  return Promise.resolve();
+});
+const saveChapter = vi.fn((_userId: string, chapter: PersonalChapter) => {
+  snapshot = {
+    ...snapshot,
+    chapters: [...snapshot.chapters, chapter],
+    pendingOperationCount: snapshot.pendingOperationCount + 1,
+  };
+  return Promise.resolve();
+});
+const saveNotion = vi.fn((_userId: string, notion: PersonalNotion) => {
+  snapshot = {
+    ...snapshot,
+    notions: [...snapshot.notions, notion],
+    pendingOperationCount: snapshot.pendingOperationCount + 1,
+  };
+  return Promise.resolve();
+});
 const questionWorkspaceRepository = {
   load,
   saveQuestion,
   saveQuestionDraftWithPersonalTaxonomy,
+  saveCourse,
+  saveChapter,
+  saveNotion,
   resolveConflict,
   listOutbox,
   completeOperation: vi.fn(() => Promise.resolve()),
@@ -755,6 +787,60 @@ describe('QuestionsPage', () => {
     expect(saved.classification).toMatchObject({
       kind: 'personal',
       courseId: 'course-x',
+    });
+  });
+
+  it('navigue dans la vue Dossiers et n’affiche que les questions du dossier courant', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({
+          id: 'private-1',
+          prompt: [{ kind: 'text', value: 'Question perso' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    expect(
+      screen.queryByRole('button', { name: /Question perso/ }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Officielle/ }));
+    expect(
+      await screen.findByRole('button', { name: /Calculer la somme/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Question perso/ }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
+    expect(
+      screen.queryByRole('button', { name: /Calculer la somme/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('crée un cours puis un chapitre depuis la vue Dossiers', async () => {
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.type(
+      screen.getByPlaceholderText('Nouveau cours'),
+      'Cinématique',
+    );
+    await user.click(screen.getByRole('button', { name: 'Créer' }));
+    await waitFor(() => expect(saveCourse).toHaveBeenCalledTimes(1));
+    const createdCourse = saveCourse.mock.calls[0]?.[1] as PersonalCourse;
+    expect(createdCourse.title).toBe('Cinématique');
+    expect(
+      await screen.findByPlaceholderText('Nouveau chapitre'),
+    ).toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText('Nouveau chapitre'), 'Vitesse');
+    await user.click(screen.getByRole('button', { name: 'Créer' }));
+    await waitFor(() => expect(saveChapter).toHaveBeenCalledTimes(1));
+    const createdChapter = saveChapter.mock.calls[0]?.[1] as PersonalChapter;
+    expect(createdChapter).toMatchObject({
+      title: 'Vitesse',
+      courseId: createdCourse.id,
     });
   });
 });

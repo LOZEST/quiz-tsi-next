@@ -12,6 +12,31 @@ import type {
   PersonalNotion,
 } from './personal-taxonomy/PersonalTaxonomy';
 
+export type FolderLocation =
+  | { kind: 'root' }
+  | { kind: 'source'; source: 'static' | 'shared' }
+  | { kind: 'course'; courseId: string }
+  | { kind: 'chapter'; courseId: string; chapterId: string }
+  | { kind: 'notion'; courseId: string; chapterId: string; notionId: string };
+
+export function questionsInFolder(
+  questions: readonly Readonly<Question>[],
+  location: FolderLocation,
+): readonly Readonly<Question>[] {
+  if (location.kind === 'root') return [];
+  if (location.kind === 'source')
+    return questions.filter((question) => question.source === location.source);
+  return questions.filter((question) => {
+    const classification = questionClassification(question);
+    if (!classification || classification.kind !== 'personal') return false;
+    if (classification.courseId !== location.courseId) return false;
+    if (location.kind === 'course') return classification.chapterId === null;
+    if (classification.chapterId !== location.chapterId) return false;
+    if (location.kind === 'chapter') return classification.notionId === null;
+    return classification.notionId === location.notionId;
+  });
+}
+
 export interface QuestionBankFilters {
   readonly source?: QuestionSource | undefined;
   readonly classificationKind?: 'official' | 'personal' | undefined;
