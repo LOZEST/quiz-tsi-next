@@ -7,3 +7,4 @@ supabase/.branches/
 supabase/.temp/
 .DS_Store
 *.local
+.claude/settings.local.json
