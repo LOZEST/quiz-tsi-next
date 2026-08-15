@@ -299,7 +299,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           return 'confirmation-required';
         }
-        await activateSession(result.session, activeGeneration, activeOperation);
+        await activateSession(
+          result.session,
+          activeGeneration,
+          activeOperation,
+        );
         return generation.current === activeGeneration ? 'signed-in' : false;
       } catch (error) {
         if (abortController.signal.aborted) return false;

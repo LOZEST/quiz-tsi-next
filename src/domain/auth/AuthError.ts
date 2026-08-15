@@ -39,7 +39,6 @@ export const authErrorMessages: Record<AuthErrorCode, string> = {
   'storage-unavailable':
     'L’espace local ne peut pas être ouvert sur cet appareil.',
   'email-already-registered': 'Un compte existe déjà avec cet email.',
-  'weak-password':
-    'Ton mot de passe doit contenir au moins 6 caractères.',
+  'weak-password': 'Ton mot de passe doit contenir au moins 6 caractères.',
   unknown: 'Une erreur inattendue empêche la connexion. Réessaie.',
 };

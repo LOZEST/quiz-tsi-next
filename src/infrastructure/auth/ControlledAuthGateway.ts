@@ -74,7 +74,10 @@ export class ControlledAuthGateway implements AuthGateway {
       );
     }
     sessionStorage.setItem(STORAGE_KEY, email);
-    return Promise.resolve({ status: 'signed-in', session: createSession(email) });
+    return Promise.resolve({
+      status: 'signed-in',
+      session: createSession(email),
+    });
   }
 
   signOut(): Promise<void> {

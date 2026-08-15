@@ -35,7 +35,9 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
       return;
     }
     if (password.length < 6) {
-      setValidationError('Ton mot de passe doit contenir au moins 6 caractères.');
+      setValidationError(
+        'Ton mot de passe doit contenir au moins 6 caractères.',
+      );
       passwordRef.current?.focus();
       return;
     }
@@ -61,8 +63,8 @@ export function RegisterForm({ onSuccess }: { onSuccess: () => void }) {
   if (confirmationRequired) {
     return (
       <p className={styles.success} role="status">
-        Ton compte a été créé. Vérifie ta boîte email pour confirmer ton
-        adresse avant de te connecter.
+        Ton compte a été créé. Vérifie ta boîte email pour confirmer ton adresse
+        avant de te connecter.
       </p>
     );
   }
