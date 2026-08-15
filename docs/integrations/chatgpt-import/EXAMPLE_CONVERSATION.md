@@ -38,6 +38,7 @@ flowchart TD
 ```
 
 Correspondance avec les règles de `GPT_INSTRUCTIONS.md` :
+
 - **ID compatible avec la banque ?** = l'étape 4 (`chapterId`/`notionId` trouvés sur la même ligne du Knowledge). Un « Non » ne doit jamais mener à inventer un identifiant officiel — toujours basculer en classification `personal`.
 - **Accepté par le client ? → Non → Modification → Accepté par le client ?** = boucle de l'étape 5. Chaque passage par « Modification » doit réafficher l'aperçu complet avant de redemander confirmation.
 - **Import** ne doit être atteint qu'une seule fois par contenu validé ; un nouveau passage par cette case après une correction utilise un nouvel `importId`.
@@ -77,6 +78,7 @@ Point clé à vérifier : `chapterId` change entre 10.4 (`derivatives-function-s
 ## 4. Appel de l'action
 
 Le GPT appelle `importQuestionDrafts` avec `confirmedByUser: true`, un `importId` stable, et pour chaque question :
+
 - `classification.chapterId` / `classification.notionId` recopiés exactement depuis la ligne correspondante du Knowledge (jamais réutilisés d'une question à l'autre sans revérifier),
 - `parameterization: null`.
 
@@ -92,8 +94,8 @@ Si un import échoue et que le contenu envoyé change (correction d'une classifi
 
 ## Erreurs à ne pas reproduire (observées en production)
 
-| Symptôme serveur | Cause | Règle à appliquer |
-|---|---|---|
-| `classification-unresolved` sur un `notionId` pourtant valide | `chapterId` du document réutilisé pour toutes les questions au lieu du `chapterId` propre à chaque `notionId` | `chapterId` et `notionId` viennent toujours de la même ligne du Knowledge |
-| `invalid-parameterization` sur un calcul fixe | `parameterization` renseigné avec des `variables` pour une variable muette (`t`, `x`) qui n'est pas une variable de randomisation | `parameterization: null` sauf plage numérique aléatoire explicite |
-| Retry avec le même `importId` toujours en échec | Le rapport en cache (`replayed`) est renvoyé sans réévaluation | Utiliser un nouvel `importId` à chaque nouvelle tentative avec un payload corrigé |
+| Symptôme serveur                                              | Cause                                                                                                                             | Règle à appliquer                                                                 |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `classification-unresolved` sur un `notionId` pourtant valide | `chapterId` du document réutilisé pour toutes les questions au lieu du `chapterId` propre à chaque `notionId`                     | `chapterId` et `notionId` viennent toujours de la même ligne du Knowledge         |
+| `invalid-parameterization` sur un calcul fixe                 | `parameterization` renseigné avec des `variables` pour une variable muette (`t`, `x`) qui n'est pas une variable de randomisation | `parameterization: null` sauf plage numérique aléatoire explicite                 |
+| Retry avec le même `importId` toujours en échec               | Le rapport en cache (`replayed`) est renvoyé sans réévaluation                                                                    | Utiliser un nouvel `importId` à chaque nouvelle tentative avec un payload corrigé |
