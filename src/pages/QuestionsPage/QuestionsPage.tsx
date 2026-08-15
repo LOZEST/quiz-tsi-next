@@ -3,6 +3,7 @@ import { useAuth } from '@app/providers/AuthProvider';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { EmptyState } from '@design-system/components/EmptyState/EmptyState';
+import { StatusBadge } from '@design-system/components/StatusBadge/StatusBadge';
 import {
   searchAndFilterQuestions,
   type QuestionBankFilters,
@@ -458,11 +459,7 @@ export function QuestionsPage() {
                   </span>
                   <small>
                     {labels[question.source]} ·{' '}
-                    {question.status === 'draft'
-                      ? 'Brouillon'
-                      : question.status === 'archived'
-                        ? 'Archivée'
-                        : 'Publiée'}
+                    <StatusBadge status={question.status} />
                   </small>
                 </button>
               </li>
@@ -661,7 +658,9 @@ function QuestionPreview({
   const imported = question.provenance?.chatGptImport;
   return (
     <>
-      <h2>Aperçu</h2>
+      <h2>
+        Aperçu <StatusBadge status={question.status} />
+      </h2>
       {imported ? (
         <section className={styles.importReview}>
           <strong>Import ChatGPT — À vérifier</strong>

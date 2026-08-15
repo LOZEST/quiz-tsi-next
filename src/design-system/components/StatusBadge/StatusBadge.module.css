@@ -1,0 +1,25 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--qtsi-space-1) var(--qtsi-space-2);
+  border-radius: var(--qtsi-radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.draft {
+  color: var(--qtsi-warning);
+  background: color-mix(in srgb, var(--qtsi-warning) 14%, transparent);
+}
+
+.published {
+  color: var(--qtsi-success);
+  background: color-mix(in srgb, var(--qtsi-success) 14%, transparent);
+}
+
+.archived {
+  color: var(--qtsi-text-secondary);
+  background: var(--qtsi-surface-muted);
+}
