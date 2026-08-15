@@ -29,6 +29,11 @@ import { parseMathSource, parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { ProgramIndex } from '@domain/program/Program';
+import type {
+  PersonalCourse,
+  PersonalChapter,
+  PersonalNotion,
+} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 import styles from './QuestionsPage.module.css';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
@@ -115,6 +120,17 @@ export function QuestionsPage() {
     'idle' | 'syncing' | 'denied' | 'error'
   >('idle');
   const [rejectedRemoteRowCount, setRejectedRemoteRowCount] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
+  const [bulkBusy, setBulkBusy] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+  const [bulkMoveCourseId, setBulkMoveCourseId] = useState('');
+  const [bulkMoveChapterId, setBulkMoveChapterId] = useState('');
+  const [bulkMoveNotionId, setBulkMoveNotionId] = useState('');
+  const selectAllRef = useRef<HTMLInputElement>(null);
   const reload = useCallback(async () => {
     try {
       if (userId) setWorkspace(await questionWorkspaceRepository.load(userId));
@@ -193,6 +209,111 @@ export function QuestionsPage() {
     setSelectedId(question.id);
     await reload();
   };
+  const selectableResults = results.filter(
+    (question) => question.source !== 'static',
+  );
+  const allSelected =
+    selectableResults.length > 0 &&
+    selectableResults.every((question) => selectedIds.has(question.id));
+  useEffect(() => {
+    if (selectAllRef.current)
+      selectAllRef.current.indeterminate = selectedIds.size > 0 && !allSelected;
+  }, [selectedIds, allSelected]);
+  const toggleSelected = (id: string) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = () => {
+    setSelectedIds(
+      allSelected
+        ? new Set()
+        : new Set(selectableResults.map((question) => question.id)),
+    );
+  };
+  const clearSelection = () => setSelectedIds(new Set());
+  const runBulkAction = async (
+    kind: 'create' | 'update' | 'archive' | 'publish',
+    updater: (question: Readonly<Question>) => Readonly<Question>,
+    filter?: (question: Readonly<Question>) => boolean,
+  ) => {
+    const targets = selectableResults.filter(
+      (question) =>
+        selectedIds.has(question.id) && (!filter || filter(question)),
+    );
+    if (!targets.length) return;
+    setBulkBusy({ done: 0, total: targets.length });
+    for (const [index, question] of targets.entries()) {
+      await questionWorkspaceRepository.saveQuestion(
+        userId,
+        updater(question),
+        kind,
+        crypto.randomUUID(),
+      );
+      setBulkBusy({ done: index + 1, total: targets.length });
+    }
+    setBulkBusy(null);
+    clearSelection();
+    await reload();
+  };
+  const onBulkDraft = () =>
+    runBulkAction('update', (question) => ({
+      ...question,
+      version: question.version + 1,
+      status: 'draft',
+      updatedAt: new Date().toISOString(),
+    }));
+  const onBulkArchive = () =>
+    runBulkAction('archive', (question) => ({
+      ...question,
+      version: question.version + 1,
+      status: 'archived',
+      updatedAt: new Date().toISOString(),
+    }));
+  const onBulkPublish = () =>
+    runBulkAction(
+      'publish',
+      (question) => ({
+        ...question,
+        version: question.version + 1,
+        source: 'shared',
+        status: 'published',
+        updatedAt: new Date().toISOString(),
+      }),
+      (question) =>
+        question.validated &&
+        questionClassification(question)?.kind === 'official',
+    );
+  const onBulkDuplicate = () =>
+    runBulkAction('create', (question) => {
+      const now = new Date().toISOString();
+      return {
+        ...question,
+        id: crypto.randomUUID(),
+        version: 1,
+        source: 'private',
+        ownerId: userId,
+        status: 'draft',
+        validated: false,
+        createdAt: now,
+        updatedAt: now,
+      };
+    });
+  const onBulkMove = () =>
+    runBulkAction('update', (question) => ({
+      ...question,
+      version: question.version + 1,
+      classification: {
+        kind: 'personal',
+        courseId: bulkMoveCourseId,
+        chapterId: bulkMoveChapterId || null,
+        notionId: bulkMoveNotionId || null,
+      },
+      updatedAt: new Date().toISOString(),
+    }));
 
   return (
     <div className={styles.page}>
@@ -445,26 +566,94 @@ export function QuestionsPage() {
         />
       ) : (
         <div className={styles.layout}>
-          <ul className={styles.list}>
-            {results.map((question) => (
-              <li key={`${question.id}:${question.version}`}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedId(question.id)}
-                  aria-pressed={selectedId === question.id}
-                >
-                  <span>
-                    {question.prompt.find((segment) => segment.kind === 'text')
-                      ?.value ?? 'Question mathématique'}
-                  </span>
-                  <small>
-                    {labels[question.source]} ·{' '}
-                    <StatusBadge status={question.status} />
-                  </small>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className={styles.listColumn}>
+            <div className={styles.listHeader}>
+              <label>
+                <input
+                  ref={selectAllRef}
+                  type="checkbox"
+                  checked={allSelected}
+                  disabled={selectableResults.length === 0}
+                  onChange={toggleSelectAll}
+                  aria-label="Tout sélectionner"
+                />
+                Tout sélectionner
+              </label>
+              {selectedIds.size ? (
+                <span>
+                  {selectedIds.size} sélectionnée
+                  {selectedIds.size > 1 ? 's' : ''}
+                </span>
+              ) : null}
+            </div>
+            <ul className={styles.list}>
+              {results.map((question) => {
+                const promptLabel =
+                  question.prompt.find((segment) => segment.kind === 'text')
+                    ?.value ?? 'Question mathématique';
+                return (
+                  <li
+                    key={`${question.id}:${question.version}`}
+                    className={styles.listRow}
+                  >
+                    {question.source !== 'static' ? (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(question.id)}
+                        onChange={() => toggleSelected(question.id)}
+                        aria-label={`Sélectionner ${promptLabel}`}
+                      />
+                    ) : (
+                      <span
+                        className={styles.checkboxSpacer}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(question.id)}
+                      aria-pressed={selectedId === question.id}
+                    >
+                      <span>{promptLabel}</span>
+                      <small>
+                        {labels[question.source]} ·{' '}
+                        <StatusBadge status={question.status} />
+                      </small>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {selectedIds.size ? (
+              <BulkActionBar
+                count={selectedIds.size}
+                busy={bulkBusy}
+                canPublishShared={canPublishShared}
+                courses={workspace.courses}
+                chapters={workspace.chapters}
+                notions={workspace.notions}
+                moveCourseId={bulkMoveCourseId}
+                moveChapterId={bulkMoveChapterId}
+                moveNotionId={bulkMoveNotionId}
+                onMoveCourseChange={(value) => {
+                  setBulkMoveCourseId(value);
+                  setBulkMoveChapterId('');
+                  setBulkMoveNotionId('');
+                }}
+                onMoveChapterChange={(value) => {
+                  setBulkMoveChapterId(value);
+                  setBulkMoveNotionId('');
+                }}
+                onMoveNotionChange={setBulkMoveNotionId}
+                onDraft={() => void onBulkDraft()}
+                onArchive={() => void onBulkArchive()}
+                onPublish={() => void onBulkPublish()}
+                onDuplicate={() => void onBulkDuplicate()}
+                onMove={() => void onBulkMove()}
+                onClear={clearSelection}
+              />
+            ) : null}
+          </div>
           <section className={styles.preview} aria-label="Aperçu">
             {selected ? (
               <QuestionPreview
@@ -719,6 +908,149 @@ function QuestionPreview({
         ) : null}
       </div>
     </>
+  );
+}
+
+function BulkActionBar({
+  count,
+  busy,
+  canPublishShared,
+  courses,
+  chapters,
+  notions,
+  moveCourseId,
+  moveChapterId,
+  moveNotionId,
+  onMoveCourseChange,
+  onMoveChapterChange,
+  onMoveNotionChange,
+  onDraft,
+  onArchive,
+  onPublish,
+  onDuplicate,
+  onMove,
+  onClear,
+}: {
+  count: number;
+  busy: { done: number; total: number } | null;
+  canPublishShared: boolean;
+  courses: readonly PersonalCourse[];
+  chapters: readonly PersonalChapter[];
+  notions: readonly PersonalNotion[];
+  moveCourseId: string;
+  moveChapterId: string;
+  moveNotionId: string;
+  onMoveCourseChange: (value: string) => void;
+  onMoveChapterChange: (value: string) => void;
+  onMoveNotionChange: (value: string) => void;
+  onDraft: () => void;
+  onArchive: () => void;
+  onPublish: () => void;
+  onDuplicate: () => void;
+  onMove: () => void;
+  onClear: () => void;
+}) {
+  const disabled = busy !== null;
+  return (
+    <div
+      className={styles.bulkBar}
+      role="toolbar"
+      aria-label="Actions groupées"
+    >
+      <span>
+        {count} question{count > 1 ? 's' : ''} sélectionnée
+        {count > 1 ? 's' : ''}
+      </span>
+      {busy ? (
+        <span role="status">
+          {busy.done}/{busy.total} traitées…
+        </span>
+      ) : (
+        <>
+          <button type="button" disabled={disabled} onClick={onDraft}>
+            Marquer brouillon
+          </button>
+          <button type="button" disabled={disabled} onClick={onArchive}>
+            Archiver
+          </button>
+          {canPublishShared ? (
+            <button type="button" disabled={disabled} onClick={onPublish}>
+              Publier
+            </button>
+          ) : null}
+          <button type="button" disabled={disabled} onClick={onDuplicate}>
+            Dupliquer
+          </button>
+          <label>
+            Déplacer vers
+            <select
+              value={moveCourseId}
+              disabled={disabled}
+              onChange={(event) => onMoveCourseChange(event.target.value)}
+            >
+              <option value="">Choisir un cours</option>
+              {courses.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          {moveCourseId ? (
+            <label>
+              Chapitre
+              <select
+                value={moveChapterId}
+                disabled={disabled}
+                onChange={(event) => onMoveChapterChange(event.target.value)}
+              >
+                <option value="">Aucun</option>
+                {chapters
+                  .filter((item) => item.courseId === moveCourseId)
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
+          {moveCourseId ? (
+            <label>
+              Notion
+              <select
+                value={moveNotionId}
+                disabled={disabled}
+                onChange={(event) => onMoveNotionChange(event.target.value)}
+              >
+                <option value="">Aucune</option>
+                {notions
+                  .filter(
+                    (item) =>
+                      item.courseId === moveCourseId &&
+                      (!moveChapterId || item.chapterId === moveChapterId),
+                  )
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.title}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ) : null}
+          <button
+            type="button"
+            disabled={disabled || !moveCourseId}
+            onClick={onMove}
+          >
+            Déplacer
+          </button>
+          <button type="button" disabled={disabled} onClick={onClear}>
+            Annuler la sélection
+          </button>
+        </>
+      )}
+    </div>
   );
 }
 
