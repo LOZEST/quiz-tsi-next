@@ -656,4 +656,100 @@ describe('QuestionsPage', () => {
     );
     expect(resolveConflict).toHaveBeenCalledTimes(3);
   });
+
+  it('archive en masse les questions sélectionnées puis vide la sélection', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-2',
+          prompt: [{ kind: 'text', value: 'Deux' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Deux' }),
+    );
+    expect(
+      screen.getByRole('toolbar', { name: 'Actions groupées' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('2 sélectionnées')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Archiver' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    expect(saveQuestion.mock.calls.map((call) => call[2])).toEqual([
+      'archive',
+      'archive',
+    ]);
+    expect(
+      saveQuestion.mock.calls.every(
+        (call) => (call[1] as Question).status === 'archived',
+      ),
+    ).toBe(true);
+    expect(
+      screen.queryByRole('toolbar', { name: 'Actions groupées' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('« Tout sélectionner » ignore les questions officielles en lecture seule', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
+    );
+    expect(
+      screen.getByRole('checkbox', { name: 'Sélectionner Un' }),
+    ).toBeChecked();
+    expect(
+      screen.queryByRole('checkbox', {
+        name: /Sélectionner Calculer la somme/,
+      }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('1 sélectionnée')).toBeInTheDocument();
+  });
+
+  it('déplace en masse les questions sélectionnées vers un dossier existant', async () => {
+    snapshot = {
+      ...snapshot,
+      questions: [
+        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+      ],
+      courses: [
+        {
+          id: 'course-x',
+          ownerId: 'user-1',
+          title: 'Cours X',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
+    );
+    await user.selectOptions(
+      screen.getByLabelText('Déplacer vers'),
+      'course-x',
+    );
+    await user.click(screen.getByRole('button', { name: 'Déplacer' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.classification).toMatchObject({
+      kind: 'personal',
+      courseId: 'course-x',
+    });
+  });
 });
