@@ -1,5 +1,9 @@
 import { AuthError } from '@domain/auth/AuthError';
-import type { AuthChangeHandler, AuthGateway } from '@domain/auth/AuthGateway';
+import type {
+  AuthChangeHandler,
+  AuthGateway,
+  SignUpResult,
+} from '@domain/auth/AuthGateway';
 import type { AuthSession } from '@domain/auth/AuthSession';
 import { isUserRole, type UserRole } from '@domain/auth/UserRole';
 
@@ -56,6 +60,21 @@ export class ControlledAuthGateway implements AuthGateway {
     }
     sessionStorage.setItem(STORAGE_KEY, email);
     return Promise.resolve(createSession(email));
+  }
+
+  signUp(email: string, password: string): Promise<SignUpResult> {
+    if (password === 'network-unavailable') {
+      return Promise.reject(
+        new AuthError('network-unavailable', 'Controlled network failure.'),
+      );
+    }
+    if (password.length < 6) {
+      return Promise.reject(
+        new AuthError('weak-password', 'Controlled weak password.'),
+      );
+    }
+    sessionStorage.setItem(STORAGE_KEY, email);
+    return Promise.resolve({ status: 'signed-in', session: createSession(email) });
   }
 
   signOut(): Promise<void> {

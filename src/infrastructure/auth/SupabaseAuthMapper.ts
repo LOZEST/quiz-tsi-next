@@ -79,6 +79,19 @@ export function mapSupabaseError(error: unknown): AuthError {
   ) {
     return new AuthError('permission-denied', 'Permission denied.');
   }
+  if (
+    message.includes('already registered') ||
+    message.includes('already exists') ||
+    message.includes('user already')
+  ) {
+    return new AuthError(
+      'email-already-registered',
+      'Email already registered.',
+    );
+  }
+  if (message.includes('password')) {
+    return new AuthError('weak-password', 'Password rejected.');
+  }
   return new AuthError('unknown', 'Unexpected authentication error.', {
     cause: error,
   });

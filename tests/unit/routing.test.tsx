@@ -48,6 +48,7 @@ function services(session: AuthSession | null): AppServices {
   const authGateway: AuthGateway = {
     getCurrentSession: vi.fn().mockResolvedValue(session),
     signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
     signOut: vi.fn().mockResolvedValue(undefined),
     subscribeToAuthChanges: vi.fn().mockReturnValue(() => undefined),
   };
