@@ -50,7 +50,7 @@ export function OAuthConsentPage() {
   };
   return (
     <main id="main-content">
-      <h1>Autoriser l’import Quiz TSI</h1>
+      <h1>Autoriser l’import Prépa Math</h1>
       {error ? (
         <p role="alert">{error}</p>
       ) : !details ? (
@@ -60,7 +60,7 @@ export function OAuthConsentPage() {
           <h2 id="oauth-client">{details.clientName}</h2>
           <p>
             Cette application demande l’autorisation de créer des brouillons
-            privés dans ta banque Quiz TSI.
+            privés dans ta banque Prépa Math.
           </p>
           <h3>Autorisations demandées</h3>
           <ul>

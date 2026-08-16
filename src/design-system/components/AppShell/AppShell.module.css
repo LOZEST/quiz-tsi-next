@@ -48,13 +48,19 @@
     calc(var(--qtsi-space-5) + var(--qtsi-safe-right)) var(--qtsi-space-2)
     calc(var(--qtsi-space-5) + var(--qtsi-safe-left));
   background: rgb(247 247 245 / 94%);
+  backdrop-filter: saturate(180%) blur(10px);
   border-block-end: 1px solid var(--qtsi-border);
 }
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qtsi-space-2);
+  color: var(--qtsi-text);
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.01em;
+  text-decoration: none;
 }
 
 .offlineBanner {
@@ -133,11 +139,28 @@
   list-style: none;
 }
 
+.navIcon {
+  flex-shrink: 0;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  color: var(--qtsi-text-tertiary);
+}
+
+.activeLink .navIcon {
+  color: var(--qtsi-accent);
+}
+
+.secondaryNav {
+  margin-block-start: var(--qtsi-space-3);
+  padding-block-start: var(--qtsi-space-3);
+  border-block-start: 1px solid var(--qtsi-border);
+}
+
 .accountCard {
   display: grid;
   min-block-size: var(--qtsi-touch-target);
   gap: var(--qtsi-space-1);
-  margin-block-start: auto;
+  margin-block-start: var(--qtsi-space-4);
   padding: var(--qtsi-space-3);
   color: var(--qtsi-text);
   background: var(--qtsi-surface-muted);
@@ -167,10 +190,12 @@
   display: flex;
   min-block-size: var(--qtsi-touch-target);
   align-items: center;
+  gap: var(--qtsi-space-3);
   padding-inline: var(--qtsi-space-3);
   color: var(--qtsi-text);
   border-radius: var(--qtsi-radius-2);
   text-decoration: none;
+  transition: background-color var(--qtsi-duration) var(--qtsi-easing);
 }
 
 .link:hover {

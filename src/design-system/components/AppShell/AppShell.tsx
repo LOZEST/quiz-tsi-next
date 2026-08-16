@@ -5,11 +5,28 @@ import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import { IconButton } from '@design-system/components/IconButton/IconButton';
 import { OverlayDrawer } from '@design-system/components/OverlayDrawer/OverlayDrawer';
 import { SkipLink } from '@design-system/components/SkipLink/SkipLink';
+import { LogoMark } from '@design-system/components/Logo/Logo';
+import {
+  IconAdmin,
+  IconBank,
+  IconMenu,
+  IconProgress,
+  IconSettings,
+  IconWhiteboard,
+  type IconProps,
+} from '@design-system/components/Icon/Icon';
 import styles from './AppShell.module.css';
 import { useAuth } from '@app/providers/AuthProvider';
 import { userRoleLabels } from '@domain/auth/UserRole';
 import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import type { ReactNode } from 'react';
+
+const navIcons: Record<string, (props: IconProps) => ReactNode> = {
+  '/whiteboard': IconWhiteboard,
+  '/progress': IconProgress,
+  '/questions': IconBank,
+  '/settings': IconSettings,
+};
 
 function WhiteboardDrawerSettings() {
   const settings = useWhiteboard();
@@ -122,12 +139,74 @@ export function AppShell({
   if (state.status !== 'authenticated') return null;
   const { user } = state.session;
 
+  const isWhiteboard = location.pathname === '/whiteboard';
+
+  function renderNavLinks(onLinkClick: () => void) {
+    return (
+      <>
+        <nav aria-label="Navigation principale">
+          <ul className={styles.navigation}>
+            {mainNavigation.map((destination) => {
+              const NavIcon = navIcons[destination.to];
+              return (
+                <li key={destination.to}>
+                  <NavLink
+                    to={destination.to}
+                    onClick={onLinkClick}
+                    className={({ isActive }) =>
+                      isActive ? styles.activeLink : styles.link
+                    }
+                  >
+                    {NavIcon ? <NavIcon className={styles.navIcon} /> : null}
+                    <span>{destination.label}</span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {user.role !== 'user' ? (
+          <nav
+            aria-label="Navigation secondaire"
+            className={styles.secondaryNav}
+          >
+            <ul className={styles.navigation}>
+              <li>
+                <NavLink
+                  to="/admin"
+                  onClick={onLinkClick}
+                  className={({ isActive }) =>
+                    isActive ? styles.activeLink : styles.link
+                  }
+                >
+                  <IconAdmin className={styles.navIcon} />
+                  <span>Administration</span>
+                </NavLink>
+              </li>
+            </ul>
+          </nav>
+        ) : null}
+        <NavLink
+          className={styles.accountCard!}
+          to="/account"
+          onClick={onLinkClick}
+        >
+          <span className={styles.accountIdentity}>
+            {user.displayName || user.email}
+          </span>
+          <span className={styles.accountRole}>
+            {userRoleLabels[user.role]}
+          </span>
+          <span className={styles.accountAction}>Voir le compte</span>
+        </NavLink>
+      </>
+    );
+  }
+
   return (
     <div
       className={`${styles.shell} ${
-        location.pathname === '/whiteboard'
-          ? `${styles.whiteboardShell} qtsi-whiteboard-shell`
-          : ''
+        isWhiteboard ? `${styles.whiteboardShell} qtsi-whiteboard-shell` : ''
       }`}
     >
       <SkipLink />
@@ -139,9 +218,12 @@ export function AppShell({
           aria-controls="main-navigation"
           onClick={() => setMenuOpen(true)}
         >
-          ☰
+          <IconMenu />
         </IconButton>
-        <span className={styles.brand}>Quiz TSI</span>
+        <NavLink to="/progress" className={styles.brand!}>
+          <LogoMark size={26} />
+          <span>Prépa Math</span>
+        </NavLink>
       </header>
       {state.offline ? (
         <div className={styles.offlineBanner} role="status">
@@ -156,7 +238,7 @@ export function AppShell({
         triggerRef={menuButtonRef}
         onClose={() => setMenuOpen(false)}
       >
-        {location.pathname === '/whiteboard' ? (
+        {isWhiteboard ? (
           <>
             <Disclosure label="Options du parcours">
               {whiteboardOptions}
@@ -170,49 +252,9 @@ export function AppShell({
             Authentification et espace utilisateur actifs.
           </Disclosure>
         )}
-        <nav id="main-navigation" aria-label="Navigation principale">
-          <ul className={styles.navigation}>
-            {mainNavigation.map((destination) => (
-              <li key={destination.to}>
-                <NavLink
-                  to={destination.to}
-                  onClick={() => setMenuOpen(false)}
-                  className={({ isActive }) =>
-                    isActive ? styles.activeLink : styles.link
-                  }
-                >
-                  {destination.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        {user.role !== 'user' ? (
-          <nav aria-label="Navigation secondaire">
-            <NavLink
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                isActive ? styles.activeLink : styles.link
-              }
-            >
-              Administration
-            </NavLink>
-          </nav>
-        ) : null}
-        <NavLink
-          className={styles.accountCard!}
-          to="/account"
-          onClick={() => setMenuOpen(false)}
-        >
-          <span className={styles.accountIdentity}>
-            {user.displayName || user.email}
-          </span>
-          <span className={styles.accountRole}>
-            {userRoleLabels[user.role]}
-          </span>
-          <span className={styles.accountAction}>Voir le compte</span>
-        </NavLink>
+        <div id="main-navigation">
+          {renderNavLinks(() => setMenuOpen(false))}
+        </div>
       </OverlayDrawer>
 
       <main
