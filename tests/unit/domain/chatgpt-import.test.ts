@@ -71,6 +71,23 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     if (result.ok) expect(result.value.questions).toHaveLength(1);
   });
 
+  it('accepte une classification personnelle qui omet chapitre/notion plutôt que d’envoyer null', () => {
+    const classificationWithoutOptionalKeys = {
+      kind: entry.classification.kind,
+      proposedCourseTitle: entry.classification.proposedCourseTitle,
+      reason: entry.classification.reason,
+      requiresUserConfirmation: entry.classification.requiresUserConfirmation,
+    };
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        { ...entry, classification: classificationWithoutOptionalKeys },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
   it('accepte une classification officielle et tous les segments fermés', () => {
     const result = validateChatGptQuestionImport({
       ...payload,
