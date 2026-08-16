@@ -286,7 +286,7 @@ describe('application routing', () => {
   it.each([
     ['/whiteboard', 'Tableau blanc'],
     ['/progress', 'Mon parcours'],
-    ['/questions', 'Banque de questions'],
+    ['/questions', 'Mes Quizz'],
     ['/settings', 'Réglages'],
     ['/account', 'Compte'],
   ])('renders protected route %s', async (route, heading) => {

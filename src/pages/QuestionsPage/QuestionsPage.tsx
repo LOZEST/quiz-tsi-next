@@ -27,7 +27,7 @@ import {
   MATH_SYMBOL_REGISTRY_V1,
   MATH_SYNTAX_REGISTRY_V1,
 } from '@domain/math/MathSyntaxRegistry';
-import { parseMathSource, parseMathSourceText } from '@domain/math/MathParser';
+import { parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { ProgramIndex } from '@domain/program/Program';
@@ -41,45 +41,8 @@ import { QuestionsFolderGrid } from './QuestionsFolderGrid';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
-import { KatexMathRenderer } from '@features/questions/math/KatexMathRenderer';
+import { RawContentPreview } from '@features/questions/RawContentPreview';
 import type { InstantiatedContentSegment } from '@domain/questions/QuestionInstantiation';
-
-function RawContentPreview({
-  segments,
-}: {
-  segments: readonly ContentSegment[];
-}) {
-  return (
-    <>
-      {segments.map((segment, index) => {
-        switch (segment.kind) {
-          case 'text':
-            return <span key={index}>{segment.value}</span>;
-          case 'line-break':
-            return <br key={index} />;
-          case 'inline-math':
-          case 'display-math': {
-            const parsed = parseMathSource(segment.math);
-            // KatexMathRenderer only renders resolved parameters (real
-            // instantiated values); a bank preview shows the template
-            // before any variant is generated, so an unresolved `@a`
-            // reference falls back to the readable grammar source rather
-            // than crashing mathAstToLatex's "Paramètre non résolu." guard.
-            if (!parsed.ok || parsed.parameterReferences.length > 0)
-              return <span key={index}>{segment.math.source}</span>;
-            return segment.kind === 'display-math' ? (
-              <div key={index}>
-                <KatexMathRenderer ast={parsed.ast} display />
-              </div>
-            ) : (
-              <KatexMathRenderer key={index} ast={parsed.ast} />
-            );
-          }
-        }
-      })}
-    </>
-  );
-}
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
   questions: [],
@@ -326,6 +289,8 @@ export function QuestionsPage() {
       id: crypto.randomUUID(),
       ownerId: userId,
       title,
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -336,6 +301,20 @@ export function QuestionsPage() {
     );
     await reload();
     setFolderLocation({ kind: 'course', courseId: course.id });
+  };
+  const onToggleCourseVisibility = async (
+    courseId: string,
+    visibility: 'public' | 'private',
+  ) => {
+    const course = workspace.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    await questionWorkspaceRepository.saveCourse(
+      userId,
+      { ...course, visibility, updatedAt: new Date().toISOString() },
+      crypto.randomUUID(),
+      'update',
+    );
+    await reload();
   };
   const onCreateChapter = async (title: string) => {
     if (folderLocation.kind !== 'course') return;
@@ -389,8 +368,8 @@ export function QuestionsPage() {
   return (
     <div className={styles.page}>
       <PageHeader
-        title="Banque de questions"
-        description="Recherche, création et relecture de tes questions, même hors connexion."
+        title="Mes Quizz"
+        description="Crée, organise et relis tes quizz, même hors connexion."
       />
       {offline ? (
         <p className={styles.banner} role="status">
@@ -669,6 +648,9 @@ export function QuestionsPage() {
                 onCreateCourse={(title) => void onCreateCourse(title)}
                 onCreateChapter={(title) => void onCreateChapter(title)}
                 onCreateNotion={(title) => void onCreateNotion(title)}
+                onToggleCourseVisibility={(courseId, visibility) =>
+                  void onToggleCourseVisibility(courseId, visibility)
+                }
               />
             ) : null}
             <div className={styles.listHeader}>
@@ -1403,6 +1385,8 @@ function QuestionEditor({
               id: resolvedCourseId,
               ownerId: userId,
               title: personalCourseTitle.trim(),
+              description: '',
+              visibility: 'private' as const,
               createdAt: now,
               updatedAt: now,
             }

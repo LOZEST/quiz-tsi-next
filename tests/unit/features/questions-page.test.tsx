@@ -300,6 +300,8 @@ describe('QuestionsPage', () => {
           id: 'course',
           ownerId: 'user-1',
           title: 'Cours',
+          description: '',
+          visibility: 'private' as const,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -633,6 +635,8 @@ describe('QuestionsPage', () => {
           id: 'course-1',
           ownerId: 'user-1',
           title: 'Cours personnel',
+          description: '',
+          visibility: 'private' as const,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -744,6 +748,8 @@ describe('QuestionsPage', () => {
           id: 'course-x',
           ownerId: 'user-1',
           title: 'Cours X',
+          description: '',
+          visibility: 'private' as const,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -770,10 +776,27 @@ describe('QuestionsPage', () => {
   it('navigue dans la vue Dossiers et n’affiche que les questions du dossier courant', async () => {
     snapshot = {
       ...snapshot,
+      courses: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: '',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
       questions: [
         question({
           id: 'private-1',
           prompt: [{ kind: 'text', value: 'Question perso' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-mecanique',
+            chapterId: null,
+            notionId: null,
+          },
         }),
       ],
     };
@@ -781,29 +804,24 @@ describe('QuestionsPage', () => {
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     expect(
-      screen.queryByRole('button', { name: /Question perso/ }),
+      screen.queryByRole('checkbox', { name: /Question perso/ }),
     ).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Officielle/ }));
+    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
     expect(
-      await screen.findByRole('button', { name: /Calculer la somme/ }),
+      await screen.findByRole('checkbox', { name: /Question perso/ }),
     ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     expect(
-      screen.queryByRole('button', { name: /Question perso/ }),
-    ).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
-    expect(
-      screen.queryByRole('button', { name: /Calculer la somme/ }),
+      screen.queryByRole('checkbox', { name: /Question perso/ }),
     ).not.toBeInTheDocument();
   });
 
-  it('crée un cours, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
+  it('crée un quizz, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
-    await user.click(screen.getByRole('button', { name: /Partagée/ }));
-    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
     await user.type(
-      screen.getByPlaceholderText('Nouveau cours'),
+      screen.getByPlaceholderText('Nouveau quizz'),
       'Cinématique',
     );
     await user.click(screen.getByRole('button', { name: 'Créer' }));
@@ -833,7 +851,7 @@ describe('QuestionsPage', () => {
       courseId: createdCourse.id,
       chapterId: createdChapter.id,
     });
-    await user.click(screen.getByRole('button', { name: 'Tous les dossiers' }));
+    await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     await user.click(screen.getByRole('button', { name: /Cinématique/ }));
     await user.click(screen.getByRole('button', { name: /Vitesse/ }));
     expect(
@@ -875,6 +893,8 @@ describe('QuestionsPage', () => {
           id: 'course-y',
           ownerId: 'user-1',
           title: 'Cours Y',
+          description: '',
+          visibility: 'private' as const,
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },

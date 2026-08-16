@@ -257,7 +257,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
         key: key(userId, value.id),
         userId,
         value: structuredClone(value),
-      });
+      } as OwnedCourse | OwnedChapter | OwnedNotion);
       const operation = {
         operationId,
         userId,
@@ -300,6 +300,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     userId: string,
     course: Readonly<PersonalCourse>,
     operationId: string,
+    kind: 'create' | 'update' = 'create',
   ) {
     assertPersonalTaxonomyOwner(course, userId);
     if (!operationId) throw new Error('Compte incohérent.');
@@ -315,7 +316,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
       userId,
       entity: 'course',
       entityId: course.id,
-      kind: 'create',
+      kind,
       payload: structuredClone(course),
       createdAt: new Date().toISOString(),
     };
@@ -505,7 +506,7 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
           key: key(userId, value.id),
           userId,
           value: structuredClone(value),
-        });
+        } as OwnedCourse | OwnedChapter | OwnedNotion);
       }
     }
     for (const question of changes.questions) {

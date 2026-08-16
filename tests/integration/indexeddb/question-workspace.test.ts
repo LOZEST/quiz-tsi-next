@@ -64,6 +64,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'course-a',
       ownerId: 'account-a',
       title: 'Cours personnel',
+      description: '',
+      visibility: 'private' as const,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
@@ -136,6 +138,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'atomic-course',
       ownerId,
       title: 'Cours perso',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -272,6 +276,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'thermo-course',
       ownerId,
       title: 'Thermodynamique perso',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -319,6 +325,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'offline-c',
       ownerId,
       title: 'Offline',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -386,6 +394,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'c',
       ownerId,
       title: 'Cours',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -450,6 +460,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'course-folder',
       ownerId,
       title: 'Cours',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };
@@ -503,6 +515,8 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       id: 'foreign-course',
       ownerId: 'someone-else',
       title: 'Cours étranger',
+      description: '',
+      visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
     };

@@ -291,6 +291,8 @@ describe('push distant idempotent', () => {
       id: 'c',
       ownerId: 'owner',
       title: 'Cours',
+      description: '',
+      visibility: 'private' as const,
       createdAt: '2026-08-10T00:00:00.000Z',
       updatedAt: '2026-08-10T00:00:00.000Z',
     };
@@ -300,6 +302,8 @@ describe('push distant idempotent', () => {
           id: 'c',
           owner_id: 'owner',
           title: 'Cours',
+          description: '',
+          visibility: 'private',
           created_at: course.createdAt,
           updated_at: course.updatedAt,
         },
