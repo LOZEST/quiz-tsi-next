@@ -17,8 +17,8 @@ export function ChatGptImportPrivacyPage() {
       </p>
       <p>
         Tu peux relire, corriger puis archiver ces brouillons depuis la Banque
-        de questions. Prépa Math ne reçoit ni token OAuth, ni conversation ChatGPT
-        complète, ni fichier source dans les données de question.
+        de questions. Prépa Math ne reçoit ni token OAuth, ni conversation
+        ChatGPT complète, ni fichier source dans les données de question.
       </p>
     </main>
   );

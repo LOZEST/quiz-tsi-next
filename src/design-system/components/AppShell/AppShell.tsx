@@ -157,9 +157,7 @@ export function AppShell({
                       isActive ? styles.activeLink : styles.link
                     }
                   >
-                    {NavIcon ? (
-                      <NavIcon className={styles.navIcon} />
-                    ) : null}
+                    {NavIcon ? <NavIcon className={styles.navIcon} /> : null}
                     <span>{destination.label}</span>
                   </NavLink>
                 </li>
@@ -168,7 +166,10 @@ export function AppShell({
           </ul>
         </nav>
         {user.role !== 'user' ? (
-          <nav aria-label="Navigation secondaire" className={styles.secondaryNav}>
+          <nav
+            aria-label="Navigation secondaire"
+            className={styles.secondaryNav}
+          >
             <ul className={styles.navigation}>
               <li>
                 <NavLink
@@ -235,9 +236,9 @@ export function AppShell({
           </header>
           {state.offline ? (
             <div className={styles.offlineBanner} role="status">
-              Hors connexion — les données locales validées restent
-              accessibles. Le rôle est informatif et les opérations sensibles
-              sont désactivées.
+              Hors connexion — les données locales validées restent accessibles.
+              Le rôle est informatif et les opérations sensibles sont
+              désactivées.
             </div>
           ) : null}
 

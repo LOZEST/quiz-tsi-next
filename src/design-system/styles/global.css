@@ -55,10 +55,8 @@ html.qtsi-scroll-locked:has(.qtsi-whiteboard-shell) {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(
-      rgb(255 255 255 / 8%) 1px,
-      transparent 1px
-    ),
+  background-image:
+    linear-gradient(rgb(255 255 255 / 8%) 1px, transparent 1px),
     linear-gradient(90deg, rgb(255 255 255 / 8%) 1px, transparent 1px);
   background-position: -1px -1px;
   background-size: 2.75rem 2.75rem;
