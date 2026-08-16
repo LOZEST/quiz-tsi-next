@@ -75,7 +75,7 @@ export function OverlayDrawer({
             <IconClose />
           </IconButton>
         </header>
-        {children}
+        {open ? children : null}
       </div>
     </dialog>
   );

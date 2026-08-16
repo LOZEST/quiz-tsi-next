@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AppRoutes } from '@app/AppRouter';
@@ -308,10 +308,11 @@ describe('application routing', () => {
       await screen.findByRole('heading', { name: 'Administration' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Ouvrir le menu' }));
+    const adminMenu = within(screen.getByRole('dialog'));
     expect(
-      screen.getByRole('link', { name: 'Administration' }),
+      adminMenu.getByRole('link', { name: 'Administration' }),
     ).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByText('Ada Admin')).toBeVisible();
+    expect(adminMenu.getByText('Ada Admin')).toBeVisible();
     adminView.unmount();
     renderRoute('/admin', sessions.owner);
     expect(
@@ -345,9 +346,10 @@ describe('application routing', () => {
     renderRoute('/whiteboard', sessions.user);
     await screen.findByRole('heading', { name: 'Tableau blanc' });
     await user.click(screen.getByRole('button', { name: 'Ouvrir le menu' }));
-    expect(screen.getByText('user@example.test')).toBeVisible();
-    expect(screen.getByText('Élève')).toBeVisible();
-    expect(screen.queryByRole('link', { name: 'Administration' })).toBeNull();
+    const menu = within(screen.getByRole('dialog'));
+    expect(menu.getByText('user@example.test')).toBeVisible();
+    expect(menu.getByText('Élève')).toBeVisible();
+    expect(menu.queryByRole('link', { name: 'Administration' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Déconnexion' })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Fermer le menu' }));
   });
