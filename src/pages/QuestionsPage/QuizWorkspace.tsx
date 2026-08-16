@@ -19,12 +19,16 @@ function QuestionColumn({
   questions,
   selectedId,
   onSelect,
+  selectedIds,
+  onToggleSelected,
   emptyMessage,
 }: {
   title: string;
   questions: readonly Readonly<Question>[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  selectedIds: ReadonlySet<string>;
+  onToggleSelected: (id: string) => void;
   emptyMessage: string;
 }) {
   return (
@@ -32,17 +36,26 @@ function QuestionColumn({
       <h3>{title}</h3>
       {questions.length ? (
         <ul>
-          {questions.map((question) => (
-            <li key={`${question.id}:${question.version}`}>
-              <button
-                type="button"
-                aria-pressed={selectedId === question.id}
-                onClick={() => onSelect(question.id)}
-              >
-                {promptLabel(question)}
-              </button>
-            </li>
-          ))}
+          {questions.map((question) => {
+            const label = promptLabel(question);
+            return (
+              <li key={`${question.id}:${question.version}`}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(question.id)}
+                  onChange={() => onToggleSelected(question.id)}
+                  aria-label={`Sélectionner ${label}`}
+                />
+                <button
+                  type="button"
+                  aria-pressed={selectedId === question.id}
+                  onClick={() => onSelect(question.id)}
+                >
+                  {label}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className={styles.empty}>{emptyMessage}</p>
@@ -63,6 +76,12 @@ export function QuizWorkspace({
   onUpdateCourseMeta,
   onCreateManual,
   chatGptImportUrl,
+  selectedIds,
+  onToggleSelected,
+  bulkBusy,
+  onBulkValidate,
+  onBulkDelete,
+  onClearSelection,
 }: {
   questions: readonly Readonly<Question>[];
   course: PersonalCourse | null;
@@ -82,6 +101,12 @@ export function QuizWorkspace({
   ) => void;
   onCreateManual: () => void;
   chatGptImportUrl: string | null;
+  selectedIds: ReadonlySet<string>;
+  onToggleSelected: (id: string) => void;
+  bulkBusy: Readonly<{ done: number; total: number }> | null;
+  onBulkValidate: () => void;
+  onBulkDelete: () => void;
+  onClearSelection: () => void;
 }) {
   const [editingMeta, setEditingMeta] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
@@ -113,6 +138,8 @@ export function QuizWorkspace({
         questions={validated}
         selectedId={selectedId}
         onSelect={onSelect}
+        selectedIds={selectedIds}
+        onToggleSelected={onToggleSelected}
         emptyMessage="Aucune question validée pour l’instant."
       />
       <QuestionColumn
@@ -120,13 +147,70 @@ export function QuizWorkspace({
         questions={toValidate}
         selectedId={selectedId}
         onSelect={onSelect}
+        selectedIds={selectedIds}
+        onToggleSelected={onToggleSelected}
         emptyMessage="Aucune question en attente de validation."
       />
       <div className={styles.detailColumn}>
+        {selectedIds.size ? (
+          <div
+            className={styles.bulkBar}
+            role="toolbar"
+            aria-label="Actions groupées"
+          >
+            <span>
+              {selectedIds.size} question{selectedIds.size > 1 ? 's' : ''}{' '}
+              sélectionnée{selectedIds.size > 1 ? 's' : ''}
+            </span>
+            {bulkBusy ? (
+              <span role="status">
+                {bulkBusy.done}/{bulkBusy.total} traitées…
+              </span>
+            ) : (
+              <>
+                <button type="button" onClick={onBulkValidate}>
+                  Valider
+                </button>
+                <button type="button" onClick={onBulkDelete}>
+                  Supprimer
+                </button>
+                <button type="button" onClick={onClearSelection}>
+                  Annuler
+                </button>
+              </>
+            )}
+          </div>
+        ) : null}
         <div className={styles.detail}>
           <h3>Détail question</h3>
           {selected ? (
             <>
+              {selected.provenance?.chatGptImport ? (
+                <section className={styles.importReview}>
+                  <strong>Import ChatGPT — À vérifier</strong>
+                  <p>
+                    Couverture : {selected.provenance.chatGptImport.coverage}
+                  </p>
+                  {selected.provenance.chatGptImport.coverage !==
+                  'text-and-visuals' ? (
+                    <p role="alert">
+                      {selected.provenance.chatGptImport.coverage ===
+                      'incomplete'
+                        ? 'Analyse incomplète : vérifie attentivement le document.'
+                        : 'Les visuels n’ont pas été analysés.'}
+                    </p>
+                  ) : null}
+                  <ul>
+                    {selected.provenance.chatGptImport.uncertainties.map(
+                      (item, index) => (
+                        <li key={`${item.path}:${index}`}>
+                          {item.message} ({item.path})
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </section>
+              ) : null}
               <h4>Énoncé</h4>
               <p>
                 <RawContentPreview segments={selected.prompt} />

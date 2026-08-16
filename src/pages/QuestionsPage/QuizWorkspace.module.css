@@ -26,12 +26,21 @@
   padding: 0;
   list-style: none;
 }
+.column li {
+  display: flex;
+  align-items: center;
+  gap: var(--qtsi-space-2);
+}
 .column li button {
   display: block;
-  inline-size: 100%;
+  flex: 1;
+  min-inline-size: 0;
   padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  overflow: hidden;
   color: var(--qtsi-text);
   text-align: start;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   background: var(--qtsi-surface-muted);
   border: 1px solid transparent;
   border-radius: var(--qtsi-radius-2);
@@ -53,12 +62,44 @@
   flex-direction: column;
   gap: var(--qtsi-space-4);
 }
+.bulkBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--qtsi-space-3);
+  padding: var(--qtsi-space-3) var(--qtsi-space-4);
+  background: var(--qtsi-accent-tint);
+  border: 1px solid var(--qtsi-accent);
+  border-radius: var(--qtsi-radius-3);
+}
+.bulkBar button {
+  min-block-size: var(--qtsi-touch-target);
+  padding: 0 var(--qtsi-space-3);
+  color: var(--qtsi-accent);
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-accent);
+  border-radius: var(--qtsi-radius-2);
+  cursor: pointer;
+}
+.bulkBar button:hover {
+  background: var(--qtsi-accent-soft);
+}
 .detail {
   padding: var(--qtsi-space-4);
   background: var(--qtsi-surface);
   border: 1px solid var(--qtsi-border);
   border-radius: var(--qtsi-radius-3);
   box-shadow: var(--qtsi-shadow-subtle);
+}
+.importReview {
+  padding: var(--qtsi-space-3);
+  margin-block-end: var(--qtsi-space-3);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-2);
+}
+.importReview p,
+.importReview ul {
+  margin: var(--qtsi-space-1) 0 0;
 }
 .detail h3 {
   margin: 0 0 var(--qtsi-space-3);
