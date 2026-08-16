@@ -145,6 +145,15 @@ describe('SupabaseAuthGateway', () => {
       status: 'signed-in',
       session: { user: { id: 'account-a', role: 'user' } },
     });
+    expect(
+      // The test client is a Vitest mock behind the Supabase SDK shape.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      client.auth.signUp,
+    ).toHaveBeenCalledWith({
+      email: 'a@example.test',
+      password: 'secret1',
+      options: { emailRedirectTo: 'http://localhost:3000/login' },
+    });
   });
 
   it('reports confirmation-required when sign-up returns no session', async () => {
