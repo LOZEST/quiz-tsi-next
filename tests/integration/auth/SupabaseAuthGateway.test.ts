@@ -204,6 +204,23 @@ describe('SupabaseAuthGateway', () => {
     ).rejects.toMatchObject({ code: 'weak-password' });
   });
 
+  it('maps a rate-limited sign-up attempt', async () => {
+    const { client } = createClient();
+    (
+      client.auth.signUp as unknown as {
+        mockResolvedValue: (v: unknown) => void;
+      }
+    ).mockResolvedValue({
+      data: { user: null, session: null },
+      error: new Error(
+        'For security purposes, you can only request this after 46 seconds.',
+      ),
+    });
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', 'secret1'),
+    ).rejects.toMatchObject({ code: 'rate-limited' });
+  });
+
   it('subscribes to sign-out events and unsubscribes', () => {
     const controlled = createClient();
     const handler = vi.fn();
