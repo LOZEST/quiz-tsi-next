@@ -6,6 +6,8 @@ export type AuthErrorCode =
   | 'profile-missing'
   | 'permission-denied'
   | 'storage-unavailable'
+  | 'email-already-registered'
+  | 'weak-password'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -36,5 +38,7 @@ export const authErrorMessages: Record<AuthErrorCode, string> = {
   'permission-denied': 'Tu n’as pas accès à cette ressource.',
   'storage-unavailable':
     'L’espace local ne peut pas être ouvert sur cet appareil.',
+  'email-already-registered': 'Un compte existe déjà avec cet email.',
+  'weak-password': 'Ton mot de passe doit contenir au moins 6 caractères.',
   unknown: 'Une erreur inattendue empêche la connexion. Réessaie.',
 };

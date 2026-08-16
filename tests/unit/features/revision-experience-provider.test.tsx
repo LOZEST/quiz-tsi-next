@@ -136,6 +136,7 @@ const baseServices = (
   authGateway: {
     getCurrentSession: vi.fn().mockResolvedValue(null),
     signInWithPassword: vi.fn(),
+    signUp: vi.fn(),
     signOut: vi.fn().mockResolvedValue(undefined),
     subscribeToAuthChanges: vi.fn().mockReturnValue(() => undefined),
   },

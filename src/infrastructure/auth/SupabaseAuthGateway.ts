@@ -4,6 +4,7 @@ import type {
   AuthChangeErrorHandler,
   AuthChangeHandler,
   AuthGateway,
+  SignUpResult,
 } from '@domain/auth/AuthGateway';
 import type { AuthSession } from '@domain/auth/AuthSession';
 import {
@@ -44,6 +45,40 @@ export class SupabaseAuthGateway implements AuthGateway {
         throw new AuthError('session-expired', 'No session returned.');
       }
       return await this.loadSession(data.session, signal);
+    } catch (error) {
+      throw mapSupabaseError(error);
+    }
+  }
+
+  async signUp(
+    email: string,
+    password: string,
+    signal?: AbortSignal,
+  ): Promise<SignUpResult> {
+    try {
+      signal?.throwIfAborted();
+      const { data, error } = await this.client.auth.signUp({
+        email,
+        password,
+      });
+      if (error) throw error;
+      if (
+        data.user &&
+        Array.isArray(data.user.identities) &&
+        data.user.identities.length === 0
+      ) {
+        throw new AuthError(
+          'email-already-registered',
+          'Email already registered.',
+        );
+      }
+      if (!data.session) {
+        return { status: 'confirmation-required' };
+      }
+      return {
+        status: 'signed-in',
+        session: await this.loadSession(data.session, signal),
+      };
     } catch (error) {
       throw mapSupabaseError(error);
     }

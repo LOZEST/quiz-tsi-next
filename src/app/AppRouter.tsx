@@ -8,6 +8,7 @@ import { AppShell } from '@design-system/components/AppShell/AppShell';
 import { AccountPage } from '@pages/AccountPage/AccountPage';
 import { AdminPage } from '@pages/AdminPage/AdminPage';
 import { LoginPage } from '@pages/LoginPage/LoginPage';
+import { RegisterPage } from '@pages/RegisterPage/RegisterPage';
 import { NotFoundPage } from '@pages/NotFoundPage/NotFoundPage';
 import { ProgressPage } from '@pages/ProgressPage/ProgressPage';
 import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
@@ -35,6 +36,7 @@ export function AppRoutes() {
       />
       <Route element={<PublicOnlyRoute />}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Route>
       <Route
         path="/privacy/chatgpt-import"

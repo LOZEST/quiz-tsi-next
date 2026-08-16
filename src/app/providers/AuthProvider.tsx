@@ -18,9 +18,12 @@ import {
 import type { AuthState } from '@features/auth/state/AuthState';
 import { useAppServices } from './AppServicesProvider';
 
+export type SignUpOutcome = 'signed-in' | 'confirmation-required' | false;
+
 interface AuthContextValue {
   state: AuthState;
   signIn(email: string, password: string): Promise<boolean>;
+  signUp(email: string, password: string): Promise<SignUpOutcome>;
   signOut(): Promise<void>;
 }
 
@@ -268,6 +271,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [activateSession, authGateway, workspaceRepository],
   );
 
+  const signUp = useCallback(
+    async (email: string, password: string): Promise<SignUpOutcome> => {
+      controller.current?.abort();
+      await workspaceRepository.close();
+      const activeGeneration = ++generation.current;
+      const activeOperation = ++operation.current;
+      const abortController = new AbortController();
+      controller.current = abortController;
+      dispatch({
+        type: 'AUTHENTICATE_START',
+        generation: activeGeneration,
+        operationId: activeOperation,
+      });
+      try {
+        const result = await authGateway.signUp(
+          email,
+          password,
+          abortController.signal,
+        );
+        if (generation.current !== activeGeneration) return false;
+        if (result.status === 'confirmation-required') {
+          dispatch({
+            type: 'RESTORE_EMPTY',
+            generation: activeGeneration,
+            operationId: activeOperation,
+          });
+          return 'confirmation-required';
+        }
+        await activateSession(
+          result.session,
+          activeGeneration,
+          activeOperation,
+        );
+        return generation.current === activeGeneration ? 'signed-in' : false;
+      } catch (error) {
+        if (abortController.signal.aborted) return false;
+        dispatch({
+          type: 'AUTHENTICATE_FAILURE',
+          generation: activeGeneration,
+          operationId: activeOperation,
+          error: normalizeError(error),
+        });
+        return false;
+      }
+    },
+    [activateSession, authGateway, workspaceRepository],
+  );
+
   const signOut = useCallback(async (): Promise<void> => {
     const current = stateRef.current;
     if (current.status !== 'authenticated') return;
@@ -296,8 +347,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [authGateway, workspaceRepository]);
 
   const value = useMemo(
-    () => ({ state, signIn, signOut }),
-    [signIn, signOut, state],
+    () => ({ state, signIn, signUp, signOut }),
+    [signIn, signUp, signOut, state],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
