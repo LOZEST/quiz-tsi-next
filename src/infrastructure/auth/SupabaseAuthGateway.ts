@@ -7,12 +7,18 @@ import type {
   SignUpResult,
 } from '@domain/auth/AuthGateway';
 import type { AuthSession } from '@domain/auth/AuthSession';
+import { normalizeBasename } from '@app/routing/basename';
 import {
   mapProfile,
   mapSession,
   mapSupabaseError,
   type ProfileRow,
 } from './SupabaseAuthMapper';
+
+function signUpRedirectUrl(): string {
+  const basename = normalizeBasename(import.meta.env.BASE_URL);
+  return `${window.location.origin}${basename === '/' ? '' : basename}/login`;
+}
 
 export class SupabaseAuthGateway implements AuthGateway {
   constructor(private readonly client: SupabaseClient) {}
@@ -60,6 +66,7 @@ export class SupabaseAuthGateway implements AuthGateway {
       const { data, error } = await this.client.auth.signUp({
         email,
         password,
+        options: { emailRedirectTo: signUpRedirectUrl() },
       });
       if (error) throw error;
       if (

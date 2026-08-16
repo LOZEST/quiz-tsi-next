@@ -66,6 +66,9 @@ export function mapSupabaseError(error: unknown): AuthError {
   if (message.includes('not confirmed')) {
     return new AuthError('email-not-confirmed', 'Email not confirmed.');
   }
+  if (message.includes('rate limit') || message.includes('security purposes')) {
+    return new AuthError('rate-limited', 'Too many requests.');
+  }
   if (
     message.includes('fetch') ||
     message.includes('network') ||
