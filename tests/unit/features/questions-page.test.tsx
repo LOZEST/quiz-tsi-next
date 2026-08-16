@@ -804,16 +804,116 @@ describe('QuestionsPage', () => {
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Mécanique/ }));
     expect(
-      await screen.findByRole('checkbox', { name: /Question perso/ }),
+      await screen.findByRole('button', { name: 'Question perso' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('sélectionne, valide, supprime une question et bascule la visibilité du quizz dans l’espace de travail', async () => {
+    snapshot = {
+      ...snapshot,
+      courses: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: 'Chute libre et cinématique',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      questions: [
+        question({
+          id: 'draft-1',
+          status: 'draft',
+          prompt: [{ kind: 'text', value: 'Question brouillon' }],
+          hint: [{ kind: 'text', value: 'Un indice' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-mecanique',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
+        question({
+          id: 'published-1',
+          status: 'published',
+          validated: true,
+          prompt: [{ kind: 'text', value: 'Question publiée' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-mecanique',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
+    expect(
+      screen.getByText('Sélectionne une question dans les colonnes de gauche.'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Question publiée' }));
+    expect(screen.getByText('Deux')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Valider' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    await waitFor(() =>
+      expect(saveQuestion).toHaveBeenLastCalledWith(
+        'user-1',
+        expect.objectContaining({ id: 'published-1', status: 'archived' }),
+        'archive',
+        expect.any(String),
+      ),
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Question brouillon' }),
+    );
+    expect(screen.getByText('Un indice')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await waitFor(() =>
+      expect(saveQuestion).toHaveBeenLastCalledWith(
+        'user-1',
+        expect.objectContaining({ id: 'draft-1', status: 'published' }),
+        'publish',
+        expect.any(String),
+      ),
+    );
+
+    expect(screen.getByText('Chute libre et cinématique')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Privé' }));
+    await waitFor(() =>
+      expect(saveCourse).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({
+          id: 'course-mecanique',
+          visibility: 'public',
+        }),
+        expect.any(String),
+        'update',
+      ),
+    );
+
+    await user.click(
+      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Nouvelle question' }),
+    ).toBeInTheDocument();
   });
 
   it('crée un quizz, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {

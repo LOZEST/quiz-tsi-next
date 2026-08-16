@@ -38,6 +38,7 @@ import type {
 } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 import styles from './QuestionsPage.module.css';
 import { QuestionsFolderGrid } from './QuestionsFolderGrid';
+import { QuizWorkspace } from './QuizWorkspace';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
@@ -177,8 +178,39 @@ export function QuestionsPage() {
     setSelectedId(question.id);
     await reload();
   };
+  const publishQuestion = (question: Readonly<Question>) => {
+    const prepared = prepareQuestionForReview(question);
+    setReviewErrors(prepared.issues);
+    if (prepared.issues.length) return;
+    void mutate(
+      {
+        ...prepared.normalizedQuestion,
+        version: question.version + 1,
+        status: 'published',
+        validated: true,
+        updatedAt: new Date().toISOString(),
+      },
+      'publish',
+    );
+  };
+  const archiveQuestion = (question: Readonly<Question>) =>
+    void mutate(
+      {
+        ...question,
+        version: question.version + 1,
+        status: 'archived',
+        updatedAt: new Date().toISOString(),
+      },
+      'archive',
+    );
   const displayedQuestions =
     view === 'folders' ? questionsInFolder(results, folderLocation) : results;
+  const workspaceCourse =
+    folderLocation.kind === 'course'
+      ? (workspace.courses.find(
+          (item) => item.id === folderLocation.courseId,
+        ) ?? null)
+      : null;
   const selectableResults = displayedQuestions.filter(
     (question) => question.source !== 'static',
   );
@@ -653,146 +685,170 @@ export function QuestionsPage() {
                 }
               />
             ) : null}
-            <div className={styles.listHeader}>
-              <label>
-                <input
-                  ref={selectAllRef}
-                  type="checkbox"
-                  checked={allSelected}
-                  disabled={selectableResults.length === 0}
-                  onChange={toggleSelectAll}
-                  aria-label="Tout sélectionner"
-                />
-                Tout sélectionner
-              </label>
-              {selectedIds.size ? (
-                <span>
-                  {selectedIds.size} sélectionnée
-                  {selectedIds.size > 1 ? 's' : ''}
-                </span>
-              ) : null}
-            </div>
-            <ul className={styles.list}>
-              {displayedQuestions.map((question) => {
-                const promptLabel =
-                  question.prompt.find((segment) => segment.kind === 'text')
-                    ?.value ?? 'Question mathématique';
-                return (
-                  <li
-                    key={`${question.id}:${question.version}`}
-                    className={styles.listRow}
-                  >
-                    {question.source !== 'static' ? (
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(question.id)}
-                        onChange={() => toggleSelected(question.id)}
-                        aria-label={`Sélectionner ${promptLabel}`}
-                      />
-                    ) : (
-                      <span
-                        className={styles.checkboxSpacer}
-                        aria-hidden="true"
-                      />
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedId(question.id)}
-                      aria-pressed={selectedId === question.id}
-                    >
-                      <span>{promptLabel}</span>
-                      <small>
-                        {labels[question.source]} ·{' '}
-                        <StatusBadge status={question.status} />
-                      </small>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {selectedIds.size ? (
-              <BulkActionBar
-                count={selectedIds.size}
-                busy={bulkBusy}
-                canEdit={selectedIds.size === 1}
-                courses={workspace.courses}
-                chapters={workspace.chapters}
-                notions={workspace.notions}
-                moveCourseId={bulkMoveCourseId}
-                moveChapterId={bulkMoveChapterId}
-                moveNotionId={bulkMoveNotionId}
-                onMoveCourseChange={(value) => {
-                  setBulkMoveCourseId(value);
-                  setBulkMoveChapterId('');
-                  setBulkMoveNotionId('');
-                }}
-                onMoveChapterChange={(value) => {
-                  setBulkMoveChapterId(value);
-                  setBulkMoveNotionId('');
-                }}
-                onMoveNotionChange={setBulkMoveNotionId}
-                onEdit={onBulkEdit}
-                onValidate={() => void onBulkValidate()}
-                onDelete={() => void onBulkDelete()}
-                onMove={() => void onBulkMove()}
-                onClear={clearSelection}
-              />
-            ) : null}
+            {view === 'folders' && folderLocation.kind !== 'root' ? null : (
+              <>
+                <div className={styles.listHeader}>
+                  <label>
+                    <input
+                      ref={selectAllRef}
+                      type="checkbox"
+                      checked={allSelected}
+                      disabled={selectableResults.length === 0}
+                      onChange={toggleSelectAll}
+                      aria-label="Tout sélectionner"
+                    />
+                    Tout sélectionner
+                  </label>
+                  {selectedIds.size ? (
+                    <span>
+                      {selectedIds.size} sélectionnée
+                      {selectedIds.size > 1 ? 's' : ''}
+                    </span>
+                  ) : null}
+                </div>
+                <ul className={styles.list}>
+                  {displayedQuestions.map((question) => {
+                    const promptLabel =
+                      question.prompt.find((segment) => segment.kind === 'text')
+                        ?.value ?? 'Question mathématique';
+                    return (
+                      <li
+                        key={`${question.id}:${question.version}`}
+                        className={styles.listRow}
+                      >
+                        {question.source !== 'static' ? (
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(question.id)}
+                            onChange={() => toggleSelected(question.id)}
+                            aria-label={`Sélectionner ${promptLabel}`}
+                          />
+                        ) : (
+                          <span
+                            className={styles.checkboxSpacer}
+                            aria-hidden="true"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(question.id)}
+                          aria-pressed={selectedId === question.id}
+                        >
+                          <span>{promptLabel}</span>
+                          <small>
+                            {labels[question.source]} ·{' '}
+                            <StatusBadge status={question.status} />
+                          </small>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {selectedIds.size ? (
+                  <BulkActionBar
+                    count={selectedIds.size}
+                    busy={bulkBusy}
+                    canEdit={selectedIds.size === 1}
+                    courses={workspace.courses}
+                    chapters={workspace.chapters}
+                    notions={workspace.notions}
+                    moveCourseId={bulkMoveCourseId}
+                    moveChapterId={bulkMoveChapterId}
+                    moveNotionId={bulkMoveNotionId}
+                    onMoveCourseChange={(value) => {
+                      setBulkMoveCourseId(value);
+                      setBulkMoveChapterId('');
+                      setBulkMoveNotionId('');
+                    }}
+                    onMoveChapterChange={(value) => {
+                      setBulkMoveChapterId(value);
+                      setBulkMoveNotionId('');
+                    }}
+                    onMoveNotionChange={setBulkMoveNotionId}
+                    onEdit={onBulkEdit}
+                    onValidate={() => void onBulkValidate()}
+                    onDelete={() => void onBulkDelete()}
+                    onMove={() => void onBulkMove()}
+                    onClear={clearSelection}
+                  />
+                ) : null}
+              </>
+            )}
           </div>
-          <section className={styles.preview} aria-label="Aperçu">
-            {selected ? (
-              <QuestionPreview
-                question={selected}
-                courses={workspace.courses}
-                chapters={workspace.chapters}
-                notions={workspace.notions}
-                onEdit={() => setEditing(true)}
-                onValidate={() => {
-                  const prepared = prepareQuestionForReview(selected);
-                  setReviewErrors(prepared.issues);
-                  if (!prepared.issues.length)
+          {view === 'folders' && folderLocation.kind !== 'root' ? (
+            <QuizWorkspace
+              questions={displayedQuestions}
+              course={workspaceCourse}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onValidate={publishQuestion}
+              onDelete={archiveQuestion}
+              onEdit={() => setEditing(true)}
+              onToggleCourseVisibility={(courseId, visibility) =>
+                void onToggleCourseVisibility(courseId, visibility)
+              }
+              onCreateManual={() => {
+                setSelectedId(null);
+                setEditing(true);
+              }}
+              chatGptImportUrl={chatGptImportUrl}
+            />
+          ) : (
+            <section className={styles.preview} aria-label="Aperçu">
+              {selected ? (
+                <QuestionPreview
+                  question={selected}
+                  courses={workspace.courses}
+                  chapters={workspace.chapters}
+                  notions={workspace.notions}
+                  onEdit={() => setEditing(true)}
+                  onValidate={() => {
+                    const prepared = prepareQuestionForReview(selected);
+                    setReviewErrors(prepared.issues);
+                    if (!prepared.issues.length)
+                      void mutate(
+                        {
+                          ...prepared.normalizedQuestion,
+                          version: selected.version + 1,
+                          validated: true,
+                          updatedAt: new Date().toISOString(),
+                        },
+                        'update',
+                      );
+                  }}
+                  onDelete={() =>
                     void mutate(
                       {
-                        ...prepared.normalizedQuestion,
+                        ...selected,
                         version: selected.version + 1,
-                        validated: true,
+                        status: 'archived',
+                        updatedAt: new Date().toISOString(),
+                      },
+                      'archive',
+                    )
+                  }
+                  onMove={(courseId, chapterId, notionId) =>
+                    void mutate(
+                      {
+                        ...selected,
+                        version: selected.version + 1,
+                        classification: {
+                          kind: 'personal',
+                          courseId,
+                          chapterId,
+                          notionId,
+                        },
                         updatedAt: new Date().toISOString(),
                       },
                       'update',
-                    );
-                }}
-                onDelete={() =>
-                  void mutate(
-                    {
-                      ...selected,
-                      version: selected.version + 1,
-                      status: 'archived',
-                      updatedAt: new Date().toISOString(),
-                    },
-                    'archive',
-                  )
-                }
-                onMove={(courseId, chapterId, notionId) =>
-                  void mutate(
-                    {
-                      ...selected,
-                      version: selected.version + 1,
-                      classification: {
-                        kind: 'personal',
-                        courseId,
-                        chapterId,
-                        notionId,
-                      },
-                      updatedAt: new Date().toISOString(),
-                    },
-                    'update',
-                  )
-                }
-              />
-            ) : (
-              <p>Sélectionne une question pour afficher son aperçu.</p>
-            )}
-          </section>
+                    )
+                  }
+                />
+              ) : (
+                <p>Sélectionne une question pour afficher son aperçu.</p>
+              )}
+            </section>
+          )}
         </div>
       )}
       {workspace.conflicts.map((conflict) => (
