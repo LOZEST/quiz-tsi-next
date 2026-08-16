@@ -116,7 +116,7 @@ const hasOwnDangerousKey = (value: Record<string, unknown>) =>
     ['__proto__', 'constructor', 'prototype'].includes(key),
   );
 const boundedText = (value: unknown, maximum: number, nullable = false) =>
-  (nullable && value === null) ||
+  (nullable && (value === null || value === undefined)) ||
   (typeof value === 'string' && value.length <= maximum);
 const issue = (
   index: number,
