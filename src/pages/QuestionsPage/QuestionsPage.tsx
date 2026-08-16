@@ -348,6 +348,21 @@ export function QuestionsPage() {
     );
     await reload();
   };
+  const onUpdateCourseMeta = async (
+    courseId: string,
+    title: string,
+    description: string,
+  ) => {
+    const course = workspace.courses.find((item) => item.id === courseId);
+    if (!course) return;
+    await questionWorkspaceRepository.saveCourse(
+      userId,
+      { ...course, title, description, updatedAt: new Date().toISOString() },
+      crypto.randomUUID(),
+      'update',
+    );
+    await reload();
+  };
   const onCreateChapter = async (title: string) => {
     if (folderLocation.kind !== 'course') return;
     const now = new Date().toISOString();
@@ -787,6 +802,9 @@ export function QuestionsPage() {
               onToggleCourseVisibility={(courseId, visibility) =>
                 void onToggleCourseVisibility(courseId, visibility)
               }
+              onUpdateCourseMeta={(courseId, title, description) =>
+                void onUpdateCourseMeta(courseId, title, description)
+              }
               onCreateManual={() => {
                 setSelectedId(null);
                 setEditing(true);
@@ -890,6 +908,24 @@ export function QuestionsPage() {
       {editing ? (
         <QuestionEditor
           initial={selected?.source === 'static' ? null : selected}
+          initialClassification={
+            !selected &&
+            (folderLocation.kind === 'course' ||
+              folderLocation.kind === 'chapter' ||
+              folderLocation.kind === 'notion')
+              ? {
+                  courseId: folderLocation.courseId,
+                  chapterId:
+                    folderLocation.kind !== 'course'
+                      ? folderLocation.chapterId
+                      : null,
+                  notionId:
+                    folderLocation.kind === 'notion'
+                      ? folderLocation.notionId
+                      : null,
+                }
+              : null
+          }
           userId={userId}
           programIndex={programIndex}
           workspace={workspace}
@@ -1241,6 +1277,7 @@ function BulkActionBar({
 
 function QuestionEditor({
   initial,
+  initialClassification,
   userId,
   programIndex,
   workspace,
@@ -1248,6 +1285,11 @@ function QuestionEditor({
   onSave,
 }: {
   initial: Readonly<Question> | null;
+  initialClassification?: Readonly<{
+    courseId: string;
+    chapterId: string | null;
+    notionId: string | null;
+  }> | null;
   userId: string;
   programIndex: ProgramIndex | null;
   workspace: QuestionWorkspaceSnapshot;
@@ -1316,7 +1358,10 @@ function QuestionEditor({
     : null;
   const [classificationKind, setClassificationKind] = useState<
     'official' | 'personal'
-  >(existingClassification?.kind ?? 'official');
+  >(
+    existingClassification?.kind ??
+      (initialClassification ? 'personal' : 'official'),
+  );
   const [partId, setPartId] = useState(
     existingClassification?.kind === 'official'
       ? existingClassification.partId
@@ -1335,17 +1380,17 @@ function QuestionEditor({
   const [courseId, setCourseId] = useState(
     existingClassification?.kind === 'personal'
       ? existingClassification.courseId
-      : '',
+      : (initialClassification?.courseId ?? ''),
   );
   const [personalChapterId, setPersonalChapterId] = useState(
     existingClassification?.kind === 'personal'
       ? (existingClassification.chapterId ?? '')
-      : '',
+      : (initialClassification?.chapterId ?? ''),
   );
   const [personalNotionId, setPersonalNotionId] = useState(
     existingClassification?.kind === 'personal'
       ? (existingClassification.notionId ?? '')
-      : '',
+      : (initialClassification?.notionId ?? ''),
   );
   const [personalCourseTitle, setPersonalCourseTitle] = useState('');
   const [personalChapterTitle, setPersonalChapterTitle] = useState('');

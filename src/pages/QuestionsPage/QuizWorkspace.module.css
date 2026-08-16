@@ -120,9 +120,75 @@
 .metaHeader strong {
   font-size: 1.0625rem;
 }
-.metaDescription {
-  margin: var(--qtsi-space-2) 0 0;
+.metaTitleButton {
+  padding: var(--qtsi-space-1) var(--qtsi-space-2);
+  margin-inline-start: calc(var(--qtsi-space-2) * -1);
+  color: inherit;
+  text-align: start;
+  background: transparent;
+  border: 0;
+  border-radius: var(--qtsi-radius-2);
+  cursor: pointer;
+}
+.metaTitleButton:hover {
+  background: var(--qtsi-surface-hover);
+}
+.metaDescriptionButton {
+  display: block;
+  inline-size: 100%;
+  padding: var(--qtsi-space-1) var(--qtsi-space-2);
+  margin: var(--qtsi-space-2) 0 0 calc(var(--qtsi-space-2) * -1);
   color: var(--qtsi-text-secondary);
+  text-align: start;
+  background: transparent;
+  border: 0;
+  border-radius: var(--qtsi-radius-2);
+  cursor: pointer;
+}
+.metaDescriptionButton:hover {
+  background: var(--qtsi-surface-hover);
+}
+.metaEdit {
+  display: grid;
+  gap: var(--qtsi-space-3);
+}
+.metaEdit label {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.875rem;
+}
+.metaEdit input,
+.metaEdit textarea {
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  font: inherit;
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-2);
+}
+.metaEdit textarea {
+  min-block-size: 4.5rem;
+  resize: vertical;
+}
+.metaEditActions {
+  display: flex;
+  gap: var(--qtsi-space-2);
+}
+.metaEditActions button {
+  min-block-size: var(--qtsi-touch-target);
+  padding: 0 var(--qtsi-space-4);
+  border: 0;
+  border-radius: var(--qtsi-radius-2);
+  font-weight: 650;
+  cursor: pointer;
+}
+.metaEditActions button:first-child {
+  color: white;
+  background: var(--qtsi-accent);
+}
+.metaEditActions button:last-child {
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface-muted);
 }
 .metaActions {
   display: flex;

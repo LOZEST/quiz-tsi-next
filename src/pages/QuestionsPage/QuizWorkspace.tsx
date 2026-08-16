@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Question } from '@domain/questions/Question';
 import type {
   PersonalCourse,
@@ -59,6 +60,7 @@ export function QuizWorkspace({
   onDelete,
   onEdit,
   onToggleCourseVisibility,
+  onUpdateCourseMeta,
   onCreateManual,
   chatGptImportUrl,
 }: {
@@ -73,9 +75,28 @@ export function QuizWorkspace({
     courseId: string,
     visibility: PersonalCourseVisibility,
   ) => void;
+  onUpdateCourseMeta: (
+    courseId: string,
+    title: string,
+    description: string,
+  ) => void;
   onCreateManual: () => void;
   chatGptImportUrl: string | null;
 }) {
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [draftTitle, setDraftTitle] = useState('');
+  const [draftDescription, setDraftDescription] = useState('');
+  const startEditingMeta = () => {
+    if (!course) return;
+    setDraftTitle(course.title);
+    setDraftDescription(course.description);
+    setEditingMeta(true);
+  };
+  const saveMeta = () => {
+    if (!course || !draftTitle.trim()) return;
+    onUpdateCourseMeta(course.id, draftTitle.trim(), draftDescription.trim());
+    setEditingMeta(false);
+  };
   const validated = questions.filter(
     (question) => question.status === 'published',
   );
@@ -163,27 +184,73 @@ export function QuizWorkspace({
         </div>
         {course ? (
           <div className={styles.meta}>
-            <div className={styles.metaHeader}>
-              <strong>{course.title}</strong>
-              <label className={styles.visibilityToggle}>
-                <input
-                  type="checkbox"
-                  checked={course.visibility === 'public'}
-                  onChange={(event) =>
-                    onToggleCourseVisibility(
-                      course.id,
-                      event.target.checked ? 'public' : 'private',
-                    )
-                  }
-                />
-                <span>
-                  {course.visibility === 'public' ? 'Public' : 'Privé'}
-                </span>
-              </label>
-            </div>
-            {course.description ? (
-              <p className={styles.metaDescription}>{course.description}</p>
-            ) : null}
+            {editingMeta ? (
+              <div className={styles.metaEdit}>
+                <label>
+                  Nom du quizz
+                  <input
+                    value={draftTitle}
+                    onChange={(event) => setDraftTitle(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Description
+                  <textarea
+                    value={draftDescription}
+                    onChange={(event) =>
+                      setDraftDescription(event.target.value)
+                    }
+                  />
+                </label>
+                <div className={styles.metaEditActions}>
+                  <button
+                    type="button"
+                    disabled={!draftTitle.trim()}
+                    onClick={saveMeta}
+                  >
+                    Enregistrer
+                  </button>
+                  <button type="button" onClick={() => setEditingMeta(false)}>
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className={styles.metaHeader}>
+                  <button
+                    type="button"
+                    className={styles.metaTitleButton}
+                    onClick={startEditingMeta}
+                    title="Cliquer pour modifier"
+                  >
+                    <strong>{course.title}</strong>
+                  </button>
+                  <label className={styles.visibilityToggle}>
+                    <input
+                      type="checkbox"
+                      checked={course.visibility === 'public'}
+                      onChange={(event) =>
+                        onToggleCourseVisibility(
+                          course.id,
+                          event.target.checked ? 'public' : 'private',
+                        )
+                      }
+                    />
+                    <span>
+                      {course.visibility === 'public' ? 'Public' : 'Privé'}
+                    </span>
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  className={styles.metaDescriptionButton}
+                  onClick={startEditingMeta}
+                >
+                  {course.description || 'Ajouter une description…'}
+                </button>
+              </>
+            )}
             <div className={styles.metaActions}>
               {chatGptImportUrl ? (
                 <a

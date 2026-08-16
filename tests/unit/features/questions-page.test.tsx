@@ -909,11 +909,37 @@ describe('QuestionsPage', () => {
     );
 
     await user.click(
+      screen.getByRole('button', {
+        name: 'Chute libre et cinématique',
+      }),
+    );
+    const titleInput = screen.getByLabelText('Nom du quizz');
+    await user.clear(titleInput);
+    await user.type(titleInput, 'Mécanique du point');
+    const descriptionInput = screen.getByLabelText('Description');
+    await user.clear(descriptionInput);
+    await user.type(descriptionInput, 'Cinématique et dynamique');
+    await user.click(screen.getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() =>
+      expect(saveCourse).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({
+          id: 'course-mecanique',
+          title: 'Mécanique du point',
+          description: 'Cinématique et dynamique',
+        }),
+        expect.any(String),
+        'update',
+      ),
+    );
+
+    await user.click(
       screen.getByRole('button', { name: 'Ajouter une question à la main' }),
     );
     expect(
       screen.getByRole('dialog', { name: 'Nouvelle question' }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText('Cours')).toHaveValue('course-mecanique');
   });
 
   it('crée un quizz, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
