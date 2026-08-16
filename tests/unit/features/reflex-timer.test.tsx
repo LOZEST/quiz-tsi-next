@@ -85,6 +85,7 @@ describe('ReflexTimer', () => {
       authGateway: {
         getCurrentSession: vi.fn(),
         signInWithPassword: vi.fn(),
+        signUp: vi.fn(),
         signOut: vi.fn(),
         subscribeToAuthChanges: vi.fn(),
       },

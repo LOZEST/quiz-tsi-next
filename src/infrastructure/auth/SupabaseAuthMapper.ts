@@ -63,6 +63,9 @@ export function mapSupabaseError(error: unknown): AuthError {
   ) {
     return new AuthError('invalid-credentials', 'Credentials rejected.');
   }
+  if (message.includes('not confirmed')) {
+    return new AuthError('email-not-confirmed', 'Email not confirmed.');
+  }
   if (
     message.includes('fetch') ||
     message.includes('network') ||
@@ -78,6 +81,19 @@ export function mapSupabaseError(error: unknown): AuthError {
     message.includes('row-level security')
   ) {
     return new AuthError('permission-denied', 'Permission denied.');
+  }
+  if (
+    message.includes('already registered') ||
+    message.includes('already exists') ||
+    message.includes('user already')
+  ) {
+    return new AuthError(
+      'email-already-registered',
+      'Email already registered.',
+    );
+  }
+  if (message.includes('password')) {
+    return new AuthError('weak-password', 'Password rejected.');
   }
   return new AuthError('unknown', 'Unexpected authentication error.', {
     cause: error,

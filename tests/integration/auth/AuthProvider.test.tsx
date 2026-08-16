@@ -48,6 +48,7 @@ describe('AuthProvider concurrency', () => {
         .fn()
         .mockReturnValueOnce(requestA.promise)
         .mockReturnValueOnce(requestB.promise),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi.fn().mockReturnValue(() => undefined),
     };
@@ -125,6 +126,7 @@ describe('AuthProvider concurrency', () => {
         }),
       ),
       signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi.fn().mockReturnValue(() => undefined),
     };
@@ -165,6 +167,7 @@ describe('AuthProvider concurrency', () => {
     const gateway: AuthGateway = {
       getCurrentSession: vi.fn().mockResolvedValue(null),
       signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi
         .fn()
@@ -250,6 +253,7 @@ describe('AuthProvider concurrency', () => {
     const gateway: AuthGateway = {
       getCurrentSession: vi.fn().mockResolvedValue(null),
       signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi
         .fn()
@@ -306,6 +310,7 @@ describe('AuthProvider concurrency', () => {
     const gateway: AuthGateway = {
       getCurrentSession: vi.fn().mockResolvedValue(null),
       signInWithPassword: vi.fn().mockReturnValue(signedIn.promise),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi
         .fn()
@@ -368,6 +373,7 @@ describe('AuthProvider concurrency', () => {
     const gateway: AuthGateway = {
       getCurrentSession: vi.fn().mockResolvedValue(null),
       signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
       signOut: vi.fn().mockResolvedValue(undefined),
       subscribeToAuthChanges: vi
         .fn()

@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { Surface } from '@design-system/components/Surface/Surface';
 import { Logo, LogoMark } from '@design-system/components/Logo/Logo';
@@ -8,8 +8,9 @@ import { safeRedirectTarget } from '@app/routing/redirect';
 export function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const search = location.search;
   const target = safeRedirectTarget(
-    new URLSearchParams(location.search).get('returnTo') ??
+    new URLSearchParams(search).get('returnTo') ??
       (location.state as { from?: unknown } | null)?.from,
   );
   return (
@@ -41,6 +42,9 @@ export function LoginPage() {
               }}
             />
           </Surface>
+          <Link className="qtsi-text-link" to={`/register${search}`}>
+            Pas encore de compte ? En créer un
+          </Link>
         </div>
       </div>
     </main>
