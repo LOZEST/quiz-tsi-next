@@ -63,6 +63,9 @@ export function mapSupabaseError(error: unknown): AuthError {
   ) {
     return new AuthError('invalid-credentials', 'Credentials rejected.');
   }
+  if (message.includes('not confirmed')) {
+    return new AuthError('email-not-confirmed', 'Email not confirmed.');
+  }
   if (
     message.includes('fetch') ||
     message.includes('network') ||

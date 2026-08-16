@@ -8,6 +8,7 @@ export type AuthErrorCode =
   | 'storage-unavailable'
   | 'email-already-registered'
   | 'weak-password'
+  | 'email-not-confirmed'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -40,5 +41,7 @@ export const authErrorMessages: Record<AuthErrorCode, string> = {
     'L’espace local ne peut pas être ouvert sur cet appareil.',
   'email-already-registered': 'Un compte existe déjà avec cet email.',
   'weak-password': 'Ton mot de passe doit contenir au moins 6 caractères.',
+  'email-not-confirmed':
+    'Confirme ton adresse email avant de te connecter : vérifie ta boîte de réception (et tes spams).',
   unknown: 'Une erreur inattendue empêche la connexion. Réessaie.',
 };

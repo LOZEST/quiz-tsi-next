@@ -125,6 +125,18 @@ describe('SupabaseAuthGateway', () => {
     ).rejects.toMatchObject({ code: 'profile-missing' });
   });
 
+  it('translates a sign-in attempt before email confirmation', async () => {
+    const unconfirmed = createClient({
+      signInError: new Error('Email not confirmed'),
+    });
+    await expect(
+      new SupabaseAuthGateway(unconfirmed.client).signInWithPassword(
+        'a@example.test',
+        'secret1',
+      ),
+    ).rejects.toMatchObject({ code: 'email-not-confirmed' });
+  });
+
   it('signs up and maps the created session', async () => {
     const { client } = createClient();
     await expect(
