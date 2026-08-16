@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 const destinations = [
   ['Tableau blanc', 'whiteboard', 'Tableau blanc'],
   ['Mon parcours', 'progress', 'Mon parcours'],
-  ['Banque de questions', 'questions', 'Banque de questions'],
+  ['Mes Quizz', 'questions', 'Mes Quizz'],
   ['Réglages', 'settings', 'Réglages'],
 ] as const;
 
@@ -186,9 +186,7 @@ test('reloads a Pages deep route without HashRouter', async ({ page }) => {
   await login(page);
   await page.goto('questions?type=course#details');
   await page.reload();
-  await expect(
-    page.getByRole('heading', { name: 'Banque de questions' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Mes Quizz' })).toBeVisible();
   await expect(page).toHaveURL(/\/questions\?type=course#details$/);
   expect(new URL(page.url()).hash.startsWith('#/')).toBe(false);
 });

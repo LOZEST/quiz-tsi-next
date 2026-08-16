@@ -24,7 +24,7 @@ export type PersonalTaxonomyOutboxOperation =
       userId: string;
       entity: 'course';
       entityId: string;
-      kind: 'create';
+      kind: 'create' | 'update';
       payload: PersonalCourse;
       createdAt: string;
     }>
@@ -99,6 +99,7 @@ export interface QuestionWorkspaceRepository {
     userId: string,
     course: Readonly<PersonalCourse>,
     operationId: string,
+    kind?: 'create' | 'update',
   ): Promise<void>;
   saveChapter(
     userId: string,

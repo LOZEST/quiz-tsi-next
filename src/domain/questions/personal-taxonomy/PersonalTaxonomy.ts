@@ -1,7 +1,11 @@
+export type PersonalCourseVisibility = 'public' | 'private';
+
 export interface PersonalCourse {
   readonly id: string;
   readonly ownerId: string;
   readonly title: string;
+  readonly description: string;
+  readonly visibility: PersonalCourseVisibility;
   readonly createdAt: string;
   readonly updatedAt: string;
 }

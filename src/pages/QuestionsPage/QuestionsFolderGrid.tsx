@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   questionClassification,
   type Question,
@@ -7,14 +7,11 @@ import type { FolderLocation } from '@domain/questions/QuestionBankSearch';
 import type {
   PersonalChapter,
   PersonalCourse,
+  PersonalCourseVisibility,
   PersonalNotion,
 } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import { RawContentPreview } from '@features/questions/RawContentPreview';
 import styles from './QuestionsFolderGrid.module.css';
-
-const folderLabel = {
-  static: 'Officielle',
-  shared: 'Partagée',
-} as const;
 
 export function QuestionsFolderGrid({
   location,
@@ -26,6 +23,7 @@ export function QuestionsFolderGrid({
   onCreateCourse,
   onCreateChapter,
   onCreateNotion,
+  onToggleCourseVisibility,
 }: {
   location: FolderLocation;
   onLocationChange: (location: FolderLocation) => void;
@@ -36,22 +34,18 @@ export function QuestionsFolderGrid({
   onCreateCourse: (title: string) => void;
   onCreateChapter: (title: string) => void;
   onCreateNotion: (title: string) => void;
+  onToggleCourseVisibility: (
+    courseId: string,
+    visibility: PersonalCourseVisibility,
+  ) => void;
 }) {
   const [newFolderTitle, setNewFolderTitle] = useState('');
+  const newFolderInputRef = useRef<HTMLInputElement>(null);
   const countIn = (predicate: (location: FolderLocation) => boolean) => {
     let count = 0;
     for (const question of questions) {
       const classification = questionClassification(question);
-      if (classification?.kind !== 'personal') {
-        if (
-          predicate({
-            kind: 'source',
-            source: question.source as 'static' | 'shared',
-          })
-        )
-          count += 1;
-        continue;
-      }
+      if (classification?.kind !== 'personal') continue;
       if (
         predicate({ kind: 'course', courseId: classification.courseId }) ||
         (classification.chapterId &&
@@ -73,12 +67,18 @@ export function QuestionsFolderGrid({
     }
     return count;
   };
+  const exampleFor = (courseId: string) =>
+    questions.find((question) => {
+      const classification = questionClassification(question);
+      return (
+        classification?.kind === 'personal' &&
+        classification.courseId === courseId
+      );
+    })?.prompt ?? null;
 
   const breadcrumb: { label: string; location: FolderLocation }[] = [
-    { label: 'Tous les dossiers', location: { kind: 'root' } },
+    { label: 'Mes Quizz', location: { kind: 'root' } },
   ];
-  if (location.kind === 'source')
-    breadcrumb.push({ label: folderLabel[location.source], location });
   if (
     location.kind === 'course' ||
     location.kind === 'chapter' ||
@@ -86,7 +86,7 @@ export function QuestionsFolderGrid({
   ) {
     const course = courses.find((item) => item.id === location.courseId);
     breadcrumb.push({
-      label: course?.title ?? 'Cours',
+      label: course?.title ?? 'Quizz',
       location: { kind: 'course', courseId: location.courseId },
     });
   }
@@ -121,91 +121,98 @@ export function QuestionsFolderGrid({
     location.kind === 'chapter';
   const newFolderPlaceholder =
     location.kind === 'root'
-      ? 'Nouveau cours'
+      ? 'Nouveau quizz'
       : location.kind === 'course'
         ? 'Nouveau chapitre'
         : 'Nouvelle notion';
 
   return (
     <div className={styles.folderGrid}>
-      <nav aria-label="Fil d’Ariane" className={styles.breadcrumb}>
-        {breadcrumb.map((crumb, index) => (
-          <span key={index}>
-            {index > 0 ? <span aria-hidden="true"> / </span> : null}
-            {index === breadcrumb.length - 1 ? (
-              <span>{crumb.label}</span>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onLocationChange(crumb.location)}
-              >
-                {crumb.label}
-              </button>
-            )}
-          </span>
-        ))}
-      </nav>
-      <div className={styles.cards}>
+      {location.kind !== 'root' ? (
+        <nav aria-label="Fil d’Ariane" className={styles.breadcrumb}>
+          {breadcrumb.map((crumb, index) => (
+            <span key={index}>
+              {index > 0 ? <span aria-hidden="true"> / </span> : null}
+              {index === breadcrumb.length - 1 ? (
+                <span>{crumb.label}</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onLocationChange(crumb.location)}
+                >
+                  {crumb.label}
+                </button>
+              )}
+            </span>
+          ))}
+        </nav>
+      ) : null}
+      <div
+        className={location.kind === 'root' ? styles.quizCards : styles.cards}
+      >
         {location.kind === 'root' ? (
           <>
             <button
               type="button"
-              className={styles.card}
-              onClick={() =>
-                onLocationChange({ kind: 'source', source: 'static' })
-              }
+              className={styles.addQuizCard}
+              onClick={() => newFolderInputRef.current?.focus()}
             >
-              <span className={styles.cardIcon} aria-hidden="true">
-                📁
+              <span aria-hidden="true">Ajoute un quizz</span>
+              <span className={styles.addQuizPlus} aria-hidden="true">
+                +
               </span>
-              <span>Officielle</span>
-              <small>
-                {countIn(
-                  (item) => item.kind === 'source' && item.source === 'static',
-                )}{' '}
-                question(s)
-              </small>
             </button>
-            <button
-              type="button"
-              className={styles.card}
-              onClick={() =>
-                onLocationChange({ kind: 'source', source: 'shared' })
-              }
-            >
-              <span className={styles.cardIcon} aria-hidden="true">
-                📁
-              </span>
-              <span>Partagée</span>
-              <small>
-                {countIn(
-                  (item) => item.kind === 'source' && item.source === 'shared',
-                )}{' '}
-                question(s)
-              </small>
-            </button>
-            {courses.map((course) => (
-              <button
-                type="button"
-                key={course.id}
-                className={styles.card}
-                onClick={() =>
-                  onLocationChange({ kind: 'course', courseId: course.id })
-                }
-              >
-                <span className={styles.cardIcon} aria-hidden="true">
-                  📁
-                </span>
-                <span>{course.title}</span>
-                <small>
-                  {countIn(
-                    (item) =>
-                      item.kind === 'course' && item.courseId === course.id,
-                  )}{' '}
-                  question(s)
-                </small>
-              </button>
-            ))}
+            {courses.map((course) => {
+              const example = exampleFor(course.id);
+              return (
+                <div key={course.id} className={styles.quizCard}>
+                  <button
+                    type="button"
+                    className={styles.quizCardMain}
+                    onClick={() =>
+                      onLocationChange({ kind: 'course', courseId: course.id })
+                    }
+                  >
+                    <div className={styles.quizPreview}>
+                      {example ? (
+                        <RawContentPreview segments={example} />
+                      ) : (
+                        <span className={styles.quizPreviewEmpty}>
+                          Pas encore de question
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.quizMeta}>
+                      <strong>{course.title}</strong>
+                      {course.description ? <p>{course.description}</p> : null}
+                      <small>
+                        {countIn(
+                          (item) =>
+                            item.kind === 'course' &&
+                            item.courseId === course.id,
+                        )}{' '}
+                        question(s)
+                      </small>
+                    </div>
+                  </button>
+                  <label className={styles.visibilityToggle}>
+                    <input
+                      type="checkbox"
+                      checked={course.visibility === 'public'}
+                      onChange={(event) =>
+                        onToggleCourseVisibility(
+                          course.id,
+                          event.target.checked ? 'public' : 'private',
+                        )
+                      }
+                    />
+                    <span>
+                      {course.visibility === 'public' ? 'Public' : 'Privé'}
+                    </span>
+                  </label>
+                </div>
+              );
+            })}
           </>
         ) : null}
         {location.kind === 'course'
@@ -286,6 +293,7 @@ export function QuestionsFolderGrid({
           <label>
             {newFolderPlaceholder}
             <input
+              ref={newFolderInputRef}
               value={newFolderTitle}
               onChange={(event) => setNewFolderTitle(event.target.value)}
               placeholder={newFolderPlaceholder}

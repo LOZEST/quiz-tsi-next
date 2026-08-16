@@ -85,15 +85,27 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
         notion: 'personal_notions',
       }[operation.entity];
       const payload = operation.payload;
-      const { error } = await this.client.from(table).insert({
+      const row = {
         id: payload.id,
         owner_id: payload.ownerId,
         ...('courseId' in payload ? { course_id: payload.courseId } : {}),
         ...('chapterId' in payload ? { chapter_id: payload.chapterId } : {}),
         title: payload.title,
+        ...('description' in payload
+          ? { description: payload.description }
+          : {}),
+        ...('visibility' in payload ? { visibility: payload.visibility } : {}),
         created_at: payload.createdAt,
         updated_at: payload.updatedAt,
-      });
+      };
+      const { error } =
+        operation.entity === 'course' && operation.kind === 'update'
+          ? await this.client
+              .from(table)
+              .update(row)
+              .eq('id', payload.id)
+              .eq('owner_id', payload.ownerId)
+          : await this.client.from(table).insert(row);
       if (error?.code === '42501')
         return { kind: 'permission-denied' as const };
       if (error?.code === '23505') {
@@ -232,36 +244,43 @@ function taxonomyRows(
   kind: 'course' | 'chapter' | 'notion',
 ): (PersonalCourse | PersonalChapter | PersonalNotion)[] {
   if (!Array.isArray(data)) return [];
-  return data.flatMap((row) => {
-    if (
-      !isRecord(row) ||
-      typeof row.id !== 'string' ||
-      row.owner_id !== userId ||
-      typeof row.title !== 'string' ||
-      typeof row.created_at !== 'string' ||
-      typeof row.updated_at !== 'string'
-    )
-      return [];
-    const common = {
-      id: row.id,
-      ownerId: userId,
-      title: row.title,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-    };
-    if (kind === 'course') return [common];
-    if (typeof row.course_id !== 'string') return [];
-    if (kind === 'chapter') return [{ ...common, courseId: row.course_id }];
-    if (row.chapter_id !== null && typeof row.chapter_id !== 'string')
-      return [];
-    return [
-      {
-        ...common,
-        courseId: row.course_id,
-        chapterId: row.chapter_id,
-      },
-    ];
-  });
+  return data.flatMap(
+    (row): (PersonalCourse | PersonalChapter | PersonalNotion)[] => {
+      if (
+        !isRecord(row) ||
+        typeof row.id !== 'string' ||
+        row.owner_id !== userId ||
+        typeof row.title !== 'string' ||
+        typeof row.created_at !== 'string' ||
+        typeof row.updated_at !== 'string'
+      )
+        return [];
+      const common = {
+        id: row.id,
+        ownerId: userId,
+        title: row.title,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+      if (kind === 'course') {
+        const description =
+          typeof row.description === 'string' ? row.description : '';
+        const visibility = row.visibility === 'public' ? 'public' : 'private';
+        return [{ ...common, description, visibility }];
+      }
+      if (typeof row.course_id !== 'string') return [];
+      if (kind === 'chapter') return [{ ...common, courseId: row.course_id }];
+      if (row.chapter_id !== null && typeof row.chapter_id !== 'string')
+        return [];
+      return [
+        {
+          ...common,
+          courseId: row.course_id,
+          chapterId: row.chapter_id,
+        },
+      ];
+    },
+  );
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -289,6 +308,8 @@ const taxonomyEqual = (
     row.owner_id === payload.ownerId &&
     row.title === payload.title &&
     (!('courseId' in payload) || row.course_id === payload.courseId) &&
-    (!('chapterId' in payload) || row.chapter_id === payload.chapterId)
+    (!('chapterId' in payload) || row.chapter_id === payload.chapterId) &&
+    (!('description' in payload) || row.description === payload.description) &&
+    (!('visibility' in payload) || row.visibility === payload.visibility)
   );
 };

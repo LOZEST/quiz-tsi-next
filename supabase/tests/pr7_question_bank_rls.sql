@@ -1,5 +1,5 @@
 begin;
-select plan(59);
+select plan(62);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
@@ -49,6 +49,8 @@ set local role authenticated;
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}',true);
 select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Cours A')$$,'A écrit son cours');
+select is((select visibility from public.personal_courses where id='aaaaaaaa-0000-4000-8000-000000000001'),'private','cours privé par défaut');
+select lives_ok($$update public.personal_courses set description='Une révision de maths',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001'$$,'A modifie la description et la visibilité de son cours');
 select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values('aaaaaaaa-0000-4000-8000-000000000010',1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapterId":null,"notionId":null}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'A écrit private A');
 select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),1,'A lit private A');
 
@@ -57,6 +59,8 @@ select set_config('request.jwt.claims','{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb
 select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas private A');
 select throws_ok($$update public.questions set status='archived' where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,'42501',null,'B ne modifie pas A');
 select throws_ok($$delete from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,'42501',null,'B ne supprime pas A');
+update public.personal_courses set description='Piraté',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001';
+select is((select count(*)::integer from public.personal_courses where id='aaaaaaaa-0000-4000-8000-000000000001' and description='Piraté'),0,'B ne modifie pas le cours de A');
 select throws_ok($$insert into public.personal_chapters(owner_id,course_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','aaaaaaaa-0000-4000-8000-000000000001','Intrus')$$,'23503',null,'B ne référence pas le cours A');
 select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('bbbbbbbb-0000-4000-8000-000000000001','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Cours B')$$,'B écrit son cours');
 select throws_ok($$insert into public.personal_notions(owner_id,course_id,chapter_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','bbbbbbbb-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000002','Intruse')$$,'23503',null,'B ne référence pas le chapitre A');

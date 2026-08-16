@@ -1,7 +1,7 @@
 export const mainNavigation = [
   { label: 'Tableau blanc', to: '/whiteboard' },
   { label: 'Mon parcours', to: '/progress' },
-  { label: 'Banque de questions', to: '/questions' },
+  { label: 'Mes Quizz', to: '/questions' },
   { label: 'Réglages', to: '/settings' },
 ] as const;
 
