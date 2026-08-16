@@ -68,6 +68,6 @@ test('preserves the OAuth authorization id through login and Pages routing', asy
     /\/oauth\/consent\?authorization_id=authorization-test$/,
   );
   await expect(
-    page.getByRole('heading', { name: 'Autoriser l’import Quiz TSI' }),
+    page.getByRole('heading', { name: 'Autoriser l’import Prépa Math' }),
   ).toBeVisible();
 });

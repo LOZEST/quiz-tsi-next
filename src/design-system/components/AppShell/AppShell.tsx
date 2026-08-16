@@ -5,7 +5,7 @@ import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import { IconButton } from '@design-system/components/IconButton/IconButton';
 import { OverlayDrawer } from '@design-system/components/OverlayDrawer/OverlayDrawer';
 import { SkipLink } from '@design-system/components/SkipLink/SkipLink';
-import { Logo, LogoMark } from '@design-system/components/Logo/Logo';
+import { LogoMark } from '@design-system/components/Logo/Logo';
 import {
   IconAdmin,
   IconBank,
@@ -210,73 +210,61 @@ export function AppShell({
       }`}
     >
       <SkipLink />
-      <div className={styles.layout}>
-        <aside className={styles.sidebar} aria-label="Barre latérale">
-          <NavLink to="/progress" className={styles.sidebarLogo!}>
-            <Logo tagline="Espace de révision" />
-          </NavLink>
-          {renderNavLinks(() => undefined)}
-        </aside>
-
-        <div className={styles.contentColumn}>
-          <header className={styles.topbar}>
-            <IconButton
-              ref={menuButtonRef}
-              label="Ouvrir le menu"
-              aria-expanded={menuOpen}
-              aria-controls="main-navigation"
-              onClick={() => setMenuOpen(true)}
-            >
-              <IconMenu />
-            </IconButton>
-            <NavLink to="/progress" className={styles.brand!}>
-              <LogoMark size={26} />
-              <span>Prépa Math</span>
-            </NavLink>
-          </header>
-          {state.offline ? (
-            <div className={styles.offlineBanner} role="status">
-              Hors connexion — les données locales validées restent accessibles.
-              Le rôle est informatif et les opérations sensibles sont
-              désactivées.
-            </div>
-          ) : null}
-
-          <OverlayDrawer
-            open={menuOpen}
-            title="Menu"
-            triggerRef={menuButtonRef}
-            onClose={() => setMenuOpen(false)}
-          >
-            {isWhiteboard ? (
-              <>
-                <Disclosure label="Options du parcours">
-                  {whiteboardOptions}
-                </Disclosure>
-                <Disclosure label="Réglages Apple Pencil">
-                  <WhiteboardDrawerSettings />
-                </Disclosure>
-              </>
-            ) : (
-              <Disclosure label="À propos de cette version">
-                Authentification et espace utilisateur actifs.
-              </Disclosure>
-            )}
-            <div id="main-navigation">
-              {renderNavLinks(() => setMenuOpen(false))}
-            </div>
-          </OverlayDrawer>
-
-          <main
-            id="main-content"
-            className={styles.main}
-            tabIndex={-1}
-            key={location.pathname}
-          >
-            <Outlet />
-          </main>
+      <header className={styles.topbar}>
+        <IconButton
+          ref={menuButtonRef}
+          label="Ouvrir le menu"
+          aria-expanded={menuOpen}
+          aria-controls="main-navigation"
+          onClick={() => setMenuOpen(true)}
+        >
+          <IconMenu />
+        </IconButton>
+        <NavLink to="/progress" className={styles.brand!}>
+          <LogoMark size={26} />
+          <span>Prépa Math</span>
+        </NavLink>
+      </header>
+      {state.offline ? (
+        <div className={styles.offlineBanner} role="status">
+          Hors connexion — les données locales validées restent accessibles. Le
+          rôle est informatif et les opérations sensibles sont désactivées.
         </div>
-      </div>
+      ) : null}
+
+      <OverlayDrawer
+        open={menuOpen}
+        title="Menu"
+        triggerRef={menuButtonRef}
+        onClose={() => setMenuOpen(false)}
+      >
+        {isWhiteboard ? (
+          <>
+            <Disclosure label="Options du parcours">
+              {whiteboardOptions}
+            </Disclosure>
+            <Disclosure label="Réglages Apple Pencil">
+              <WhiteboardDrawerSettings />
+            </Disclosure>
+          </>
+        ) : (
+          <Disclosure label="À propos de cette version">
+            Authentification et espace utilisateur actifs.
+          </Disclosure>
+        )}
+        <div id="main-navigation">
+          {renderNavLinks(() => setMenuOpen(false))}
+        </div>
+      </OverlayDrawer>
+
+      <main
+        id="main-content"
+        className={styles.main}
+        tabIndex={-1}
+        key={location.pathname}
+      >
+        <Outlet />
+      </main>
     </div>
   );
 }
