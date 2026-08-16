@@ -40,7 +40,7 @@ export class SupabaseOAuthConsentGateway implements OAuthConsentGateway {
 
 export class UnavailableOAuthConsentGateway implements OAuthConsentGateway {
   private unavailable(): Error {
-    return new Error('Le serveur OAuth Quiz TSI n’est pas configuré.');
+    return new Error('Le serveur OAuth Prépa Math n’est pas configuré.');
   }
   getAuthorizationDetails(): Promise<never> {
     return Promise.reject(this.unavailable());

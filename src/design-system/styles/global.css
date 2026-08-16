@@ -20,8 +20,7 @@ html.qtsi-scroll-locked:has(.qtsi-whiteboard-shell) {
   scrollbar-gutter: auto;
 }
 
-.qtsi-centered-state,
-.qtsi-login {
+.qtsi-centered-state {
   display: grid;
   min-block-size: 100dvh;
   padding: calc(var(--qtsi-space-6) + var(--qtsi-safe-top))
@@ -31,20 +30,111 @@ html.qtsi-scroll-locked:has(.qtsi-whiteboard-shell) {
   place-items: center;
 }
 
-.qtsi-login > div {
-  inline-size: min(100%, 34rem);
+.qtsi-login {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-block-size: 100dvh;
+  background: var(--qtsi-bg);
 }
 
-.qtsi-wordmark {
-  margin: 0 0 var(--qtsi-space-4);
-  font-size: 1.125rem;
-  font-weight: 700;
+.qtsi-login-aside {
+  display: none;
+  position: relative;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--qtsi-space-10);
+  overflow: hidden;
+  background:
+    radial-gradient(60% 55% at 85% 15%, rgb(255 255 255 / 14%), transparent),
+    radial-gradient(70% 60% at 10% 100%, rgb(255 255 255 / 10%), transparent),
+    linear-gradient(155deg, var(--qtsi-accent) 0%, var(--qtsi-accent-deep) 100%);
+  color: white;
+}
+
+.qtsi-login-aside::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      rgb(255 255 255 / 8%) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgb(255 255 255 / 8%) 1px, transparent 1px);
+  background-position: -1px -1px;
+  background-size: 2.75rem 2.75rem;
+  mask-image: radial-gradient(80% 75% at 30% 30%, black 40%, transparent 90%);
+}
+
+.qtsi-login-aside > * {
+  position: relative;
+}
+
+.qtsi-login-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  background: rgb(255 255 255 / 16%);
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: var(--qtsi-radius-2);
+}
+
+.qtsi-login-pitch {
+  max-inline-size: 24rem;
+}
+
+.qtsi-login-pitch h2 {
+  margin: 0 0 var(--qtsi-space-3);
+  font-size: clamp(1.5rem, 2.4vw, 1.875rem);
+  letter-spacing: -0.02em;
+}
+
+.qtsi-login-pitch p {
+  margin: 0;
+  color: rgb(255 255 255 / 82%);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.qtsi-login-signature {
+  color: rgb(255 255 255 / 65%);
+  font-size: 0.8125rem;
+}
+
+.qtsi-login-main {
+  display: grid;
+  padding: calc(var(--qtsi-space-6) + var(--qtsi-safe-top))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-right))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-bottom))
+    calc(var(--qtsi-space-6) + var(--qtsi-safe-left));
+  place-items: center;
+}
+
+.qtsi-login-main > div {
+  inline-size: min(100%, 26rem);
+}
+
+.qtsi-login-main > div > *:first-child {
+  display: inline-flex;
+  margin-block-end: var(--qtsi-space-6);
+}
+
+@media (min-width: 64rem) {
+  .qtsi-login {
+    grid-template-columns: minmax(22rem, 2fr) minmax(26rem, 3fr);
+  }
+
+  .qtsi-login-aside {
+    display: flex;
+  }
 }
 
 .qtsi-text-link {
   display: inline-flex;
   min-block-size: var(--qtsi-touch-target);
   align-items: center;
+  margin-block-start: var(--qtsi-space-4);
   color: var(--qtsi-accent);
   font-weight: 600;
 }

@@ -5,11 +5,28 @@ import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import { IconButton } from '@design-system/components/IconButton/IconButton';
 import { OverlayDrawer } from '@design-system/components/OverlayDrawer/OverlayDrawer';
 import { SkipLink } from '@design-system/components/SkipLink/SkipLink';
+import { Logo, LogoMark } from '@design-system/components/Logo/Logo';
+import {
+  IconAdmin,
+  IconBank,
+  IconMenu,
+  IconProgress,
+  IconSettings,
+  IconWhiteboard,
+  type IconProps,
+} from '@design-system/components/Icon/Icon';
 import styles from './AppShell.module.css';
 import { useAuth } from '@app/providers/AuthProvider';
 import { userRoleLabels } from '@domain/auth/UserRole';
 import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import type { ReactNode } from 'react';
+
+const navIcons: Record<string, (props: IconProps) => ReactNode> = {
+  '/whiteboard': IconWhiteboard,
+  '/progress': IconProgress,
+  '/questions': IconBank,
+  '/settings': IconSettings,
+};
 
 function WhiteboardDrawerSettings() {
   const settings = useWhiteboard();
@@ -122,88 +139,56 @@ export function AppShell({
   if (state.status !== 'authenticated') return null;
   const { user } = state.session;
 
-  return (
-    <div
-      className={`${styles.shell} ${
-        location.pathname === '/whiteboard'
-          ? `${styles.whiteboardShell} qtsi-whiteboard-shell`
-          : ''
-      }`}
-    >
-      <SkipLink />
-      <header className={styles.topbar}>
-        <IconButton
-          ref={menuButtonRef}
-          label="Ouvrir le menu"
-          aria-expanded={menuOpen}
-          aria-controls="main-navigation"
-          onClick={() => setMenuOpen(true)}
-        >
-          ☰
-        </IconButton>
-        <span className={styles.brand}>Quiz TSI</span>
-      </header>
-      {state.offline ? (
-        <div className={styles.offlineBanner} role="status">
-          Hors connexion — les données locales validées restent accessibles. Le
-          rôle est informatif et les opérations sensibles sont désactivées.
-        </div>
-      ) : null}
+  const isWhiteboard = location.pathname === '/whiteboard';
 
-      <OverlayDrawer
-        open={menuOpen}
-        title="Menu"
-        triggerRef={menuButtonRef}
-        onClose={() => setMenuOpen(false)}
-      >
-        {location.pathname === '/whiteboard' ? (
-          <>
-            <Disclosure label="Options du parcours">
-              {whiteboardOptions}
-            </Disclosure>
-            <Disclosure label="Réglages Apple Pencil">
-              <WhiteboardDrawerSettings />
-            </Disclosure>
-          </>
-        ) : (
-          <Disclosure label="À propos de cette version">
-            Authentification et espace utilisateur actifs.
-          </Disclosure>
-        )}
-        <nav id="main-navigation" aria-label="Navigation principale">
+  function renderNavLinks(onLinkClick: () => void) {
+    return (
+      <>
+        <nav aria-label="Navigation principale">
           <ul className={styles.navigation}>
-            {mainNavigation.map((destination) => (
-              <li key={destination.to}>
+            {mainNavigation.map((destination) => {
+              const NavIcon = navIcons[destination.to];
+              return (
+                <li key={destination.to}>
+                  <NavLink
+                    to={destination.to}
+                    onClick={onLinkClick}
+                    className={({ isActive }) =>
+                      isActive ? styles.activeLink : styles.link
+                    }
+                  >
+                    {NavIcon ? (
+                      <NavIcon className={styles.navIcon} />
+                    ) : null}
+                    <span>{destination.label}</span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+        {user.role !== 'user' ? (
+          <nav aria-label="Navigation secondaire" className={styles.secondaryNav}>
+            <ul className={styles.navigation}>
+              <li>
                 <NavLink
-                  to={destination.to}
-                  onClick={() => setMenuOpen(false)}
+                  to="/admin"
+                  onClick={onLinkClick}
                   className={({ isActive }) =>
                     isActive ? styles.activeLink : styles.link
                   }
                 >
-                  {destination.label}
+                  <IconAdmin className={styles.navIcon} />
+                  <span>Administration</span>
                 </NavLink>
               </li>
-            ))}
-          </ul>
-        </nav>
-        {user.role !== 'user' ? (
-          <nav aria-label="Navigation secondaire">
-            <NavLink
-              to="/admin"
-              onClick={() => setMenuOpen(false)}
-              className={({ isActive }) =>
-                isActive ? styles.activeLink : styles.link
-              }
-            >
-              Administration
-            </NavLink>
+            </ul>
           </nav>
         ) : null}
         <NavLink
           className={styles.accountCard!}
           to="/account"
-          onClick={() => setMenuOpen(false)}
+          onClick={onLinkClick}
         >
           <span className={styles.accountIdentity}>
             {user.displayName || user.email}
@@ -213,16 +198,84 @@ export function AppShell({
           </span>
           <span className={styles.accountAction}>Voir le compte</span>
         </NavLink>
-      </OverlayDrawer>
+      </>
+    );
+  }
 
-      <main
-        id="main-content"
-        className={styles.main}
-        tabIndex={-1}
-        key={location.pathname}
-      >
-        <Outlet />
-      </main>
+  return (
+    <div
+      className={`${styles.shell} ${
+        isWhiteboard ? `${styles.whiteboardShell} qtsi-whiteboard-shell` : ''
+      }`}
+    >
+      <SkipLink />
+      <div className={styles.layout}>
+        <aside className={styles.sidebar} aria-label="Barre latérale">
+          <NavLink to="/progress" className={styles.sidebarLogo!}>
+            <Logo tagline="Espace de révision" />
+          </NavLink>
+          {renderNavLinks(() => undefined)}
+        </aside>
+
+        <div className={styles.contentColumn}>
+          <header className={styles.topbar}>
+            <IconButton
+              ref={menuButtonRef}
+              label="Ouvrir le menu"
+              aria-expanded={menuOpen}
+              aria-controls="main-navigation"
+              onClick={() => setMenuOpen(true)}
+            >
+              <IconMenu />
+            </IconButton>
+            <NavLink to="/progress" className={styles.brand!}>
+              <LogoMark size={26} />
+              <span>Prépa Math</span>
+            </NavLink>
+          </header>
+          {state.offline ? (
+            <div className={styles.offlineBanner} role="status">
+              Hors connexion — les données locales validées restent
+              accessibles. Le rôle est informatif et les opérations sensibles
+              sont désactivées.
+            </div>
+          ) : null}
+
+          <OverlayDrawer
+            open={menuOpen}
+            title="Menu"
+            triggerRef={menuButtonRef}
+            onClose={() => setMenuOpen(false)}
+          >
+            {isWhiteboard ? (
+              <>
+                <Disclosure label="Options du parcours">
+                  {whiteboardOptions}
+                </Disclosure>
+                <Disclosure label="Réglages Apple Pencil">
+                  <WhiteboardDrawerSettings />
+                </Disclosure>
+              </>
+            ) : (
+              <Disclosure label="À propos de cette version">
+                Authentification et espace utilisateur actifs.
+              </Disclosure>
+            )}
+            <div id="main-navigation">
+              {renderNavLinks(() => setMenuOpen(false))}
+            </div>
+          </OverlayDrawer>
+
+          <main
+            id="main-content"
+            className={styles.main}
+            tabIndex={-1}
+            key={location.pathname}
+          >
+            <Outlet />
+          </main>
+        </div>
+      </div>
     </div>
   );
 }

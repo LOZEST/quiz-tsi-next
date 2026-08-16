@@ -1,0 +1,28 @@
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  text-decoration: none;
+}
+
+.mark {
+  flex-shrink: 0;
+  border-radius: var(--qtsi-radius-2);
+}
+
+.wordmark {
+  font-size: 1.0625rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.tagline {
+  display: block;
+  margin-block-start: 0.0625rem;
+  color: var(--qtsi-text-tertiary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}

@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from 'react';
 import { IconButton } from '@design-system/components/IconButton/IconButton';
+import { IconClose } from '@design-system/components/Icon/Icon';
 import styles from './OverlayDrawer.module.css';
 
 interface OverlayDrawerProps {
@@ -71,7 +72,7 @@ export function OverlayDrawer({
         <header className={styles.header}>
           <h2 id={titleId}>{title}</h2>
           <IconButton label="Fermer le menu" onClick={closeAndRestoreFocus}>
-            ×
+            <IconClose />
           </IconButton>
         </header>
         {children}
