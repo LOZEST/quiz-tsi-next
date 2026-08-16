@@ -53,7 +53,7 @@ describe('ProgressPage', () => {
     render(<ProgressPage />);
     expect(await screen.findByText('Calibration en cours')).toBeVisible();
     expect(screen.getAllByTestId('primary-indicator')).toHaveLength(1);
-    expect(screen.getByTestId('secondary-indicators').children).toHaveLength(3);
+    expect(screen.getByTestId('secondary-indicators').children).toHaveLength(4);
     expect(screen.queryByTestId('notion-details')).toBeNull();
   });
 
@@ -113,8 +113,16 @@ describe('ProgressPage', () => {
     partial: false,
     globalMastery: 72,
     globalConfidence: 81,
+    globalMasteryDelta: 5,
     dueCount: 2,
     lastSevenDaysActivity: 6,
+    streakDays: 3,
+    weeklyAccuracy: [
+      { weekStart: '2026-07-20', accuracy: 60, count: 4 },
+      { weekStart: '2026-07-27', accuracy: 65, count: 5 },
+      { weekStart: '2026-08-03', accuracy: null, count: 0 },
+      { weekStart: '2026-08-10', accuracy: 80, count: 6 },
+    ],
     parts: [
       {
         id: 'numbers',
@@ -203,10 +211,14 @@ describe('ProgressPage', () => {
     expect(screen.getByText('81 %')).toBeVisible();
     expect(screen.getByText(/1\/3/)).toBeVisible();
     expect(screen.getByText(/Plusieurs réponses/)).toBeVisible();
-    expect(screen.getByText(/Réussi · Révision libre/)).toBeVisible();
-    expect(screen.getByText(/Partiel · Révision du jour/)).toBeVisible();
-    expect(screen.getByText(/Raté · Points faibles/)).toBeVisible();
-    expect(screen.getByText(/Passé · Test de chapitres/)).toBeVisible();
+    expect(screen.getByText('Réussi')).toBeVisible();
+    expect(screen.getByText(/· Révision libre/)).toBeVisible();
+    expect(screen.getByText('Partiel')).toBeVisible();
+    expect(screen.getByText(/· Révision du jour/)).toBeVisible();
+    expect(screen.getByText('Raté')).toBeVisible();
+    expect(screen.getByText(/· Points faibles/)).toBeVisible();
+    expect(screen.getByText('Passé')).toBeVisible();
+    expect(screen.getByText(/· Test de chapitres/)).toBeVisible();
     await user.click(
       screen.getByRole('button', { name: /Partie sans données/i }),
     );

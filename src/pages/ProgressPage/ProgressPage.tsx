@@ -34,6 +34,24 @@ const masteryStatusLabels: Record<MasteryStatus, string> = {
   solid: 'Solide',
   progressing: 'En progression',
 };
+const resultTones = {
+  success: 'success',
+  partial: 'warning',
+  failed: 'danger',
+  skipped: 'muted',
+} as const;
+const masteryStatusTones: Record<
+  MasteryStatus,
+  'success' | 'warning' | 'danger' | 'muted' | 'accent'
+> = {
+  new: 'muted',
+  discovery: 'muted',
+  'needs-review': 'warning',
+  overdue: 'danger',
+  fragile: 'danger',
+  progressing: 'accent',
+  solid: 'success',
+};
 
 export function ProgressPage() {
   const { state } = useAuth();
@@ -148,6 +166,25 @@ export function ProgressContent({
               </strong>
             </div>
             <span>Maîtrise globale</span>
+            {snapshot.globalMasteryDelta !== null ? (
+              <span
+                className={styles.trend}
+                data-direction={
+                  snapshot.globalMasteryDelta > 0
+                    ? 'up'
+                    : snapshot.globalMasteryDelta < 0
+                      ? 'down'
+                      : 'flat'
+                }
+              >
+                {snapshot.globalMasteryDelta > 0
+                  ? `▲ +${snapshot.globalMasteryDelta} pts`
+                  : snapshot.globalMasteryDelta < 0
+                    ? `▼ ${snapshot.globalMasteryDelta} pts`
+                    : '= stable'}{' '}
+                cette semaine
+              </span>
+            ) : null}
           </div>
           <dl className={styles.secondary} data-testid="secondary-indicators">
             <div>
@@ -165,6 +202,12 @@ export function ProgressContent({
             <div>
               <dt>Activité sur 7 jours</dt>
               <dd>{snapshot.lastSevenDaysActivity}</dd>
+            </div>
+            <div>
+              <dt>Série en cours</dt>
+              <dd>
+                {snapshot.streakDays} jour{snapshot.streakDays > 1 ? 's' : ''}
+              </dd>
             </div>
           </dl>
         </div>
@@ -229,7 +272,14 @@ export function ProgressContent({
                             </div>
                             <div>
                               <dt>Statut</dt>
-                              <dd>{masteryStatusLabels[notion.status]}</dd>
+                              <dd>
+                                <span
+                                  className={styles.pill}
+                                  data-tone={masteryStatusTones[notion.status]}
+                                >
+                                  {masteryStatusLabels[notion.status]}
+                                </span>
+                              </dd>
                             </div>
                             <div>
                               <dt>Dernière activité</dt>
@@ -255,6 +305,43 @@ export function ProgressContent({
             </div>
           ))}
         </div>
+      </section>
+      <section className={styles.trendChart}>
+        <h2>Évolution du taux de réussite</h2>
+        {snapshot.weeklyAccuracy.some((week) => week.accuracy !== null) ? (
+          <div
+            className={styles.trendBars}
+            aria-label="Taux de réussite sur les 4 dernières semaines"
+          >
+            {snapshot.weeklyAccuracy.map((week) => (
+              <div key={week.weekStart}>
+                <span
+                  className={styles.trendBar}
+                  style={{
+                    blockSize:
+                      week.accuracy === null
+                        ? '4%'
+                        : `${Math.max(4, week.accuracy)}%`,
+                  }}
+                  data-empty={week.accuracy === null}
+                  title={
+                    week.accuracy === null
+                      ? 'Aucune donnée'
+                      : `${week.accuracy} % (${week.count} question${week.count > 1 ? 's' : ''})`
+                  }
+                />
+                <time dateTime={week.weekStart}>
+                  {new Intl.DateTimeFormat('fr-FR', {
+                    day: 'numeric',
+                    month: 'short',
+                  }).format(new Date(`${week.weekStart}T12:00:00`))}
+                </time>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>Pas encore assez de données pour tracer une évolution.</p>
+        )}
       </section>
       <section className={styles.activity}>
         <h2>Activité</h2>
@@ -298,7 +385,13 @@ export function ProgressContent({
           <ol className={styles.weakList}>
             {snapshot.weakPoints.items.map((item) => (
               <li key={item.notionId}>
-                {label(item.notionId)} — {item.rationale}
+                <span className={styles.weakPriority} aria-hidden="true">
+                  {item.priority}
+                </span>
+                <div>
+                  <strong>{label(item.notionId)}</strong>
+                  <p>{item.rationale}</p>
+                </div>
               </li>
             ))}
           </ol>
@@ -311,10 +404,16 @@ export function ProgressContent({
         {snapshot.recent.length ? (
           <ol className={styles.timeline}>
             {snapshot.recent.map((event) => (
-              <li key={event.id}>
+              <li key={event.id} data-tone={resultTones[event.result]}>
                 <strong>{label(event.notionId)}</strong>
                 <span>
-                  {resultLabels[event.result]} · {modeLabels[event.sessionMode]}
+                  <span
+                    className={styles.pill}
+                    data-tone={resultTones[event.result]}
+                  >
+                    {resultLabels[event.result]}
+                  </span>
+                  {` · ${modeLabels[event.sessionMode]}`}
                 </span>
                 <time dateTime={event.occurredAt}>
                   {formatDate(event.occurredAt)}
