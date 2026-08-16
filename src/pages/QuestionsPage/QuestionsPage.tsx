@@ -96,7 +96,7 @@ export function QuestionsPage() {
   const [bulkMoveChapterId, setBulkMoveChapterId] = useState('');
   const [bulkMoveNotionId, setBulkMoveNotionId] = useState('');
   const selectAllRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'list' | 'folders'>('list');
+  const [view, setView] = useState<'list' | 'folders'>('folders');
   const [folderLocation, setFolderLocation] = useState<FolderLocation>({
     kind: 'root',
   });

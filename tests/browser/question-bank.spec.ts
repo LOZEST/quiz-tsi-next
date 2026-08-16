@@ -11,6 +11,7 @@ async function login(page: Page) {
 test('searches, filters and previews the official bank', async ({ page }) => {
   await login(page);
   await page.goto('questions');
+  await page.getByRole('button', { name: 'Liste' }).click();
   await page.getByLabel('Recherche').fill('Divisibilité');
   await expect(
     page
@@ -30,6 +31,7 @@ test('creates a structured local draft with math and restores it after reload', 
 }) => {
   await login(page);
   await page.goto('questions');
+  await page.getByRole('button', { name: 'Liste' }).click();
   await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
   await editor.getByLabel('Partie').selectOption('fundamentals');
@@ -53,6 +55,7 @@ test('creates a structured local draft with math and restores it after reload', 
   await expect(page.getByText('Calculer une puissance')).toBeVisible();
   await expect(page.getByText('1 en attente')).toBeVisible();
   await page.reload();
+  await page.getByRole('button', { name: 'Liste' }).click();
   await expect(page.getByText('Calculer une puissance')).toBeVisible();
 });
 

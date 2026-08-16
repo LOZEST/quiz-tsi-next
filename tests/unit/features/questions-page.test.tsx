@@ -226,6 +226,7 @@ describe('QuestionsPage', () => {
   it('recherche, filtre, valide et supprime un brouillon', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     expect(await screen.findByText('1 en attente')).toBeInTheDocument();
     await user.type(screen.getByLabelText('Recherche'), 'somme');
     await user.selectOptions(screen.getByLabelText('Source'), 'private');
@@ -282,6 +283,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       (await screen.findAllByRole('button', { name: /Calculer/ }))[0]!,
     );
@@ -545,6 +547,7 @@ describe('QuestionsPage', () => {
     snapshot = { ...snapshot, questions: [structured] };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       (await screen.findAllByRole('button', { name: /Calculer la somme/ }))[0]!,
     );
@@ -655,6 +658,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await screen.findByRole('option', { name: 'Cours personnel' });
     await user.selectOptions(
       screen.getByLabelText('Partie / Cours'),
@@ -690,6 +694,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
     );
@@ -723,6 +728,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
     );
@@ -757,6 +763,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
     );
@@ -998,6 +1005,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
     );
@@ -1028,6 +1036,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(await screen.findByRole('button', { name: /^Un/ }));
     await user.selectOptions(
       screen.getByLabelText('Déplacer vers'),
@@ -1058,6 +1067,7 @@ describe('QuestionsPage', () => {
     );
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Liste' }));
     await user.click(
       await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
     );
