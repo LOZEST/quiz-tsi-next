@@ -40,7 +40,10 @@ const resultTones = {
   failed: 'danger',
   skipped: 'muted',
 } as const;
-const masteryStatusTones: Record<MasteryStatus, 'success' | 'warning' | 'danger' | 'muted' | 'accent'> = {
+const masteryStatusTones: Record<
+  MasteryStatus,
+  'success' | 'warning' | 'danger' | 'muted' | 'accent'
+> = {
   new: 'muted',
   discovery: 'muted',
   'needs-review': 'warning',

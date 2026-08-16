@@ -94,7 +94,11 @@ function computeWeeklyAccuracy(
     const start = calendarBoundary.rangeForDaysAgo(now, week * 7 + 6);
     const end = calendarBoundary.rangeForDaysAgo(now, week * 7);
     const weekEvents = events.filter(
-      (event): event is MasteryEvent & { result: 'success' | 'partial' | 'failed' } => {
+      (
+        event,
+      ): event is MasteryEvent & {
+        result: 'success' | 'partial' | 'failed';
+      } => {
         const occurredAt = Date.parse(event.occurredAt);
         return (
           occurredAt >= start.start &&
