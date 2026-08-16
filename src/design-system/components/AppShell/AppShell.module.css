@@ -17,6 +17,7 @@
     calc(var(--qtsi-space-3) + var(--qtsi-safe-right)) 0
     calc(var(--qtsi-space-3) + var(--qtsi-safe-left));
   background: transparent;
+  backdrop-filter: none;
   border: 0;
   pointer-events: none;
 }
