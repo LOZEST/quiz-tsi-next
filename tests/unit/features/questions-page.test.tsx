@@ -804,15 +804,15 @@ describe('QuestionsPage', () => {
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Mécanique/ }));
     expect(
-      await screen.findByRole('checkbox', { name: /Question perso/ }),
+      await screen.findByRole('button', { name: 'Question perso' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
   });
 
