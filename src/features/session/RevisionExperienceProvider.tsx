@@ -376,10 +376,12 @@ export function RevisionExperienceProvider({
   useEffect(() => {
     if (initialLoaded.current) return;
     initialLoaded.current = true;
-    queueMicrotask(() => {
-      if (mounted.current) attemptFree(initialFreeRevisionFilters);
+    void services.refreshQuestionRepositoryForUser(userId).finally(() => {
+      queueMicrotask(() => {
+        if (mounted.current) attemptFree(initialFreeRevisionFilters);
+      });
     });
-  }, [attemptFree]);
+  }, [attemptFree, services, userId]);
 
   const enterMode = useCallback(
     (next: SessionMode, clearDraft = false) => {

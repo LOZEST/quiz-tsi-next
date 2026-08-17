@@ -1,0 +1,12 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--qtsi-space-1) var(--qtsi-space-2);
+  border-radius: var(--qtsi-radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--qtsi-accent);
+  background: color-mix(in srgb, var(--qtsi-accent) 14%, transparent);
+}

@@ -64,7 +64,9 @@ export function createDailyPlan(
     );
     const start = boundary.startOfDay(now);
     const end = boundary.endOfDay(now);
-    const notionIds = new Set(userEvents.map((event) => event.notionId));
+    const notionIds = new Set(
+      userEvents.flatMap((event) => (event.notionId ? [event.notionId] : [])),
+    );
     const items = [...notionIds].flatMap((notionId) => {
       const beforeToday = userEvents.filter(
         (event) => Date.parse(event.occurredAt) < start,
@@ -123,7 +125,9 @@ export function createWeakPoints(
   const userEvents = deduplicate(events).filter(
     (event) => event.userId === userId && event.result !== 'skipped',
   );
-  const notionIds = new Set(userEvents.map((event) => event.notionId));
+  const notionIds = new Set(
+    userEvents.flatMap((event) => (event.notionId ? [event.notionId] : [])),
+  );
   if (userEvents.length < 8 || notionIds.size < 2) {
     return {
       kind: 'calibrating',

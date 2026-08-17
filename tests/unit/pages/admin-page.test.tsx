@@ -57,6 +57,9 @@ const listAccounts = vi.fn(() => Promise.resolve(accounts));
 const setAccountRole = vi.fn(() => Promise.resolve());
 const listReports = vi.fn(() => Promise.resolve([]));
 const setReportStatus = vi.fn(() => Promise.resolve());
+const adminListListings = vi.fn(() => Promise.resolve([]));
+const adminSetCertified = vi.fn(() => Promise.resolve());
+const adminSetHidden = vi.fn(() => Promise.resolve());
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -71,6 +74,11 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
     questionWorkspaceRepository: { load, saveQuestion },
     accountManagementGateway: { listAccounts, setAccountRole },
     questionReportGateway: { listReports, setReportStatus },
+    quizzMarketplaceGateway: {
+      adminListListings,
+      adminSetCertified,
+      adminSetHidden,
+    },
   }),
 }));
 
@@ -83,9 +91,7 @@ describe('AdminPage', () => {
     currentRole = 'owner';
     snapshot = {
       questions: [sharedQuestion],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       pendingOperationCount: 0,
       conflicts: [],
     };

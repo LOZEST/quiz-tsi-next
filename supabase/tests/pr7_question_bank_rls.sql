@@ -1,5 +1,5 @@
 begin;
-select plan(62);
+select plan(53);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
@@ -10,13 +10,13 @@ update public.profiles set role='admin' where user_id='aaaaaaaa-aaaa-4aaa-8aaa-a
 update public.profiles set role='owner' where user_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 insert into public.oauth_integration_clients(client_id,purpose) values('gpt-fixture','chatgpt-question-import');
 
-create function pg_temp.personal_import_entry(p_client text, p_course text, p_chapter text, p_notion text)
+create function pg_temp.personal_import_entry(p_client text, p_course text, p_chapter text)
 returns jsonb language sql immutable as $$
   select jsonb_build_object(
     'clientEntryId', p_client,
     'classification', jsonb_build_object(
       'kind','personal','proposedCourseTitle',p_course,
-      'proposedChapterTitle',p_chapter,'proposedNotionTitle',p_notion,
+      'proposedChapterTitle',p_chapter,
       'reason','Hors programme','requiresUserConfirmation',true
     ),
     'type','course','difficulty','standard','parameterization',null,
@@ -31,16 +31,16 @@ insert into import_dedup_fixture values (jsonb_build_object(
   'schemaVersion',1,'importId','dedup-fixture','analysisCoverage','text-only','confirmedByUser',true,
   'document',jsonb_build_object('kind','pdf','title','Fixture','pageCount',1),
   'questions',jsonb_build_array(
-    pg_temp.personal_import_entry('a1','Cours A','Chapitre B','Notion C'),
-    pg_temp.personal_import_entry('a2','Cours A','Chapitre B','Notion C'),
-    pg_temp.personal_import_entry('b1','Cours A',null,'Notion sans chapitre'),
-    pg_temp.personal_import_entry('b2','Cours A',null,'Notion sans chapitre'),
-    pg_temp.personal_import_entry('c1','Cours A','Chapitre B','Notion D'),
-    pg_temp.personal_import_entry('c2','Cours A','Chapitre B','Notion E'),
-    pg_temp.personal_import_entry('d1','Cours A','Chapitre X','Notion répétée'),
-    pg_temp.personal_import_entry('d2','Cours A','Chapitre Y','Notion répétée'),
-    pg_temp.personal_import_entry('e1','Cours M',null,'Notion commune'),
-    pg_temp.personal_import_entry('e2','Cours N',null,'Notion commune')
+    pg_temp.personal_import_entry('a1','Cours A','Chapitre B'),
+    pg_temp.personal_import_entry('a2','Cours A','Chapitre B'),
+    pg_temp.personal_import_entry('b1','Cours A',null),
+    pg_temp.personal_import_entry('b2','Cours A',null),
+    pg_temp.personal_import_entry('c1','Cours A','Chapitre B'),
+    pg_temp.personal_import_entry('c2','Cours A','Chapitre B'),
+    pg_temp.personal_import_entry('d1','Cours A','Chapitre X'),
+    pg_temp.personal_import_entry('d2','Cours A','Chapitre Y'),
+    pg_temp.personal_import_entry('e1','Cours M',null),
+    pg_temp.personal_import_entry('e2','Cours N',null)
   )
 ));
 grant select on import_dedup_fixture to authenticated;
@@ -48,10 +48,10 @@ grant select on import_dedup_fixture to authenticated;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}',true);
-select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Cours A')$$,'A écrit son cours');
-select is((select visibility from public.personal_courses where id='aaaaaaaa-0000-4000-8000-000000000001'),'private','cours privé par défaut');
-select lives_ok($$update public.personal_courses set description='Une révision de maths',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001'$$,'A modifie la description et la visibilité de son cours');
-select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values('aaaaaaaa-0000-4000-8000-000000000010',1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapterId":null,"notionId":null}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'A écrit private A');
+select lives_ok($$insert into public.quizzes(id,owner_id,title) values('aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Cours A')$$,'A écrit son cours');
+select is((select visibility from public.quizzes where id='aaaaaaaa-0000-4000-8000-000000000001'),'private','cours privé par défaut');
+select lives_ok($$update public.quizzes set description='Une révision de maths',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001'$$,'A modifie la description et la visibilité de son cours');
+select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values('aaaaaaaa-0000-4000-8000-000000000010',1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapter":null}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'A écrit private A');
 select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),1,'A lit private A');
 
 select set_config('request.jwt.claim.sub','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',true);
@@ -59,26 +59,22 @@ select set_config('request.jwt.claims','{"sub":"bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbb
 select is((select count(*)::integer from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas private A');
 select throws_ok($$update public.questions set status='archived' where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,'42501',null,'B ne modifie pas A');
 select throws_ok($$delete from public.questions where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'$$,'42501',null,'B ne supprime pas A');
-update public.personal_courses set description='Piraté',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001';
-select is((select count(*)::integer from public.personal_courses where id='aaaaaaaa-0000-4000-8000-000000000001' and description='Piraté'),0,'B ne modifie pas le cours de A');
-select throws_ok($$insert into public.personal_chapters(owner_id,course_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','aaaaaaaa-0000-4000-8000-000000000001','Intrus')$$,'23503',null,'B ne référence pas le cours A');
-select lives_ok($$insert into public.personal_courses(id,owner_id,title) values('bbbbbbbb-0000-4000-8000-000000000001','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Cours B')$$,'B écrit son cours');
-select throws_ok($$insert into public.personal_notions(owner_id,course_id,chapter_id,title) values('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','bbbbbbbb-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000002','Intruse')$$,'23503',null,'B ne référence pas le chapitre A');
+update public.quizzes set description='Piraté',visibility='public' where id='aaaaaaaa-0000-4000-8000-000000000001';
+select is((select count(*)::integer from public.quizzes where id='aaaaaaaa-0000-4000-8000-000000000001' and description='Piraté'),0,'B ne modifie pas le cours de A');
+select lives_ok($$insert into public.quizzes(id,owner_id,title) values('bbbbbbbb-0000-4000-8000-000000000001','bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','Cours B')$$,'B écrit son cours');
 select is((select count(*)::integer from public.question_imports where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas les imports A');
 select is((select count(*)::integer from public.question_import_quarantine where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas la quarantaine A');
-select is((select count(*)::integer from public.personal_courses where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas la taxonomie A');
+select is((select count(*)::integer from public.quizzes where owner_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),0,'B ne lit pas la taxonomie A');
 select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,null,'static','published',true,'{}','course','standard','{}','[]')$$,'42501',null,'static non mutable par utilisateur');
 select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','shared','published',true,'{"kind":"official","partId":"numbers","chapterId":"numbers-arithmetic","notionId":"NUM-F01"}','course','standard','{"prompt":[{"kind":"text","value":"B"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'user ne publie pas shared');
 select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','private','draft',false,'{"kind":"official","partId":"numbers","chapterId":"numbers-arithmetic","notionId":"FAUX"}','course','standard','{"prompt":[{"kind":"text","value":"B"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'faux identifiant officiel refusé');
-select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapterId":null,"notionId":null}','course','standard','{"prompt":[{"kind":"text","value":"B"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'classification personnelle cross-account refusée');
+select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb','private','draft',false,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapter":null}','course','standard','{"prompt":[{"kind":"text","value":"B"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'classification personnelle cross-account refusée');
 
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
 select set_config('request.jwt.claims','{"sub":"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}',true);
-insert into public.personal_chapters(id,owner_id,course_id,title) values('aaaaaaaa-0000-4000-8000-000000000002','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','aaaaaaaa-0000-4000-8000-000000000001','Chapitre A');
-select lives_ok($$insert into public.personal_notions(owner_id,course_id,chapter_id,title) values('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','aaaaaaaa-0000-4000-8000-000000000001','aaaaaaaa-0000-4000-8000-000000000002','Notion A')$$,'A référence sa taxonomie');
 select throws_ok($$update public.questions set status='archived' where id='aaaaaaaa-0000-4000-8000-000000000010'$$,'42501',null,'A ne modifie pas v1 en place');
 select throws_ok($$delete from public.questions where id='aaaaaaaa-0000-4000-8000-000000000010'$$,'42501',null,'A ne supprime pas v1');
-select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','shared','published',true,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapterId":"aaaaaaaa-0000-4000-8000-000000000002","notionId":null}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'shared personal refusé');
+select throws_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','shared','published',true,'{"kind":"personal","courseId":"aaaaaaaa-0000-4000-8000-000000000001","chapter":"Chapitre A"}','course','standard','{"prompt":[{"kind":"text","value":"A"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'42501',null,'shared personal refusé');
 select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values('aaaaaaaa-0000-4000-8000-000000000010',2,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','shared','published',true,'{"kind":"official","partId":"fundamentals","chapterId":"numbers-arithmetic","notionId":"NUM-F01"}','course','standard','{"prompt":[{"kind":"text","value":"A v2"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'admin crée shared official valide');
 select is((select count(*)::integer from public.latest_accessible_questions where id='aaaaaaaa-0000-4000-8000-000000000010' and version=2),1,'projection latest expose seulement v2');
 
@@ -106,19 +102,13 @@ select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccc
 select lives_ok($$insert into public.questions(id,version,owner_id,source,status,validated,classification,type,difficulty,content,tags) values(gen_random_uuid(),1,'cccccccc-cccc-4ccc-8ccc-cccccccccccc','shared','published',true,'{"kind":"official","partId":"fundamentals","chapterId":"numbers-arithmetic","notionId":"NUM-F02"}','course','standard','{"prompt":[{"kind":"text","value":"C"}],"hint":[],"correction":[{"id":"s","title":null,"content":[{"kind":"text","value":"C"}]}]}','[]')$$,'owner crée shared official valide');
 select set_config('request.jwt.claims','{"sub":"cccccccc-cccc-4ccc-8ccc-cccccccccccc","client_id":"gpt-fixture"}',true);
 select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-dedup',(select payload from import_dedup_fixture),'[0,1,2,3,4,5,6,7,8,9]','[]','[]')$$,'import personnel groupé créé');
-select is((select count(*)::integer from public.personal_courses where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'trois cours distincts');
-select is((select count(*)::integer from public.personal_chapters where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'trois chapitres distincts');
-select is((select count(*)::integer from public.personal_notions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),8,'huit notions par groupe exact');
+select is((select count(*)::integer from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'trois cours distincts');
 select is((select count(*)::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'),10,'dix questions importées');
-select is((select count(distinct (classification->>'courseId',classification->>'chapterId',classification->>'notionId'))::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('0','1')),1,'même cours chapitre notion partage les trois IDs');
-select is((select count(*)::integer from public.personal_notions n join public.personal_courses c on c.id=n.course_id where n.owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and c.title='Cours A' and n.chapter_id is null and n.title='Notion sans chapitre'),1,'notion sans chapitre dédupliquée');
-select is((select count(*)::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('2','3') and classification->>'chapterId' is null),2,'deux questions conservent chapter null');
-select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('4','5')),2,'deux titres de notion restent distincts');
-select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('6','7')),2,'même libellé sous deux chapitres reste distinct');
+select is((select count(distinct (classification->>'courseId',classification->>'chapter'))::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('0','1')),1,'même cours et même chapitre partagent le même tag');
+select is((select count(*)::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('2','3') and classification->>'chapter' is null),2,'deux questions conservent chapter null');
 select is((select count(distinct classification->>'courseId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('8','9')),2,'même libellé sous deux cours conserve deux cours');
-select is((select count(distinct classification->>'notionId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('8','9')),2,'même libellé sous deux cours conserve deux notions');
 select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-dedup',(select payload from import_dedup_fixture),'[0,1,2,3,4,5,6,7,8,9]','[]','[]')$$,'replay identique accepté');
-select is((select jsonb_build_array((select count(*) from public.personal_courses where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.personal_chapters where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.personal_notions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'))),'[3,3,8,10]'::jsonb,'replay ne crée aucune ligne');
+select is((select jsonb_build_array((select count(*) from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'))),'[3,10]'::jsonb,'replay ne crée aucune ligne');
 -- Chemin "official" du RPC d'import GPT : régression du bug classification-unresolved
 -- (public.official_program_notions désynchronisée de src/data/program/official-program-v2.json).
 create function pg_temp.official_import_entry(p_client text, p_chapter text, p_notion text)

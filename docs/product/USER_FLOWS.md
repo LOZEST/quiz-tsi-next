@@ -347,3 +347,29 @@ Les flux de cette section appartiennent à PR5. PR4 ne fournit que `FLOW-SESSION
 Quand Partie vaut **Toutes les parties**, Chapitre contient d'abord **Tous les chapitres**, puis tous les chapitres regroupés ou libellés par partie. Notion contient d'abord **Toutes les notions**, puis les notions admissibles avec pour libellé visible le seul `notion.label`. Partie et Chapitre portent le contexte de filtrage.
 
 Changer Partie remet tout chapitre incompatible sur **Tous les chapitres** et toute notion incompatible sur **Toutes les notions**. Changer Chapitre remet toute notion incompatible sur **Toutes les notions**. Choisir Réflexe fixe `difficulty` à `{ kind: "not-applicable" }` et masque le contrôle ; le quitter remet toujours `difficulty` à `{ kind: "all" }`. Une difficulté précise exclut Réflexe sans changer Type et peut produire un état sans résultat explicite.
+
+## Marketplace de Quizz
+
+### FLOW-MARKET-001 — Publier un Quizz
+- **Préconditions :** le compte possède un Quizz dans `/questions`. **Étapes :** ouvrir « Publier sur la marketplace », renseigner titre/description, publier. **Résultat attendu :** le listing apparaît immédiatement sur `/marketplace` — aucun statut d'attente, aucune modération bloquante.
+
+### FLOW-MARKET-002 — Découvrir et prévisualiser
+- **Préconditions :** au moins un listing visible. **Étapes :** ouvrir `/marketplace`, cliquer « Aperçu ». **Résultat attendu :** aperçu strictement lecture seule (énoncé + correction) ; badge « Quizz certifié » visible seulement si CE listing a été certifié.
+
+### FLOW-MARKET-003 — S'abonner et être invité à noter
+- **Préconditions :** listing visible, non encore abonné. **Étapes :** cliquer « Ajouter à mon espace ». **Résultat attendu :** un abonnement (référence, pas de copie) est créé ; une popup de notation ignorable apparaît immédiatement ; le Quizz apparaît en lecture/jeu seule dans `/questions` sous « Abonnements ».
+
+### FLOW-MARKET-004 — Ignorer la popup de notation
+- **Préconditions :** popup de notation affichée après un abonnement. **Étapes :** cliquer « Plus tard ». **Résultat attendu :** la popup se ferme sans bloquer la navigation ; l'utilisateur peut noter plus tard depuis l'aperçu du listing.
+
+### FLOW-MARKET-005 — Voir une modification de l'auteur après abonnement
+- **Préconditions :** compte abonné à un Quizz. **Étapes :** l'auteur modifie son Quizz ; l'abonné consulte à nouveau le Quizz. **Résultat attendu :** la modification est visible côté abonné (référence vivante) ; le Quizz reste la propriété exclusive de l'auteur, non éditable par l'abonné.
+
+### FLOW-MARKET-006 — Noter uniquement en tant qu'abonné
+- **Préconditions :** un compte non abonné consulte un aperçu. **Étapes :** tenter de noter. **Résultat attendu :** le widget de notation est désactivé côté client ; toute tentative directe est refusée côté serveur (RPC `rate_quizz_listing`).
+
+### FLOW-MARKET-007 — Certifier un listing (admin)
+- **Préconditions :** compte admin/owner, listing visible. **Étapes :** `/admin`, panneau Marketplace, « Certifier ». **Résultat attendu :** le badge « Quizz certifié » apparaît uniquement sur ce listing ; aucun autre listing du même auteur n'est affecté.
+
+### FLOW-MARKET-008 — Masquer un listing (admin)
+- **Préconditions :** compte admin/owner, listing visible. **Étapes :** `/admin`, panneau Marketplace, « Masquer ». **Résultat attendu :** le listing disparaît de `/marketplace` ; la certification éventuelle reste inchangée en base et peut être rétablie indépendamment.

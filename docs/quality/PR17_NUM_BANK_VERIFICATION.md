@@ -27,7 +27,7 @@ résultat recalculé indépendamment à chacun des deux champs source.
 
 ## Compatibilité
 
-Convention conservée pour les banques futures : `static` désigne la banque officielle Quiz TSI (`ownerId: null`), `private` le futur contenu personnel de son auteur et `shared` le futur contenu partagé par son auteur. Les statistiques futures appartiendront à l’utilisateur et ne seront pas stockées directement sur une question ou un pack partagé. PR17 n’implémente aucune fonctionnalité Marketplace.
+Convention conservée pour les banques futures : `static` désigne la banque officielle Quiz TSI (`ownerId: null`), `private` le futur contenu personnel de son auteur et `shared` le futur contenu partagé par son auteur. Les statistiques futures appartiendront à l’utilisateur et ne seront pas stockées directement sur une question ou un pack partagé. PR17 n’implémente aucune fonctionnalité Marketplace ; la Marketplace n’est plus hors-scope depuis PR21, voir `docs/quality/PR21_QUIZZ_MARKETPLACE_VERIFICATION.md`.
 
 Opérateurs rencontrés : `=`, `!=`, `<`, `<=`, `>`, `>=`, `and`, `or`, `parity`, addition, soustraction, multiplication, division, modulo et puissance.
 

@@ -5,7 +5,8 @@ export type SessionMode = 'daily' | 'weak-points' | 'free' | 'chapter-test';
 export interface MasteryEvent {
   readonly id: string;
   readonly userId: string;
-  readonly notionId: string;
+  readonly notionId: string | null;
+  readonly quizzId: string | null;
   readonly questionId: string;
   readonly sessionId: string;
   readonly questionInstanceId: string;
@@ -59,18 +60,21 @@ export function projectMasteryEvents(
       evaluation.sessionId,
       chapterTestSessionIds,
     );
-    if (
-      !sessionMode ||
-      evaluation.classification?.kind === 'personal' ||
-      !evaluation.notionId
-    ) {
+    const personalCourseId =
+      evaluation.classification?.kind === 'personal'
+        ? evaluation.classification.courseId
+        : null;
+    const isOfficial = !personalCourseId && Boolean(evaluation.notionId);
+    const isPersonal = Boolean(personalCourseId);
+    if (!sessionMode || (!isOfficial && !isPersonal)) {
       unresolvedEvaluationIds.push(evaluation.id);
       continue;
     }
     events.push({
       id: `mastery:${evaluation.id}`,
       userId: evaluation.userId,
-      notionId: evaluation.notionId,
+      notionId: isOfficial ? evaluation.notionId : null,
+      quizzId: isPersonal ? personalCourseId : null,
       questionId: evaluation.questionId,
       sessionId: evaluation.sessionId,
       questionInstanceId: evaluation.questionInstanceId,

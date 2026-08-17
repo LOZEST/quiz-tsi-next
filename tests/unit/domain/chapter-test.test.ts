@@ -30,11 +30,13 @@ describe('ChapterTestBlueprint', () => {
         ).size,
       ).toBe(count);
       expect(
-        blueprint?.orderedQuestionInstances.every(
-          (entry) =>
-            questionClassification(entry.frozenQuestion)?.chapterId ===
-            'numbers-arithmetic',
-        ),
+        blueprint?.orderedQuestionInstances.every((entry) => {
+          const classification = questionClassification(entry.frozenQuestion);
+          return (
+            classification?.kind === 'official' &&
+            classification.chapterId === 'numbers-arithmetic'
+          );
+        }),
       ).toBe(true);
       expect(Object.isFrozen(blueprint)).toBe(true);
     },

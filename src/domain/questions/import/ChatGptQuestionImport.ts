@@ -23,7 +23,6 @@ export type ImportClassification =
       kind: 'personal';
       proposedCourseTitle: string;
       proposedChapterTitle: string | null;
-      proposedNotionTitle: string | null;
       reason: string;
       requiresUserConfirmation: true;
     }>;
@@ -253,7 +252,6 @@ function classification(value: unknown): value is ImportClassification {
       'kind',
       'proposedCourseTitle',
       'proposedChapterTitle',
-      'proposedNotionTitle',
       'reason',
       'requiresUserConfirmation',
     ]) &&
@@ -265,11 +263,6 @@ function classification(value: unknown): value is ImportClassification {
     value.proposedCourseTitle.trim() !== '' &&
     boundedText(
       value.proposedChapterTitle,
-      CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
-      true,
-    ) &&
-    boundedText(
-      value.proposedNotionTitle,
       CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
       true,
     ) &&

@@ -11,6 +11,7 @@ function event(id: string, occurredAt: string): MasteryEvent {
     id,
     userId: 'u1',
     notionId: 'n1',
+    quizzId: null,
     questionId: `q-${id}`,
     sessionId: `free:${id}`,
     questionInstanceId: `i-${id}`,

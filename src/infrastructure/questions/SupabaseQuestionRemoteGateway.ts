@@ -1,11 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { validateQuestion, type Question } from '@domain/questions/Question';
 import { latestQuestionVersions } from '@domain/questions/LatestQuestionVersions';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 import type { QuestionRemoteGateway } from '@domain/repositories/QuestionRemoteGateway';
 import type { QuestionWorkspaceOutboxOperation } from '@domain/repositories/QuestionWorkspaceRepository';
 
@@ -79,27 +75,19 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
   constructor(private readonly client: SupabaseClient) {}
   async push(operation: QuestionWorkspaceOutboxOperation) {
     if (operation.entity !== 'question') {
-      const table = {
-        course: 'personal_courses',
-        chapter: 'personal_chapters',
-        notion: 'personal_notions',
-      }[operation.entity];
+      const table = 'quizzes';
       const payload = operation.payload;
       const row = {
         id: payload.id,
         owner_id: payload.ownerId,
-        ...('courseId' in payload ? { course_id: payload.courseId } : {}),
-        ...('chapterId' in payload ? { chapter_id: payload.chapterId } : {}),
         title: payload.title,
-        ...('description' in payload
-          ? { description: payload.description }
-          : {}),
-        ...('visibility' in payload ? { visibility: payload.visibility } : {}),
+        description: payload.description,
+        visibility: payload.visibility,
         created_at: payload.createdAt,
         updated_at: payload.updatedAt,
       };
       const { error } =
-        operation.entity === 'course' && operation.kind === 'update'
+        operation.kind === 'update'
           ? await this.client
               .from(table)
               .update(row)
@@ -173,23 +161,15 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
   }
   async pullRecent(userId: string, limit: number) {
     const boundedLimit = Math.min(100, Math.max(1, limit));
-    const [questionResponse, courseResponse, chapterResponse, notionResponse] =
-      (await Promise.all([
-        this.client
-          .from('latest_accessible_questions')
-          .select('*')
-          .order('updated_at', { ascending: false })
-          .limit(boundedLimit),
-        this.client.from('personal_courses').select('*'),
-        this.client.from('personal_chapters').select('*'),
-        this.client.from('personal_notions').select('*'),
-      ])) as readonly RemoteResponse[];
-    if (
-      questionResponse?.error ||
-      courseResponse?.error ||
-      chapterResponse?.error ||
-      notionResponse?.error
-    )
+    const [questionResponse, quizzResponse] = (await Promise.all([
+      this.client
+        .from('latest_accessible_questions')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .limit(boundedLimit),
+      this.client.from('quizzes').select('*'),
+    ])) as readonly RemoteResponse[];
+    if (questionResponse?.error || quizzResponse?.error)
       throw new Error('Récupération des questions impossible.');
     const rejectedRows: { index: number; message: string }[] = [];
     const questions: Question[] = [];
@@ -210,9 +190,7 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
     }
     return {
       questions: latestQuestionVersions(questions),
-      courses: taxonomyRows(courseResponse?.data, userId, 'course'),
-      chapters: taxonomyRows(chapterResponse?.data, userId, 'chapter'),
-      notions: taxonomyRows(notionResponse?.data, userId, 'notion'),
+      quizzes: quizzRows(quizzResponse?.data, userId),
       rejectedRows,
     };
   }
@@ -223,64 +201,33 @@ interface RemoteResponse {
   readonly error: { readonly code?: string; readonly message?: string } | null;
 }
 
-function taxonomyRows(
-  data: unknown,
-  userId: string,
-  kind: 'course',
-): PersonalCourse[];
-function taxonomyRows(
-  data: unknown,
-  userId: string,
-  kind: 'chapter',
-): PersonalChapter[];
-function taxonomyRows(
-  data: unknown,
-  userId: string,
-  kind: 'notion',
-): PersonalNotion[];
-function taxonomyRows(
-  data: unknown,
-  userId: string,
-  kind: 'course' | 'chapter' | 'notion',
-): (PersonalCourse | PersonalChapter | PersonalNotion)[] {
+function quizzRows(data: unknown, userId: string): Quizz[] {
   if (!Array.isArray(data)) return [];
-  return data.flatMap(
-    (row): (PersonalCourse | PersonalChapter | PersonalNotion)[] => {
-      if (
-        !isRecord(row) ||
-        typeof row.id !== 'string' ||
-        row.owner_id !== userId ||
-        typeof row.title !== 'string' ||
-        typeof row.created_at !== 'string' ||
-        typeof row.updated_at !== 'string'
-      )
-        return [];
-      const common = {
+  return data.flatMap((row): Quizz[] => {
+    if (
+      !isRecord(row) ||
+      typeof row.id !== 'string' ||
+      row.owner_id !== userId ||
+      typeof row.title !== 'string' ||
+      typeof row.created_at !== 'string' ||
+      typeof row.updated_at !== 'string'
+    )
+      return [];
+    const description =
+      typeof row.description === 'string' ? row.description : '';
+    const visibility = row.visibility === 'public' ? 'public' : 'private';
+    return [
+      {
         id: row.id,
         ownerId: userId,
         title: row.title,
+        description,
+        visibility,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
-      };
-      if (kind === 'course') {
-        const description =
-          typeof row.description === 'string' ? row.description : '';
-        const visibility = row.visibility === 'public' ? 'public' : 'private';
-        return [{ ...common, description, visibility }];
-      }
-      if (typeof row.course_id !== 'string') return [];
-      if (kind === 'chapter') return [{ ...common, courseId: row.course_id }];
-      if (row.chapter_id !== null && typeof row.chapter_id !== 'string')
-        return [];
-      return [
-        {
-          ...common,
-          courseId: row.course_id,
-          chapterId: row.chapter_id,
-        },
-      ];
-    },
-  );
+      },
+    ];
+  });
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -298,18 +245,13 @@ const questionsEqual = (
   return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
 };
 
-const taxonomyEqual = (
-  row: unknown,
-  payload: PersonalCourse | PersonalChapter | PersonalNotion,
-) => {
+const taxonomyEqual = (row: unknown, payload: Quizz) => {
   if (!isRecord(row)) return false;
   return (
     row.id === payload.id &&
     row.owner_id === payload.ownerId &&
     row.title === payload.title &&
-    (!('courseId' in payload) || row.course_id === payload.courseId) &&
-    (!('chapterId' in payload) || row.chapter_id === payload.chapterId) &&
-    (!('description' in payload) || row.description === payload.description) &&
-    (!('visibility' in payload) || row.visibility === payload.visibility)
+    row.description === payload.description &&
+    row.visibility === payload.visibility
   );
 };

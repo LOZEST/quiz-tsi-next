@@ -53,6 +53,7 @@ function event(
     id: `m${index}`,
     userId: 'u1',
     notionId: 'n1',
+    quizzId: null,
     questionId: `q${index}`,
     sessionId: `free:s${index}`,
     questionInstanceId: `i${index}`,

@@ -1,9 +1,5 @@
 import type { Question } from '../questions/Question';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from '../questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '../questions/quizz/Quizz';
 import type { QuestionWorkspaceOutboxOperation } from './QuestionWorkspaceRepository';
 
 export type QuestionPushResult =
@@ -21,9 +17,7 @@ export interface QuestionRemoteGateway {
   ): Promise<
     Readonly<{
       questions: readonly Readonly<Question>[];
-      courses: readonly PersonalCourse[];
-      chapters: readonly PersonalChapter[];
-      notions: readonly PersonalNotion[];
+      quizzes: readonly Quizz[];
       rejectedRows: readonly Readonly<{
         index: number;
         message: string;

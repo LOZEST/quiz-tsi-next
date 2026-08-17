@@ -64,9 +64,11 @@ export class InMemoryQuestionRepository
             (classification?.kind === 'official' &&
               classification.partId === query.partId)) &&
           (query.chapterId === undefined ||
-            classification?.chapterId === query.chapterId) &&
+            (classification?.kind === 'official' &&
+              classification.chapterId === query.chapterId)) &&
           (query.notionId === undefined ||
-            classification?.notionId === query.notionId) &&
+            (classification?.kind === 'official' &&
+              classification.notionId === query.notionId)) &&
           (query.source === undefined || item.source === query.source)
         );
       }),

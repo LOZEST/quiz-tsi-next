@@ -6,18 +6,12 @@ import {
   type QuestionSource,
   type QuestionType,
 } from './Question';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from './personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from './quizz/Quizz';
 
 export type FolderLocation =
   | { kind: 'root' }
   | { kind: 'source'; source: 'static' | 'shared' }
-  | { kind: 'course'; courseId: string }
-  | { kind: 'chapter'; courseId: string; chapterId: string }
-  | { kind: 'notion'; courseId: string; chapterId: string; notionId: string };
+  | { kind: 'quizz'; courseId: string };
 
 export function questionsInFolder(
   questions: readonly Readonly<Question>[],
@@ -29,11 +23,7 @@ export function questionsInFolder(
   return questions.filter((question) => {
     const classification = questionClassification(question);
     if (!classification || classification.kind !== 'personal') return false;
-    if (classification.courseId !== location.courseId) return false;
-    if (location.kind === 'course') return classification.chapterId === null;
-    if (classification.chapterId !== location.chapterId) return false;
-    if (location.kind === 'chapter') return classification.notionId === null;
-    return classification.notionId === location.notionId;
+    return classification.courseId === location.courseId;
   });
 }
 
@@ -42,7 +32,7 @@ export interface QuestionBankFilters {
   readonly classificationKind?: 'official' | 'personal' | undefined;
   readonly courseOrPartId?: string | undefined;
   readonly chapterId?: string | undefined;
-  readonly notionId?: string | undefined;
+  readonly chapter?: string | undefined;
   readonly type?: QuestionType | undefined;
   readonly difficulty?: Difficulty | undefined;
   readonly status?: Question['status'] | undefined;
@@ -65,9 +55,7 @@ export function searchAndFilterQuestions(input: {
   search: string;
   filters: QuestionBankFilters;
   program?: ProgramIndex | null;
-  courses?: readonly PersonalCourse[];
-  chapters?: readonly PersonalChapter[];
-  notions?: readonly PersonalNotion[];
+  quizzes?: readonly Quizz[];
 }): readonly Readonly<Question>[] {
   const needle = normalize(input.search);
   return [...input.questions]
@@ -92,9 +80,17 @@ export function searchAndFilterQuestions(input: {
           : classification.courseId) !== filters.courseOrPartId
       )
         return false;
-      if (filters.chapterId && classification.chapterId !== filters.chapterId)
+      if (
+        filters.chapterId &&
+        (classification.kind !== 'official' ||
+          classification.chapterId !== filters.chapterId)
+      )
         return false;
-      if (filters.notionId && classification.notionId !== filters.notionId)
+      if (
+        filters.chapter &&
+        (classification.kind !== 'personal' ||
+          classification.chapter !== filters.chapter)
+      )
         return false;
       if (!needle) return true;
       const labels =
@@ -105,13 +101,9 @@ export function searchAndFilterQuestions(input: {
               input.program?.getNotion(classification.notionId)?.label,
             ]
           : [
-              input.courses?.find((item) => item.id === classification.courseId)
+              input.quizzes?.find((item) => item.id === classification.courseId)
                 ?.title,
-              input.chapters?.find(
-                (item) => item.id === classification.chapterId,
-              )?.title,
-              input.notions?.find((item) => item.id === classification.notionId)
-                ?.title,
+              classification.chapter,
             ];
       return [
         ...textSegments(question),

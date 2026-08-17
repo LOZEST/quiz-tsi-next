@@ -6,7 +6,7 @@ export async function syncQuestionWorkspace(
   local: QuestionWorkspaceRepository,
   remote: QuestionRemoteGateway,
 ) {
-  const priority = { course: 0, chapter: 1, notion: 2, question: 3 } as const;
+  const priority = { quizz: 0, question: 1 } as const;
   const operations = [...(await local.listOutbox(userId))]
     .sort(
       (left, right) =>

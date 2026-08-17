@@ -136,12 +136,8 @@ function LocalDataSection() {
         <dl>
           <dt>Questions enregistrées localement</dt>
           <dd>{snapshot.questions.length}</dd>
-          <dt>Cours personnels</dt>
-          <dd>{snapshot.courses.length}</dd>
-          <dt>Chapitres personnels</dt>
-          <dd>{snapshot.chapters.length}</dd>
-          <dt>Notions personnelles</dt>
-          <dd>{snapshot.notions.length}</dd>
+          <dt>Quizz personnels</dt>
+          <dd>{snapshot.quizzes.length}</dd>
         </dl>
       ) : (
         <p>Chargement des données locales…</p>
@@ -194,9 +190,7 @@ function BackupSection() {
     const payload = {
       exportedAt: new Date().toISOString(),
       questions: snapshot.questions,
-      courses: snapshot.courses,
-      chapters: snapshot.chapters,
-      notions: snapshot.notions,
+      quizzes: snapshot.quizzes,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',

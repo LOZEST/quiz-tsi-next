@@ -172,8 +172,7 @@ export type QuestionClassification =
   | Readonly<{
       kind: 'personal';
       courseId: string;
-      chapterId: string | null;
-      notionId: string | null;
+      chapter: string | null;
     }>;
 
 export interface Question {
@@ -214,13 +213,11 @@ export const officialClassification = (
 
 export const personalClassification = (
   courseId: string,
-  chapterId: string | null = null,
-  notionId: string | null = null,
+  chapter: string | null = null,
 ): QuestionClassification => ({
   kind: 'personal',
   courseId,
-  chapterId,
-  notionId,
+  chapter,
 });
 
 export function questionClassification(
@@ -704,14 +701,9 @@ function validateQuestionClassification(
   }
   if (isRecord(candidate) && candidate.kind === 'personal') {
     return isNonEmptyString(candidate.courseId) &&
-      (candidate.chapterId === null || isNonEmptyString(candidate.chapterId)) &&
-      (candidate.notionId === null || isNonEmptyString(candidate.notionId))
+      (candidate.chapter === null || isNonEmptyString(candidate.chapter))
       ? valid(
-          personalClassification(
-            candidate.courseId,
-            candidate.chapterId,
-            candidate.notionId,
-          ),
+          personalClassification(candidate.courseId, candidate.chapter),
         )
       : invalid(
           issue(

@@ -104,9 +104,11 @@ export class QuestionBankIndex {
             (classification?.kind === 'official' &&
               classification.partId === typed.partId)) &&
           (typed.chapterId === undefined ||
-            classification?.chapterId === typed.chapterId) &&
+            (classification?.kind === 'official' &&
+              classification.chapterId === typed.chapterId)) &&
           (typed.notionId === undefined ||
-            classification?.notionId === typed.notionId) &&
+            (classification?.kind === 'official' &&
+              classification.notionId === typed.notionId)) &&
           (typed.type === undefined || question.type === typed.type) &&
           (typed.source === undefined || question.source === typed.source) &&
           (typed.status === undefined || question.status === typed.status) &&

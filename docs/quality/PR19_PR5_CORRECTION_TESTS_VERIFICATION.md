@@ -5,7 +5,7 @@
 - Base : `0b1161df9b8fe92d6fbd308010b212059a5fb17b`.
 - Branche : `feat/pr5-attempt-correction-flow`.
 - Banque stable : 60 questions NUM de `quiz-tsi-official-num-v1` ; aucune nouvelle banque importée.
-- Hors périmètre respecté : maîtrise, progression PR6, répétition espacée, Marketplace, GPT/photo, formes Canvas et familles ALG/EQI/SUI.
+- Hors périmètre respecté : maîtrise, progression PR6, répétition espacée, Marketplace (n’est plus hors-scope depuis PR21, voir `docs/quality/PR21_QUIZZ_MARKETPLACE_VERIFICATION.md`), GPT/photo, formes Canvas et familles ALG/EQI/SUI.
 
 ## Contrats et règles
 

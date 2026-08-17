@@ -12,6 +12,7 @@ import { RegisterPage } from '@pages/RegisterPage/RegisterPage';
 import { NotFoundPage } from '@pages/NotFoundPage/NotFoundPage';
 import { ProgressPage } from '@pages/ProgressPage/ProgressPage';
 import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
+import { MarketplacePage } from '@pages/MarketplacePage/MarketplacePage';
 import { SettingsPage } from '@pages/SettingsPage/SettingsPage';
 import { WhiteboardPage } from '@pages/WhiteboardPage/WhiteboardPage';
 import { AccessDeniedPage } from '@pages/AccessDeniedPage/AccessDeniedPage';
@@ -59,6 +60,7 @@ export function AppRoutes() {
           <Route path="/whiteboard" element={<WhiteboardPage />} />
           <Route path="/progress" element={<ProgressPage />} />
           <Route path="/questions" element={<QuestionsPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/oauth/consent" element={<OAuthConsentPage />} />

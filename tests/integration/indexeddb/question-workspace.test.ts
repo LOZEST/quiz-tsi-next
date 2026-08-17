@@ -16,8 +16,7 @@ const draft = (userId: string, id: string): Question => ({
   classification: {
     kind: 'personal',
     courseId: `${userId}-course`,
-    chapterId: null,
-    notionId: null,
+    chapter: null,
   },
   type: 'course',
   difficulty: 'standard',
@@ -58,7 +57,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     ).rejects.toThrow('Compte incohérent');
   });
 
-  it('isole la taxonomie personnelle par ownerId', async () => {
+  it('isole le quizz personnel par ownerId', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const course = {
       id: 'course-a',
@@ -69,27 +68,24 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
     };
-    await repository.saveQuestionDraftWithPersonalTaxonomy(
+    await repository.saveQuestionWithQuizz(
       'account-a',
       {
         ...draft('account-a', 'taxonomy-q'),
         classification: {
           kind: 'personal',
           courseId: 'course-a',
-          chapterId: null,
-          notionId: null,
+          chapter: null,
         },
       },
-      { course, chapter: null, notion: null },
+      course,
       {
         question: 'taxonomy-q-op',
-        course: 'course-op',
-        chapter: null,
-        notion: null,
+        quizz: 'course-op',
       },
     );
-    expect((await repository.load('account-a')).courses).toEqual([course]);
-    expect((await repository.load('account-b')).courses).toEqual([]);
+    expect((await repository.load('account-a')).quizzes).toEqual([course]);
+    expect((await repository.load('account-b')).quizzes).toEqual([]);
   });
 
   it('expose seulement la dernière version tout en conservant l’historique physique', async () => {
@@ -97,9 +93,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     for (const version of [1, 2, 3]) {
       await repository.applyRemoteWorkspace('history-owner', {
         questions: [{ ...draft('history-owner', 'history-q'), version }],
-        courses: [],
-        chapters: [],
-        notions: [],
+        quizzes: [],
       });
     }
     expect((await repository.load('history-owner')).questions).toEqual([
@@ -130,7 +124,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     db.close();
   });
 
-  it('enregistre hiérarchie, question et outbox dans une transaction unique', async () => {
+  it('enregistre quizz, question et outbox dans une transaction unique', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'atomic-owner';
     const now = '2026-01-01T00:00:00.000Z';
@@ -143,48 +137,25 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       createdAt: now,
       updatedAt: now,
     };
-    const chapter = {
-      id: 'atomic-chapter',
-      ownerId,
-      courseId: course.id,
-      title: 'Chapitre 1',
-      createdAt: now,
-      updatedAt: now,
-    };
-    const notion = {
-      id: 'atomic-notion',
-      ownerId,
-      courseId: course.id,
-      chapterId: chapter.id,
-      title: 'Notion 1',
-      createdAt: now,
-      updatedAt: now,
-    };
     const question = {
       ...draft(ownerId, 'atomic-q'),
       classification: {
         kind: 'personal' as const,
         courseId: course.id,
-        chapterId: chapter.id,
-        notionId: notion.id,
+        chapter: 'Chapitre 1',
       },
     };
-    await repository.saveQuestionDraftWithPersonalTaxonomy(
-      ownerId,
-      question,
-      { course, chapter, notion },
-      { question: 'op-q', course: 'op-c', chapter: 'op-ch', notion: 'op-n' },
-    );
+    await repository.saveQuestionWithQuizz(ownerId, question, course, {
+      question: 'op-q',
+      quizz: 'op-c',
+    });
     const snapshot = await repository.load(ownerId);
-    expect([
-      snapshot.courses.length,
-      snapshot.chapters.length,
-      snapshot.notions.length,
-      snapshot.questions.length,
-    ]).toEqual([1, 1, 1, 1]);
+    expect([snapshot.quizzes.length, snapshot.questions.length]).toEqual([
+      1, 1,
+    ]);
     expect(
       (await repository.listOutbox(ownerId)).map((item) => item.entity),
-    ).toEqual(['course', 'chapter', 'notion', 'question']);
+    ).toEqual(['quizz', 'question']);
   });
 
   it('consomme l’opération conflictuelle et prépare une seconde synchronisation saine', async () => {
@@ -256,9 +227,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       pullRecent: () =>
         Promise.resolve({
           questions: [],
-          courses: [],
-          chapters: [],
-          notions: [],
+          quizzes: [],
           rejectedRows: [],
         }),
     };
@@ -268,7 +237,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     expect(await repository.listOutbox(ownerId)).toHaveLength(1);
   });
 
-  it('récupère la taxonomie GPT distante avec ses libellés sans fuite intercompte', async () => {
+  it('récupère le quizz distant avec ses libellés sans fuite intercompte', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'gpt-owner';
     const now = '2026-01-01T00:00:00.000Z';
@@ -286,8 +255,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       classification: {
         kind: 'personal' as const,
         courseId: course.id,
-        chapterId: null,
-        notionId: null,
+        chapter: null,
       },
     };
     await syncQuestionWorkspace(ownerId, repository, {
@@ -295,29 +263,25 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       pullRecent: () =>
         Promise.resolve({
           questions: [remoteQuestion],
-          courses: [course],
-          chapters: [],
-          notions: [],
+          quizzes: [course],
           rejectedRows: [],
         }),
     });
     const snapshot = await repository.load(ownerId);
-    expect(snapshot.courses).toEqual([course]);
+    expect(snapshot.quizzes).toEqual([course]);
     expect(
       searchAndFilterQuestions({
         questions: snapshot.questions,
         search: 'Thermodynamique perso',
         filters: {},
         program: null,
-        courses: snapshot.courses,
-        chapters: snapshot.chapters,
-        notions: snapshot.notions,
+        quizzes: snapshot.quizzes,
       }).map((item) => item.id),
     ).toEqual(['gpt-q']);
-    expect((await repository.load('other-owner')).courses).toEqual([]);
+    expect((await repository.load('other-owner')).quizzes).toEqual([]);
   });
 
-  it('synchronise une taxonomie manuelle offline dans l’ordre des dépendances', async () => {
+  it('synchronise un quizz manuel offline dans l’ordre des dépendances', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'offline-owner';
     const now = '2026-01-01T00:00:00.000Z';
@@ -330,43 +294,18 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       createdAt: now,
       updatedAt: now,
     };
-    const chapter = {
-      id: 'offline-ch',
-      ownerId,
-      courseId: course.id,
-      title: 'Chapitre',
-      createdAt: now,
-      updatedAt: now,
-    };
-    const notion = {
-      id: 'offline-n',
-      ownerId,
-      courseId: course.id,
-      chapterId: chapter.id,
-      title: 'Notion',
-      createdAt: now,
-      updatedAt: now,
-    };
     const offlineQuestion = {
       ...draft(ownerId, 'offline-q'),
       classification: {
         kind: 'personal' as const,
         courseId: course.id,
-        chapterId: chapter.id,
-        notionId: notion.id,
+        chapter: 'Chapitre',
       },
     };
-    await repository.saveQuestionDraftWithPersonalTaxonomy(
-      ownerId,
-      offlineQuestion,
-      { course, chapter, notion },
-      {
-        question: 'offline-op-q',
-        course: 'offline-op-c',
-        chapter: 'offline-op-ch',
-        notion: 'offline-op-n',
-      },
-    );
+    await repository.saveQuestionWithQuizz(ownerId, offlineQuestion, course, {
+      question: 'offline-op-q',
+      quizz: 'offline-op-c',
+    });
     const pushed: string[] = [];
     await syncQuestionWorkspace(ownerId, repository, {
       push: (operation) => {
@@ -376,83 +315,15 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       pullRecent: () =>
         Promise.resolve({
           questions: [],
-          courses: [],
-          chapters: [],
-          notions: [],
+          quizzes: [],
           rejectedRows: [],
         }),
     });
-    expect(pushed).toEqual(['course', 'chapter', 'notion', 'question']);
+    expect(pushed).toEqual(['quizz', 'question']);
     expect(await repository.listOutbox(ownerId)).toEqual([]);
   });
 
-  it('refuse atomiquement une notion existante rattachée à un autre chapitre', async () => {
-    const repository = new IndexedDbQuestionWorkspaceRepository();
-    const ownerId = 'coherent-owner';
-    const now = '2026-01-01T00:00:00.000Z';
-    const course = {
-      id: 'c',
-      ownerId,
-      title: 'Cours',
-      description: '',
-      visibility: 'private' as const,
-      createdAt: now,
-      updatedAt: now,
-    };
-    const chapterA = {
-      id: 'a',
-      ownerId,
-      courseId: 'c',
-      title: 'A',
-      createdAt: now,
-      updatedAt: now,
-    };
-    const notionA = {
-      id: 'a1',
-      ownerId,
-      courseId: 'c',
-      chapterId: 'a',
-      title: 'A1',
-      createdAt: now,
-      updatedAt: now,
-    };
-    await repository.saveQuestionDraftWithPersonalTaxonomy(
-      ownerId,
-      {
-        ...draft(ownerId, 'baseline'),
-        classification: {
-          kind: 'personal',
-          courseId: 'c',
-          chapterId: 'a',
-          notionId: 'a1',
-        },
-      },
-      { course, chapter: chapterA, notion: notionA },
-      { question: 'q1', course: 'c1', chapter: 'a1-op', notion: 'n1' },
-    );
-    const chapterB = { ...chapterA, id: 'b', title: 'B' };
-    await expect(
-      repository.saveQuestionDraftWithPersonalTaxonomy(
-        ownerId,
-        {
-          ...draft(ownerId, 'invalid'),
-          classification: {
-            kind: 'personal',
-            courseId: 'c',
-            chapterId: 'b',
-            notionId: 'a1',
-          },
-        },
-        { course: null, chapter: chapterB, notion: null },
-        { question: 'q2', course: null, chapter: 'b-op', notion: null },
-      ),
-    ).rejects.toThrow('Taxonomie incohérente');
-    expect(
-      (await repository.load(ownerId)).questions.map((item) => item.id),
-    ).toEqual(['baseline']);
-  });
-
-  it('crée un dossier (cours/chapitre/notion) indépendamment de toute question', async () => {
+  it('crée un quizz indépendamment de toute question', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'folder-owner';
     const now = '2026-01-01T00:00:00.000Z';
@@ -465,80 +336,10 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       createdAt: now,
       updatedAt: now,
     };
-    await repository.saveCourse(ownerId, course, 'op-course');
-    const chapter = {
-      id: 'chapter-folder',
-      ownerId,
-      courseId: 'course-folder',
-      title: 'Chapitre',
-      createdAt: now,
-      updatedAt: now,
-    };
-    await repository.saveChapter(ownerId, chapter, 'op-chapter');
-    const notion = {
-      id: 'notion-folder',
-      ownerId,
-      courseId: 'course-folder',
-      chapterId: 'chapter-folder',
-      title: 'Notion',
-      createdAt: now,
-      updatedAt: now,
-    };
-    await repository.saveNotion(ownerId, notion, 'op-notion');
+    await repository.saveQuizz(ownerId, course, 'op-course');
     const snapshot = await repository.load(ownerId);
-    expect(snapshot.courses).toEqual([course]);
-    expect(snapshot.chapters).toEqual([chapter]);
-    expect(snapshot.notions).toEqual([notion]);
-    expect(snapshot.pendingOperationCount).toBe(3);
-    expect((await repository.load('other-owner')).courses).toEqual([]);
-  });
-
-  it('refuse un chapitre ou une notion rattachés à un cours inexistant ou étranger', async () => {
-    const repository = new IndexedDbQuestionWorkspaceRepository();
-    const ownerId = 'guard-owner';
-    const now = '2026-01-01T00:00:00.000Z';
-    await expect(
-      repository.saveChapter(
-        ownerId,
-        {
-          id: 'orphan-chapter',
-          ownerId,
-          courseId: 'missing-course',
-          title: 'X',
-          createdAt: now,
-          updatedAt: now,
-        },
-        'op-orphan-chapter',
-      ),
-    ).rejects.toThrow('Taxonomie incohérente');
-    const otherOwnerCourse = {
-      id: 'foreign-course',
-      ownerId: 'someone-else',
-      title: 'Cours étranger',
-      description: '',
-      visibility: 'private' as const,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await repository.saveCourse(
-      'someone-else',
-      otherOwnerCourse,
-      'op-foreign-course',
-    );
-    await expect(
-      repository.saveNotion(
-        ownerId,
-        {
-          id: 'orphan-notion',
-          ownerId,
-          courseId: 'foreign-course',
-          chapterId: null,
-          title: 'Y',
-          createdAt: now,
-          updatedAt: now,
-        },
-        'op-orphan-notion',
-      ),
-    ).rejects.toThrow('Taxonomie incohérente');
+    expect(snapshot.quizzes).toEqual([course]);
+    expect(snapshot.pendingOperationCount).toBe(1);
+    expect((await repository.load('other-owner')).quizzes).toEqual([]);
   });
 });

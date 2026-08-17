@@ -3,12 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
-import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 
 const question = (overrides: Partial<Question> = {}): Question => ({
   id: 'private-1',
@@ -60,46 +55,22 @@ const saveQuestion = vi.fn<
   return Promise.resolve();
 });
 const resolveConflict = vi.fn(() => Promise.resolve());
-const saveQuestionDraftWithPersonalTaxonomy = vi.fn(
-  (_userId, next: Question, taxonomy: PersonalTaxonomyDraft) => {
+const saveQuestionWithQuizz = vi.fn(
+  (_userId: string, next: Question, quizz: Quizz | null) => {
     snapshot = {
       ...snapshot,
       questions: [...snapshot.questions, next],
-      courses: taxonomy.course
-        ? [...snapshot.courses, taxonomy.course]
-        : snapshot.courses,
-      chapters: taxonomy.chapter
-        ? [...snapshot.chapters, taxonomy.chapter]
-        : snapshot.chapters,
-      notions: taxonomy.notion
-        ? [...snapshot.notions, taxonomy.notion]
-        : snapshot.notions,
+      quizzes: quizz ? [...snapshot.quizzes, quizz] : snapshot.quizzes,
       pendingOperationCount: snapshot.pendingOperationCount + 1,
     };
     return Promise.resolve();
   },
 );
 const listOutbox = vi.fn(() => Promise.resolve([]));
-const saveCourse = vi.fn((_userId: string, course: PersonalCourse) => {
+const saveQuizz = vi.fn((_userId: string, course: Quizz) => {
   snapshot = {
     ...snapshot,
-    courses: [...snapshot.courses, course],
-    pendingOperationCount: snapshot.pendingOperationCount + 1,
-  };
-  return Promise.resolve();
-});
-const saveChapter = vi.fn((_userId: string, chapter: PersonalChapter) => {
-  snapshot = {
-    ...snapshot,
-    chapters: [...snapshot.chapters, chapter],
-    pendingOperationCount: snapshot.pendingOperationCount + 1,
-  };
-  return Promise.resolve();
-});
-const saveNotion = vi.fn((_userId: string, notion: PersonalNotion) => {
-  snapshot = {
-    ...snapshot,
-    notions: [...snapshot.notions, notion],
+    quizzes: [...snapshot.quizzes, course],
     pendingOperationCount: snapshot.pendingOperationCount + 1,
   };
   return Promise.resolve();
@@ -107,10 +78,8 @@ const saveNotion = vi.fn((_userId: string, notion: PersonalNotion) => {
 const questionWorkspaceRepository = {
   load,
   saveQuestion,
-  saveQuestionDraftWithPersonalTaxonomy,
-  saveCourse,
-  saveChapter,
-  saveNotion,
+  saveQuestionWithQuizz,
+  saveQuizz,
   resolveConflict,
   listOutbox,
   completeOperation: vi.fn(() => Promise.resolve()),
@@ -122,9 +91,7 @@ const questionRemoteGateway = {
   pullRecent: vi.fn(() =>
     Promise.resolve({
       questions: [],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       rejectedRows: [] as { index: number; message: string }[],
     }),
   ),
@@ -154,6 +121,9 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
     questionWorkspaceRepository,
     questionRemoteGateway,
     programIndex: null,
+    quizzMarketplaceGateway: {
+      listSubscribedQuizzContent: () => Promise.resolve([]),
+    },
   }),
 }));
 
@@ -164,9 +134,7 @@ describe('QuestionsPage', () => {
     currentRole = 'owner';
     snapshot = {
       questions: [question()],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       pendingOperationCount: 1,
       conflicts: [],
     };
@@ -292,37 +260,16 @@ describe('QuestionsPage', () => {
     expect(saved.validated).toBe(true);
   });
 
-  it('efface une notion existante lorsqu’un nouveau chapitre est saisi', async () => {
+  it('crée une question personnelle avec un chapitre en texte libre', async () => {
     snapshot = {
       ...snapshot,
-      courses: [
+      quizzes: [
         {
           id: 'course',
           ownerId: 'user-1',
           title: 'Cours',
           description: '',
           visibility: 'private' as const,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-      chapters: [
-        {
-          id: 'chapter-a',
-          courseId: 'course',
-          ownerId: 'user-1',
-          title: 'A',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-      notions: [
-        {
-          id: 'notion-a1',
-          courseId: 'course',
-          chapterId: 'chapter-a',
-          ownerId: 'user-1',
-          title: 'A1',
           createdAt: '2026-01-01T00:00:00.000Z',
           updatedAt: '2026-01-01T00:00:00.000Z',
         },
@@ -337,16 +284,8 @@ describe('QuestionsPage', () => {
       screen.getByLabelText('Type de classification'),
       'personal',
     );
-    await user.selectOptions(screen.getByLabelText('Cours'), 'course');
-    await user.selectOptions(
-      screen.getByLabelText('Chapitre existant facultatif'),
-      'chapter-a',
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Notion existante facultative'),
-      'notion-a1',
-    );
-    await user.type(screen.getByLabelText('Nouveau chapitre facultatif'), 'B');
+    await user.selectOptions(screen.getByLabelText('Quizz'), 'course');
+    await user.type(screen.getByLabelText('Chapitre facultatif'), 'B');
     await user.type(screen.getByLabelText('Texte'), 'Question');
     const correction = screen.getByRole('group', {
       name: 'Contenu de l’étape 1',
@@ -358,21 +297,13 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
     );
-    await waitFor(() =>
-      expect(saveQuestionDraftWithPersonalTaxonomy).toHaveBeenCalled(),
-    );
-    const saved = saveQuestionDraftWithPersonalTaxonomy.mock.calls.at(
-      -1,
-    )?.[1] as Question;
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
     expect(saved.classification).toMatchObject({
+      kind: 'personal',
       courseId: 'course',
-      notionId: null,
+      chapter: 'B',
     });
-    expect(
-      saved.classification &&
-        'chapterId' in saved.classification &&
-        saved.classification.chapterId,
-    ).not.toBe('chapter-a');
   });
 
   it('crée et édite les segments structurés et les aides mathématiques', async () => {
@@ -386,14 +317,10 @@ describe('QuestionsPage', () => {
       screen.getByLabelText('Type de classification'),
       'personal',
     );
-    await user.type(screen.getByLabelText('Nouveau cours'), 'Mon cours');
+    await user.type(screen.getByLabelText('Nouveau quizz'), 'Mon cours');
     await user.type(
-      screen.getByLabelText('Nouveau chapitre facultatif'),
+      screen.getByLabelText('Chapitre facultatif'),
       'Chapitre 1',
-    );
-    await user.type(
-      screen.getByLabelText('Nouvelle notion facultative'),
-      'Notion 1',
     );
     const prompt = screen.getByRole('group', { name: 'Énoncé' });
     await user.type(
@@ -457,7 +384,8 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Tester les variantes' }),
     );
-    expect(saveQuestionDraftWithPersonalTaxonomy).not.toHaveBeenCalled();
+    expect(saveQuestion).not.toHaveBeenCalled();
+    expect(saveQuestionWithQuizz).not.toHaveBeenCalled();
     expect(
       await screen.findByRole('list', { name: 'Variantes générées' }),
     ).toBeInTheDocument();
@@ -473,13 +401,14 @@ describe('QuestionsPage', () => {
       screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
     );
     await waitFor(() =>
-      expect(saveQuestionDraftWithPersonalTaxonomy).toHaveBeenCalledTimes(1),
+      expect(saveQuestionWithQuizz).toHaveBeenCalledTimes(1),
     );
-    const savedTaxonomy =
-      saveQuestionDraftWithPersonalTaxonomy.mock.calls[0]?.[2];
-    expect(savedTaxonomy?.course?.title).toBe('Mon cours');
-    expect(savedTaxonomy?.chapter?.title).toBe('Chapitre 1');
-    expect(savedTaxonomy?.notion?.title).toBe('Notion 1');
+    const savedQuizz = saveQuestionWithQuizz.mock.calls[0]?.[2] as Quizz;
+    expect(savedQuizz?.title).toBe('Mon cours');
+    const savedQuestion = saveQuestionWithQuizz.mock.calls[0]?.[1] as Question;
+    expect(savedQuestion.classification).toMatchObject({
+      chapter: 'Chapitre 1',
+    });
   }, 10_000);
 
   it('affiche les erreurs de stockage et de synchronisation et réagit au hors-ligne', async () => {
@@ -500,9 +429,7 @@ describe('QuestionsPage', () => {
   it('signale les questions distantes rejetées sans bloquer la synchronisation', async () => {
     questionRemoteGateway.pullRecent.mockResolvedValueOnce({
       questions: [],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       rejectedRows: [
         { index: 0, message: 'Question distante invalide : provenance.' },
         { index: 2, message: 'Question distante invalide : timestamps.' },
@@ -582,7 +509,7 @@ describe('QuestionsPage', () => {
       'personal',
     );
     await user.type(
-      screen.getByLabelText('Nouveau cours'),
+      screen.getByLabelText('Nouveau quizz'),
       'Cours sans sauvegarde',
     );
     await user.type(screen.getByLabelText('Nom'), 'n');
@@ -598,16 +525,15 @@ describe('QuestionsPage', () => {
     await user.click(preview);
     await user.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(saveQuestion).not.toHaveBeenCalled();
-    expect(saveQuestionDraftWithPersonalTaxonomy).not.toHaveBeenCalled();
+    expect(saveQuestionWithQuizz).not.toHaveBeenCalled();
   });
 
-  it('présente un import incomplet, la taxonomie personnelle et les choix de conflit', async () => {
+  it('présente un import incomplet, le quizz personnel et les choix de conflit', async () => {
     const imported = question({
       classification: {
         kind: 'personal',
         courseId: 'course-1',
-        chapterId: null,
-        notionId: null,
+        chapter: null,
       },
       provenance: {
         bundleId: 'import-1',
@@ -630,7 +556,7 @@ describe('QuestionsPage', () => {
     snapshot = {
       ...snapshot,
       questions: [imported],
-      courses: [
+      quizzes: [
         {
           id: 'course-1',
           ownerId: 'user-1',
@@ -657,7 +583,7 @@ describe('QuestionsPage', () => {
     render(<QuestionsPage />);
     await screen.findByRole('option', { name: 'Cours personnel' });
     await user.selectOptions(
-      screen.getByLabelText('Partie / Cours'),
+      screen.getByLabelText('Partie / Quizz'),
       'course-1',
     );
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
@@ -743,7 +669,7 @@ describe('QuestionsPage', () => {
       questions: [
         question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
       ],
-      courses: [
+      quizzes: [
         {
           id: 'course-x',
           ownerId: 'user-1',
@@ -773,10 +699,10 @@ describe('QuestionsPage', () => {
     });
   });
 
-  it('navigue dans la vue Dossiers et n’affiche que les questions du dossier courant', async () => {
+  it('navigue dans la vue Dossiers et n’affiche que les questions du quizz courant', async () => {
     snapshot = {
       ...snapshot,
-      courses: [
+      quizzes: [
         {
           id: 'course-mecanique',
           ownerId: 'user-1',
@@ -794,8 +720,7 @@ describe('QuestionsPage', () => {
           classification: {
             kind: 'personal',
             courseId: 'course-mecanique',
-            chapterId: null,
-            notionId: null,
+            chapter: null,
           },
         }),
       ],
@@ -816,7 +741,7 @@ describe('QuestionsPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('crée un quizz, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
+  it('crée un quizz depuis la vue Dossiers', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
@@ -825,38 +750,9 @@ describe('QuestionsPage', () => {
       'Cinématique',
     );
     await user.click(screen.getByRole('button', { name: 'Créer' }));
-    await waitFor(() => expect(saveCourse).toHaveBeenCalledTimes(1));
-    const createdCourse = saveCourse.mock.calls[0]?.[1] as PersonalCourse;
+    await waitFor(() => expect(saveQuizz).toHaveBeenCalledTimes(1));
+    const createdCourse = saveQuizz.mock.calls[0]?.[1] as Quizz;
     expect(createdCourse.title).toBe('Cinématique');
-    expect(
-      await screen.findByPlaceholderText('Nouveau chapitre'),
-    ).toBeInTheDocument();
-    await user.type(screen.getByPlaceholderText('Nouveau chapitre'), 'Vitesse');
-    await user.click(screen.getByRole('button', { name: 'Créer' }));
-    await waitFor(() => expect(saveChapter).toHaveBeenCalledTimes(1));
-    const createdChapter = saveChapter.mock.calls[0]?.[1] as PersonalChapter;
-    expect(createdChapter).toMatchObject({
-      title: 'Vitesse',
-      courseId: createdCourse.id,
-    });
-    expect(
-      await screen.findByPlaceholderText('Nouvelle notion'),
-    ).toBeInTheDocument();
-    await user.type(screen.getByPlaceholderText('Nouvelle notion'), 'MRU');
-    await user.click(screen.getByRole('button', { name: 'Créer' }));
-    await waitFor(() => expect(saveNotion).toHaveBeenCalledTimes(1));
-    const createdNotion = saveNotion.mock.calls[0]?.[1] as PersonalNotion;
-    expect(createdNotion).toMatchObject({
-      title: 'MRU',
-      courseId: createdCourse.id,
-      chapterId: createdChapter.id,
-    });
-    await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
-    await user.click(screen.getByRole('button', { name: /Cinématique/ }));
-    await user.click(screen.getByRole('button', { name: /Vitesse/ }));
-    expect(
-      await screen.findByRole('button', { name: /MRU/ }),
-    ).toBeInTheDocument();
   });
 
   it('valide en masse les brouillons sélectionnés', async () => {
@@ -888,7 +784,7 @@ describe('QuestionsPage', () => {
       questions: [
         question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
       ],
-      courses: [
+      quizzes: [
         {
           id: 'course-y',
           ownerId: 'user-1',

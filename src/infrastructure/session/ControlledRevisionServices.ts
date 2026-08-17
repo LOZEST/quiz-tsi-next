@@ -6,8 +6,8 @@ import type {
 } from '@domain/repositories/RevisionStateRepositories';
 import type { RevisionTestServices } from './RevisionServicesComposition';
 import {
+  mergedQuestionRepository,
   productionProgramIndex,
-  productionQuestionRepository,
 } from './ProductionRevisionServices';
 
 export class ControlledRevisionSeedSource implements RevisionSeedSource {
@@ -89,7 +89,7 @@ declare global {
 export function createRevisionTestServices(): RevisionTestServices {
   return {
     programIndex: productionProgramIndex,
-    questionRepository: productionQuestionRepository,
+    questionRepository: mergedQuestionRepository,
     dailyPlanStateRepository: new ControlledDailyRepository(),
     weakPointsStateRepository: new ControlledWeakPointsRepository(),
     revisionSeedSource: new ControlledRevisionSeedSource(),

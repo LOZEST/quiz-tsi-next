@@ -416,10 +416,13 @@ function ChapterTest() {
     ? new Set(
         questionRepository
           .listPublished()
-          .filter(
-            (question) =>
-              questionClassification(question)?.chapterId === chapter,
-          )
+          .filter((question) => {
+            const classification = questionClassification(question);
+            return (
+              classification?.kind === 'official' &&
+              classification.chapterId === chapter
+            );
+          })
           .map((question) => question.id),
       ).size
     : 0;

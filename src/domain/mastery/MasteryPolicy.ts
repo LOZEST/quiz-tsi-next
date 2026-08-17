@@ -54,18 +54,30 @@ export function calculateNotionMastery(
   sourceEvents: readonly MasteryEvent[],
   now: number,
 ): NotionMastery {
+  return calculateMasteryForKey(
+    notionId,
+    sourceEvents.filter((event) => event.notionId === notionId),
+    now,
+  );
+}
+
+export function calculateMasteryForKey(
+  key: string,
+  sourceEvents: readonly MasteryEvent[],
+  now: number,
+): NotionMastery {
   const events = sourceEvents
     .filter(
       (
         event,
       ): event is MasteryEvent & { result: 'success' | 'partial' | 'failed' } =>
-        event.notionId === notionId && event.result !== 'skipped',
+        event.result !== 'skipped',
     )
     .filter((event) => Number.isFinite(Date.parse(event.occurredAt)))
     .sort((a, b) => Date.parse(a.occurredAt) - Date.parse(b.occurredAt));
   if (events.length === 0) {
     return {
-      notionId,
+      notionId: key,
       masteryScore: 0,
       confidenceScore: 0,
       evidenceCount: 0,
@@ -141,7 +153,7 @@ export function calculateNotionMastery(
               ? 'solid'
               : 'progressing';
   return {
-    notionId,
+    notionId: key,
     masteryScore,
     confidenceScore,
     evidenceCount: events.length,

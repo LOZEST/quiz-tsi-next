@@ -4,127 +4,70 @@ import {
   type Question,
 } from '@domain/questions/Question';
 import type { FolderLocation } from '@domain/questions/QuestionBankSearch';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalCourseVisibility,
-  PersonalNotion,
-} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz, QuizzVisibility } from '@domain/questions/quizz/Quizz';
 import { RawContentPreview } from '@features/questions/RawContentPreview';
+import { PublishQuizzDialog } from '@features/quizz/PublishQuizzDialog';
+import { SubscribedQuizzesSection } from './SubscribedQuizzesSection';
 import styles from './QuestionsFolderGrid.module.css';
 
 export function QuestionsFolderGrid({
   location,
   onLocationChange,
-  courses,
-  chapters,
-  notions,
+  quizzes,
   questions,
-  onCreateCourse,
-  onCreateChapter,
-  onCreateNotion,
-  onToggleCourseVisibility,
+  onCreateQuizz,
+  onToggleQuizzVisibility,
 }: {
   location: FolderLocation;
   onLocationChange: (location: FolderLocation) => void;
-  courses: readonly PersonalCourse[];
-  chapters: readonly PersonalChapter[];
-  notions: readonly PersonalNotion[];
+  quizzes: readonly Quizz[];
   questions: readonly Readonly<Question>[];
-  onCreateCourse: (title: string) => void;
-  onCreateChapter: (title: string) => void;
-  onCreateNotion: (title: string) => void;
-  onToggleCourseVisibility: (
-    courseId: string,
-    visibility: PersonalCourseVisibility,
+  onCreateQuizz: (title: string) => void;
+  onToggleQuizzVisibility: (
+    quizzId: string,
+    visibility: QuizzVisibility,
   ) => void;
 }) {
   const [newFolderTitle, setNewFolderTitle] = useState('');
   const newFolderInputRef = useRef<HTMLInputElement>(null);
-  const countIn = (predicate: (location: FolderLocation) => boolean) => {
-    let count = 0;
-    for (const question of questions) {
+  const [publishingQuizz, setPublishingQuizz] = useState<Quizz | null>(null);
+  const publishTriggerRef = useRef<HTMLButtonElement>(null);
+  const countIn = (quizzId: string) =>
+    questions.filter((question) => {
       const classification = questionClassification(question);
-      if (classification?.kind !== 'personal') continue;
-      if (
-        predicate({ kind: 'course', courseId: classification.courseId }) ||
-        (classification.chapterId &&
-          predicate({
-            kind: 'chapter',
-            courseId: classification.courseId,
-            chapterId: classification.chapterId,
-          })) ||
-        (classification.chapterId &&
-          classification.notionId &&
-          predicate({
-            kind: 'notion',
-            courseId: classification.courseId,
-            chapterId: classification.chapterId,
-            notionId: classification.notionId,
-          }))
-      )
-        count += 1;
-    }
-    return count;
-  };
-  const exampleFor = (courseId: string) =>
+      return (
+        classification?.kind === 'personal' &&
+        classification.courseId === quizzId
+      );
+    }).length;
+  const exampleFor = (quizzId: string) =>
     questions.find((question) => {
       const classification = questionClassification(question);
       return (
         classification?.kind === 'personal' &&
-        classification.courseId === courseId
+        classification.courseId === quizzId
       );
     })?.prompt ?? null;
 
   const breadcrumb: { label: string; location: FolderLocation }[] = [
     { label: 'Mes Quizz', location: { kind: 'root' } },
   ];
-  if (
-    location.kind === 'course' ||
-    location.kind === 'chapter' ||
-    location.kind === 'notion'
-  ) {
-    const course = courses.find((item) => item.id === location.courseId);
+  if (location.kind === 'quizz') {
+    const quizz = quizzes.find((item) => item.id === location.courseId);
     breadcrumb.push({
-      label: course?.title ?? 'Quizz',
-      location: { kind: 'course', courseId: location.courseId },
+      label: quizz?.title ?? 'Quizz',
+      location: { kind: 'quizz', courseId: location.courseId },
     });
-  }
-  if (location.kind === 'chapter' || location.kind === 'notion') {
-    const chapter = chapters.find((item) => item.id === location.chapterId);
-    breadcrumb.push({
-      label: chapter?.title ?? 'Chapitre',
-      location: {
-        kind: 'chapter',
-        courseId: location.courseId,
-        chapterId: location.chapterId,
-      },
-    });
-  }
-  if (location.kind === 'notion') {
-    const notion = notions.find((item) => item.id === location.notionId);
-    breadcrumb.push({ label: notion?.title ?? 'Notion', location });
   }
 
   const submitNewFolder = () => {
     const title = newFolderTitle.trim();
     if (!title) return;
-    if (location.kind === 'root') onCreateCourse(title);
-    else if (location.kind === 'course') onCreateChapter(title);
-    else if (location.kind === 'chapter') onCreateNotion(title);
+    if (location.kind === 'root') onCreateQuizz(title);
     setNewFolderTitle('');
   };
 
-  const canCreateFolder =
-    location.kind === 'root' ||
-    location.kind === 'course' ||
-    location.kind === 'chapter';
-  const newFolderPlaceholder =
-    location.kind === 'root'
-      ? 'Nouveau quizz'
-      : location.kind === 'course'
-        ? 'Nouveau chapitre'
-        : 'Nouvelle notion';
+  const canCreateFolder = location.kind === 'root';
 
   return (
     <div className={styles.folderGrid}>
@@ -162,15 +105,15 @@ export function QuestionsFolderGrid({
                 +
               </span>
             </button>
-            {courses.map((course) => {
-              const example = exampleFor(course.id);
+            {quizzes.map((quizz) => {
+              const example = exampleFor(quizz.id);
               return (
-                <div key={course.id} className={styles.quizCard}>
+                <div key={quizz.id} className={styles.quizCard}>
                   <button
                     type="button"
                     className={styles.quizCardMain}
                     onClick={() =>
-                      onLocationChange({ kind: 'course', courseId: course.id })
+                      onLocationChange({ kind: 'quizz', courseId: quizz.id })
                     }
                   >
                     <div className={styles.quizPreview}>
@@ -183,104 +126,50 @@ export function QuestionsFolderGrid({
                       )}
                     </div>
                     <div className={styles.quizMeta}>
-                      <strong>{course.title}</strong>
-                      {course.description ? <p>{course.description}</p> : null}
-                      <small>
-                        {countIn(
-                          (item) =>
-                            item.kind === 'course' &&
-                            item.courseId === course.id,
-                        )}{' '}
-                        question(s)
-                      </small>
+                      <strong>{quizz.title}</strong>
+                      {quizz.description ? <p>{quizz.description}</p> : null}
+                      <small>{countIn(quizz.id)} question(s)</small>
                     </div>
                   </button>
                   <label className={styles.visibilityToggle}>
                     <input
                       type="checkbox"
-                      checked={course.visibility === 'public'}
+                      checked={quizz.visibility === 'public'}
                       onChange={(event) =>
-                        onToggleCourseVisibility(
-                          course.id,
+                        onToggleQuizzVisibility(
+                          quizz.id,
                           event.target.checked ? 'public' : 'private',
                         )
                       }
                     />
                     <span>
-                      {course.visibility === 'public' ? 'Public' : 'Privé'}
+                      {quizz.visibility === 'public' ? 'Public' : 'Privé'}
                     </span>
                   </label>
+                  <button
+                    type="button"
+                    ref={(element) => {
+                      if (publishingQuizz?.id === quizz.id)
+                        publishTriggerRef.current = element;
+                    }}
+                    onClick={() => setPublishingQuizz(quizz)}
+                  >
+                    Publier sur la marketplace
+                  </button>
                 </div>
               );
             })}
           </>
         ) : null}
-        {location.kind === 'course'
-          ? chapters
-              .filter((chapter) => chapter.courseId === location.courseId)
-              .map((chapter) => (
-                <button
-                  type="button"
-                  key={chapter.id}
-                  className={styles.card}
-                  onClick={() =>
-                    onLocationChange({
-                      kind: 'chapter',
-                      courseId: location.courseId,
-                      chapterId: chapter.id,
-                    })
-                  }
-                >
-                  <span className={styles.cardIcon} aria-hidden="true">
-                    📁
-                  </span>
-                  <span>{chapter.title}</span>
-                  <small>
-                    {countIn(
-                      (item) =>
-                        item.kind === 'chapter' &&
-                        item.chapterId === chapter.id,
-                    )}{' '}
-                    question(s)
-                  </small>
-                </button>
-              ))
-          : null}
-        {location.kind === 'chapter'
-          ? notions
-              .filter(
-                (notion) =>
-                  notion.courseId === location.courseId &&
-                  notion.chapterId === location.chapterId,
-              )
-              .map((notion) => (
-                <button
-                  type="button"
-                  key={notion.id}
-                  className={styles.card}
-                  onClick={() =>
-                    onLocationChange({
-                      kind: 'notion',
-                      courseId: location.courseId,
-                      chapterId: location.chapterId,
-                      notionId: notion.id,
-                    })
-                  }
-                >
-                  <span className={styles.cardIcon} aria-hidden="true">
-                    📁
-                  </span>
-                  <span>{notion.title}</span>
-                  <small>
-                    {countIn(
-                      (item) =>
-                        item.kind === 'notion' && item.notionId === notion.id,
-                    )}{' '}
-                    question(s)
-                  </small>
-                </button>
-              ))
-          : null}
+        {publishingQuizz ? (
+          <PublishQuizzDialog
+            open
+            triggerRef={publishTriggerRef}
+            quizzId={publishingQuizz.id}
+            defaultTitle={publishingQuizz.title}
+            onClose={() => setPublishingQuizz(null)}
+          />
+        ) : null}
       </div>
       {canCreateFolder ? (
         <form
@@ -291,12 +180,12 @@ export function QuestionsFolderGrid({
           }}
         >
           <label>
-            {newFolderPlaceholder}
+            Nouveau quizz
             <input
               ref={newFolderInputRef}
               value={newFolderTitle}
               onChange={(event) => setNewFolderTitle(event.target.value)}
-              placeholder={newFolderPlaceholder}
+              placeholder="Nouveau quizz"
             />
           </label>
           <button type="submit" disabled={!newFolderTitle.trim()}>
@@ -304,6 +193,7 @@ export function QuestionsFolderGrid({
           </button>
         </form>
       ) : null}
+      {location.kind === 'root' ? <SubscribedQuizzesSection /> : null}
     </div>
   );
 }

@@ -13,8 +13,7 @@ const question = (id: string, version: number): Question => ({
   classification: {
     kind: 'personal',
     courseId: 'course',
-    chapterId: null,
-    notionId: null,
+    chapter: null,
   },
   type: 'course',
   difficulty: 'standard',

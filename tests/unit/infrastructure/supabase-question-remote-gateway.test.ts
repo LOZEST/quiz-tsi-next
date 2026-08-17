@@ -16,8 +16,7 @@ const row = () => ({
   classification: {
     kind: 'personal',
     courseId: 'c',
-    chapterId: null,
-    notionId: null,
+    chapter: null,
   },
   type: 'course',
   difficulty: 'standard',
@@ -137,7 +136,7 @@ describe('questionFromRemoteRow', () => {
           },
           { ...row(), id: 'q2', owner_id: 'owner' },
         ],
-        personal_courses: [
+        quizzes: [
           {
             id: 'c',
             owner_id: 'owner',
@@ -163,7 +162,7 @@ describe('questionFromRemoteRow', () => {
     expect(pulled.rejectedRows).toHaveLength(1);
     expect(pulled.rejectedRows[0]?.index).toBe(3);
     expect(pulled.rejectedRows[0]?.message).toContain('invalide');
-    expect(pulled.courses.map((course) => course.title)).toEqual([
+    expect(pulled.quizzes.map((course) => course.title)).toEqual([
       'Thermodynamique perso',
     ]);
   });
@@ -297,7 +296,7 @@ describe('push distant idempotent', () => {
       updatedAt: '2026-08-10T00:00:00.000Z',
     };
     const remote = statefulClient({
-      personal_courses: [
+      quizzes: [
         {
           id: 'c',
           owner_id: 'owner',
@@ -313,7 +312,7 @@ describe('push distant idempotent', () => {
     const operation = {
       operationId: 'tax',
       userId: 'owner',
-      entity: 'course',
+      entity: 'quizz',
       entityId: 'c',
       kind: 'create',
       payload: course,

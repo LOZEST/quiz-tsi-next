@@ -19,8 +19,7 @@ const value = (): Question => ({
   classification: {
     kind: 'personal',
     courseId: 'course',
-    chapterId: null,
-    notionId: null,
+    chapter: null,
   },
   type: 'calculation',
   difficulty: 'standard',

@@ -65,9 +65,7 @@ describe('SettingsPage', () => {
     vi.clearAllMocks();
     snapshot = {
       questions: [question],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       pendingOperationCount: 2,
       conflicts: [
         {
