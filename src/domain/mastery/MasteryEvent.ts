@@ -5,7 +5,11 @@ export type SessionMode = 'daily' | 'weak-points' | 'free' | 'chapter-test';
 export interface MasteryEvent {
   readonly id: string;
   readonly userId: string;
+  /** For a personal/quizz event, this is the quizz's `courseId` (Phase 7:
+   * a quizz is flat, so it has no notion of its own — its id fills this
+   * "revision unit" slot instead). */
   readonly notionId: string;
+  readonly classificationKind: 'official' | 'personal';
   readonly questionId: string;
   readonly sessionId: string;
   readonly questionInstanceId: string;
@@ -59,18 +63,18 @@ export function projectMasteryEvents(
       evaluation.sessionId,
       chapterTestSessionIds,
     );
-    if (
-      !sessionMode ||
-      evaluation.classification?.kind === 'personal' ||
-      !evaluation.notionId
-    ) {
+    const classification = evaluation.classification;
+    const isPersonal = classification?.kind === 'personal';
+    const unitId = isPersonal ? classification.courseId : evaluation.notionId;
+    if (!sessionMode || !unitId) {
       unresolvedEvaluationIds.push(evaluation.id);
       continue;
     }
     events.push({
       id: `mastery:${evaluation.id}`,
       userId: evaluation.userId,
-      notionId: evaluation.notionId,
+      notionId: unitId,
+      classificationKind: isPersonal ? 'personal' : 'official',
       questionId: evaluation.questionId,
       sessionId: evaluation.sessionId,
       questionInstanceId: evaluation.questionInstanceId,

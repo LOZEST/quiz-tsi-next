@@ -10,6 +10,7 @@ import {
   createProgressSnapshot,
   type ProgressSnapshot,
 } from '@domain/progress/ProgressSnapshot';
+import { useUserQuizzes } from '@shared/useUserQuizzes';
 import styles from './ProgressPage.module.css';
 import type { MasteryStatus } from '@domain/mastery/MasteryPolicy';
 
@@ -92,6 +93,7 @@ export function ProgressPage() {
   }, [chapterTestRepository, evaluationRepository, state]);
 
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
+  const quizzes = useUserQuizzes();
   const snapshot = useMemo(
     () =>
       data
@@ -100,10 +102,11 @@ export function ProgressPage() {
             userId,
             now: clock.now(),
             programIndex,
+            quizzes,
             partial: data.partial,
           })
         : null,
-    [clock, data, programIndex, userId],
+    [clock, data, programIndex, quizzes, userId],
   );
   return (
     <main className={styles.page}>
@@ -135,6 +138,7 @@ export function ProgressContent({
 }) {
   const [openPart, setOpenPart] = useState<string | null>(null);
   const [openNotion, setOpenNotion] = useState<string | null>(null);
+  const [openQuizz, setOpenQuizz] = useState<string | null>(null);
   const label = (id: string) =>
     programIndex?.getNotion(id)?.label ?? 'Notion non disponible';
   return (
@@ -306,6 +310,67 @@ export function ProgressContent({
           ))}
         </div>
       </section>
+      {snapshot.quizzes.length ? (
+        <section aria-labelledby="quizzes-title">
+          <h2 id="quizzes-title">Mes quizz</h2>
+          <div className={styles.parts}>
+            {snapshot.quizzes.map((quizz) => (
+              <div key={quizz.notionId}>
+                <button
+                  type="button"
+                  aria-expanded={openQuizz === quizz.notionId}
+                  onClick={() =>
+                    setOpenQuizz(
+                      openQuizz === quizz.notionId ? null : quizz.notionId,
+                    )
+                  }
+                >
+                  <span>{quizz.label}</span>
+                  <strong>{quizz.masteryScore} %</strong>
+                  <span className={styles.partTrack} aria-hidden="true">
+                    <span style={{ inlineSize: `${quizz.masteryScore}%` }} />
+                  </span>
+                </button>
+                {openQuizz === quizz.notionId ? (
+                  <dl className={styles.details} data-testid="quizz-details">
+                    <div>
+                      <dt>Maîtrise</dt>
+                      <dd>{quizz.masteryScore} %</dd>
+                    </div>
+                    <div>
+                      <dt>Confiance</dt>
+                      <dd>{quizz.confidenceScore} %</dd>
+                    </div>
+                    <div>
+                      <dt>Statut</dt>
+                      <dd>
+                        <span
+                          className={styles.pill}
+                          data-tone={masteryStatusTones[quizz.status]}
+                        >
+                          {masteryStatusLabels[quizz.status]}
+                        </span>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Dernière activité</dt>
+                      <dd>{formatDate(quizz.lastReviewedAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Prochaine révision</dt>
+                      <dd>{formatDate(quizz.nextReviewAt)}</dd>
+                    </div>
+                    <div>
+                      <dt>Historique</dt>
+                      <dd>{quizz.evidenceCount} preuve(s)</dd>
+                    </div>
+                  </dl>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <section className={styles.trendChart}>
         <h2>Évolution du taux de réussite</h2>
         {snapshot.weeklyAccuracy.some((week) => week.accuracy !== null) ? (

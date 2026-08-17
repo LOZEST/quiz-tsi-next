@@ -14,6 +14,7 @@ import { QuestionBankIndex } from '../../../src/domain/questions/QuestionBankInd
 import { prepareQuestion } from '../../../src/domain/questions/PreparedQuestion';
 import { selectFreeRevisionQuestions } from '../../../src/domain/questions/QuestionSelection';
 import type { Question } from '../../../src/domain/questions/Question';
+import { MergedQuestionRepository } from '../../../src/infrastructure/session/MergedQuestionRepository';
 
 const programValue = {
   schemaVersion: 1,
@@ -478,6 +479,29 @@ describe('index, filtres et sélection', () => {
     ).toEqual(['reflex']);
   });
 
+  it('traite un quizz personnel comme un chapitre via courseId', () => {
+    const personal = question('quizz-question', {
+      source: 'private',
+      ownerId: 'owner-1',
+      classification: {
+        kind: 'personal',
+        courseId: 'quizz-1',
+        chapterId: null,
+        notionId: null,
+      },
+    });
+    const index = new QuestionBankIndex([question('official'), personal]);
+    const byQuizz = index.query({ chapterId: 'quizz-1' });
+    expect(byQuizz.ok && byQuizz.questions.map((entry) => entry.id)).toEqual([
+      'quizz-question',
+    ]);
+    const byOfficialChapter = index.query({ chapterId: 'c1' });
+    expect(
+      byOfficialChapter.ok &&
+        byOfficialChapter.questions.map((entry) => entry.id),
+    ).toEqual(['official']);
+  });
+
   it('dérive les listes et retire les enfants incompatibles', () => {
     expect(deriveAvailableChapters(program, { kind: 'all' })).toHaveLength(2);
     expect(
@@ -498,6 +522,45 @@ describe('index, filtres et sélection', () => {
     );
     expect(normalized.ok && normalized.value.chapter).toEqual({ kind: 'all' });
     expect(normalized.ok && normalized.value.notion).toEqual({ kind: 'all' });
+  });
+
+  it('MergedQuestionRepository fusionne le pool officiel et les contributions perso', () => {
+    const validated = validateQuestionBankBundle(
+      bundle([question('official')]),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const staticRepository = new InMemoryQuestionRepository(validated.value);
+    const merged = new MergedQuestionRepository(staticRepository);
+    const personal = question('quizz-question', {
+      source: 'private',
+      ownerId: 'owner-1',
+      classification: {
+        kind: 'personal',
+        courseId: 'quizz-1',
+        chapterId: null,
+        notionId: null,
+      },
+    });
+    expect(merged.listPublished().map((entry) => entry.id)).toEqual([
+      'official',
+    ]);
+    merged.setUserContributions([personal]);
+    expect(
+      merged
+        .listPublished()
+        .map((entry) => entry.id)
+        .sort(),
+    ).toEqual(['official', 'quizz-question']);
+    expect(
+      merged.query({ chapterId: 'quizz-1' }).map((entry) => entry.id),
+    ).toEqual(['quizz-question']);
+    expect(merged.getByIdAndVersion('quizz-question', 1)?.id).toBe(
+      'quizz-question',
+    );
+    expect(merged.getLatestById('quizz-question')?.id).toBe('quizz-question');
+    expect(merged.getBankMetadata()?.questionCount).toBe(1);
   });
 
   it('sélectionne et prépare dans un ordre déterministe', () => {
