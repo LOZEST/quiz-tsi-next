@@ -8,35 +8,17 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/\/whiteboard$/);
 }
 
-test('searches, filters and previews the official bank', async ({ page }) => {
-  await login(page);
-  await page.goto('questions');
-  await page.getByRole('button', { name: 'Liste' }).click();
-  await page.getByLabel('Recherche').fill('Divisibilité');
-  await expect(
-    page
-      .locator('ul')
-      .filter({ has: page.getByText(/Officielle/) })
-      .getByRole('button')
-      .first(),
-  ).toBeVisible();
-  await page.getByLabel('Source').selectOption('shared');
-  await expect(
-    page.getByRole('heading', { name: 'Aucun résultat' }),
-  ).toBeVisible();
-});
-
 test('creates a structured local draft with math and restores it after reload', async ({
   page,
 }) => {
   await login(page);
   await page.goto('questions');
-  await page.getByRole('button', { name: 'Liste' }).click();
-  await page.getByRole('button', { name: 'Créer une question' }).click();
+  await page.getByPlaceholder('Nouveau quizz').fill('Arithmétique');
+  await page.getByRole('button', { name: 'Créer' }).click();
+  await page
+    .getByRole('button', { name: 'Ajouter une question à la main' })
+    .click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
-  await editor.getByLabel('Partie').selectOption('fundamentals');
-  await editor.getByLabel('Chapitre').selectOption('numbers-arithmetic');
-  await editor.getByLabel('Notion').selectOption('NUM-F01');
   const prompt = editor.getByRole('group', { name: 'Énoncé' });
   await prompt.getByLabel('Texte').fill('Calculer une puissance');
   await prompt.getByRole('button', { name: '+ Formule', exact: true }).click();
@@ -52,11 +34,14 @@ test('creates a structured local draft with math and restores it after reload', 
   await editor
     .getByRole('button', { name: 'Enregistrer le brouillon' })
     .click();
-  await expect(page.getByText('Calculer une puissance')).toBeVisible();
-  await expect(page.getByText('1 en attente')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Calculer une puissance' }),
+  ).toBeVisible();
   await page.reload();
-  await page.getByRole('button', { name: 'Liste' }).click();
-  await expect(page.getByText('Calculer une puissance')).toBeVisible();
+  await page.getByRole('button', { name: /Arithmétique/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Calculer une puissance' }),
+  ).toBeVisible();
 });
 
 test('preserves the OAuth authorization id through login and Pages routing', async ({

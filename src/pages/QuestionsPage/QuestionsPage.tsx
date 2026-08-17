@@ -2,12 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
-import { EmptyState } from '@design-system/components/EmptyState/EmptyState';
-import { StatusBadge } from '@design-system/components/StatusBadge/StatusBadge';
 import {
-  searchAndFilterQuestions,
   questionsInFolder,
-  type QuestionBankFilters,
   type FolderLocation,
 } from '@domain/questions/QuestionBankSearch';
 import {
@@ -31,18 +27,12 @@ import { parseMathSourceText } from '@domain/math/MathParser';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { PersonalTaxonomyDraft } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { ProgramIndex } from '@domain/program/Program';
-import type {
-  PersonalCourse,
-  PersonalChapter,
-  PersonalNotion,
-} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
 import styles from './QuestionsPage.module.css';
 import { QuestionsFolderGrid } from './QuestionsFolderGrid';
 import { QuizWorkspace } from './QuizWorkspace';
 import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
-import { RawContentPreview } from '@features/questions/RawContentPreview';
 import type { InstantiatedContentSegment } from '@domain/questions/QuestionInstantiation';
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
@@ -53,11 +43,6 @@ const emptySnapshot: QuestionWorkspaceSnapshot = {
   pendingOperationCount: 0,
   conflicts: [],
 };
-const labels = {
-  static: 'Officielle',
-  private: 'Ma banque',
-  shared: 'Partagée',
-} as const;
 
 export function QuestionsPage() {
   const { state } = useAuth();
@@ -73,8 +58,6 @@ export function QuestionsPage() {
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
   const [storageError, setStorageError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState<QuestionBankFilters>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [reviewErrors, setReviewErrors] = useState<
@@ -92,11 +75,6 @@ export function QuestionsPage() {
     done: number;
     total: number;
   } | null>(null);
-  const [bulkMoveCourseId, setBulkMoveCourseId] = useState('');
-  const [bulkMoveChapterId, setBulkMoveChapterId] = useState('');
-  const [bulkMoveNotionId, setBulkMoveNotionId] = useState('');
-  const selectAllRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'list' | 'folders'>('folders');
   const [folderLocation, setFolderLocation] = useState<FolderLocation>({
     kind: 'root',
   });
@@ -151,19 +129,7 @@ export function QuestionsPage() {
     () => [...questionRepository.listPublished(), ...workspace.questions],
     [questionRepository, workspace.questions],
   );
-  const results = useMemo(
-    () =>
-      searchAndFilterQuestions({
-        questions: all,
-        search,
-        filters,
-        program: programIndex,
-        courses: workspace.courses,
-        chapters: workspace.chapters,
-        notions: workspace.notions,
-      }),
-    [all, search, filters, programIndex, workspace],
-  );
+  const results = all;
   const selected = all.find((question) => question.id === selectedId) ?? null;
   const mutate = async (
     question: Readonly<Question>,
@@ -203,8 +169,7 @@ export function QuestionsPage() {
       },
       'archive',
     );
-  const displayedQuestions =
-    view === 'folders' ? questionsInFolder(results, folderLocation) : results;
+  const displayedQuestions = questionsInFolder(results, folderLocation);
   const workspaceCourse =
     folderLocation.kind === 'course'
       ? (workspace.courses.find(
@@ -214,13 +179,6 @@ export function QuestionsPage() {
   const selectableResults = displayedQuestions.filter(
     (question) => question.source !== 'static',
   );
-  const allSelected =
-    selectableResults.length > 0 &&
-    selectableResults.every((question) => selectedIds.has(question.id));
-  useEffect(() => {
-    if (selectAllRef.current)
-      selectAllRef.current.indeterminate = selectedIds.size > 0 && !allSelected;
-  }, [selectedIds, allSelected]);
   const toggleSelected = (id: string) => {
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -228,13 +186,6 @@ export function QuestionsPage() {
       else next.add(id);
       return next;
     });
-  };
-  const toggleSelectAll = () => {
-    setSelectedIds(
-      allSelected
-        ? new Set()
-        : new Set(selectableResults.map((question) => question.id)),
-    );
   };
   const clearSelection = () => setSelectedIds(new Set());
   const runBulkAction = async (
@@ -271,18 +222,9 @@ export function QuestionsPage() {
     clearSelection();
     await reload();
   };
-  const onBulkEdit = () => {
-    if (selectedIds.size !== 1) return;
-    const only = selectableResults.find((question) =>
-      selectedIds.has(question.id),
-    );
-    if (!only) return;
-    setSelectedId(only.id);
-    setEditing(true);
-  };
   const onBulkValidate = () =>
     runBulkAction(
-      'update',
+      'publish',
       (question) => {
         const prepared = prepareQuestionForReview(question);
         if (prepared.issues.length)
@@ -290,29 +232,18 @@ export function QuestionsPage() {
         return {
           ...prepared.normalizedQuestion,
           version: question.version + 1,
+          status: 'published',
           validated: true,
           updatedAt: new Date().toISOString(),
         };
       },
-      (question) => !question.validated,
+      (question) => question.status !== 'published',
     );
   const onBulkDelete = () =>
     runBulkAction('archive', (question) => ({
       ...question,
       version: question.version + 1,
       status: 'archived',
-      updatedAt: new Date().toISOString(),
-    }));
-  const onBulkMove = () =>
-    runBulkAction('update', (question) => ({
-      ...question,
-      version: question.version + 1,
-      classification: {
-        kind: 'personal',
-        courseId: bulkMoveCourseId,
-        chapterId: bulkMoveChapterId || null,
-        notionId: bulkMoveNotionId || null,
-      },
       updatedAt: new Date().toISOString(),
     }));
   const onCreateCourse = async (title: string) => {
@@ -434,51 +365,6 @@ export function QuestionsPage() {
         </ul>
       ) : null}
       <div className={styles.actions}>
-        <button type="button" onClick={() => setEditing(true)}>
-          Créer une question
-        </button>
-        <div
-          role="group"
-          aria-label="Mode d’affichage"
-          className={styles.viewToggle}
-        >
-          <button
-            type="button"
-            aria-pressed={view === 'list'}
-            onClick={() => setView('list')}
-          >
-            Liste
-          </button>
-          <button
-            type="button"
-            aria-pressed={view === 'folders'}
-            onClick={() => setView('folders')}
-          >
-            Dossiers
-          </button>
-        </div>
-        {chatGptImportUrl ? (
-          <a
-            className="qtsi-text-link"
-            href={chatGptImportUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Importer avec ChatGPT
-          </a>
-        ) : null}
-        <button
-          type="button"
-          onClick={() =>
-            (
-              document.getElementById(
-                'question-help',
-              ) as HTMLDialogElement | null
-            )?.showModal()
-          }
-        >
-          Aide
-        </button>
         <button
           type="button"
           disabled={offline || syncState === 'syncing'}
@@ -505,292 +391,25 @@ export function QuestionsPage() {
           </span>
         ) : null}
       </div>
-      <div className={styles.filters}>
-        <label>
-          Recherche
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Énoncé, taxonomie ou tag"
-          />
-        </label>
-        <label>
-          Source
-          <select
-            value={filters.source ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                source: event.target.value
-                  ? (event.target.value as Question['source'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Toutes</option>
-            <option value="static">Officielle</option>
-            <option value="private">Ma banque</option>
-            <option value="shared">Partagée</option>
-          </select>
-        </label>
-        <label>
-          Partie / Cours
-          <select
-            value={filters.courseOrPartId ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                courseOrPartId: event.target.value || undefined,
-                chapterId: undefined,
-                notionId: undefined,
-              }))
-            }
-          >
-            <option value="">Toutes les parties et tous les cours</option>
-            {programIndex?.getAllParts().map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-            {workspace.courses.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Chapitre
-          <select
-            value={filters.chapterId ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                chapterId: event.target.value || undefined,
-                notionId: undefined,
-              }))
-            }
-          >
-            <option value="">Tous les chapitres</option>
-            {programIndex?.getAllChapters().map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-            {workspace.chapters.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Notion
-          <select
-            value={filters.notionId ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                notionId: event.target.value || undefined,
-              }))
-            }
-          >
-            <option value="">Toutes les notions</option>
-            {programIndex?.getAllNotions().map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-            {workspace.notions.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Type
-          <select
-            value={filters.type ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                type: event.target.value
-                  ? (event.target.value as Question['type'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Tous</option>
-            <option value="formula">Formules</option>
-            <option value="course">Cours</option>
-            <option value="calculation">Calcul</option>
-            <option value="reflex">Réflexe</option>
-          </select>
-        </label>
-        <label>
-          Difficulté
-          <select
-            value={filters.difficulty ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                difficulty: event.target.value
-                  ? (event.target.value as Exclude<
-                      Question['difficulty'],
-                      null
-                    >)
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Toutes</option>
-            <option value="fundamental">Fondamental</option>
-            <option value="standard">Standard</option>
-            <option value="trap">Piège</option>
-          </select>
-        </label>
-        <label>
-          Statut
-          <select
-            value={filters.status ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                status: event.target.value
-                  ? (event.target.value as Question['status'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Tous</option>
-            <option value="draft">Brouillon</option>
-            <option value="published">Publié</option>
-            <option value="archived">Archivé</option>
-          </select>
-        </label>
-      </div>
       {loading ? (
-        <p role="status">Chargement de la banque…</p>
-      ) : results.length === 0 ? (
-        <EmptyState
-          title={all.length ? 'Aucun résultat' : 'Ta banque est vide'}
-          message={
-            all.length
-              ? 'Aucune question ne correspond à la recherche et aux filtres.'
-              : 'Crée une première question ; elle sera disponible hors connexion.'
-          }
-        />
+        <p role="status">Chargement de tes quizz…</p>
       ) : (
-        <div className={styles.layout}>
-          <div className={styles.listColumn}>
-            {view === 'folders' ? (
-              <QuestionsFolderGrid
-                location={folderLocation}
-                onLocationChange={setFolderLocation}
-                courses={workspace.courses}
-                chapters={workspace.chapters}
-                notions={workspace.notions}
-                questions={results}
-                onCreateCourse={(title) => void onCreateCourse(title)}
-                onCreateChapter={(title) => void onCreateChapter(title)}
-                onCreateNotion={(title) => void onCreateNotion(title)}
-                onToggleCourseVisibility={(courseId, visibility) =>
-                  void onToggleCourseVisibility(courseId, visibility)
-                }
-              />
-            ) : null}
-            {view === 'folders' && folderLocation.kind !== 'root' ? null : (
-              <>
-                <div className={styles.listHeader}>
-                  <label>
-                    <input
-                      ref={selectAllRef}
-                      type="checkbox"
-                      checked={allSelected}
-                      disabled={selectableResults.length === 0}
-                      onChange={toggleSelectAll}
-                      aria-label="Tout sélectionner"
-                    />
-                    Tout sélectionner
-                  </label>
-                  {selectedIds.size ? (
-                    <span>
-                      {selectedIds.size} sélectionnée
-                      {selectedIds.size > 1 ? 's' : ''}
-                    </span>
-                  ) : null}
-                </div>
-                <ul className={styles.list}>
-                  {displayedQuestions.map((question) => {
-                    const promptLabel =
-                      question.prompt.find((segment) => segment.kind === 'text')
-                        ?.value ?? 'Question mathématique';
-                    return (
-                      <li
-                        key={`${question.id}:${question.version}`}
-                        className={styles.listRow}
-                      >
-                        {question.source !== 'static' ? (
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(question.id)}
-                            onChange={() => toggleSelected(question.id)}
-                            aria-label={`Sélectionner ${promptLabel}`}
-                          />
-                        ) : (
-                          <span
-                            className={styles.checkboxSpacer}
-                            aria-hidden="true"
-                          />
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => setSelectedId(question.id)}
-                          aria-pressed={selectedId === question.id}
-                        >
-                          <span>{promptLabel}</span>
-                          <small>
-                            {labels[question.source]} ·{' '}
-                            <StatusBadge status={question.status} />
-                          </small>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-                {selectedIds.size ? (
-                  <BulkActionBar
-                    count={selectedIds.size}
-                    busy={bulkBusy}
-                    canEdit={selectedIds.size === 1}
-                    courses={workspace.courses}
-                    chapters={workspace.chapters}
-                    notions={workspace.notions}
-                    moveCourseId={bulkMoveCourseId}
-                    moveChapterId={bulkMoveChapterId}
-                    moveNotionId={bulkMoveNotionId}
-                    onMoveCourseChange={(value) => {
-                      setBulkMoveCourseId(value);
-                      setBulkMoveChapterId('');
-                      setBulkMoveNotionId('');
-                    }}
-                    onMoveChapterChange={(value) => {
-                      setBulkMoveChapterId(value);
-                      setBulkMoveNotionId('');
-                    }}
-                    onMoveNotionChange={setBulkMoveNotionId}
-                    onEdit={onBulkEdit}
-                    onValidate={() => void onBulkValidate()}
-                    onDelete={() => void onBulkDelete()}
-                    onMove={() => void onBulkMove()}
-                    onClear={clearSelection}
-                  />
-                ) : null}
-              </>
-            )}
-          </div>
-          {view === 'folders' && folderLocation.kind !== 'root' ? (
+        <>
+          <QuestionsFolderGrid
+            location={folderLocation}
+            onLocationChange={setFolderLocation}
+            courses={workspace.courses}
+            chapters={workspace.chapters}
+            notions={workspace.notions}
+            questions={results}
+            onCreateCourse={(title) => void onCreateCourse(title)}
+            onCreateChapter={(title) => void onCreateChapter(title)}
+            onCreateNotion={(title) => void onCreateNotion(title)}
+            onToggleCourseVisibility={(courseId, visibility) =>
+              void onToggleCourseVisibility(courseId, visibility)
+            }
+          />
+          {folderLocation.kind !== 'root' ? (
             <QuizWorkspace
               questions={displayedQuestions}
               course={workspaceCourse}
@@ -810,64 +429,15 @@ export function QuestionsPage() {
                 setEditing(true);
               }}
               chatGptImportUrl={chatGptImportUrl}
+              selectedIds={selectedIds}
+              onToggleSelected={toggleSelected}
+              bulkBusy={bulkBusy}
+              onBulkValidate={() => void onBulkValidate()}
+              onBulkDelete={() => void onBulkDelete()}
+              onClearSelection={clearSelection}
             />
-          ) : (
-            <section className={styles.preview} aria-label="Aperçu">
-              {selected ? (
-                <QuestionPreview
-                  question={selected}
-                  courses={workspace.courses}
-                  chapters={workspace.chapters}
-                  notions={workspace.notions}
-                  onEdit={() => setEditing(true)}
-                  onValidate={() => {
-                    const prepared = prepareQuestionForReview(selected);
-                    setReviewErrors(prepared.issues);
-                    if (!prepared.issues.length)
-                      void mutate(
-                        {
-                          ...prepared.normalizedQuestion,
-                          version: selected.version + 1,
-                          validated: true,
-                          updatedAt: new Date().toISOString(),
-                        },
-                        'update',
-                      );
-                  }}
-                  onDelete={() =>
-                    void mutate(
-                      {
-                        ...selected,
-                        version: selected.version + 1,
-                        status: 'archived',
-                        updatedAt: new Date().toISOString(),
-                      },
-                      'archive',
-                    )
-                  }
-                  onMove={(courseId, chapterId, notionId) =>
-                    void mutate(
-                      {
-                        ...selected,
-                        version: selected.version + 1,
-                        classification: {
-                          kind: 'personal',
-                          courseId,
-                          chapterId,
-                          notionId,
-                        },
-                        updatedAt: new Date().toISOString(),
-                      },
-                      'update',
-                    )
-                  }
-                />
-              ) : (
-                <p>Sélectionne une question pour afficher son aperçu.</p>
-              )}
-            </section>
-          )}
-        </div>
+          ) : null}
+        </>
       )}
       {workspace.conflicts.map((conflict) => (
         <section key={conflict.id} className={styles.conflict}>
@@ -957,320 +527,6 @@ export function QuestionsPage() {
           }}
         />
       ) : null}
-      <dialog id="question-help">
-        <h2>Créer une question</h2>
-        <p>
-          Ajoute du texte et des formules MathSource, puis vérifie les variantes
-          avant publication.
-        </p>
-        <h3>Raccourcis</h3>
-        <ul>
-          {MATH_SYNTAX_REGISTRY_V1.map((item) => (
-            <li key={item.id}>
-              <code>{item.syntax}</code> — {item.description}
-            </li>
-          ))}
-        </ul>
-        <form method="dialog">
-          <button>Fermer</button>
-        </form>
-      </dialog>
-    </div>
-  );
-}
-
-function QuestionPreview({
-  question,
-  courses,
-  chapters,
-  notions,
-  onEdit,
-  onValidate,
-  onDelete,
-  onMove,
-}: {
-  question: Readonly<Question>;
-  courses: readonly PersonalCourse[];
-  chapters: readonly PersonalChapter[];
-  notions: readonly PersonalNotion[];
-  onEdit: () => void;
-  onValidate: () => void;
-  onDelete: () => void;
-  onMove: (
-    courseId: string,
-    chapterId: string | null,
-    notionId: string | null,
-  ) => void;
-}) {
-  const classification = questionClassification(question);
-  const imported = question.provenance?.chatGptImport;
-  const [moveCourseId, setMoveCourseId] = useState('');
-  const [moveChapterId, setMoveChapterId] = useState('');
-  const [moveNotionId, setMoveNotionId] = useState('');
-  return (
-    <>
-      <h2>
-        Aperçu <StatusBadge status={question.status} />
-      </h2>
-      {imported ? (
-        <section className={styles.importReview}>
-          <strong>Import ChatGPT — À vérifier</strong>
-          <p>Couverture : {imported.coverage}</p>
-          {imported.coverage !== 'text-and-visuals' ? (
-            <p role="alert">
-              {imported.coverage === 'incomplete'
-                ? 'Analyse incomplète : vérifie attentivement le document.'
-                : 'Les visuels n’ont pas été analysés.'}
-            </p>
-          ) : null}
-          <ul>
-            {imported.uncertainties.map((item, index) => (
-              <li key={`${item.path}:${index}`}>
-                {item.message} ({item.path})
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-      <p>
-        <RawContentPreview segments={question.prompt} />
-      </p>
-      <p>
-        {classification?.kind === 'official'
-          ? `${classification.chapterId} · ${classification.notionId}`
-          : `Cours personnel · ${classification?.courseId ?? ''}`}
-      </p>
-      <div className={styles.actions}>
-        {question.source !== 'static' ? (
-          <button type="button" onClick={onEdit}>
-            Modifier
-          </button>
-        ) : null}
-        {question.source !== 'static' && !question.validated ? (
-          <button type="button" onClick={onValidate}>
-            Valider
-          </button>
-        ) : null}
-        {question.source !== 'static' && question.status !== 'archived' ? (
-          <button type="button" onClick={onDelete}>
-            Supprimer
-          </button>
-        ) : null}
-      </div>
-      {question.source !== 'static' ? (
-        <div className={styles.actions}>
-          <label>
-            Déplacer vers
-            <select
-              value={moveCourseId}
-              onChange={(event) => {
-                setMoveCourseId(event.target.value);
-                setMoveChapterId('');
-                setMoveNotionId('');
-              }}
-            >
-              <option value="">Choisir un cours</option>
-              {courses.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          {moveCourseId ? (
-            <label>
-              Chapitre
-              <select
-                value={moveChapterId}
-                onChange={(event) => {
-                  setMoveChapterId(event.target.value);
-                  setMoveNotionId('');
-                }}
-              >
-                <option value="">Aucun</option>
-                {chapters
-                  .filter((item) => item.courseId === moveCourseId)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ) : null}
-          {moveCourseId ? (
-            <label>
-              Notion
-              <select
-                value={moveNotionId}
-                onChange={(event) => setMoveNotionId(event.target.value)}
-              >
-                <option value="">Aucune</option>
-                {notions
-                  .filter(
-                    (item) =>
-                      item.courseId === moveCourseId &&
-                      (!moveChapterId || item.chapterId === moveChapterId),
-                  )
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ) : null}
-          <button
-            type="button"
-            disabled={!moveCourseId}
-            onClick={() =>
-              onMove(moveCourseId, moveChapterId || null, moveNotionId || null)
-            }
-          >
-            Déplacer
-          </button>
-        </div>
-      ) : null}
-    </>
-  );
-}
-
-function BulkActionBar({
-  count,
-  busy,
-  canEdit,
-  courses,
-  chapters,
-  notions,
-  moveCourseId,
-  moveChapterId,
-  moveNotionId,
-  onMoveCourseChange,
-  onMoveChapterChange,
-  onMoveNotionChange,
-  onEdit,
-  onValidate,
-  onDelete,
-  onMove,
-  onClear,
-}: {
-  count: number;
-  busy: { done: number; total: number } | null;
-  canEdit: boolean;
-  courses: readonly PersonalCourse[];
-  chapters: readonly PersonalChapter[];
-  notions: readonly PersonalNotion[];
-  moveCourseId: string;
-  moveChapterId: string;
-  moveNotionId: string;
-  onMoveCourseChange: (value: string) => void;
-  onMoveChapterChange: (value: string) => void;
-  onMoveNotionChange: (value: string) => void;
-  onEdit: () => void;
-  onValidate: () => void;
-  onDelete: () => void;
-  onMove: () => void;
-  onClear: () => void;
-}) {
-  const disabled = busy !== null;
-  return (
-    <div
-      className={styles.bulkBar}
-      role="toolbar"
-      aria-label="Actions groupées"
-    >
-      <span>
-        {count} question{count > 1 ? 's' : ''} sélectionnée
-        {count > 1 ? 's' : ''}
-      </span>
-      {busy ? (
-        <span role="status">
-          {busy.done}/{busy.total} traitées…
-        </span>
-      ) : (
-        <>
-          <button
-            type="button"
-            disabled={disabled || !canEdit}
-            onClick={onEdit}
-          >
-            Modifier
-          </button>
-          <button type="button" disabled={disabled} onClick={onValidate}>
-            Valider
-          </button>
-          <button type="button" disabled={disabled} onClick={onDelete}>
-            Supprimer
-          </button>
-          <label>
-            Déplacer vers
-            <select
-              value={moveCourseId}
-              disabled={disabled}
-              onChange={(event) => onMoveCourseChange(event.target.value)}
-            >
-              <option value="">Choisir un cours</option>
-              {courses.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-          {moveCourseId ? (
-            <label>
-              Chapitre
-              <select
-                value={moveChapterId}
-                disabled={disabled}
-                onChange={(event) => onMoveChapterChange(event.target.value)}
-              >
-                <option value="">Aucun</option>
-                {chapters
-                  .filter((item) => item.courseId === moveCourseId)
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ) : null}
-          {moveCourseId ? (
-            <label>
-              Notion
-              <select
-                value={moveNotionId}
-                disabled={disabled}
-                onChange={(event) => onMoveNotionChange(event.target.value)}
-              >
-                <option value="">Aucune</option>
-                {notions
-                  .filter(
-                    (item) =>
-                      item.courseId === moveCourseId &&
-                      (!moveChapterId || item.chapterId === moveChapterId),
-                  )
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>
-                      {item.title}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          ) : null}
-          <button
-            type="button"
-            disabled={disabled || !moveCourseId}
-            onClick={onMove}
-          >
-            Déplacer
-          </button>
-          <button type="button" disabled={disabled} onClick={onClear}>
-            Annuler la sélection
-          </button>
-        </>
-      )}
     </div>
   );
 }

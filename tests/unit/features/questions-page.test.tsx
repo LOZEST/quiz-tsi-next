@@ -38,6 +38,17 @@ const question = (overrides: Partial<Question> = {}): Question => ({
   ...overrides,
 });
 
+const course = (overrides: Partial<PersonalCourse> = {}): PersonalCourse => ({
+  id: 'course-1',
+  ownerId: 'user-1',
+  title: 'Mécanique',
+  description: '',
+  visibility: 'private',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+  ...overrides,
+});
+
 let snapshot: QuestionWorkspaceSnapshot;
 let currentRole: 'user' | 'admin' | 'owner' = 'owner';
 const load = vi.fn(() => Promise.resolve(snapshot));
@@ -80,10 +91,10 @@ const saveQuestionDraftWithPersonalTaxonomy = vi.fn(
   },
 );
 const listOutbox = vi.fn(() => Promise.resolve([]));
-const saveCourse = vi.fn((_userId: string, course: PersonalCourse) => {
+const saveCourse = vi.fn((_userId: string, next: PersonalCourse) => {
   snapshot = {
     ...snapshot,
-    courses: [...snapshot.courses, course],
+    courses: [...snapshot.courses.filter((item) => item.id !== next.id), next],
     pendingOperationCount: snapshot.pendingOperationCount + 1,
   };
   return Promise.resolve();
@@ -159,11 +170,20 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
 
 import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
 
+async function enterCourse(
+  user: ReturnType<typeof userEvent.setup>,
+  title: string,
+) {
+  await user.click(
+    await screen.findByRole('button', { name: new RegExp(title) }),
+  );
+}
+
 describe('QuestionsPage', () => {
   beforeEach(() => {
     currentRole = 'owner';
     snapshot = {
-      questions: [question()],
+      questions: [],
       courses: [],
       chapters: [],
       notions: [],
@@ -182,29 +202,10 @@ describe('QuestionsPage', () => {
     );
   });
 
-  it('ouvre le GPT configuré dans un nouvel onglet sans remplacer la page', async () => {
+  it('synchronise et affiche les opérations en attente', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
-
-    const importLink = await screen.findByRole('link', {
-      name: 'Importer avec ChatGPT',
-    });
-    expect(importLink).toHaveAttribute(
-      'href',
-      'https://chatgpt.com/g/quiz-tsi-import',
-    );
-    expect(importLink).toHaveAttribute('target', '_blank');
-    expect(importLink.getAttribute('rel')?.split(' ')).toEqual(
-      expect.arrayContaining(['noopener', 'noreferrer']),
-    );
-
-    await user.click(
-      screen.getByRole('button', { name: 'Créer une question' }),
-    );
-    expect(
-      screen.getByRole('dialog', { name: 'Nouvelle question' }),
-    ).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(await screen.findByText('1 en attente')).toBeInTheDocument();
     const previousPullCount =
       questionRemoteGateway.pullRecent.mock.calls.length;
     await user.click(screen.getByRole('button', { name: 'Synchroniser' }));
@@ -215,30 +216,71 @@ describe('QuestionsPage', () => {
     );
   });
 
-  it('ne rend aucun lien lorsque la configuration ChatGPT est dangereuse', () => {
-    vi.stubEnv('VITE_CHATGPT_IMPORT_GPT_URL', 'javascript:alert(1)');
+  it('ouvre le GPT configuré dans un nouvel onglet et ouvre/ferme l’éditeur manuel', async () => {
+    snapshot = { ...snapshot, courses: [course()] };
+    const user = userEvent.setup();
     render(<QuestionsPage />);
+    await enterCourse(user, 'Mécanique');
+    const importLink = await screen.findByRole('link', {
+      name: 'Ajouter une question avec GPT',
+    });
+    expect(importLink).toHaveAttribute(
+      'href',
+      'https://chatgpt.com/g/quiz-tsi-import',
+    );
+    expect(importLink).toHaveAttribute('target', '_blank');
+    expect(importLink.getAttribute('rel')?.split(' ')).toEqual(
+      expect.arrayContaining(['noopener', 'noreferrer']),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
+    );
     expect(
-      screen.queryByRole('link', { name: 'Importer avec ChatGPT' }),
+      screen.getByRole('dialog', { name: 'Nouvelle question' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(
+      screen.queryByRole('dialog', { name: 'Nouvelle question' }),
     ).not.toBeInTheDocument();
   });
 
-  it('recherche, filtre, valide et supprime un brouillon', async () => {
+  it('ne rend aucun lien lorsque la configuration ChatGPT est dangereuse', async () => {
+    vi.stubEnv('VITE_CHATGPT_IMPORT_GPT_URL', 'javascript:alert(1)');
+    snapshot = { ...snapshot, courses: [course()] };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
-    expect(await screen.findByText('1 en attente')).toBeInTheDocument();
-    await user.type(screen.getByLabelText('Recherche'), 'somme');
-    await user.selectOptions(screen.getByLabelText('Source'), 'private');
-    await user.selectOptions(screen.getByLabelText('Type'), 'course');
-    await user.selectOptions(screen.getByLabelText('Difficulté'), 'standard');
-    await user.selectOptions(screen.getByLabelText('Statut'), 'draft');
+    await enterCourse(user, 'Mécanique');
+    expect(
+      screen.queryByRole('link', { name: 'Ajouter une question avec GPT' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('valide une question de brouillon puis la supprime depuis l’espace de travail', async () => {
+    snapshot = {
+      ...snapshot,
+      courses: [course()],
+      questions: [
+        question({
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await enterCourse(user, 'Mécanique');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     await user.click(screen.getByRole('button', { name: 'Valider' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
-    expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).validated).toBe(
-      true,
-    );
+    expect(saveQuestion.mock.calls[0]?.[1]).toMatchObject({
+      status: 'published',
+      validated: true,
+    });
+    expect(saveQuestion.mock.calls[0]?.[2]).toBe('publish');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     await user.click(screen.getByRole('button', { name: 'Supprimer' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
@@ -250,8 +292,15 @@ describe('QuestionsPage', () => {
   it('persiste dix variantes prouvées lors de la relecture d’un import paramétré', async () => {
     snapshot = {
       ...snapshot,
+      courses: [course()],
       questions: [
         question({
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
           prompt: [{ kind: 'text', value: 'Calculer @n' }],
           correction: [
             {
@@ -283,7 +332,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
+    await enterCourse(user, 'Mécanique');
     await user.click(
       (await screen.findAllByRole('button', { name: /Calculer/ }))[0]!,
     );
@@ -297,17 +346,7 @@ describe('QuestionsPage', () => {
   it('efface une notion existante lorsqu’un nouveau chapitre est saisi', async () => {
     snapshot = {
       ...snapshot,
-      courses: [
-        {
-          id: 'course',
-          ownerId: 'user-1',
-          title: 'Cours',
-          description: '',
-          visibility: 'private' as const,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
+      courses: [{ ...course(), id: 'course' }],
       chapters: [
         {
           id: 'chapter-a',
@@ -332,12 +371,9 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await enterCourse(user, 'Mécanique');
     await user.click(
-      await screen.findByRole('button', { name: 'Créer une question' }),
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Type de classification'),
-      'personal',
+      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
     );
     await user.selectOptions(screen.getByLabelText('Cours'), 'course');
     await user.selectOptions(
@@ -378,16 +414,14 @@ describe('QuestionsPage', () => {
   });
 
   it('crée et édite les segments structurés et les aides mathématiques', async () => {
+    snapshot = { ...snapshot, courses: [course()] };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await screen.findByText('1 en attente');
+    await enterCourse(user, 'Mécanique');
     await user.click(
-      screen.getByRole('button', { name: 'Créer une question' }),
+      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
     );
-    await user.selectOptions(
-      screen.getByLabelText('Type de classification'),
-      'personal',
-    );
+    await user.selectOptions(screen.getByLabelText('Cours'), '');
     await user.type(screen.getByLabelText('Nouveau cours'), 'Mon cours');
     await user.type(
       screen.getByLabelText('Nouveau chapitre facultatif'),
@@ -523,6 +557,12 @@ describe('QuestionsPage', () => {
 
   it('préserve indice structuré, étapes de correction, type et tags à l’édition', async () => {
     const structured = question({
+      classification: {
+        kind: 'personal',
+        courseId: 'course-1',
+        chapterId: null,
+        notionId: null,
+      },
       hint: [
         { kind: 'text', value: 'Utilise ' },
         { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x^2' } },
@@ -544,10 +584,10 @@ describe('QuestionsPage', () => {
       ],
       tags: ['algèbre', 'carré'],
     });
-    snapshot = { ...snapshot, questions: [structured] };
+    snapshot = { ...snapshot, courses: [course()], questions: [structured] };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
+    await enterCourse(user, 'Mécanique');
     await user.click(
       (await screen.findAllByRole('button', { name: /Calculer la somme/ }))[0]!,
     );
@@ -575,18 +615,12 @@ describe('QuestionsPage', () => {
   });
 
   it('tester plusieurs fois puis annuler ne persiste aucune donnée', async () => {
+    snapshot = { ...snapshot, courses: [course()] };
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await enterCourse(user, 'Mécanique');
     await user.click(
-      await screen.findByRole('button', { name: 'Créer une question' }),
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Type de classification'),
-      'personal',
-    );
-    await user.type(
-      screen.getByLabelText('Nouveau cours'),
-      'Cours sans sauvegarde',
+      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
     );
     await user.type(screen.getByLabelText('Nom'), 'n');
     await user.type(screen.getByLabelText('Libellé'), 'Entier');
@@ -604,7 +638,7 @@ describe('QuestionsPage', () => {
     expect(saveQuestionDraftWithPersonalTaxonomy).not.toHaveBeenCalled();
   });
 
-  it('présente un import incomplet, la taxonomie personnelle et les choix de conflit', async () => {
+  it('présente un import incomplet et les choix de conflit', async () => {
     const imported = question({
       classification: {
         kind: 'personal',
@@ -633,17 +667,7 @@ describe('QuestionsPage', () => {
     snapshot = {
       ...snapshot,
       questions: [imported],
-      courses: [
-        {
-          id: 'course-1',
-          ownerId: 'user-1',
-          title: 'Cours personnel',
-          description: '',
-          visibility: 'private' as const,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
+      courses: [course()],
       conflicts: [
         {
           id: 'conflict-1',
@@ -658,12 +682,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
-    await screen.findByRole('option', { name: 'Cours personnel' });
-    await user.selectOptions(
-      screen.getByLabelText('Partie / Cours'),
-      'course-1',
-    );
+    await enterCourse(user, 'Mécanique');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     expect(screen.getByText(/Analyse incomplète/)).toBeInTheDocument();
     expect(screen.getByText(/Schéma illisible/)).toBeInTheDocument();
@@ -684,17 +703,33 @@ describe('QuestionsPage', () => {
   it('supprime en masse les questions sélectionnées puis vide la sélection', async () => {
     snapshot = {
       ...snapshot,
+      courses: [course()],
       questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-1',
+          prompt: [{ kind: 'text', value: 'Un' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
         question({
           id: 'private-2',
           prompt: [{ kind: 'text', value: 'Deux' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
         }),
       ],
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
+    await enterCourse(user, 'Mécanique');
     await user.click(
       await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
     );
@@ -704,8 +739,12 @@ describe('QuestionsPage', () => {
     expect(
       screen.getByRole('toolbar', { name: 'Actions groupées' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('2 sélectionnées')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    expect(screen.getByText('2 questions sélectionnées')).toBeInTheDocument();
+    await user.click(
+      within(
+        screen.getByRole('toolbar', { name: 'Actions groupées' }),
+      ).getByRole('button', { name: 'Supprimer' }),
+    );
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
     expect(saveQuestion.mock.calls.map((call) => call[2])).toEqual([
       'archive',
@@ -719,81 +758,10 @@ describe('QuestionsPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('« Tout sélectionner » ignore les questions officielles en lecture seule', async () => {
+  it('navigue dans la grille Mes Quizz et n’affiche que les questions du quizz courant', async () => {
     snapshot = {
       ...snapshot,
-      questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
-      ],
-    };
-    const user = userEvent.setup();
-    render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
-    await user.click(
-      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
-    );
-    expect(
-      screen.getByRole('checkbox', { name: 'Sélectionner Un' }),
-    ).toBeChecked();
-    expect(
-      screen.queryByRole('checkbox', {
-        name: /Sélectionner Calculer la somme/,
-      }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText('1 sélectionnée')).toBeInTheDocument();
-  });
-
-  it('déplace en masse les questions sélectionnées vers un dossier existant', async () => {
-    snapshot = {
-      ...snapshot,
-      questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
-      ],
-      courses: [
-        {
-          id: 'course-x',
-          ownerId: 'user-1',
-          title: 'Cours X',
-          description: '',
-          visibility: 'private' as const,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-    };
-    const user = userEvent.setup();
-    render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
-    await user.click(
-      await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Déplacer vers'),
-      'course-x',
-    );
-    await user.click(screen.getByRole('button', { name: 'Déplacer' }));
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
-    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
-    expect(saved.classification).toMatchObject({
-      kind: 'personal',
-      courseId: 'course-x',
-    });
-  });
-
-  it('navigue dans la vue Dossiers et n’affiche que les questions du dossier courant', async () => {
-    snapshot = {
-      ...snapshot,
-      courses: [
-        {
-          id: 'course-mecanique',
-          ownerId: 'user-1',
-          title: 'Mécanique',
-          description: '',
-          visibility: 'private',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
+      courses: [{ ...course(), id: 'course-mecanique' }],
       questions: [
         question({
           id: 'private-1',
@@ -809,17 +777,16 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     expect(
-      screen.queryByRole('button', { name: 'Question perso' }),
+      screen.queryByRole('checkbox', { name: /Question perso/ }),
     ).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
+    await enterCourse(user, 'Mécanique');
     expect(
-      await screen.findByRole('button', { name: 'Question perso' }),
+      await screen.findByRole('checkbox', { name: /Question perso/ }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     expect(
-      screen.queryByRole('button', { name: 'Question perso' }),
+      screen.queryByRole('checkbox', { name: /Question perso/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -828,13 +795,9 @@ describe('QuestionsPage', () => {
       ...snapshot,
       courses: [
         {
+          ...course(),
           id: 'course-mecanique',
-          ownerId: 'user-1',
-          title: 'Mécanique',
           description: 'Chute libre et cinématique',
-          visibility: 'private',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
         },
       ],
       questions: [
@@ -866,8 +829,7 @@ describe('QuestionsPage', () => {
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
-    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
+    await enterCourse(user, 'Mécanique');
     expect(
       screen.getByText('Sélectionne une question dans les colonnes de gauche.'),
     ).toBeInTheDocument();
@@ -949,12 +911,11 @@ describe('QuestionsPage', () => {
     expect(screen.getByLabelText('Cours')).toHaveValue('course-mecanique');
   });
 
-  it('crée un quizz, un chapitre puis une notion depuis la vue Dossiers, puis re-navigue vers les dossiers existants', async () => {
+  it('crée un quizz, un chapitre puis une notion, puis re-navigue vers les quizz existants', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     await user.type(
-      screen.getByPlaceholderText('Nouveau quizz'),
+      await screen.findByPlaceholderText('Nouveau quizz'),
       'Cinématique',
     );
     await user.click(screen.getByRole('button', { name: 'Créer' }));
@@ -995,70 +956,79 @@ describe('QuestionsPage', () => {
   it('valide en masse les brouillons sélectionnés', async () => {
     snapshot = {
       ...snapshot,
+      courses: [course()],
       questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-1',
+          prompt: [{ kind: 'text', value: 'Un' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
         question({
           id: 'private-2',
           prompt: [{ kind: 'text', value: 'Deux' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
         }),
       ],
     };
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
+    await enterCourse(user, 'Mécanique');
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
+      await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
     );
-    await user.click(screen.getByRole('button', { name: 'Valider' }));
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Deux' }),
+    );
+    await user.click(
+      within(
+        screen.getByRole('toolbar', { name: 'Actions groupées' }),
+      ).getByRole('button', { name: 'Valider' }),
+    );
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
     expect(
-      saveQuestion.mock.calls.every((call) => call[1].validated === true),
+      saveQuestion.mock.calls.every(
+        (call) => call[1].status === 'published' && call[1].validated,
+      ),
     ).toBe(true);
-  });
-
-  it('déplace une seule question depuis l’aperçu', async () => {
-    snapshot = {
-      ...snapshot,
-      questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
-      ],
-      courses: [
-        {
-          id: 'course-y',
-          ownerId: 'user-1',
-          title: 'Cours Y',
-          description: '',
-          visibility: 'private' as const,
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-    };
-    const user = userEvent.setup();
-    render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
-    await user.click(await screen.findByRole('button', { name: /^Un/ }));
-    await user.selectOptions(
-      screen.getByLabelText('Déplacer vers'),
-      'course-y',
+    expect(saveQuestion.mock.calls.every((call) => call[2] === 'publish')).toBe(
+      true,
     );
-    await user.click(screen.getByRole('button', { name: 'Déplacer' }));
-    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
-    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
-    expect(saved.classification).toMatchObject({
-      kind: 'personal',
-      courseId: 'course-y',
-    });
   });
 
   it('n’interrompt pas une action groupée si une question échoue, et le signale', async () => {
     snapshot = {
       ...snapshot,
+      courses: [course()],
       questions: [
-        question({ id: 'private-1', prompt: [{ kind: 'text', value: 'Un' }] }),
+        question({
+          id: 'private-1',
+          prompt: [{ kind: 'text', value: 'Un' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
+        }),
         question({
           id: 'private-2',
           prompt: [{ kind: 'text', value: 'Deux' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-1',
+            chapterId: null,
+            notionId: null,
+          },
         }),
       ],
     };
@@ -1067,11 +1037,18 @@ describe('QuestionsPage', () => {
     );
     const user = userEvent.setup();
     render(<QuestionsPage />);
-    await user.click(screen.getByRole('button', { name: 'Liste' }));
+    await enterCourse(user, 'Mécanique');
     await user.click(
-      await screen.findByRole('checkbox', { name: 'Tout sélectionner' }),
+      await screen.findByRole('checkbox', { name: 'Sélectionner Un' }),
     );
-    await user.click(screen.getByRole('button', { name: 'Supprimer' }));
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Deux' }),
+    );
+    await user.click(
+      within(
+        screen.getByRole('toolbar', { name: 'Actions groupées' }),
+      ).getByRole('button', { name: 'Supprimer' }),
+    );
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
     expect(
       await screen.findByText('private-1 — Échec réseau simulé'),
