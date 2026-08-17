@@ -13,6 +13,7 @@ test('creates a structured local draft with math and restores it after reload', 
 }) => {
   await login(page);
   await page.goto('questions');
+  await page.getByRole('button', { name: /Ajoute un quizz/ }).click();
   await page.getByPlaceholder('Nouveau quizz').fill('Arithmétique');
   await page.getByRole('button', { name: 'Créer' }).click();
   await page
