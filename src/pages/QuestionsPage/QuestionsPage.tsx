@@ -351,9 +351,11 @@ export function QuestionsPage() {
         </ul>
       ) : null}
       {syncState === 'denied' ? (
-        <p role="alert">Permission serveur refusée.</p>
+        <p role="alert" className={styles.visuallyHidden}>
+          Permission serveur refusée.
+        </p>
       ) : syncState === 'error' ? (
-        <p role="alert">
+        <p role="alert" className={styles.visuallyHidden}>
           Synchronisation impossible ; le brouillon local est conservé.
         </p>
       ) : null}
