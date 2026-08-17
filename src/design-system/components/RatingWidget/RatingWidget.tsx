@@ -1,4 +1,7 @@
-import { quizzRatingScores, type QuizzRatingScore } from '@domain/quizz/QuizzRating';
+import {
+  quizzRatingScores,
+  type QuizzRatingScore,
+} from '@domain/quizz/QuizzRating';
 import styles from './RatingWidget.module.css';
 
 interface RatingWidgetProps {

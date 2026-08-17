@@ -449,9 +449,7 @@ export function ProgressContent({
           <ol className={styles.timeline}>
             {snapshot.recent.map((event) => (
               <li key={event.id} data-tone={resultTones[event.result]}>
-                <strong>
-                  {label(event.notionId ?? event.quizzId ?? '')}
-                </strong>
+                <strong>{label(event.notionId ?? event.quizzId ?? '')}</strong>
                 <span>
                   <span
                     className={styles.pill}

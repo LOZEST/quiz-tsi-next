@@ -363,9 +363,7 @@ function QuizzListingsPanel() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
-  const [pendingListingId, setPendingListingId] = useState<string | null>(
-    null,
-  );
+  const [pendingListingId, setPendingListingId] = useState<string | null>(null);
 
   const reload = () => {
     quizzMarketplaceGateway
@@ -397,10 +395,7 @@ function QuizzListingsPanel() {
     setPendingListingId(listing.id);
     setError(null);
     try {
-      await quizzMarketplaceGateway.adminSetHidden(
-        listing.id,
-        !listing.hidden,
-      );
+      await quizzMarketplaceGateway.adminSetHidden(listing.id, !listing.hidden);
       reload();
     } catch {
       setError('Le retrait/rétablissement a échoué.');

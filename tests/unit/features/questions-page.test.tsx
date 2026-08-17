@@ -318,10 +318,7 @@ describe('QuestionsPage', () => {
       'personal',
     );
     await user.type(screen.getByLabelText('Nouveau quizz'), 'Mon cours');
-    await user.type(
-      screen.getByLabelText('Chapitre facultatif'),
-      'Chapitre 1',
-    );
+    await user.type(screen.getByLabelText('Chapitre facultatif'), 'Chapitre 1');
     const prompt = screen.getByRole('group', { name: 'Énoncé' });
     await user.type(
       within(prompt).getByLabelText('Texte'),
@@ -400,9 +397,7 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
     );
-    await waitFor(() =>
-      expect(saveQuestionWithQuizz).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(saveQuestionWithQuizz).toHaveBeenCalledTimes(1));
     const savedQuizz = saveQuestionWithQuizz.mock.calls[0]?.[2] as Quizz;
     expect(savedQuizz?.title).toBe('Mon cours');
     const savedQuestion = saveQuestionWithQuizz.mock.calls[0]?.[1] as Question;

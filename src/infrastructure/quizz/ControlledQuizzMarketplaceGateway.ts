@@ -67,7 +67,8 @@ function ratingSummary(listing: StoredListing): {
   const scores = Object.values(listing.ratings);
   if (scores.length === 0) return { averageRating: null, ratingCount: 0 };
   return {
-    averageRating: scores.reduce((sum, score) => sum + score, 0) / scores.length,
+    averageRating:
+      scores.reduce((sum, score) => sum + score, 0) / scores.length,
     ratingCount: scores.length,
   };
 }
@@ -130,12 +131,15 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
   subscribeToListing(listingId: string): Promise<void> {
     const identity = currentIdentity();
     const listings = readListings();
-    if (!listings.some((listing) => listing.id === listingId && !listing.hidden)) {
+    if (
+      !listings.some((listing) => listing.id === listingId && !listing.hidden)
+    ) {
       return Promise.reject(new Error('Listing introuvable.'));
     }
     const subscriptions = readSubscriptions();
     const key = `${listingId}:${identity.userId}`;
-    if (!subscriptions.includes(key)) writeSubscriptions([...subscriptions, key]);
+    if (!subscriptions.includes(key))
+      writeSubscriptions([...subscriptions, key]);
     return Promise.resolve();
   }
 
@@ -150,13 +154,21 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
     const key = `${submission.listingId}:${identity.userId}`;
     if (!readSubscriptions().includes(key)) {
       return Promise.reject(
-        new Error('Seuls les utilisateurs abonnés à ce Quizz peuvent le noter.'),
+        new Error(
+          'Seuls les utilisateurs abonnés à ce Quizz peuvent le noter.',
+        ),
       );
     }
     const listings = readListings();
     const updated = listings.map((listing) =>
       listing.id === submission.listingId
-        ? { ...listing, ratings: { ...listing.ratings, [identity.userId]: submission.score } }
+        ? {
+            ...listing,
+            ratings: {
+              ...listing.ratings,
+              [identity.userId]: submission.score,
+            },
+          }
         : listing,
     );
     writeListings(updated);
@@ -193,7 +205,9 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
     const identity = currentIdentity();
     if (!isAdmin(identity.role)) {
       return Promise.reject(
-        new Error('Seuls les administrateurs consultent la modération marketplace.'),
+        new Error(
+          'Seuls les administrateurs consultent la modération marketplace.',
+        ),
       );
     }
     const listings = readListings();

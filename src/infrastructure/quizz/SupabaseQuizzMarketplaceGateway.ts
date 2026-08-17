@@ -33,7 +33,8 @@ function mapListing(row: QuizzListingRow): QuizzListing {
     description: row.description,
     certified: row.certified,
     hidden: row.hidden,
-    averageRating: row.average_rating === null ? null : Number(row.average_rating),
+    averageRating:
+      row.average_rating === null ? null : Number(row.average_rating),
     ratingCount: Number(row.rating_count),
     publishedAt: row.published_at,
     certifiedAt: row.certified_at,
@@ -107,7 +108,9 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
     if (error) throw new Error('L’envoi de la note a échoué.');
   }
 
-  async listSubscribedQuizzContent(): Promise<readonly SubscribedQuizzContent[]> {
+  async listSubscribedQuizzContent(): Promise<
+    readonly SubscribedQuizzContent[]
+  > {
     const subscriptionsResponse = await this.client.rpc(
       'list_my_quizz_subscriptions',
     );
@@ -128,9 +131,7 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
       ),
     );
     if (questionResponses.some((response) => response.error))
-      throw new Error(
-        'Le contenu des Quizz abonnés n’a pas pu être chargé.',
-      );
+      throw new Error('Le contenu des Quizz abonnés n’a pas pu être chargé.');
     const questionRows = questionResponses.flatMap(
       (response) => (response.data ?? []) as unknown[],
     );
@@ -167,7 +168,10 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
     return (data ?? []).map(mapListing);
   }
 
-  async adminSetCertified(listingId: string, certified: boolean): Promise<void> {
+  async adminSetCertified(
+    listingId: string,
+    certified: boolean,
+  ): Promise<void> {
     const { error } = await this.client.rpc(
       'admin_set_quizz_listing_certified',
       { p_listing_id: listingId, p_certified: certified },
@@ -180,6 +184,7 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
       p_listing_id: listingId,
       p_hidden: hidden,
     });
-    if (error) throw new Error('Le retrait/rétablissement du listing a échoué.');
+    if (error)
+      throw new Error('Le retrait/rétablissement du listing a échoué.');
   }
 }

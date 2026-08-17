@@ -4,9 +4,15 @@ import type {
   QuestionRepositoryQuery,
 } from '@domain/repositories/QuestionRepository';
 import type { QuestionBankBundle } from '@domain/questions/QuestionBank';
-import { questionClassification, type Question } from '@domain/questions/Question';
+import {
+  questionClassification,
+  type Question,
+} from '@domain/questions/Question';
 
-function matchesQuery(item: Readonly<Question>, query: QuestionRepositoryQuery): boolean {
+function matchesQuery(
+  item: Readonly<Question>,
+  query: QuestionRepositoryQuery,
+): boolean {
   const classification = questionClassification(item);
   // A quizz is flat: its questions carry a `courseId` with no chapter/notion
   // of their own, so a "chapterId" query is matched against `courseId` for
@@ -19,10 +25,12 @@ function matchesQuery(item: Readonly<Question>, query: QuestionRepositoryQuery):
         classification.courseId === query.chapterId);
   return (
     (query.partId === undefined ||
-      (classification?.kind === 'official' && classification.partId === query.partId)) &&
+      (classification?.kind === 'official' &&
+        classification.partId === query.partId)) &&
     chapterMatches &&
     (query.notionId === undefined ||
-      (classification?.kind === 'official' && classification.notionId === query.notionId)) &&
+      (classification?.kind === 'official' &&
+        classification.notionId === query.notionId)) &&
     (query.source === undefined || item.source === query.source)
   );
 }

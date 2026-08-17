@@ -64,9 +64,7 @@ export function RateListingPrompt({
         disabled={status === 'submitting' || status === 'submitted'}
         label="Noter ce Quizz"
       />
-      {status === 'submitted' ? (
-        <p role="status">Merci pour ta note.</p>
-      ) : null}
+      {status === 'submitted' ? <p role="status">Merci pour ta note.</p> : null}
       {status === 'error' ? (
         <p role="alert">L’envoi de la note a échoué.</p>
       ) : null}

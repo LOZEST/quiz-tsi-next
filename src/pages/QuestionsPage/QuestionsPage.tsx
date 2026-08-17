@@ -684,10 +684,7 @@ export function QuestionsPage() {
                     {
                       ...selected,
                       version: selected.version + 1,
-                      classification: personalClassification(
-                        courseId,
-                        chapter,
-                      ),
+                      classification: personalClassification(courseId, chapter),
                       updatedAt: new Date().toISOString(),
                     },
                     'update',
@@ -1136,7 +1133,8 @@ function QuestionEditor({
     }
     const now = new Date().toISOString();
     const newCourse = !courseId && personalCourseTitle.trim() !== '';
-    const resolvedCourseId = courseId || (newCourse ? pendingQuizzId.current : '');
+    const resolvedCourseId =
+      courseId || (newCourse ? pendingQuizzId.current : '');
     if (!resolvedCourseId) return null;
     const existingCourse = workspace.quizzes.find(
       (item) => item.id === resolvedCourseId && item.ownerId === userId,

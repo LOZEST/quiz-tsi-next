@@ -702,9 +702,7 @@ function validateQuestionClassification(
   if (isRecord(candidate) && candidate.kind === 'personal') {
     return isNonEmptyString(candidate.courseId) &&
       (candidate.chapter === null || isNonEmptyString(candidate.chapter))
-      ? valid(
-          personalClassification(candidate.courseId, candidate.chapter),
-        )
+      ? valid(personalClassification(candidate.courseId, candidate.chapter))
       : invalid(
           issue(
             'question.classification',

@@ -94,7 +94,8 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     services.questionWorkspaceRepository ??
     new IndexedDbQuestionWorkspaceRepository();
   const quizzMarketplaceGateway =
-    services.quizzMarketplaceGateway ?? new UnavailableQuizzMarketplaceGateway();
+    services.quizzMarketplaceGateway ??
+    new UnavailableQuizzMarketplaceGateway();
   return {
     ...services,
     programIndex: services.programIndex ?? null,

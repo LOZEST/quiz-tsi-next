@@ -54,9 +54,7 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   const ratingBeforeSubscribe = page.getByRole('radiogroup', {
     name: 'Noter ce Quizz',
   });
-  await expect(
-    ratingBeforeSubscribe.getByRole('radio').first(),
-  ).toBeDisabled();
+  await expect(ratingBeforeSubscribe.getByRole('radio').first()).toBeDisabled();
   await page.getByRole('button', { name: 'Fermer l’aperçu' }).click();
 
   await logout(page);

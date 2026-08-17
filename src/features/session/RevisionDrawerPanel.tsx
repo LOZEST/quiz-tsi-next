@@ -330,8 +330,8 @@ function Daily({
     <ul>
       {state.items.map((item) => (
         <li key={item.notionId}>
-          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong>{' '}
-          — {item.successCount}/{item.plannedCount}
+          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong> —{' '}
+          {item.successCount}/{item.plannedCount}
           <details>
             <summary>Détails</summary>
             <dl>

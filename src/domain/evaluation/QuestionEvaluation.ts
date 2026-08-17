@@ -162,8 +162,10 @@ export function completeQuestionAttempt(
     questionSource: question.source,
     classification,
     partId: classification.kind === 'official' ? classification.partId : null,
-    chapterId: classification.kind === 'official' ? classification.chapterId : null,
-    notionId: classification.kind === 'official' ? classification.notionId : null,
+    chapterId:
+      classification.kind === 'official' ? classification.chapterId : null,
+    notionId:
+      classification.kind === 'official' ? classification.notionId : null,
     questionType: question.type,
     difficulty: question.difficulty,
     hintUsed: attempt.hintUsed,

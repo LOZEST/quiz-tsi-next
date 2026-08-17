@@ -64,23 +64,17 @@ export function MarketplacePage() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
-  const [pendingListingId, setPendingListingId] = useState<string | null>(
-    null,
-  );
+  const [pendingListingId, setPendingListingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [previewListingId, setPreviewListingId] = useState<string | null>(
-    null,
-  );
-  const [preview, setPreview] = useState<QuizzListingPreviewData | null>(
-    null,
-  );
+  const [previewListingId, setPreviewListingId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<QuizzListingPreviewData | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [subscribedListingIds, setSubscribedListingIds] = useState<
     readonly string[]
   >([]);
-  const [ratePromptListingId, setRatePromptListingId] = useState<
-    string | null
-  >(null);
+  const [ratePromptListingId, setRatePromptListingId] = useState<string | null>(
+    null,
+  );
   const activeSubscribeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [rating, setRating] = useState<QuizzRatingScore | null>(null);
   const [ratingStatus, setRatingStatus] = useState<
