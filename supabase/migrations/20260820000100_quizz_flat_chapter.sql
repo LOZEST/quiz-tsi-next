@@ -6,6 +6,44 @@ drop policy quizz_notions_read_subscribed on public.quizz_notions;
 drop table public.quizz_notions;
 drop table public.quizz_chapters;
 
+-- The marketplace migration's `questions_read_accessible` and
+-- `quizzes_read_subscribed` policies query quizz_listings/
+-- quizz_listing_subscriptions directly in their USING clause, but those
+-- tables have all direct grants revoked (everything else goes through
+-- security-definer RPCs). A plain RLS policy's USING clause runs as the
+-- querying role, so it can never see rows in a table it has no grant on —
+-- this silently made both policies permission-denied for every query,
+-- never caught before because nothing had exercised them against a real
+-- Postgres instance. This helper runs as the (trusted) function owner so
+-- the check succeeds regardless of the caller's own table grants.
+create or replace function public.has_subscribed_quizz_access(p_quizz_id uuid)
+returns boolean language sql stable security definer set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.quizz_listings l
+    join public.quizz_listing_subscriptions s on s.listing_id = l.id
+    where l.quizz_id = p_quizz_id and s.user_id = (select auth.uid())
+  );
+$$;
+revoke all on function public.has_subscribed_quizz_access(uuid) from public, anon;
+grant execute on function public.has_subscribed_quizz_access(uuid) to authenticated;
+
+drop policy questions_read_accessible on public.questions;
+create policy questions_read_accessible on public.questions for select using (
+  owner_id = auth.uid() or source = 'static' or (
+    source = 'shared' and status = 'published' and validated
+    and public.is_latest_question_version(id, version)
+  ) or (
+    classification->>'kind' = 'personal'
+    and public.has_subscribed_quizz_access((classification->>'courseId')::uuid)
+  )
+);
+
+drop policy quizzes_read_subscribed on public.quizzes;
+create policy quizzes_read_subscribed on public.quizzes for select using (
+  public.has_subscribed_quizz_access(quizzes.id)
+);
+
 create or replace function public.is_valid_question_classification(p_classification jsonb, p_source text)
 returns boolean language plpgsql stable security definer set search_path = public, pg_temp
 as $$
