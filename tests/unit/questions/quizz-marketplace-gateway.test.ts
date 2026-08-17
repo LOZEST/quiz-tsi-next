@@ -126,6 +126,112 @@ describe('SupabaseQuizzMarketplaceGateway', () => {
     expect(content).toEqual([]);
   });
 
+  it('rejects when the subscription-status RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(gateway.hasSubscribed('l1')).rejects.toThrow();
+  });
+
+  it('rejects when the hide/unhide RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(gateway.adminSetHidden('l1', true)).rejects.toThrow();
+  });
+
+  it('rejects when listing subscribed content fails to load the subscriptions', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(gateway.listSubscribedQuizzContent()).rejects.toThrow();
+  });
+
+  it('rejects when a question fetch for a subscribed quizz fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      error: null,
+      data: [
+        {
+          listing_id: 'l1',
+          quizz_id: 'q1',
+          owner_id: 'u1',
+          title: 'T',
+          description: '',
+          certified: false,
+        },
+      ],
+    });
+    const client = {
+      rpc,
+      from() {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          then(resolve: (value: unknown) => void) {
+            resolve({ data: null, error: new Error('denied') });
+          },
+        };
+        return query;
+      },
+    } as unknown as SupabaseClient;
+    const gateway = new SupabaseQuizzMarketplaceGateway(client);
+    await expect(gateway.listSubscribedQuizzContent()).rejects.toThrow();
+  });
+
+  it('returns subscribed content with its questions, silently dropping ones that fail to parse', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      error: null,
+      data: [
+        {
+          listing_id: 'l1',
+          quizz_id: 'q1',
+          owner_id: 'u1',
+          title: 'T',
+          description: '',
+          certified: true,
+        },
+      ],
+    });
+    const client = {
+      rpc,
+      from() {
+        const query = {
+          select: () => query,
+          eq: () => query,
+          then(resolve: (value: unknown) => void) {
+            resolve({
+              data: [
+                { id: 'bad', classification: { courseId: 'q1' } },
+                {
+                  id: 'other-quizz',
+                  classification: { courseId: 'other' },
+                },
+              ],
+              error: null,
+            });
+          },
+        };
+        return query;
+      },
+    } as unknown as SupabaseClient;
+    const gateway = new SupabaseQuizzMarketplaceGateway(client);
+    const content = await gateway.listSubscribedQuizzContent();
+    expect(content).toEqual([
+      {
+        listingId: 'l1',
+        quizzId: 'q1',
+        ownerId: 'u1',
+        title: 'T',
+        description: '',
+        certified: true,
+        questions: [],
+      },
+    ]);
+  });
+
+  it('rejects when the admin listings RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(gateway.adminListListings()).rejects.toThrow();
+  });
+
   it('certifies and hides listings independently through their own RPCs', async () => {
     const rpc = vi.fn().mockResolvedValue({ error: null });
     const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
