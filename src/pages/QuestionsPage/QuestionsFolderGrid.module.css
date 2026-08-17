@@ -19,33 +19,38 @@
   font: inherit;
   cursor: pointer;
 }
-.cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--qtsi-space-3);
+.gridHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qtsi-space-2);
 }
-.card {
-  display: grid;
-  gap: var(--qtsi-space-1);
-  padding: var(--qtsi-space-3);
-  text-align: center;
-  background: var(--qtsi-surface-muted);
-  border: 1px solid var(--qtsi-border);
+.searchArea {
+  display: flex;
+  align-items: center;
+  gap: var(--qtsi-space-2);
+}
+.searchInput {
+  min-block-size: var(--qtsi-touch-target);
+  padding-inline: var(--qtsi-space-3);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-full);
+  font: inherit;
+}
+.searchToggle {
+  display: inline-grid;
+  inline-size: var(--qtsi-touch-target);
+  block-size: var(--qtsi-touch-target);
+  color: var(--qtsi-text-tertiary);
+  background: transparent;
+  border: 0;
   border-radius: var(--qtsi-radius-2);
+  place-items: center;
   cursor: pointer;
 }
-.card:hover {
+.searchToggle:hover {
+  color: var(--qtsi-accent);
   background: var(--qtsi-surface-hover);
-}
-.card span:nth-child(2) {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-.cardIcon {
-  font-size: 2rem;
-}
-.card small {
-  color: var(--qtsi-text-secondary);
 }
 .quizCards {
   display: grid;

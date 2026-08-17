@@ -115,6 +115,20 @@ const saveNotion = vi.fn((_userId: string, notion: PersonalNotion) => {
   };
   return Promise.resolve();
 });
+const deleteCourse = vi.fn((_userId: string, courseId: string) => {
+  snapshot = {
+    ...snapshot,
+    courses: snapshot.courses.filter((item) => item.id !== courseId),
+    questions: snapshot.questions.map((item) =>
+      item.classification?.kind === 'personal' &&
+      item.classification.courseId === courseId
+        ? { ...item, status: 'archived' as const }
+        : item,
+    ),
+    pendingOperationCount: snapshot.pendingOperationCount + 1,
+  };
+  return Promise.resolve();
+});
 const questionWorkspaceRepository = {
   load,
   saveQuestion,
@@ -122,6 +136,7 @@ const questionWorkspaceRepository = {
   saveCourse,
   saveChapter,
   saveNotion,
+  deleteCourse,
   resolveConflict,
   listOutbox,
   completeOperation: vi.fn(() => Promise.resolve()),
@@ -207,6 +222,28 @@ describe('QuestionsPage', () => {
     await waitFor(() =>
       expect(questionRemoteGateway.pullRecent).toHaveBeenCalled(),
     );
+  });
+
+  it('affiche un point de synchronisation cliquable qui relance la synchronisation', async () => {
+    snapshot = { ...snapshot, pendingOperationCount: 0 };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    const dot = await screen.findByRole('button', { name: /^Synchronisé$/ });
+    await user.click(dot);
+    await waitFor(() =>
+      expect(questionRemoteGateway.pullRecent).toHaveBeenCalledTimes(2),
+    );
+  });
+
+  it('signale un état non synchronisé quand des opérations sont en attente', async () => {
+    snapshot = { ...snapshot, pendingOperationCount: 1 };
+    render(<QuestionsPage />);
+    await waitFor(() =>
+      expect(questionRemoteGateway.pullRecent).toHaveBeenCalled(),
+    );
+    expect(
+      await screen.findByRole('button', { name: /Non synchronisé/ }),
+    ).toBeInTheDocument();
   });
 
   it('ouvre le GPT configuré dans un nouvel onglet et ouvre/ferme l’éditeur manuel', async () => {
@@ -336,76 +373,6 @@ describe('QuestionsPage', () => {
     expect(saved.validated).toBe(true);
   });
 
-  it('efface une notion existante lorsqu’un nouveau chapitre est saisi', async () => {
-    snapshot = {
-      ...snapshot,
-      courses: [{ ...course(), id: 'course' }],
-      chapters: [
-        {
-          id: 'chapter-a',
-          courseId: 'course',
-          ownerId: 'user-1',
-          title: 'A',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-      notions: [
-        {
-          id: 'notion-a1',
-          courseId: 'course',
-          chapterId: 'chapter-a',
-          ownerId: 'user-1',
-          title: 'A1',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          updatedAt: '2026-01-01T00:00:00.000Z',
-        },
-      ],
-    };
-    const user = userEvent.setup();
-    render(<QuestionsPage />);
-    await enterCourse(user, 'Mécanique');
-    await user.click(
-      screen.getByRole('button', { name: 'Ajouter une question à la main' }),
-    );
-    await user.selectOptions(screen.getByLabelText('Cours'), 'course');
-    await user.selectOptions(
-      screen.getByLabelText('Chapitre existant facultatif'),
-      'chapter-a',
-    );
-    await user.selectOptions(
-      screen.getByLabelText('Notion existante facultative'),
-      'notion-a1',
-    );
-    await user.type(screen.getByLabelText('Nouveau chapitre facultatif'), 'B');
-    await user.type(screen.getByLabelText('Texte'), 'Question');
-    const correction = screen.getByRole('group', {
-      name: 'Contenu de l’étape 1',
-    });
-    await user.click(
-      within(correction).getByRole('button', { name: '+ Texte' }),
-    );
-    await user.type(within(correction).getByLabelText('Texte'), 'Réponse');
-    await user.click(
-      screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
-    );
-    await waitFor(() =>
-      expect(saveQuestionDraftWithPersonalTaxonomy).toHaveBeenCalled(),
-    );
-    const saved = saveQuestionDraftWithPersonalTaxonomy.mock.calls.at(
-      -1,
-    )?.[1] as Question;
-    expect(saved.classification).toMatchObject({
-      courseId: 'course',
-      notionId: null,
-    });
-    expect(
-      saved.classification &&
-        'chapterId' in saved.classification &&
-        saved.classification.chapterId,
-    ).not.toBe('chapter-a');
-  });
-
   it('crée et édite les segments structurés et les aides mathématiques', async () => {
     snapshot = { ...snapshot, courses: [course()] };
     const user = userEvent.setup();
@@ -414,16 +381,8 @@ describe('QuestionsPage', () => {
     await user.click(
       screen.getByRole('button', { name: 'Ajouter une question à la main' }),
     );
-    await user.selectOptions(screen.getByLabelText('Cours'), '');
-    await user.type(screen.getByLabelText('Nouveau cours'), 'Mon cours');
-    await user.type(
-      screen.getByLabelText('Nouveau chapitre facultatif'),
-      'Chapitre 1',
-    );
-    await user.type(
-      screen.getByLabelText('Nouvelle notion facultative'),
-      'Notion 1',
-    );
+    await user.selectOptions(screen.getByLabelText('Quizz'), '');
+    await user.type(screen.getByLabelText('Nouveau quizz'), 'Mon cours');
     const prompt = screen.getByRole('group', { name: 'Énoncé' });
     await user.type(
       within(prompt).getByLabelText('Texte'),
@@ -507,8 +466,8 @@ describe('QuestionsPage', () => {
     const savedTaxonomy =
       saveQuestionDraftWithPersonalTaxonomy.mock.calls[0]?.[2];
     expect(savedTaxonomy?.course?.title).toBe('Mon cours');
-    expect(savedTaxonomy?.chapter?.title).toBe('Chapitre 1');
-    expect(savedTaxonomy?.notion?.title).toBe('Notion 1');
+    expect(savedTaxonomy?.chapter).toBeNull();
+    expect(savedTaxonomy?.notion).toBeNull();
   }, 10_000);
 
   it('affiche les erreurs de stockage et de synchronisation et réagit au hors-ligne', async () => {
@@ -783,6 +742,57 @@ describe('QuestionsPage', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('filtre les quizz via la recherche discrète et bascule leur visibilité depuis la grille', async () => {
+    snapshot = {
+      ...snapshot,
+      courses: [
+        {
+          ...course(),
+          id: 'course-mecanique',
+          title: 'Mécanique',
+          description: 'Chute libre',
+        },
+        { ...course(), id: 'course-optique', title: 'Optique' },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    expect(
+      await screen.findByRole('button', { name: /Mécanique/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Optique/ })).toBeInTheDocument();
+    expect(screen.getByText('Chute libre')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Filtrer les quizz' }));
+    const searchInput = screen.getByPlaceholderText('Rechercher un quizz');
+    await user.type(searchInput, 'Opti');
+    expect(
+      screen.queryByRole('button', { name: /Mécanique/ }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Optique/ })).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    expect(
+      screen.queryByPlaceholderText('Rechercher un quizz'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Mécanique/ }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getAllByRole('checkbox', { name: 'Privé' })[0]!);
+    await waitFor(() =>
+      expect(saveCourse).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({
+          id: 'course-mecanique',
+          visibility: 'public',
+        }),
+        expect.any(String),
+        'update',
+      ),
+    );
+  });
+
   it('sélectionne, valide, supprime une question et bascule la visibilité du quizz dans l’espace de travail', async () => {
     snapshot = {
       ...snapshot,
@@ -901,10 +911,48 @@ describe('QuestionsPage', () => {
     expect(
       screen.getByRole('dialog', { name: 'Nouvelle question' }),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText('Cours')).toHaveValue('course-mecanique');
+    expect(screen.getByLabelText('Quizz')).toHaveValue('course-mecanique');
   });
 
-  it('crée un quizz, un chapitre puis une notion, puis re-navigue vers les quizz existants', async () => {
+  it('supprime un quizz depuis l’espace de travail après confirmation', async () => {
+    snapshot = {
+      ...snapshot,
+      courses: [{ ...course(), id: 'course-mecanique' }],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await enterCourse(user, 'Mécanique');
+    await user.click(
+      screen.getByRole('button', { name: 'Supprimer le quizz' }),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Confirmer la suppression' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Annuler' }));
+    expect(deleteCourse).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole('button', { name: 'Confirmer la suppression' }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Supprimer le quizz' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Confirmer la suppression' }),
+    );
+    await waitFor(() =>
+      expect(deleteCourse).toHaveBeenCalledWith(
+        'user-1',
+        'course-mecanique',
+        expect.any(String),
+      ),
+    );
+    expect(
+      await screen.findByRole('button', { name: /Ajoute un quizz/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('crée un quizz puis re-navigue vers les quizz existants', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
     await user.click(
@@ -918,34 +966,9 @@ describe('QuestionsPage', () => {
     await waitFor(() => expect(saveCourse).toHaveBeenCalledTimes(1));
     const createdCourse = saveCourse.mock.calls[0]?.[1] as PersonalCourse;
     expect(createdCourse.title).toBe('Cinématique');
-    await user.click(
-      await screen.findByRole('button', { name: /Nouveau chapitre/ }),
-    );
-    await user.type(screen.getByPlaceholderText('Nouveau chapitre'), 'Vitesse');
-    await user.click(screen.getByRole('button', { name: 'Créer' }));
-    await waitFor(() => expect(saveChapter).toHaveBeenCalledTimes(1));
-    const createdChapter = saveChapter.mock.calls[0]?.[1] as PersonalChapter;
-    expect(createdChapter).toMatchObject({
-      title: 'Vitesse',
-      courseId: createdCourse.id,
-    });
-    await user.click(
-      await screen.findByRole('button', { name: /Nouvelle notion/ }),
-    );
-    await user.type(screen.getByPlaceholderText('Nouvelle notion'), 'MRU');
-    await user.click(screen.getByRole('button', { name: 'Créer' }));
-    await waitFor(() => expect(saveNotion).toHaveBeenCalledTimes(1));
-    const createdNotion = saveNotion.mock.calls[0]?.[1] as PersonalNotion;
-    expect(createdNotion).toMatchObject({
-      title: 'MRU',
-      courseId: createdCourse.id,
-      chapterId: createdChapter.id,
-    });
     await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
-    await user.click(screen.getByRole('button', { name: /Cinématique/ }));
-    await user.click(screen.getByRole('button', { name: /Vitesse/ }));
     expect(
-      await screen.findByRole('button', { name: /MRU/ }),
+      await screen.findByRole('button', { name: /Cinématique/ }),
     ).toBeInTheDocument();
   });
 

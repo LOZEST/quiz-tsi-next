@@ -211,6 +211,32 @@ const statefulClient = (initial: Record<string, unknown[]> = {}) => {
           tables.set(table, rows);
           return Promise.resolve({ error: null });
         },
+        delete: () => {
+          let matchId: string | undefined;
+          let matchOwnerId: string | undefined;
+          const deleteQuery = {
+            eq(column: string, value: string) {
+              if (column === 'id') matchId = value;
+              if (column === 'owner_id') matchOwnerId = value;
+              return deleteQuery;
+            },
+            then(resolve: (value: unknown) => void) {
+              const rows = tables.get(table) ?? [];
+              tables.set(
+                table,
+                rows.filter(
+                  (item) =>
+                    !(
+                      (item as { id: string }).id === matchId &&
+                      (item as { owner_id?: string }).owner_id === matchOwnerId
+                    ),
+                ),
+              );
+              resolve({ error: null });
+            },
+          };
+          return deleteQuery;
+        },
       };
       return query;
     },
@@ -326,5 +352,42 @@ describe('push distant idempotent', () => {
         payload: { ...course, title: 'Autre' },
       }),
     ).toEqual({ kind: 'taxonomy-conflict' });
+  });
+
+  it('supprime un quizz distant appartenant au bon propriétaire', async () => {
+    const course = {
+      id: 'c',
+      ownerId: 'owner',
+      title: 'Cours',
+      description: '',
+      visibility: 'private' as const,
+      createdAt: '2026-08-10T00:00:00.000Z',
+      updatedAt: '2026-08-10T00:00:00.000Z',
+    };
+    const remote = statefulClient({
+      personal_courses: [
+        {
+          id: 'c',
+          owner_id: 'owner',
+          title: 'Cours',
+          description: '',
+          visibility: 'private',
+          created_at: course.createdAt,
+          updated_at: course.updatedAt,
+        },
+      ],
+    });
+    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
+    const operation = {
+      operationId: 'del',
+      userId: 'owner',
+      entity: 'course',
+      entityId: 'c',
+      kind: 'delete',
+      payload: course,
+      createdAt: course.createdAt,
+    } as const;
+    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
+    expect(remote.tables.get('personal_courses')).toEqual([]);
   });
 });

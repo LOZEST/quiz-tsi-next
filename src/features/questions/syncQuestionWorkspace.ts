@@ -1,16 +1,28 @@
 import type { QuestionRemoteGateway } from '@domain/repositories/QuestionRemoteGateway';
-import type { QuestionWorkspaceRepository } from '@domain/repositories/QuestionWorkspaceRepository';
+import type {
+  QuestionWorkspaceOutboxOperation,
+  QuestionWorkspaceRepository,
+} from '@domain/repositories/QuestionWorkspaceRepository';
+
+const priority = { course: 0, chapter: 1, notion: 2, question: 3 } as const;
+// Deletes must land strictly after every create/update in the same batch:
+// deleting a quizz first would strand its (still-syncing) question archives
+// behind a classification that no longer exists remotely. Among deletes,
+// leaves go first (reverse hierarchy) so a course delete is always last.
+const rank = (operation: QuestionWorkspaceOutboxOperation): number =>
+  operation.kind === 'delete'
+    ? 100 - priority[operation.entity]
+    : priority[operation.entity];
 
 export async function syncQuestionWorkspace(
   userId: string,
   local: QuestionWorkspaceRepository,
   remote: QuestionRemoteGateway,
 ) {
-  const priority = { course: 0, chapter: 1, notion: 2, question: 3 } as const;
   const operations = [...(await local.listOutbox(userId))]
     .sort(
       (left, right) =>
-        priority[left.entity] - priority[right.entity] ||
+        rank(left) - rank(right) ||
         left.createdAt.localeCompare(right.createdAt),
     )
     .slice(0, 50);

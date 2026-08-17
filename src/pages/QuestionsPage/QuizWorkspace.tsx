@@ -82,6 +82,7 @@ export function QuizWorkspace({
   onBulkValidate,
   onBulkDelete,
   onClearSelection,
+  onDeleteCourse,
 }: {
   questions: readonly Readonly<Question>[];
   course: PersonalCourse | null;
@@ -107,10 +108,12 @@ export function QuizWorkspace({
   onBulkValidate: () => void;
   onBulkDelete: () => void;
   onClearSelection: () => void;
+  onDeleteCourse: (courseId: string) => void;
 }) {
   const [editingMeta, setEditingMeta] = useState(false);
   const [draftTitle, setDraftTitle] = useState('');
   const [draftDescription, setDraftDescription] = useState('');
+  const [confirmingDeleteCourse, setConfirmingDeleteCourse] = useState(false);
   const startEditingMeta = () => {
     if (!course) return;
     setDraftTitle(course.title);
@@ -349,6 +352,34 @@ export function QuizWorkspace({
                 Ajouter une question à la main
               </button>
             </div>
+            {confirmingDeleteCourse ? (
+              <div className={styles.deleteCourseConfirm} role="alertdialog">
+                <p>Supprimer ce quizz ? Ses questions seront archivées.</p>
+                <div className={styles.deleteCourseConfirmActions}>
+                  <button
+                    type="button"
+                    className={styles.deleteButton}
+                    onClick={() => onDeleteCourse(course.id)}
+                  >
+                    Confirmer la suppression
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDeleteCourse(false)}
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={styles.deleteCourseButton}
+                onClick={() => setConfirmingDeleteCourse(true)}
+              >
+                Supprimer le quizz
+              </button>
+            )}
           </div>
         ) : null}
       </div>

@@ -493,6 +493,80 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     expect((await repository.load('other-owner')).courses).toEqual([]);
   });
 
+  it('supprime un quizz, archive ses questions et pousse la suppression après les archives', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const ownerId = 'delete-owner';
+    const now = '2026-01-01T00:00:00.000Z';
+    const course = {
+      id: 'course-to-delete',
+      ownerId,
+      title: 'Cours',
+      description: '',
+      visibility: 'private' as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    await repository.saveCourse(ownerId, course, 'op-course');
+    const question = {
+      ...draft(ownerId, 'q-in-deleted-course'),
+      status: 'published' as const,
+      validated: true,
+      classification: {
+        kind: 'personal' as const,
+        courseId: course.id,
+        chapterId: null,
+        notionId: null,
+      },
+    };
+    await repository.saveQuestion(ownerId, question, 'publish', 'op-question');
+    const otherOwnerCourse = {
+      ...course,
+      id: 'untouched',
+      ownerId: 'someone-else',
+    };
+    await repository.saveCourse(
+      'someone-else',
+      otherOwnerCourse,
+      'op-untouched',
+    );
+
+    await repository.deleteCourse(ownerId, course.id, 'op-delete');
+
+    const snapshot = await repository.load(ownerId);
+    expect(snapshot.courses).toEqual([]);
+    expect(snapshot.questions).toEqual([
+      expect.objectContaining({
+        id: 'q-in-deleted-course',
+        status: 'archived',
+      }),
+    ]);
+    expect((await repository.load('someone-else')).courses).toEqual([
+      otherOwnerCourse,
+    ]);
+
+    const pushed: string[] = [];
+    await syncQuestionWorkspace(ownerId, repository, {
+      push: (operation) => {
+        pushed.push(`${operation.entity}:${operation.kind}`);
+        return Promise.resolve({ kind: 'accepted' as const });
+      },
+      pullRecent: () =>
+        Promise.resolve({
+          questions: [],
+          courses: [],
+          chapters: [],
+          notions: [],
+          rejectedRows: [],
+        }),
+    });
+    expect(pushed).toContain('course:delete');
+    expect(pushed.indexOf('course:delete')).toBe(pushed.length - 1);
+    expect(pushed.indexOf('question:archive')).toBeLessThan(
+      pushed.indexOf('course:delete'),
+    );
+    expect(await repository.listOutbox(ownerId)).toEqual([]);
+  });
+
   it('refuse un chapitre ou une notion rattachés à un cours inexistant ou étranger', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'guard-owner';

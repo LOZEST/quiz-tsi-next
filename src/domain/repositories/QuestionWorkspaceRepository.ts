@@ -24,7 +24,7 @@ export type PersonalTaxonomyOutboxOperation =
       userId: string;
       entity: 'course';
       entityId: string;
-      kind: 'create' | 'update';
+      kind: 'create' | 'update' | 'delete';
       payload: PersonalCourse;
       createdAt: string;
     }>
@@ -109,6 +109,11 @@ export interface QuestionWorkspaceRepository {
   saveNotion(
     userId: string,
     notion: Readonly<PersonalNotion>,
+    operationId: string,
+  ): Promise<void>;
+  deleteCourse(
+    userId: string,
+    courseId: string,
     operationId: string,
   ): Promise<void>;
   resolveConflict(

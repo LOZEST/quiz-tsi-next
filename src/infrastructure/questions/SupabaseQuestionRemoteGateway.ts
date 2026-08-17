@@ -85,6 +85,17 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
         notion: 'personal_notions',
       }[operation.entity];
       const payload = operation.payload;
+      if (operation.entity === 'course' && operation.kind === 'delete') {
+        const { error } = await this.client
+          .from(table)
+          .delete()
+          .eq('id', payload.id)
+          .eq('owner_id', payload.ownerId);
+        if (error?.code === '42501')
+          return { kind: 'permission-denied' as const };
+        if (error) throw new Error('Suppression du quizz impossible.');
+        return { kind: 'accepted' as const };
+      }
       const row = {
         id: payload.id,
         owner_id: payload.ownerId,
