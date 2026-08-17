@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: 20px;
+  gap: 12px;
   min-width: 0;
 }
 .banner {
@@ -8,6 +8,39 @@
   padding: 12px 16px;
   border: 1px solid var(--qtsi-warning);
   border-radius: 10px;
+}
+.syncDot {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.syncDot::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--qtsi-success);
+}
+.syncDot[data-state='pending']::after {
+  background: var(--qtsi-warning);
+}
+.syncDot[data-state='syncing']::after {
+  animation: qtsi-sync-pulse 1s ease-in-out infinite;
+}
+@keyframes qtsi-sync-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 .actions,
 .editorFooter {

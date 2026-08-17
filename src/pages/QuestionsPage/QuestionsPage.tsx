@@ -294,60 +294,46 @@ export function QuestionsPage() {
     );
     await reload();
   };
-  const onCreateChapter = async (title: string) => {
-    if (folderLocation.kind !== 'course') return;
-    const now = new Date().toISOString();
-    const chapter = {
-      id: crypto.randomUUID(),
-      ownerId: userId,
-      courseId: folderLocation.courseId,
-      title,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await questionWorkspaceRepository.saveChapter(
+  const onDeleteCourse = async (courseId: string) => {
+    await questionWorkspaceRepository.deleteCourse(
       userId,
-      chapter,
+      courseId,
       crypto.randomUUID(),
     );
+    setSelectedId(null);
+    setFolderLocation({ kind: 'root' });
     await reload();
-    setFolderLocation({
-      kind: 'chapter',
-      courseId: folderLocation.courseId,
-      chapterId: chapter.id,
-    });
   };
-  const onCreateNotion = async (title: string) => {
-    if (folderLocation.kind !== 'chapter') return;
-    const now = new Date().toISOString();
-    const notion = {
-      id: crypto.randomUUID(),
-      ownerId: userId,
-      courseId: folderLocation.courseId,
-      chapterId: folderLocation.chapterId,
-      title,
-      createdAt: now,
-      updatedAt: now,
-    };
-    await questionWorkspaceRepository.saveNotion(
-      userId,
-      notion,
-      crypto.randomUUID(),
-    );
-    await reload();
-    setFolderLocation({
-      kind: 'notion',
-      courseId: folderLocation.courseId,
-      chapterId: folderLocation.chapterId,
-      notionId: notion.id,
-    });
-  };
-
+  const syncDotState: 'synced' | 'pending' | 'syncing' =
+    syncState === 'syncing'
+      ? 'syncing'
+      : offline ||
+          syncState === 'denied' ||
+          syncState === 'error' ||
+          workspace.pendingOperationCount > 0
+        ? 'pending'
+        : 'synced';
+  const syncDotLabel =
+    syncDotState === 'syncing'
+      ? 'Synchronisation en cours…'
+      : syncDotState === 'pending'
+        ? 'Non synchronisé — cliquer pour synchroniser'
+        : 'Synchronisé';
   return (
     <div className={styles.page}>
       <PageHeader
         title="Mes Quizz"
         description="Crée, organise et relis tes quizz, même hors connexion."
+        actions={
+          <button
+            type="button"
+            className={styles.syncDot}
+            data-state={syncDotState}
+            aria-label={syncDotLabel}
+            title={syncDotLabel}
+            onClick={() => void synchronize()}
+          />
+        }
       />
       {offline ? (
         <p className={styles.banner} role="status">
@@ -387,12 +373,8 @@ export function QuestionsPage() {
             location={folderLocation}
             onLocationChange={setFolderLocation}
             courses={workspace.courses}
-            chapters={workspace.chapters}
-            notions={workspace.notions}
             questions={results}
             onCreateCourse={(title) => void onCreateCourse(title)}
-            onCreateChapter={(title) => void onCreateChapter(title)}
-            onCreateNotion={(title) => void onCreateNotion(title)}
             onToggleCourseVisibility={(courseId, visibility) =>
               void onToggleCourseVisibility(courseId, visibility)
             }
@@ -423,6 +405,7 @@ export function QuestionsPage() {
               onBulkValidate={() => void onBulkValidate()}
               onBulkDelete={() => void onBulkDelete()}
               onClearSelection={clearSelection}
+              onDeleteCourse={(courseId) => void onDeleteCourse(courseId)}
             />
           ) : null}
         </>
@@ -626,23 +609,9 @@ function QuestionEditor({
       ? existingClassification.courseId
       : (initialClassification?.courseId ?? ''),
   );
-  const [personalChapterId, setPersonalChapterId] = useState(
-    existingClassification?.kind === 'personal'
-      ? (existingClassification.chapterId ?? '')
-      : (initialClassification?.chapterId ?? ''),
-  );
-  const [personalNotionId, setPersonalNotionId] = useState(
-    existingClassification?.kind === 'personal'
-      ? (existingClassification.notionId ?? '')
-      : (initialClassification?.notionId ?? ''),
-  );
   const [personalCourseTitle, setPersonalCourseTitle] = useState('');
-  const [personalChapterTitle, setPersonalChapterTitle] = useState('');
-  const [personalNotionTitle, setPersonalNotionTitle] = useState('');
   const pendingTaxonomyIds = useRef({
     course: crypto.randomUUID(),
-    chapter: crypto.randomUUID(),
-    notion: crypto.randomUUID(),
   });
   const [editorErrors, setEditorErrors] = useState<string[]>([]);
   const [variantPreview, setVariantPreview] = useState<
@@ -684,45 +653,16 @@ function QuestionEditor({
     const resolvedCourseId =
       courseId || (newCourse ? pendingTaxonomyIds.current.course : '');
     if (!resolvedCourseId) return null;
-    const newChapter = personalChapterTitle.trim() !== '';
-    const resolvedChapterId = newChapter
-      ? pendingTaxonomyIds.current.chapter
-      : personalChapterId || null;
-    const newNotion = personalNotionTitle.trim() !== '';
-    const resolvedNotionId = newNotion
-      ? pendingTaxonomyIds.current.notion
-      : newChapter
-        ? null
-        : personalNotionId || null;
     const existingCourse = workspace.courses.find(
       (item) => item.id === resolvedCourseId && item.ownerId === userId,
     );
     if (!newCourse && !existingCourse) return null;
-    const existingChapter = resolvedChapterId
-      ? workspace.chapters.find(
-          (item) =>
-            item.id === resolvedChapterId &&
-            item.ownerId === userId &&
-            item.courseId === resolvedCourseId,
-        )
-      : null;
-    if (resolvedChapterId && !newChapter && !existingChapter) return null;
-    const existingNotion = resolvedNotionId
-      ? workspace.notions.find(
-          (item) =>
-            item.id === resolvedNotionId &&
-            item.ownerId === userId &&
-            item.courseId === resolvedCourseId &&
-            item.chapterId === resolvedChapterId,
-        )
-      : null;
-    if (resolvedNotionId && !newNotion && !existingNotion) return null;
     return {
       classification: {
         kind: 'personal',
         courseId: resolvedCourseId,
-        chapterId: resolvedChapterId,
-        notionId: resolvedNotionId,
+        chapterId: null,
+        notionId: null,
       },
       taxonomy: {
         course: newCourse
@@ -736,27 +676,8 @@ function QuestionEditor({
               updatedAt: now,
             }
           : null,
-        chapter: newChapter
-          ? {
-              id: resolvedChapterId!,
-              ownerId: userId,
-              courseId: resolvedCourseId,
-              title: personalChapterTitle.trim(),
-              createdAt: now,
-              updatedAt: now,
-            }
-          : null,
-        notion: newNotion
-          ? {
-              id: resolvedNotionId!,
-              ownerId: userId,
-              courseId: resolvedCourseId,
-              chapterId: resolvedChapterId,
-              title: personalNotionTitle.trim(),
-              createdAt: now,
-              updatedAt: now,
-            }
-          : null,
+        chapter: null,
+        notion: null,
       },
     };
   };
@@ -906,16 +827,12 @@ function QuestionEditor({
           ) : (
             <>
               <label>
-                Cours
+                Quizz
                 <select
                   value={courseId}
-                  onChange={(event) => {
-                    setCourseId(event.target.value);
-                    setPersonalChapterId('');
-                    setPersonalNotionId('');
-                  }}
+                  onChange={(event) => setCourseId(event.target.value)}
                 >
-                  <option value="">Créer un cours</option>
+                  <option value="">Créer un quizz</option>
                   {workspace.courses.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.title}
@@ -925,7 +842,7 @@ function QuestionEditor({
               </label>
               {!courseId ? (
                 <label>
-                  Nouveau cours
+                  Nouveau quizz
                   <input
                     value={personalCourseTitle}
                     onChange={(event) =>
@@ -934,71 +851,6 @@ function QuestionEditor({
                   />
                 </label>
               ) : null}
-              {courseId ? (
-                <label>
-                  Chapitre existant facultatif
-                  <select
-                    value={personalChapterId}
-                    onChange={(event) => {
-                      setPersonalChapterId(event.target.value);
-                      setPersonalNotionId('');
-                    }}
-                  >
-                    <option value="">Aucun</option>
-                    {workspace.chapters
-                      .filter((item) => item.courseId === courseId)
-                      .map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.title}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              ) : null}
-              {courseId ? (
-                <label>
-                  Notion existante facultative
-                  <select
-                    value={personalNotionId}
-                    onChange={(event) =>
-                      setPersonalNotionId(event.target.value)
-                    }
-                  >
-                    <option value="">Aucune</option>
-                    {workspace.notions
-                      .filter(
-                        (item) =>
-                          item.courseId === courseId &&
-                          (!personalChapterId ||
-                            item.chapterId === personalChapterId),
-                      )
-                      .map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.title}
-                        </option>
-                      ))}
-                  </select>
-                </label>
-              ) : null}
-              <label>
-                Nouveau chapitre facultatif
-                <input
-                  value={personalChapterTitle}
-                  onChange={(event) => {
-                    setPersonalChapterTitle(event.target.value);
-                    if (event.target.value.trim()) setPersonalNotionId('');
-                  }}
-                />
-              </label>
-              <label>
-                Nouvelle notion facultative
-                <input
-                  value={personalNotionTitle}
-                  onChange={(event) =>
-                    setPersonalNotionTitle(event.target.value)
-                  }
-                />
-              </label>
             </>
           )}
         </fieldset>

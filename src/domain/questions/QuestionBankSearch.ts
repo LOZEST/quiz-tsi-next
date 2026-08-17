@@ -30,7 +30,9 @@ export function questionsInFolder(
     const classification = questionClassification(question);
     if (!classification || classification.kind !== 'personal') return false;
     if (classification.courseId !== location.courseId) return false;
-    if (location.kind === 'course') return classification.chapterId === null;
+    // A quizz is flat: every question classified under it belongs to its
+    // single workspace, regardless of any chapter/notion sub-classification.
+    if (location.kind === 'course') return true;
     if (classification.chapterId !== location.chapterId) return false;
     if (location.kind === 'chapter') return classification.notionId === null;
     return classification.notionId === location.notionId;

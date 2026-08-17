@@ -415,6 +415,78 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     await transaction.done;
   }
 
+  async deleteCourse(userId: string, courseId: string, operationId: string) {
+    if (!operationId) throw new Error('Compte incohérent.');
+    const db = await database();
+    const transaction = db.transaction(
+      ['courses', 'questions', 'outbox'],
+      'readwrite',
+    );
+    const courseRow = await transaction
+      .objectStore('courses')
+      .get(key(userId, courseId));
+    if (!courseRow || courseRow.userId !== userId)
+      throw new Error('Quizz introuvable.');
+    const now = new Date().toISOString();
+    const questionRows = await transaction
+      .objectStore('questions')
+      .index('by-user')
+      .getAll(userId);
+    const latest = latestQuestionVersions(
+      questionRows.map((row) => row.question),
+    );
+    for (const question of latest) {
+      const classification = questionClassification(question);
+      if (
+        classification?.kind !== 'personal' ||
+        classification.courseId !== courseId ||
+        question.status === 'archived'
+      )
+        continue;
+      const archived: Question = {
+        ...question,
+        version: question.version + 1,
+        status: 'archived',
+        updatedAt: now,
+      };
+      await transaction.objectStore('questions').put({
+        key: key(userId, `${archived.id}:${archived.version}`),
+        userId,
+        question: structuredClone(archived),
+      });
+      const archiveOperationId = crypto.randomUUID();
+      const archiveOperation: QuestionOutboxOperation = {
+        operationId: archiveOperationId,
+        userId,
+        entity: 'question',
+        entityId: archived.id,
+        kind: 'archive',
+        baseVersion: question.version,
+        payload: structuredClone(archived),
+        createdAt: now,
+      };
+      await transaction.objectStore('outbox').put({
+        key: key(userId, archiveOperationId),
+        userId,
+        value: archiveOperation,
+      });
+    }
+    await transaction.objectStore('courses').delete(key(userId, courseId));
+    const deleteOperation: QuestionWorkspaceOutboxOperation = {
+      operationId,
+      userId,
+      entity: 'course',
+      entityId: courseId,
+      kind: 'delete',
+      payload: structuredClone(courseRow.value),
+      createdAt: now,
+    };
+    await transaction
+      .objectStore('outbox')
+      .put({ key: key(userId, operationId), userId, value: deleteOperation });
+    await transaction.done;
+  }
+
   async resolveConflict(
     userId: string,
     conflictId: string,

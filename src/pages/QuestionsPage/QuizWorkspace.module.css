@@ -255,6 +255,45 @@
 .metaActions button:hover {
   background: var(--qtsi-accent-hover);
 }
+.deleteCourseButton {
+  display: block;
+  margin-block-start: var(--qtsi-space-4);
+  padding: var(--qtsi-space-1) var(--qtsi-space-2);
+  color: var(--qtsi-danger);
+  background: transparent;
+  border: 0;
+  border-radius: var(--qtsi-radius-2);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+.deleteCourseButton:hover {
+  background: var(--qtsi-surface-hover);
+}
+.deleteCourseConfirm {
+  margin-block-start: var(--qtsi-space-4);
+  padding: var(--qtsi-space-3);
+  border: 1px solid var(--qtsi-danger);
+  border-radius: var(--qtsi-radius-2);
+}
+.deleteCourseConfirm p {
+  margin: 0 0 var(--qtsi-space-3);
+}
+.deleteCourseConfirmActions {
+  display: flex;
+  gap: var(--qtsi-space-2);
+}
+.deleteCourseConfirmActions button {
+  min-block-size: var(--qtsi-touch-target);
+  padding: 0 var(--qtsi-space-4);
+  border: 0;
+  border-radius: var(--qtsi-radius-2);
+  font-weight: 650;
+  cursor: pointer;
+}
+.deleteCourseConfirmActions button:last-child {
+  color: var(--qtsi-text);
+  background: var(--qtsi-surface-muted);
+}
 .visibilityToggle {
   position: relative;
   display: inline-flex;
