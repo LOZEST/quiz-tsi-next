@@ -364,33 +364,21 @@ export function QuestionsPage() {
           ))}
         </ul>
       ) : null}
-      <div className={styles.actions}>
-        <button
-          type="button"
-          disabled={offline || syncState === 'syncing'}
-          onClick={() => void synchronize()}
-        >
-          {syncState === 'syncing' ? 'Synchronisation…' : 'Synchroniser'}
-        </button>
-        {workspace.pendingOperationCount ? (
-          <span>{workspace.pendingOperationCount} en attente</span>
-        ) : null}
-        {syncState === 'denied' ? (
-          <span role="alert">Permission serveur refusée.</span>
-        ) : syncState === 'error' ? (
-          <span role="alert">
-            Synchronisation impossible; le brouillon local est conservé.
-          </span>
-        ) : null}
-        {rejectedRemoteRowCount > 0 ? (
-          <span role="status">
-            {rejectedRemoteRowCount}{' '}
-            {rejectedRemoteRowCount === 1
-              ? 'question distante n’a pas pu être chargée.'
-              : 'questions distantes n’ont pas pu être chargées.'}
-          </span>
-        ) : null}
-      </div>
+      {syncState === 'denied' ? (
+        <p role="alert">Permission serveur refusée.</p>
+      ) : syncState === 'error' ? (
+        <p role="alert">
+          Synchronisation impossible ; le brouillon local est conservé.
+        </p>
+      ) : null}
+      {rejectedRemoteRowCount > 0 ? (
+        <p role="status">
+          {rejectedRemoteRowCount}{' '}
+          {rejectedRemoteRowCount === 1
+            ? 'question distante n’a pas pu être chargée.'
+            : 'questions distantes n’ont pas pu être chargées.'}
+        </p>
+      ) : null}
       {loading ? (
         <p role="status">Chargement de tes quizz…</p>
       ) : (

@@ -202,17 +202,10 @@ describe('QuestionsPage', () => {
     );
   });
 
-  it('synchronise et affiche les opérations en attente', async () => {
-    const user = userEvent.setup();
+  it('synchronise automatiquement au chargement', async () => {
     render(<QuestionsPage />);
-    expect(await screen.findByText('1 en attente')).toBeInTheDocument();
-    const previousPullCount =
-      questionRemoteGateway.pullRecent.mock.calls.length;
-    await user.click(screen.getByRole('button', { name: 'Synchroniser' }));
     await waitFor(() =>
-      expect(
-        questionRemoteGateway.pullRecent.mock.calls.length,
-      ).toBeGreaterThan(previousPullCount),
+      expect(questionRemoteGateway.pullRecent).toHaveBeenCalled(),
     );
   });
 
@@ -914,17 +907,20 @@ describe('QuestionsPage', () => {
   it('crée un quizz, un chapitre puis une notion, puis re-navigue vers les quizz existants', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('button', { name: /Ajoute un quizz/ }),
+    );
     await user.type(
-      await screen.findByPlaceholderText('Nouveau quizz'),
+      screen.getByPlaceholderText('Nouveau quizz'),
       'Cinématique',
     );
     await user.click(screen.getByRole('button', { name: 'Créer' }));
     await waitFor(() => expect(saveCourse).toHaveBeenCalledTimes(1));
     const createdCourse = saveCourse.mock.calls[0]?.[1] as PersonalCourse;
     expect(createdCourse.title).toBe('Cinématique');
-    expect(
-      await screen.findByPlaceholderText('Nouveau chapitre'),
-    ).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole('button', { name: /Nouveau chapitre/ }),
+    );
     await user.type(screen.getByPlaceholderText('Nouveau chapitre'), 'Vitesse');
     await user.click(screen.getByRole('button', { name: 'Créer' }));
     await waitFor(() => expect(saveChapter).toHaveBeenCalledTimes(1));
@@ -933,9 +929,9 @@ describe('QuestionsPage', () => {
       title: 'Vitesse',
       courseId: createdCourse.id,
     });
-    expect(
-      await screen.findByPlaceholderText('Nouvelle notion'),
-    ).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole('button', { name: /Nouvelle notion/ }),
+    );
     await user.type(screen.getByPlaceholderText('Nouvelle notion'), 'MRU');
     await user.click(screen.getByRole('button', { name: 'Créer' }));
     await waitFor(() => expect(saveNotion).toHaveBeenCalledTimes(1));

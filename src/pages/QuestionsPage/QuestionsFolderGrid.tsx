@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   questionClassification,
   type Question,
@@ -39,8 +39,8 @@ export function QuestionsFolderGrid({
     visibility: PersonalCourseVisibility,
   ) => void;
 }) {
+  const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderTitle, setNewFolderTitle] = useState('');
-  const newFolderInputRef = useRef<HTMLInputElement>(null);
   const countIn = (predicate: (location: FolderLocation) => boolean) => {
     let count = 0;
     for (const question of questions) {
@@ -106,6 +106,25 @@ export function QuestionsFolderGrid({
     breadcrumb.push({ label: notion?.title ?? 'Notion', location });
   }
 
+  const canCreateFolder =
+    location.kind === 'root' ||
+    location.kind === 'course' ||
+    location.kind === 'chapter';
+  const newFolderLabel =
+    location.kind === 'root'
+      ? 'Nouveau quizz'
+      : location.kind === 'course'
+        ? 'Nouveau chapitre'
+        : 'Nouvelle notion';
+
+  const startCreating = () => {
+    setNewFolderTitle('');
+    setCreatingFolder(true);
+  };
+  const cancelCreating = () => {
+    setCreatingFolder(false);
+    setNewFolderTitle('');
+  };
   const submitNewFolder = () => {
     const title = newFolderTitle.trim();
     if (!title) return;
@@ -113,18 +132,63 @@ export function QuestionsFolderGrid({
     else if (location.kind === 'course') onCreateChapter(title);
     else if (location.kind === 'chapter') onCreateNotion(title);
     setNewFolderTitle('');
+    setCreatingFolder(false);
   };
 
-  const canCreateFolder =
-    location.kind === 'root' ||
-    location.kind === 'course' ||
-    location.kind === 'chapter';
-  const newFolderPlaceholder =
-    location.kind === 'root'
-      ? 'Nouveau quizz'
-      : location.kind === 'course'
-        ? 'Nouveau chapitre'
-        : 'Nouvelle notion';
+  const addTile = canCreateFolder ? (
+    creatingFolder ? (
+      <form
+        className={
+          location.kind === 'root' ? styles.addQuizCard : styles.addCard
+        }
+        onSubmit={(event) => {
+          event.preventDefault();
+          submitNewFolder();
+        }}
+      >
+        <label className={styles.addCardLabel}>
+          {newFolderLabel}
+          <input
+            autoFocus
+            value={newFolderTitle}
+            onChange={(event) => setNewFolderTitle(event.target.value)}
+            placeholder={newFolderLabel}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') cancelCreating();
+            }}
+          />
+        </label>
+        <div className={styles.addCardActions}>
+          <button type="submit" disabled={!newFolderTitle.trim()}>
+            Créer
+          </button>
+          <button type="button" onClick={cancelCreating}>
+            Annuler
+          </button>
+        </div>
+      </form>
+    ) : (
+      <button
+        type="button"
+        className={
+          location.kind === 'root' ? styles.addQuizCard : styles.addCard
+        }
+        onClick={startCreating}
+      >
+        <span>
+          {location.kind === 'root' ? 'Ajoute un quizz' : newFolderLabel}
+        </span>
+        <span
+          className={
+            location.kind === 'root' ? styles.addQuizPlus : styles.addCardPlus
+          }
+          aria-hidden="true"
+        >
+          +
+        </span>
+      </button>
+    )
+  ) : null;
 
   return (
     <div className={styles.folderGrid}>
@@ -152,16 +216,7 @@ export function QuestionsFolderGrid({
       >
         {location.kind === 'root' ? (
           <>
-            <button
-              type="button"
-              className={styles.addQuizCard}
-              onClick={() => newFolderInputRef.current?.focus()}
-            >
-              <span aria-hidden="true">Ajoute un quizz</span>
-              <span className={styles.addQuizPlus} aria-hidden="true">
-                +
-              </span>
-            </button>
+            {addTile}
             {courses.map((course) => {
               const example = exampleFor(course.id);
               return (
@@ -215,8 +270,10 @@ export function QuestionsFolderGrid({
             })}
           </>
         ) : null}
-        {location.kind === 'course'
-          ? chapters
+        {location.kind === 'course' ? (
+          <>
+            {addTile}
+            {chapters
               .filter((chapter) => chapter.courseId === location.courseId)
               .map((chapter) => (
                 <button
@@ -244,10 +301,13 @@ export function QuestionsFolderGrid({
                     question(s)
                   </small>
                 </button>
-              ))
-          : null}
-        {location.kind === 'chapter'
-          ? notions
+              ))}
+          </>
+        ) : null}
+        {location.kind === 'chapter' ? (
+          <>
+            {addTile}
+            {notions
               .filter(
                 (notion) =>
                   notion.courseId === location.courseId &&
@@ -279,31 +339,10 @@ export function QuestionsFolderGrid({
                     question(s)
                   </small>
                 </button>
-              ))
-          : null}
+              ))}
+          </>
+        ) : null}
       </div>
-      {canCreateFolder ? (
-        <form
-          className={styles.newFolder}
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitNewFolder();
-          }}
-        >
-          <label>
-            {newFolderPlaceholder}
-            <input
-              ref={newFolderInputRef}
-              value={newFolderTitle}
-              onChange={(event) => setNewFolderTitle(event.target.value)}
-              placeholder={newFolderPlaceholder}
-            />
-          </label>
-          <button type="submit" disabled={!newFolderTitle.trim()}>
-            Créer
-          </button>
-        </form>
-      ) : null}
     </div>
   );
 }
