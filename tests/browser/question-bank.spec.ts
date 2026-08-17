@@ -24,7 +24,7 @@ test('creates a structured local draft with math and restores it after reload', 
   await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Ajoute un quizz/ }).click();
   await page.getByPlaceholder('Nouveau quizz').fill('Arithmétique');
-  await page.getByRole('button', { name: 'Créer' }).click();
+  await page.getByRole('button', { name: 'Créer', exact: true }).click();
   await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
   const prompt = editor.getByRole('group', { name: 'Énoncé' });
@@ -61,7 +61,7 @@ test('revises a quizz like an official chapter in free mode and sees it in Mon p
   await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Ajoute un quizz/ }).click();
   await page.getByPlaceholder('Nouveau quizz').fill('Ma révision');
-  await page.getByRole('button', { name: 'Créer' }).click();
+  await page.getByRole('button', { name: 'Créer', exact: true }).click();
   await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
   const prompt = editor.getByRole('group', { name: 'Énoncé' });
