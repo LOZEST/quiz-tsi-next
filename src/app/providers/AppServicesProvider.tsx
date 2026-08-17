@@ -51,6 +51,7 @@ import type { QuestionReportGateway } from '@domain/questions/QuestionReportGate
 import { SupabaseQuestionReportGateway } from '@infrastructure/questions/SupabaseQuestionReportGateway';
 import { ControlledQuestionReportGateway } from '@infrastructure/questions/ControlledQuestionReportGateway';
 import { UnavailableQuestionReportGateway } from '@infrastructure/questions/UnavailableQuestionReportGateway';
+import { MergedQuestionRepository } from '@infrastructure/session/MergedQuestionRepository';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -69,6 +70,7 @@ export interface AppServices {
   questionRemoteGateway?: QuestionRemoteGateway;
   accountManagementGateway?: AccountManagementGateway;
   questionReportGateway?: QuestionReportGateway;
+  refreshQuestionRepositoryForUser?: (userId: string) => Promise<void>;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -80,11 +82,29 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     services.evaluationRepository ?? new IndexedDbEvaluationRepository();
   const chapterTestRepository =
     services.chapterTestRepository ?? new IndexedDbChapterTestRepository();
+  const questionWorkspaceRepository =
+    services.questionWorkspaceRepository ??
+    new IndexedDbQuestionWorkspaceRepository();
+  const questionRepository = new MergedQuestionRepository(
+    services.questionRepository ?? new InMemoryQuestionRepository(),
+  );
+  const refreshQuestionRepositoryForUser =
+    services.refreshQuestionRepositoryForUser ??
+    (async (userId: string) => {
+      if (!userId) return;
+      const snapshot = await questionWorkspaceRepository.load(userId);
+      questionRepository.setUserContributions(
+        snapshot.questions.filter(
+          (question) => question.status === 'published' && question.validated,
+        ),
+      );
+    });
   return {
     ...services,
     programIndex: services.programIndex ?? null,
-    questionRepository:
-      services.questionRepository ?? new InMemoryQuestionRepository(),
+    questionRepository,
+    questionWorkspaceRepository,
+    refreshQuestionRepositoryForUser,
     dailyPlanStateRepository:
       services.dailyPlanStateRepository ??
       new ProjectedDailyPlanRepository(
@@ -107,9 +127,6 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     questionAttemptRepository:
       services.questionAttemptRepository ??
       new IndexedDbQuestionAttemptRepository(),
-    questionWorkspaceRepository:
-      services.questionWorkspaceRepository ??
-      new IndexedDbQuestionWorkspaceRepository(),
     oauthConsentGateway:
       services.oauthConsentGateway ?? new UnavailableOAuthConsentGateway(),
     questionRemoteGateway:

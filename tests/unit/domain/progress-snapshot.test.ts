@@ -11,6 +11,7 @@ function event(id: string, occurredAt: string): MasteryEvent {
     id,
     userId: 'u1',
     notionId: 'n1',
+    classificationKind: 'official',
     questionId: `q-${id}`,
     sessionId: `free:${id}`,
     questionInstanceId: `i-${id}`,
@@ -54,6 +55,69 @@ function calendarSnapshot(
     calendar,
   }).calendar;
 }
+
+describe('quizzes section', () => {
+  it('sépare les events perso de la maîtrise officielle et résout le titre du quizz', () => {
+    const now = Date.parse('2026-08-10T12:00:00.000Z');
+    const official = event('official-1', '2026-08-09T10:00:00.000Z');
+    const personal: MasteryEvent = {
+      ...event('quizz-1', '2026-08-09T10:00:00.000Z'),
+      notionId: 'quizz-a',
+      classificationKind: 'personal',
+    };
+    const snapshot = createProgressSnapshot({
+      events: [official, personal],
+      userId: 'u1',
+      now,
+      programIndex: null,
+      quizzes: [
+        {
+          id: 'quizz-a',
+          ownerId: 'u1',
+          title: 'Mon quizz',
+          description: '',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    });
+    expect(snapshot.quizzes).toHaveLength(1);
+    expect(snapshot.quizzes[0]).toMatchObject({
+      notionId: 'quizz-a',
+      label: 'Mon quizz',
+      masteryScore: 100,
+    });
+    // The official global mastery/parts breakdown is untouched by the
+    // personal event: it stays computed from official events only.
+    expect(snapshot.globalMastery).toBe(100);
+    expect(snapshot.recent.map((item) => item.id)).toEqual(['official-1']);
+    // dailyPlan/weakPoints are revision queues, not stats: they see both
+    // official and personal events (weak-points evidence count below
+    // proves both events were passed through, not just the official one).
+    expect(
+      snapshot.weakPoints.kind === 'calibrating'
+        ? snapshot.weakPoints.evidence?.observedEvidence
+        : null,
+    ).toBe(2);
+  });
+
+  it('retombe sur un libellé indisponible si le quizz est introuvable', () => {
+    const personal: MasteryEvent = {
+      ...event('quizz-1', '2026-08-09T10:00:00.000Z'),
+      notionId: 'quizz-missing',
+      classificationKind: 'personal',
+    };
+    const snapshot = createProgressSnapshot({
+      events: [personal],
+      userId: 'u1',
+      now: Date.parse('2026-08-10T12:00:00.000Z'),
+      programIndex: null,
+      quizzes: [],
+    });
+    expect(snapshot.quizzes[0]?.label).toBe('Quizz indisponible');
+  });
+});
 
 describe('progress calendar local days', () => {
   it('counts UTC timestamps in their real UTC+02 local day', () => {

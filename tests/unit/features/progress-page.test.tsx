@@ -15,6 +15,17 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
     chapterTestRepository: { listByUser: () => Promise.resolve([]) },
     programIndex: productionProgramIndex,
     clock: { now: () => Date.parse('2026-08-10T12:00:00.000Z') },
+    questionWorkspaceRepository: {
+      load: () =>
+        Promise.resolve({
+          questions: [],
+          courses: [],
+          chapters: [],
+          notions: [],
+          pendingOperationCount: 0,
+          conflicts: [],
+        }),
+    },
   }),
 }));
 
@@ -95,6 +106,7 @@ describe('ProgressPage', () => {
     id: `event-${result}-${sessionMode}`,
     userId: 'u1',
     notionId: 'NUM-F01',
+    classificationKind: 'official',
     questionId: 'q1',
     sessionId: `${sessionMode}:session`,
     questionInstanceId: 'i1',
@@ -123,6 +135,7 @@ describe('ProgressPage', () => {
       { weekStart: '2026-08-03', accuracy: null, count: 0 },
       { weekStart: '2026-08-10', accuracy: 80, count: 6 },
     ],
+    quizzes: [],
     parts: [
       {
         id: 'numbers',
@@ -268,5 +281,49 @@ describe('ProgressPage', () => {
     expect(
       screen.getByText('Aucune activité terminée pour le moment.'),
     ).toBeVisible();
+  });
+
+  it('affiche la section « Mes quizz » séparément de la répartition officielle', async () => {
+    const user = userEvent.setup();
+    render(
+      <ProgressContent
+        snapshot={{
+          ...richSnapshot({ kind: 'none-scheduled' }),
+          quizzes: [
+            {
+              notionId: 'quizz-1',
+              label: 'Mon quizz',
+              masteryScore: 55,
+              confidenceScore: 40,
+              evidenceCount: 3,
+              stabilityDays: 1,
+              lastReviewedAt: null,
+              nextReviewAt: null,
+              lastResult: 'success',
+              status: 'progressing',
+              recommendedDifficulty: 'standard',
+              totalWeight: 1,
+            },
+          ],
+        }}
+        programIndex={productionProgramIndex}
+      />,
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Mes quizz' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Mon quizz.*55 %/i }));
+    expect(screen.getByTestId('quizz-details')).toBeVisible();
+    expect(screen.getByText('En progression')).toBeVisible();
+  });
+
+  it('n’affiche pas la section « Mes quizz » quand elle est vide', () => {
+    render(
+      <ProgressContent
+        snapshot={richSnapshot({ kind: 'none-scheduled' })}
+        programIndex={productionProgramIndex}
+      />,
+    );
+    expect(screen.queryByText('Mes quizz')).not.toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 import type { ProgramIndex } from '../program/Program';
 import type { MasteryEvent } from '../mastery/MasteryEvent';
+import type { PersonalCourse } from '../questions/personal-taxonomy/PersonalTaxonomy';
 import {
   calculateNotionMastery,
   MASTERY_POLICY,
@@ -23,6 +24,9 @@ export interface ProgressNotionSnapshot extends NotionMastery {
   label: string;
   chapterLabel: string;
 }
+export interface ProgressQuizzSnapshot extends NotionMastery {
+  label: string;
+}
 export interface ProgressWeekSnapshot {
   weekStart: string;
   accuracy: number | null;
@@ -37,6 +41,9 @@ export interface ProgressSnapshot {
   lastSevenDaysActivity: number;
   streakDays: number;
   parts: readonly ProgressPartSnapshot[];
+  /** Mastery per quizz, kept separate from `parts`: a quizz is not part of
+   * the official programme, so it never folds into `globalMastery`. */
+  quizzes: readonly ProgressQuizzSnapshot[];
   calendar: readonly { date: string; count: number }[];
   weeklyAccuracy: readonly ProgressWeekSnapshot[];
   recent: readonly MasteryEvent[];
@@ -127,16 +134,26 @@ export function createProgressSnapshot(input: {
   userId: string;
   now: number;
   programIndex: ProgramIndex | null;
+  quizzes?: readonly PersonalCourse[];
   calendar?: LocalDayCalendar;
   partial?: boolean;
 }): ProgressSnapshot {
-  const events = [
+  const allEvents = [
     ...new Map(
       input.events
         .filter((event) => event.userId === input.userId)
         .map((event) => [event.id, event]),
     ).values(),
   ];
+  // Quizz mastery is reported separately (ProgressSnapshot.quizzes) and
+  // never folds into the official globalMastery/parts/streak/calendar
+  // below — a quizz is not part of the official programme.
+  const events = allEvents.filter(
+    (event) => event.classificationKind !== 'personal',
+  );
+  const personalEvents = allEvents.filter(
+    (event) => event.classificationKind === 'personal',
+  );
   const notionIds = new Set(
     events
       .filter((event) => event.result !== 'skipped')
@@ -229,6 +246,17 @@ export function createProgressSnapshot(input: {
     eventsOneWeekAgo,
     oneWeekAgo,
   );
+  const quizzIds = new Set(
+    personalEvents
+      .filter((event) => event.result !== 'skipped')
+      .map((event) => event.notionId),
+  );
+  const quizzes: ProgressQuizzSnapshot[] = [...quizzIds].map((id) => ({
+    ...calculateNotionMastery(id, personalEvents, input.now),
+    label:
+      (input.quizzes ?? []).find((quizz) => quizz.id === id)?.title ??
+      'Quizz indisponible',
+  }));
   return {
     partial: input.partial ?? false,
     globalMastery,
@@ -245,12 +273,15 @@ export function createProgressSnapshot(input: {
     ).length,
     streakDays: computeStreakDays(calendar),
     parts,
+    quizzes,
     calendar,
     weeklyAccuracy: computeWeeklyAccuracy(events, input.now, calendarBoundary),
     recent: events
       .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt))
       .slice(0, 10),
-    dailyPlan: createDailyPlan(events, input.userId, input.now),
-    weakPoints: createWeakPoints(events, input.userId, input.now),
+    // Daily/weak-points are revision queues, not stats: they mix official
+    // and quizz notions so both surface as "what to review next".
+    dailyPlan: createDailyPlan(allEvents, input.userId, input.now),
+    weakPoints: createWeakPoints(allEvents, input.userId, input.now),
   };
 }

@@ -11,6 +11,8 @@ import {
   type QuestionType,
 } from '@domain/questions/Question';
 import type { ProgramIndex } from '@domain/program/Program';
+import type { PersonalCourse } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import { useUserQuizzes } from '@shared/useUserQuizzes';
 import type {
   DailyPlanState,
   FilterSelection,
@@ -20,6 +22,16 @@ import type {
 } from '@domain/session/Session';
 import { useRevisionExperience } from './RevisionExperienceProvider';
 import styles from './RevisionExperience.module.css';
+
+function classificationChapterOrCourseId(
+  question: Parameters<typeof questionClassification>[0],
+): string | null {
+  const classification = questionClassification(question);
+  if (!classification) return null;
+  return classification.kind === 'official'
+    ? classification.chapterId
+    : classification.courseId;
+}
 
 const paths: readonly { id: SessionMode; label: string }[] = [
   { id: 'daily', label: 'Révision du jour' },
@@ -51,12 +63,18 @@ const selected = (value: FilterSelection<string>) =>
 export function RevisionDrawerPanel() {
   const experience = useRevisionExperience();
   const { programIndex } = useAppServices();
+  const quizzes = useUserQuizzes();
+  const quizzIds = new Set(quizzes.map((quizz) => quizz.id));
   const update = (next: FreeRevisionFilters, trigger: HTMLSelectElement) => {
     if (!programIndex) {
       experience.setVisibleFilters(next, trigger);
       return;
     }
-    const normalized = normalizeFreeRevisionFilters(next, programIndex);
+    const normalized = normalizeFreeRevisionFilters(
+      next,
+      programIndex,
+      quizzIds,
+    );
     if (normalized.ok) experience.setVisibleFilters(normalized.value, trigger);
   };
   const filters = experience.visibleFilters;
@@ -66,6 +84,10 @@ export function RevisionDrawerPanel() {
   const notions = programIndex
     ? deriveAvailableNotions(programIndex, filters.part, filters.chapter)
     : [];
+  const selectedQuizzId =
+    filters.chapter.kind === 'one' && quizzIds.has(filters.chapter.value)
+      ? filters.chapter.value
+      : null;
   return (
     <div className={styles.panel}>
       <label className={styles.sessionType}>
@@ -139,12 +161,22 @@ export function RevisionDrawerPanel() {
                       {chapter.label}
                     </option>
                   ))}
+              {quizzes.length > 0 ? (
+                <optgroup label="Mes quizz">
+                  {quizzes.map((quizz) => (
+                    <option key={quizz.id} value={quizz.id}>
+                      {quizz.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
             </select>
           </label>
           <label>
             Notion
             <select
-              value={selected(filters.notion)}
+              value={selectedQuizzId ? '' : selected(filters.notion)}
+              disabled={selectedQuizzId !== null}
               onChange={(event) =>
                 update(
                   { ...filters, notion: selection(event.target.value) },
@@ -152,7 +184,9 @@ export function RevisionDrawerPanel() {
                 )
               }
             >
-              <option value="">Toutes les notions</option>
+              <option value="">
+                {selectedQuizzId ? 'Sans objet (quizz)' : 'Toutes les notions'}
+              </option>
               {notions.map((notion) => {
                 return (
                   <option key={notion.id} value={notion.id}>
@@ -240,27 +274,48 @@ export function RevisionDrawerPanel() {
         </div>
       ) : null}
       {experience.mode === 'daily' && experience.state.kind === 'daily' ? (
-        <Daily state={experience.state.state} program={programIndex} />
+        <Daily
+          state={experience.state.state}
+          program={programIndex}
+          quizzes={quizzes}
+        />
       ) : null}
       {experience.mode === 'weak-points' &&
       experience.state.kind === 'weak-points' ? (
         <Weak
           state={experience.state.state}
           program={programIndex}
+          quizzes={quizzes}
           onFree={() => experience.setMode('free')}
         />
       ) : null}
-      {experience.mode === 'chapter-test' ? <ChapterTest /> : null}
+      {experience.mode === 'chapter-test' ? (
+        <ChapterTest quizzes={quizzes} />
+      ) : null}
     </div>
+  );
+}
+
+function resolveUnitLabel(
+  id: string,
+  program: ProgramIndex | null,
+  quizzes: readonly PersonalCourse[],
+): string {
+  return (
+    program?.getNotion(id)?.label ??
+    quizzes.find((quizz) => quizz.id === id)?.title ??
+    'Notion indisponible'
   );
 }
 
 function Daily({
   state,
   program,
+  quizzes,
 }: {
   state: DailyPlanState;
   program: ProgramIndex | null;
+  quizzes: readonly PersonalCourse[];
 }) {
   if (state.kind === 'none-scheduled')
     return <p>Aucune révision n’est prévue aujourd’hui. Tu es à jour.</p>;
@@ -275,10 +330,8 @@ function Daily({
     <ul>
       {state.items.map((item) => (
         <li key={item.notionId}>
-          <strong>
-            {program?.getNotion(item.notionId)?.label ?? 'Notion indisponible'}
-          </strong>{' '}
-          — {item.successCount}/{item.plannedCount}
+          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong> —{' '}
+          {item.successCount}/{item.plannedCount}
           <details>
             <summary>Détails</summary>
             <dl>
@@ -306,10 +359,12 @@ function Daily({
 function Weak({
   state,
   program,
+  quizzes,
   onFree,
 }: {
   state: WeakPointsState;
   program: ProgramIndex | null;
+  quizzes: readonly PersonalCourse[];
   onFree: () => void;
 }) {
   if (state.kind === 'calibrating')
@@ -341,10 +396,8 @@ function Weak({
     <ul>
       {state.items.map((item) => (
         <li key={item.notionId}>
-          <strong>
-            {program?.getNotion(item.notionId)?.label ?? 'Notion indisponible'}
-          </strong>{' '}
-          — priorité {item.priority} ·{' '}
+          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong> —
+          priorité {item.priority} ·{' '}
           {difficultyLabels[item.recommendedDifficulty]}
           <details>
             <summary>Détails</summary>
@@ -388,7 +441,7 @@ function Weak({
     </ul>
   );
 }
-function ChapterTest() {
+function ChapterTest({ quizzes }: { quizzes: readonly PersonalCourse[] }) {
   const { programIndex, questionRepository } = useAppServices();
   const experience = useRevisionExperience();
   const chapters = programIndex?.getAllChapters() ?? [];
@@ -417,8 +470,7 @@ function ChapterTest() {
         questionRepository
           .listPublished()
           .filter(
-            (question) =>
-              questionClassification(question)?.chapterId === chapter,
+            (question) => classificationChapterOrCourseId(question) === chapter,
           )
           .map((question) => question.id),
       ).size
@@ -521,6 +573,15 @@ function ChapterTest() {
                   {entry.label}
                 </option>
               ))}
+              {quizzes.length > 0 ? (
+                <optgroup label="Mes quizz">
+                  {quizzes.map((quizz) => (
+                    <option key={quizz.id} value={quizz.id}>
+                      {quizz.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
             </select>
           </label>
           <fieldset>
