@@ -8,11 +8,19 @@ import { questionClassification, type Question } from '@domain/questions/Questio
 
 function matchesQuery(item: Readonly<Question>, query: QuestionRepositoryQuery): boolean {
   const classification = questionClassification(item);
+  // A quizz is flat: its questions carry a `courseId` with no chapter/notion
+  // of their own, so a "chapterId" query is matched against `courseId` for
+  // personal questions — a quizz fills the chapter slot for revision.
+  const chapterMatches =
+    query.chapterId === undefined ||
+    (classification?.kind === 'official'
+      ? classification.chapterId === query.chapterId
+      : classification?.kind === 'personal' &&
+        classification.courseId === query.chapterId);
   return (
     (query.partId === undefined ||
       (classification?.kind === 'official' && classification.partId === query.partId)) &&
-    (query.chapterId === undefined ||
-      (classification?.kind === 'official' && classification.chapterId === query.chapterId)) &&
+    chapterMatches &&
     (query.notionId === undefined ||
       (classification?.kind === 'official' && classification.notionId === query.notionId)) &&
     (query.source === undefined || item.source === query.source)

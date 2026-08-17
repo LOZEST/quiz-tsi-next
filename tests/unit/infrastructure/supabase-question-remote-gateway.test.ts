@@ -210,6 +210,32 @@ const statefulClient = (initial: Record<string, unknown[]> = {}) => {
           tables.set(table, rows);
           return Promise.resolve({ error: null });
         },
+        delete: () => {
+          let matchId: string | undefined;
+          let matchOwnerId: string | undefined;
+          const deleteQuery = {
+            eq(column: string, value: string) {
+              if (column === 'id') matchId = value;
+              if (column === 'owner_id') matchOwnerId = value;
+              return deleteQuery;
+            },
+            then(resolve: (value: unknown) => void) {
+              const rows = tables.get(table) ?? [];
+              tables.set(
+                table,
+                rows.filter(
+                  (item) =>
+                    !(
+                      (item as { id: string }).id === matchId &&
+                      (item as { owner_id?: string }).owner_id === matchOwnerId
+                    ),
+                ),
+              );
+              resolve({ error: null });
+            },
+          };
+          return deleteQuery;
+        },
       };
       return query;
     },

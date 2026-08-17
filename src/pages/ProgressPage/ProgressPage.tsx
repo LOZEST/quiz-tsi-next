@@ -159,7 +159,9 @@ export function ProgressContent({
   const [openPart, setOpenPart] = useState<string | null>(null);
   const [openNotion, setOpenNotion] = useState<string | null>(null);
   const label = (id: string) =>
-    programIndex?.getNotion(id)?.label ?? 'Notion non disponible';
+    programIndex?.getNotion(id)?.label ??
+    snapshot.quizzes.find((quizz) => quizz.quizzId === id)?.title ??
+    'Notion non disponible';
   return (
     <>
       {snapshot.partial ? (
@@ -448,7 +450,7 @@ export function ProgressContent({
             {snapshot.recent.map((event) => (
               <li key={event.id} data-tone={resultTones[event.result]}>
                 <strong>
-                  {event.notionId ? label(event.notionId) : 'Quizz personnel'}
+                  {label(event.notionId ?? event.quizzId ?? '')}
                 </strong>
                 <span>
                   <span

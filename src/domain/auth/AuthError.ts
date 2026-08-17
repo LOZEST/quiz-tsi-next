@@ -9,6 +9,7 @@ export type AuthErrorCode =
   | 'email-already-registered'
   | 'weak-password'
   | 'email-not-confirmed'
+  | 'rate-limited'
   | 'unknown';
 
 export class AuthError extends Error {
@@ -43,5 +44,7 @@ export const authErrorMessages: Record<AuthErrorCode, string> = {
   'weak-password': 'Ton mot de passe doit contenir au moins 6 caractères.',
   'email-not-confirmed':
     'Confirme ton adresse email avant de te connecter : vérifie ta boîte de réception (et tes spams).',
+  'rate-limited':
+    'Trop de tentatives en peu de temps. Patiente quelques instants puis réessaie.',
   unknown: 'Une erreur inattendue empêche la connexion. Réessaie.',
 };

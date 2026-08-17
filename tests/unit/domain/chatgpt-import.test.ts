@@ -11,7 +11,6 @@ const entry = {
     kind: 'personal',
     proposedCourseTitle: 'Automatique',
     proposedChapterTitle: null,
-    proposedNotionTitle: null,
     reason: 'Hors programme',
     requiresUserConfirmation: true,
   },
@@ -69,6 +68,65 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     const result = validateChatGptQuestionImport(payload);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
+  it('accepte une classification personnelle qui omet chapitre/notion plutôt que d’envoyer null', () => {
+    const classificationWithoutOptionalKeys = {
+      kind: entry.classification.kind,
+      proposedCourseTitle: entry.classification.proposedCourseTitle,
+      reason: entry.classification.reason,
+      requiresUserConfirmation: entry.classification.requiresUserConfirmation,
+    };
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        { ...entry, classification: classificationWithoutOptionalKeys },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
+  it('quarantaine avec un message précis une classification personnelle contenant une clé officielle', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        {
+          ...entry,
+          classification: {
+            ...entry.classification,
+            chapterId: 'numbers-arithmetic',
+          },
+        },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.quarantined).toHaveLength(1);
+      expect(result.quarantined[0]?.code).toBe('invalid-classification');
+      expect(result.quarantined[0]?.message).toContain(
+        'clé inconnue pour une classification personnelle',
+      );
+    }
+  });
+
+  it('quarantaine avec un message précis une classification personnelle sans reason', () => {
+    const classificationWithoutReason = {
+      kind: entry.classification.kind,
+      proposedCourseTitle: entry.classification.proposedCourseTitle,
+      proposedChapterTitle: entry.classification.proposedChapterTitle,
+      requiresUserConfirmation: entry.classification.requiresUserConfirmation,
+    };
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [{ ...entry, classification: classificationWithoutReason }],
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.quarantined).toHaveLength(1);
+      expect(result.quarantined[0]?.code).toBe('invalid-classification');
+      expect(result.quarantined[0]?.message).toContain('reason manquant');
+    }
   });
 
   it('accepte une classification officielle et tous les segments fermés', () => {

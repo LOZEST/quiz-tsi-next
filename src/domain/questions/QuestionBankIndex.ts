@@ -99,13 +99,20 @@ export class QuestionBankIndex {
         throw new Error();
       const questions = this.#questions.filter((question) => {
         const classification = questionClassification(question);
+        // A quizz is flat: its questions carry a `courseId` with no
+        // chapter/notion of their own, so a "chapterId" query is matched
+        // against `courseId` for personal questions.
+        const chapterMatches =
+          typed.chapterId === undefined ||
+          (classification?.kind === 'official'
+            ? classification.chapterId === typed.chapterId
+            : classification?.kind === 'personal' &&
+              classification.courseId === typed.chapterId);
         return (
           (typed.partId === undefined ||
             (classification?.kind === 'official' &&
               classification.partId === typed.partId)) &&
-          (typed.chapterId === undefined ||
-            (classification?.kind === 'official' &&
-              classification.chapterId === typed.chapterId)) &&
+          chapterMatches &&
           (typed.notionId === undefined ||
             (classification?.kind === 'official' &&
               classification.notionId === typed.notionId)) &&

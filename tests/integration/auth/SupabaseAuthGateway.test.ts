@@ -145,6 +145,15 @@ describe('SupabaseAuthGateway', () => {
       status: 'signed-in',
       session: { user: { id: 'account-a', role: 'user' } },
     });
+    expect(
+      // The test client is a Vitest mock behind the Supabase SDK shape.
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      client.auth.signUp,
+    ).toHaveBeenCalledWith({
+      email: 'a@example.test',
+      password: 'secret1',
+      options: { emailRedirectTo: 'http://localhost:3000/login' },
+    });
   });
 
   it('reports confirmation-required when sign-up returns no session', async () => {
@@ -193,6 +202,23 @@ describe('SupabaseAuthGateway', () => {
     await expect(
       new SupabaseAuthGateway(client).signUp('a@example.test', '1'),
     ).rejects.toMatchObject({ code: 'weak-password' });
+  });
+
+  it('maps a rate-limited sign-up attempt', async () => {
+    const { client } = createClient();
+    (
+      client.auth.signUp as unknown as {
+        mockResolvedValue: (v: unknown) => void;
+      }
+    ).mockResolvedValue({
+      data: { user: null, session: null },
+      error: new Error(
+        'For security purposes, you can only request this after 46 seconds.',
+      ),
+    });
+    await expect(
+      new SupabaseAuthGateway(client).signUp('a@example.test', 'secret1'),
+    ).rejects.toMatchObject({ code: 'rate-limited' });
   });
 
   it('subscribes to sign-out events and unsubscribes', () => {

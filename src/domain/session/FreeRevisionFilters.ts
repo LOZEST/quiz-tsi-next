@@ -35,10 +35,25 @@ export function deriveAvailableNotions(
 export function normalizeFreeRevisionFilters(
   value: unknown,
   program: ProgramIndex,
+  quizzIds: ReadonlySet<string> = new Set(),
 ): ReturnType<typeof validateFreeRevisionFilters> {
   const checked = validateFreeRevisionFilters(value);
   if (!checked.ok) return checked;
   const filters: FreeRevisionFilters = checked.value;
+  // A quizz fills the "chapter" slot (Phase 7: flat structure, no
+  // part/notion level of its own), so it bypasses the official-program
+  // consistency checks below entirely.
+  if (filters.chapter.kind === 'one' && quizzIds.has(filters.chapter.value)) {
+    return {
+      ok: true,
+      value: Object.freeze({
+        ...filters,
+        part: all<string>(),
+        chapter: filters.chapter,
+        notion: all<string>(),
+      }),
+    };
+  }
   let chapter = filters.chapter;
   let notion = filters.notion;
   if (filters.part.kind === 'one') {

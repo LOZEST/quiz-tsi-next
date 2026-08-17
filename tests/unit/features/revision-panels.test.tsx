@@ -7,6 +7,7 @@ import { initialFreeRevisionFilters } from '@features/session/RevisionExperience
 import type { RevisionExperienceState } from '@features/session/RevisionExperienceProvider';
 import type * as RevisionExperienceModule from '@features/session/RevisionExperienceProvider';
 import type { FreeRevisionFilters, SessionMode } from '@domain/session/Session';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 
 const parsed = validateProgram({
   schemaVersion: 1,
@@ -28,6 +29,7 @@ const programIndex = createProgramIndex(parsed.value);
 let mode: SessionMode = 'free';
 let state: RevisionExperienceState = { kind: 'no-bank', message: 'vide' };
 let filters: FreeRevisionFilters = initialFreeRevisionFilters;
+let quizzes: readonly Quizz[] = [];
 const setMode = vi.fn((value: SessionMode) => {
   mode = value;
 });
@@ -38,10 +40,27 @@ const setVisibleFilters = vi.fn(
   },
 );
 
+vi.mock('@app/providers/AuthProvider', () => ({
+  useAuth: () => ({
+    state: {
+      status: 'authenticated',
+      session: { user: { id: 'user-1', role: 'user' } },
+    },
+  }),
+}));
 vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
     programIndex,
     questionRepository: new InMemoryQuestionRepository(),
+    questionWorkspaceRepository: {
+      load: () =>
+        Promise.resolve({
+          questions: [],
+          quizzes,
+          pendingOperationCount: 0,
+          conflicts: [],
+        }),
+    },
   }),
 }));
 vi.mock('@features/session/RevisionExperienceProvider', async (original) => {
@@ -70,6 +89,7 @@ describe('RevisionDrawerPanel', () => {
     mode = 'free';
     state = { kind: 'no-bank', message: 'vide' };
     filters = initialFreeRevisionFilters;
+    quizzes = [];
     vi.clearAllMocks();
   });
   it('shows the exact four paths and ordered dependent filters', async () => {
@@ -178,5 +198,70 @@ describe('RevisionDrawerPanel', () => {
       screen.getByText(/assez de questions validées.*40 questions/),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Commencer/ })).toBeDisabled();
+  });
+
+  it('lists the user’s quizz as a chapter option in free mode and chapter-test, and disables Notion once selected', async () => {
+    quizzes = [
+      {
+        id: 'quizz-1',
+        ownerId: 'user-1',
+        title: 'Mon quizz',
+        description: '',
+        visibility: 'private',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    expect(
+      await screen.findByRole('option', { name: 'Mon quizz' }),
+    ).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Chapitre'), 'quizz-1');
+    expect(setVisibleFilters).toHaveBeenCalled();
+    filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
+    expect(filters.chapter).toEqual({ kind: 'one', value: 'quizz-1' });
+    expect(filters.notion).toEqual({ kind: 'all' });
+
+    mode = 'chapter-test';
+    const testView = render(<RevisionDrawerPanel />);
+    expect(
+      testView.getByRole('option', { name: 'Mon quizz' }),
+    ).toBeInTheDocument();
+  });
+
+  it('résout le libellé Daily/Weak via le titre du quizz quand la notion officielle est introuvable', async () => {
+    quizzes = [
+      {
+        id: 'quizz-1',
+        ownerId: 'user-1',
+        title: 'Mon quizz',
+        description: '',
+        visibility: 'private',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+    ];
+    mode = 'daily';
+    state = {
+      kind: 'daily',
+      state: {
+        kind: 'ready',
+        items: [
+          {
+            notionId: 'quizz-1',
+            plannedCount: 2,
+            successCount: 0,
+            partialCount: 0,
+            failedCount: 0,
+            reason: 'Plan',
+            recommendedDifficulty: 'standard',
+            dueAt: null,
+          },
+        ],
+      },
+    };
+    render(<RevisionDrawerPanel />);
+    expect(await screen.findByText('Mon quizz')).toBeInTheDocument();
   });
 });
