@@ -237,45 +237,64 @@ function strictParameterization(value: unknown): boolean {
   });
 }
 
-function classification(value: unknown): value is ImportClassification {
-  if (!record(value)) return false;
-  if (value.kind === 'official')
-    return (
-      hasOnlyKeys(value, ['kind', 'chapterId', 'notionId', 'confidence']) &&
-      text(value.chapterId) &&
-      text(value.notionId) &&
-      (value.confidence === 'certain' || value.confidence === 'uncertain') &&
-      !Object.hasOwn(value, 'partId')
-    );
-  return (
-    value.kind === 'personal' &&
-    hasOnlyKeys(value, [
+// Returns null when valid, or a short diagnostic string identifying which
+// check failed — surfaced in the quarantine message so a rejected import
+// says exactly what was wrong instead of a generic "invalide ou inconnue".
+function classificationIssue(value: unknown): string | null {
+  if (!record(value)) return 'classification absente ou non-objet';
+  if (value.kind === 'official') {
+    if (!hasOnlyKeys(value, ['kind', 'chapterId', 'notionId', 'confidence']))
+      return 'clé inconnue pour une classification officielle';
+    if (Object.hasOwn(value, 'partId'))
+      return 'partId non autorisé (déduit du serveur, jamais envoyé)';
+    if (!text(value.chapterId)) return 'chapterId manquant ou invalide';
+    if (!text(value.notionId)) return 'notionId manquant ou invalide';
+    if (value.confidence !== 'certain' && value.confidence !== 'uncertain')
+      return 'confidence manquant ou invalide (certain|uncertain attendu)';
+    return null;
+  }
+  if (value.kind !== 'personal')
+    return 'kind doit être "official" ou "personal"';
+  if (
+    !hasOnlyKeys(value, [
       'kind',
       'proposedCourseTitle',
       'proposedChapterTitle',
       'proposedNotionTitle',
       'reason',
       'requiresUserConfirmation',
-    ]) &&
-    typeof value.proposedCourseTitle === 'string' &&
-    boundedText(
+    ])
+  )
+    return 'clé inconnue pour une classification personnelle';
+  if (
+    typeof value.proposedCourseTitle !== 'string' ||
+    !boundedText(
       value.proposedCourseTitle,
       CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
-    ) &&
-    value.proposedCourseTitle.trim() !== '' &&
-    boundedText(
+    ) ||
+    value.proposedCourseTitle.trim() === ''
+  )
+    return 'proposedCourseTitle manquant, vide ou trop long';
+  if (
+    !boundedText(
       value.proposedChapterTitle,
       CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
       true,
-    ) &&
-    boundedText(
+    )
+  )
+    return 'proposedChapterTitle invalide (chaîne ou null attendu)';
+  if (
+    !boundedText(
       value.proposedNotionTitle,
       CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
       true,
-    ) &&
-    text(value.reason) &&
-    value.requiresUserConfirmation === true
-  );
+    )
+  )
+    return 'proposedNotionTitle invalide (chaîne ou null attendu)';
+  if (!text(value.reason)) return 'reason manquant, vide ou trop long';
+  if (value.requiresUserConfirmation !== true)
+    return 'requiresUserConfirmation doit être true';
+  return null;
 }
 
 function validateEntry(
@@ -321,12 +340,13 @@ function validateEntry(
       `${path}.clientEntryId`,
       'Identifiant client invalide.',
     );
-  if (!classification(value.classification))
+  const classificationProblem = classificationIssue(value.classification);
+  if (classificationProblem)
     return issue(
       index,
       'invalid-classification',
       `${path}.classification`,
-      'Classification invalide ou inconnue.',
+      `Classification invalide : ${classificationProblem}.`,
     );
   if (
     !['formula', 'course', 'calculation', 'reflex'].includes(String(value.type))
