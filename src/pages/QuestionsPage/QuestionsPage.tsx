@@ -739,6 +739,11 @@ export function QuestionsPage() {
           userId={userId}
           programIndex={programIndex}
           workspace={workspace}
+          defaultQuizzId={
+            !selected && folderLocation.kind === 'quizz'
+              ? folderLocation.courseId
+              : null
+          }
           onCancel={() => setEditing(false)}
           onSave={async (question, kind, quizz) => {
             if (quizz) {
@@ -1001,6 +1006,7 @@ function QuestionEditor({
   userId,
   programIndex,
   workspace,
+  defaultQuizzId,
   onCancel,
   onSave,
 }: {
@@ -1008,6 +1014,7 @@ function QuestionEditor({
   userId: string;
   programIndex: ProgramIndex | null;
   workspace: QuestionWorkspaceSnapshot;
+  defaultQuizzId: string | null;
   onCancel: () => void;
   onSave: (
     question: Question,
@@ -1073,7 +1080,7 @@ function QuestionEditor({
     : null;
   const [classificationKind, setClassificationKind] = useState<
     'official' | 'personal'
-  >(existingClassification?.kind ?? 'official');
+  >(existingClassification?.kind ?? (defaultQuizzId ? 'personal' : 'official'));
   const [partId, setPartId] = useState(
     existingClassification?.kind === 'official'
       ? existingClassification.partId
@@ -1092,7 +1099,7 @@ function QuestionEditor({
   const [courseId, setCourseId] = useState(
     existingClassification?.kind === 'personal'
       ? existingClassification.courseId
-      : '',
+      : (defaultQuizzId ?? ''),
   );
   const [personalChapter, setPersonalChapter] = useState(
     existingClassification?.kind === 'personal'

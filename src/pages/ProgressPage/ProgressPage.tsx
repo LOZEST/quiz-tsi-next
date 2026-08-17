@@ -333,10 +333,10 @@ export function ProgressContent({
       </section>
       {snapshot.quizzes.length ? (
         <section>
-          <h2>Progression par Quizz</h2>
+          <h2>Mes quizz</h2>
           <div className={styles.parts}>
             {snapshot.quizzes.map((quizz) => (
-              <div key={quizz.quizzId}>
+              <button type="button" key={quizz.quizzId}>
                 <span>{quizz.title}</span>
                 <strong>{quizz.masteryScore} %</strong>
                 <span
@@ -345,7 +345,7 @@ export function ProgressContent({
                 >
                   {masteryStatusLabels[quizz.status]}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </section>

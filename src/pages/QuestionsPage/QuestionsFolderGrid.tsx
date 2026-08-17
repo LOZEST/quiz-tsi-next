@@ -100,7 +100,7 @@ export function QuestionsFolderGrid({
               className={styles.addQuizCard}
               onClick={() => newFolderInputRef.current?.focus()}
             >
-              <span aria-hidden="true">Ajoute un quizz</span>
+              <span>Ajoute un quizz</span>
               <span className={styles.addQuizPlus} aria-hidden="true">
                 +
               </span>
