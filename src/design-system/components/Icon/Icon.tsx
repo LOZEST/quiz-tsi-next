@@ -85,3 +85,11 @@ export function IconClose(props: IconProps) {
     </svg>
   );
 }
+
+export function IconFilter(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 5h16L14 13v6l-4 2v-8L4 5Z" />
+    </svg>
+  );
+}

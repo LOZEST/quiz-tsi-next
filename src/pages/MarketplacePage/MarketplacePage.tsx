@@ -1,15 +1,15 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { Surface } from '@design-system/components/Surface/Surface';
 import { Button } from '@design-system/components/Button/Button';
-import { CertifiedBadge } from '@design-system/components/CertifiedBadge/CertifiedBadge';
-import { RatingWidget } from '@design-system/components/RatingWidget/RatingWidget';
+import { IconButton } from '@design-system/components/IconButton/IconButton';
+import { IconFilter } from '@design-system/components/Icon/Icon';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import type { QuizzListing } from '@domain/quizz/QuizzListing';
 import type { QuizzListingPreview as QuizzListingPreviewData } from '@domain/quizz/QuizzMarketplaceGateway';
 import type { QuizzRatingScore } from '@domain/quizz/QuizzRating';
-import { RateListingPrompt } from '@features/quizz/RateListingPrompt';
-import { QuizzListingPreview } from './QuizzListingPreview';
+import { ListingDetailModal } from './ListingDetailModal';
 import styles from './MarketplacePage.module.css';
 
 function ListingCard({
@@ -19,47 +19,38 @@ function ListingCard({
   pending,
 }: {
   listing: QuizzListing;
-  onOpenPreview: (listingId: string) => void;
-  onSubscribe: (
-    listingId: string,
-    event: MouseEvent<HTMLButtonElement>,
-  ) => void;
+  onOpenPreview: (listingId: string, trigger: HTMLButtonElement) => void;
+  onSubscribe: (listingId: string) => void;
   pending: boolean;
 }) {
   return (
     <article className={styles.card}>
-      <div className={styles.cardHeader}>
-        <h3>{listing.title}</h3>
-        {listing.certified ? <CertifiedBadge /> : null}
-      </div>
-      <p>{listing.description}</p>
-      <p>
-        {listing.averageRating !== null
-          ? `${listing.averageRating.toFixed(1)} / 5 (${listing.ratingCount})`
-          : 'Pas encore noté'}
-      </p>
-      <div>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() => onOpenPreview(listing.id)}
-        >
-          Aperçu
-        </Button>
-        <Button
-          type="button"
-          busy={pending}
-          onClick={(event) => onSubscribe(listing.id, event)}
-        >
-          Ajouter à mon espace
-        </Button>
-      </div>
+      <button
+        type="button"
+        className={styles.cardMain}
+        onClick={(event) => onOpenPreview(listing.id, event.currentTarget)}
+      >
+        <div className={styles.cardPreview}>{listing.description}</div>
+        <div className={styles.cardMeta}>
+          <strong>{listing.title}</strong>
+        </div>
+      </button>
+      <button
+        type="button"
+        className={styles.priceBadge}
+        aria-label="Ajouter à mon espace"
+        disabled={pending}
+        onClick={() => onSubscribe(listing.id)}
+      >
+        Pix
+      </button>
     </article>
   );
 }
 
 export function MarketplacePage() {
   const { quizzMarketplaceGateway } = useAppServices();
+  const navigate = useNavigate();
   const [listings, setListings] = useState<readonly QuizzListing[] | null>(
     null,
   );
@@ -72,14 +63,9 @@ export function MarketplacePage() {
   const [subscribedListingIds, setSubscribedListingIds] = useState<
     readonly string[]
   >([]);
-  const [ratePromptListingId, setRatePromptListingId] = useState<string | null>(
-    null,
-  );
-  const activeSubscribeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [rating, setRating] = useState<QuizzRatingScore | null>(null);
-  const [ratingStatus, setRatingStatus] = useState<
-    'idle' | 'submitting' | 'submitted' | 'error'
-  >('idle');
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterQuery, setFilterQuery] = useState('');
+  const activeCardTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const reload = () => {
     quizzMarketplaceGateway
@@ -91,10 +77,7 @@ export function MarketplacePage() {
   };
   useEffect(reload, [quizzMarketplaceGateway]);
 
-  const subscribe = async (
-    listingId: string,
-    event: MouseEvent<HTMLButtonElement>,
-  ) => {
+  const subscribe = async (listingId: string) => {
     setPendingListingId(listingId);
     setNotice(null);
     setError(null);
@@ -102,8 +85,6 @@ export function MarketplacePage() {
       await quizzMarketplaceGateway.subscribeToListing(listingId);
       setSubscribedListingIds((current) => [...current, listingId]);
       setNotice('Le Quizz a été ajouté à ton espace.');
-      activeSubscribeButtonRef.current = event.currentTarget;
-      setRatePromptListingId(listingId);
     } catch {
       setError('L’ajout du Quizz a échoué.');
     } finally {
@@ -111,12 +92,11 @@ export function MarketplacePage() {
     }
   };
 
-  const openPreview = async (listingId: string) => {
+  const openPreview = async (listingId: string, trigger: HTMLButtonElement) => {
+    activeCardTriggerRef.current = trigger;
     setPreviewListingId(listingId);
     setPreview(null);
     setPreviewError(null);
-    setRating(null);
-    setRatingStatus('idle');
     try {
       setPreview(await quizzMarketplaceGateway.getListingPreview(listingId));
     } catch {
@@ -145,87 +125,87 @@ export function MarketplacePage() {
 
   const submitRating = async (score: QuizzRatingScore) => {
     if (!previewListingId) return;
-    setRating(score);
-    setRatingStatus('submitting');
-    try {
-      await quizzMarketplaceGateway.rateListing({
-        listingId: previewListingId,
-        score,
-        comment: null,
-      });
-      setRatingStatus('submitted');
-    } catch {
-      setRatingStatus('error');
-    }
+    await quizzMarketplaceGateway.rateListing({
+      listingId: previewListingId,
+      score,
+      comment: null,
+    });
   };
+
+  const query = filterQuery.trim().toLowerCase();
+  const visibleListings = (listings ?? []).filter(
+    (listing) =>
+      !query ||
+      listing.title.toLowerCase().includes(query) ||
+      listing.description.toLowerCase().includes(query),
+  );
 
   return (
     <>
       <PageHeader
-        title="Marketplace"
+        title="Market Place"
         description="Découvre des Quizz publiés par la communauté, abonne-toi et note ceux que tu as essayés."
+        actions={
+          <div className={styles.headerActions}>
+            <Button
+              type="button"
+              onClick={() => {
+                void navigate('/questions');
+              }}
+            >
+              Add a Quizz
+            </Button>
+            <IconButton
+              label={showFilter ? 'Masquer le filtre' : 'Filtrer'}
+              onClick={() => setShowFilter((value) => !value)}
+            >
+              <IconFilter />
+            </IconButton>
+          </div>
+        }
       />
+      {showFilter ? (
+        <div className={styles.filterBar}>
+          <label>
+            Recherche
+            <input
+              value={filterQuery}
+              onChange={(event) => setFilterQuery(event.target.value)}
+              placeholder="Titre ou description"
+            />
+          </label>
+        </div>
+      ) : null}
       {error ? <p role="alert">{error}</p> : null}
       {notice ? <p role="status">{notice}</p> : null}
       <Surface>
         {listings === null ? (
           <p>Chargement des Quizz…</p>
-        ) : listings.length === 0 ? (
+        ) : visibleListings.length === 0 ? (
           <p>Aucun Quizz publié pour le moment.</p>
         ) : (
           <div className={styles.list}>
-            {listings.map((listing) => (
+            {visibleListings.map((listing) => (
               <ListingCard
                 key={listing.id}
                 listing={listing}
-                onOpenPreview={(id) => void openPreview(id)}
-                onSubscribe={(id, event) => void subscribe(id, event)}
+                onOpenPreview={(id, trigger) => void openPreview(id, trigger)}
+                onSubscribe={(id) => void subscribe(id)}
                 pending={pendingListingId === listing.id}
               />
             ))}
           </div>
         )}
       </Surface>
-      {previewListingId ? (
-        <Surface>
-          {previewError ? <p role="alert">{previewError}</p> : null}
-          {preview ? (
-            <>
-              <QuizzListingPreview preview={preview} />
-              <RatingWidget
-                value={rating}
-                onChange={(score) => {
-                  if (canRate) void submitRating(score);
-                }}
-                disabled={!canRate || ratingStatus === 'submitting'}
-                label="Noter ce Quizz"
-              />
-              {!canRate ? (
-                <p>Abonne-toi à ce Quizz pour pouvoir le noter.</p>
-              ) : null}
-              {ratingStatus === 'submitted' ? (
-                <p role="status">Merci pour ta note.</p>
-              ) : null}
-              {ratingStatus === 'error' ? (
-                <p role="alert">L’envoi de la note a échoué.</p>
-              ) : null}
-            </>
-          ) : (
-            <p>Chargement de l’aperçu…</p>
-          )}
-          <Button type="button" variant="secondary" onClick={closePreview}>
-            Fermer l’aperçu
-          </Button>
-        </Surface>
-      ) : null}
-      {ratePromptListingId ? (
-        <RateListingPrompt
-          open
-          listingId={ratePromptListingId}
-          triggerRef={activeSubscribeButtonRef}
-          onClose={() => setRatePromptListingId(null)}
-        />
-      ) : null}
+      <ListingDetailModal
+        open={previewListingId !== null}
+        preview={preview}
+        previewError={previewError}
+        canRate={canRate}
+        triggerRef={activeCardTriggerRef}
+        onClose={closePreview}
+        onSubmitRating={submitRating}
+      />
     </>
   );
 }

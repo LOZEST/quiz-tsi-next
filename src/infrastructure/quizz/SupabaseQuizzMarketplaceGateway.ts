@@ -22,6 +22,7 @@ interface QuizzListingRow {
   published_at: string;
   certified_at: string | null;
   hidden_at: string | null;
+  author_display_name: string | null;
 }
 
 function mapListing(row: QuizzListingRow): QuizzListing {
@@ -39,6 +40,7 @@ function mapListing(row: QuizzListingRow): QuizzListing {
     publishedAt: row.published_at,
     certifiedAt: row.certified_at,
     hiddenAt: row.hidden_at,
+    authorDisplayName: row.author_display_name,
   };
 }
 
@@ -64,6 +66,14 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
       p_description: submission.description,
     });
     if (error) throw new Error('La publication du Quizz a échoué.');
+  }
+
+  async setOwnListingHidden(quizzId: string, hidden: boolean): Promise<void> {
+    const { error } = await this.client.rpc('set_own_quizz_listing_hidden', {
+      p_quizz_id: quizzId,
+      p_hidden: hidden,
+    });
+    if (error) throw new Error('Le retrait/rétablissement du Quizz a échoué.');
   }
 
   async listVisibleListings(): Promise<readonly QuizzListing[]> {

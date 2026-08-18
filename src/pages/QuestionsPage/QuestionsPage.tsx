@@ -4,6 +4,8 @@ import { useAppServices } from '@app/providers/AppServicesProvider';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { EmptyState } from '@design-system/components/EmptyState/EmptyState';
 import { StatusBadge } from '@design-system/components/StatusBadge/StatusBadge';
+import { IconButton } from '@design-system/components/IconButton/IconButton';
+import { IconFilter } from '@design-system/components/Icon/Icon';
 import {
   searchAndFilterQuestions,
   questionsInFolder,
@@ -60,6 +62,7 @@ export function QuestionsPage() {
     questionRemoteGateway,
     programIndex,
     refreshQuestionRepositoryForUser,
+    quizzMarketplaceGateway,
   } = useAppServices();
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
   const chatGptImportUrl = readChatGptImportUrl();
@@ -90,6 +93,7 @@ export function QuestionsPage() {
   const [bulkMoveChapter, setBulkMoveChapter] = useState('');
   const selectAllRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<'list' | 'folders'>('list');
+  const [showFilters, setShowFilters] = useState(false);
   const [folderLocation, setFolderLocation] = useState<FolderLocation>({
     kind: 'root',
   });
@@ -176,6 +180,30 @@ export function QuestionsPage() {
     setSelectedId(question.id);
     await reload();
   };
+  const validateQuestion = (question: Readonly<Question>) => {
+    const prepared = prepareQuestionForReview(question);
+    setReviewErrors(prepared.issues);
+    if (!prepared.issues.length)
+      void mutate(
+        {
+          ...prepared.normalizedQuestion,
+          version: question.version + 1,
+          validated: true,
+          updatedAt: new Date().toISOString(),
+        },
+        'update',
+      );
+  };
+  const deleteQuestion = (question: Readonly<Question>) =>
+    void mutate(
+      {
+        ...question,
+        version: question.version + 1,
+        status: 'archived',
+        updatedAt: new Date().toISOString(),
+      },
+      'archive',
+    );
   const displayedQuestions =
     view === 'folders' ? questionsInFolder(results, folderLocation) : results;
   const selectableResults = displayedQuestions.filter(
@@ -311,6 +339,21 @@ export function QuestionsPage() {
       crypto.randomUUID(),
       'update',
     );
+    try {
+      if (visibility === 'public') {
+        await quizzMarketplaceGateway.publishQuizz({
+          quizzId: courseId,
+          title: quizz.title,
+          description: quizz.description,
+        });
+      } else {
+        await quizzMarketplaceGateway.setOwnListingHidden(courseId, true);
+      }
+    } catch {
+      setStorageError(
+        'La mise à jour de la visibilité sur la marketplace a échoué.',
+      );
+    }
     await reload();
   };
 
@@ -319,6 +362,16 @@ export function QuestionsPage() {
       <PageHeader
         title="Mes Quizz"
         description="Crée, organise et relis tes quizz, même hors connexion."
+        actions={
+          view === 'folders' ? (
+            <IconButton
+              label={showFilters ? 'Masquer les filtres' : 'Filtrer'}
+              onClick={() => setShowFilters((value) => !value)}
+            >
+              <IconFilter />
+            </IconButton>
+          ) : undefined
+        }
       />
       {offline ? (
         <p className={styles.banner} role="status">
@@ -407,156 +460,179 @@ export function QuestionsPage() {
           </span>
         ) : null}
       </div>
-      <div className={styles.filters}>
-        <label>
-          Recherche
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Énoncé, taxonomie ou tag"
-          />
-        </label>
-        <label>
-          Source
-          <select
-            value={filters.source ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                source: event.target.value
-                  ? (event.target.value as Question['source'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Toutes</option>
-            <option value="static">Officielle</option>
-            <option value="private">Ma banque</option>
-            <option value="shared">Partagée</option>
-          </select>
-        </label>
-        <label>
-          Partie / Quizz
-          <select
-            value={filters.courseOrPartId ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                courseOrPartId: event.target.value || undefined,
-                chapterId: undefined,
-                chapter: undefined,
-              }))
-            }
-          >
-            <option value="">Toutes les parties et tous les quizz</option>
-            {programIndex?.getAllParts().map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-            {workspace.quizzes.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Chapitre (officiel)
-          <select
-            value={filters.chapterId ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                chapterId: event.target.value || undefined,
-              }))
-            }
-          >
-            <option value="">Tous les chapitres</option>
-            {programIndex?.getAllChapters().map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Chapitre (quizz perso)
-          <input
-            value={filters.chapter ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                chapter: event.target.value || undefined,
-              }))
-            }
-            placeholder="Étiquette libre"
-          />
-        </label>
-        <label>
-          Type
-          <select
-            value={filters.type ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                type: event.target.value
-                  ? (event.target.value as Question['type'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Tous</option>
-            <option value="formula">Formules</option>
-            <option value="course">Cours</option>
-            <option value="calculation">Calcul</option>
-            <option value="reflex">Réflexe</option>
-          </select>
-        </label>
-        <label>
-          Difficulté
-          <select
-            value={filters.difficulty ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                difficulty: event.target.value
-                  ? (event.target.value as Exclude<
-                      Question['difficulty'],
-                      null
-                    >)
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Toutes</option>
-            <option value="fundamental">Fondamental</option>
-            <option value="standard">Standard</option>
-            <option value="trap">Piège</option>
-          </select>
-        </label>
-        <label>
-          Statut
-          <select
-            value={filters.status ?? ''}
-            onChange={(event) =>
-              setFilters((value) => ({
-                ...value,
-                status: event.target.value
-                  ? (event.target.value as Question['status'])
-                  : undefined,
-              }))
-            }
-          >
-            <option value="">Tous</option>
-            <option value="draft">Brouillon</option>
-            <option value="published">Publié</option>
-            <option value="archived">Archivé</option>
-          </select>
-        </label>
-      </div>
+      {view === 'list' || showFilters ? (
+        <div className={styles.filters}>
+          <label>
+            Recherche
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Énoncé, taxonomie ou tag"
+            />
+          </label>
+          <label>
+            Source
+            <select
+              value={filters.source ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  source: event.target.value
+                    ? (event.target.value as Question['source'])
+                    : undefined,
+                }))
+              }
+            >
+              <option value="">Toutes</option>
+              <option value="static">Officielle</option>
+              <option value="private">Ma banque</option>
+              <option value="shared">Partagée</option>
+            </select>
+          </label>
+          <label>
+            Partie / Quizz
+            <select
+              value={filters.courseOrPartId ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  courseOrPartId: event.target.value || undefined,
+                  chapterId: undefined,
+                  chapter: undefined,
+                }))
+              }
+            >
+              <option value="">Toutes les parties et tous les quizz</option>
+              {programIndex?.getAllParts().map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+              {workspace.quizzes.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Chapitre (officiel)
+            <select
+              value={filters.chapterId ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  chapterId: event.target.value || undefined,
+                }))
+              }
+            >
+              <option value="">Tous les chapitres</option>
+              {programIndex?.getAllChapters().map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Chapitre (quizz perso)
+            <input
+              value={filters.chapter ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  chapter: event.target.value || undefined,
+                }))
+              }
+              placeholder="Étiquette libre"
+            />
+          </label>
+          <label>
+            Type
+            <select
+              value={filters.type ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  type: event.target.value
+                    ? (event.target.value as Question['type'])
+                    : undefined,
+                }))
+              }
+            >
+              <option value="">Tous</option>
+              <option value="formula">Formules</option>
+              <option value="course">Cours</option>
+              <option value="calculation">Calcul</option>
+              <option value="reflex">Réflexe</option>
+            </select>
+          </label>
+          <label>
+            Difficulté
+            <select
+              value={filters.difficulty ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  difficulty: event.target.value
+                    ? (event.target.value as Exclude<
+                        Question['difficulty'],
+                        null
+                      >)
+                    : undefined,
+                }))
+              }
+            >
+              <option value="">Toutes</option>
+              <option value="fundamental">Fondamental</option>
+              <option value="standard">Standard</option>
+              <option value="trap">Piège</option>
+            </select>
+          </label>
+          <label>
+            Statut
+            <select
+              value={filters.status ?? ''}
+              onChange={(event) =>
+                setFilters((value) => ({
+                  ...value,
+                  status: event.target.value
+                    ? (event.target.value as Question['status'])
+                    : undefined,
+                }))
+              }
+            >
+              <option value="">Tous</option>
+              <option value="draft">Brouillon</option>
+              <option value="published">Publié</option>
+              <option value="archived">Archivé</option>
+            </select>
+          </label>
+        </div>
+      ) : null}
       {loading ? (
         <p role="status">Chargement de la banque…</p>
+      ) : view === 'folders' ? (
+        <QuestionsFolderGrid
+          location={folderLocation}
+          onLocationChange={setFolderLocation}
+          quizzes={workspace.quizzes}
+          questions={results}
+          onCreateQuizz={(title) => void onCreateQuizz(title)}
+          onToggleQuizzVisibility={(courseId, visibility) =>
+            void onToggleQuizzVisibility(courseId, visibility)
+          }
+          selectedId={selectedId}
+          onSelectQuestion={setSelectedId}
+          onEditQuestion={() => setEditing(true)}
+          onValidateQuestion={validateQuestion}
+          onDeleteQuestion={deleteQuestion}
+          onCreateQuestion={() => {
+            setSelectedId(null);
+            setEditing(true);
+          }}
+          chatGptImportUrl={chatGptImportUrl}
+        />
       ) : results.length === 0 ? (
         <EmptyState
           title={all.length ? 'Aucun résultat' : 'Ta banque est vide'}
@@ -569,18 +645,6 @@ export function QuestionsPage() {
       ) : (
         <div className={styles.layout}>
           <div className={styles.listColumn}>
-            {view === 'folders' ? (
-              <QuestionsFolderGrid
-                location={folderLocation}
-                onLocationChange={setFolderLocation}
-                quizzes={workspace.quizzes}
-                questions={results}
-                onCreateQuizz={(title) => void onCreateQuizz(title)}
-                onToggleQuizzVisibility={(courseId, visibility) =>
-                  void onToggleQuizzVisibility(courseId, visibility)
-                }
-              />
-            ) : null}
             <div className={styles.listHeader}>
               <label>
                 <input
@@ -662,31 +726,8 @@ export function QuestionsPage() {
                 question={selected}
                 quizzes={workspace.quizzes}
                 onEdit={() => setEditing(true)}
-                onValidate={() => {
-                  const prepared = prepareQuestionForReview(selected);
-                  setReviewErrors(prepared.issues);
-                  if (!prepared.issues.length)
-                    void mutate(
-                      {
-                        ...prepared.normalizedQuestion,
-                        version: selected.version + 1,
-                        validated: true,
-                        updatedAt: new Date().toISOString(),
-                      },
-                      'update',
-                    );
-                }}
-                onDelete={() =>
-                  void mutate(
-                    {
-                      ...selected,
-                      version: selected.version + 1,
-                      status: 'archived',
-                      updatedAt: new Date().toISOString(),
-                    },
-                    'archive',
-                  )
-                }
+                onValidate={() => validateQuestion(selected)}
+                onDelete={() => deleteQuestion(selected)}
                 onMove={(courseId, chapter) =>
                   void mutate(
                     {

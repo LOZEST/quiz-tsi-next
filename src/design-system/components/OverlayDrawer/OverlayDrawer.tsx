@@ -16,6 +16,8 @@ interface OverlayDrawerProps {
   triggerRef: RefObject<HTMLButtonElement | null>;
   children: ReactNode;
   onClose: () => void;
+  variant?: 'edge' | 'centered';
+  closeLabel?: string;
 }
 
 export function OverlayDrawer({
@@ -24,6 +26,8 @@ export function OverlayDrawer({
   triggerRef,
   children,
   onClose,
+  variant = 'edge',
+  closeLabel = 'Fermer le menu',
 }: OverlayDrawerProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -60,7 +64,7 @@ export function OverlayDrawer({
   return (
     <dialog
       ref={dialogRef}
-      className={styles.dialog}
+      className={`${styles.dialog} ${variant === 'centered' ? styles.dialogCentered : ''}`}
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
@@ -68,10 +72,12 @@ export function OverlayDrawer({
       }}
       onClick={handleBackdropClick}
     >
-      <div className={styles.panel}>
+      <div
+        className={`${styles.panel} ${variant === 'centered' ? styles.panelCentered : ''}`}
+      >
         <header className={styles.header}>
           <h2 id={titleId}>{title}</h2>
-          <IconButton label="Fermer le menu" onClick={closeAndRestoreFocus}>
+          <IconButton label={closeLabel} onClick={closeAndRestoreFocus}>
             <IconClose />
           </IconButton>
         </header>

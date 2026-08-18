@@ -42,3 +42,21 @@
   color: var(--qtsi-text);
   background: transparent;
 }
+
+.success {
+  color: white;
+  background: var(--qtsi-success);
+}
+
+.success:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--qtsi-success) 85%, black);
+}
+
+.danger {
+  color: white;
+  background: var(--qtsi-danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--qtsi-danger) 85%, black);
+}

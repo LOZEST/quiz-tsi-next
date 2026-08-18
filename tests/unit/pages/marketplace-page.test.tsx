@@ -1,7 +1,9 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import type { QuizzListing } from '@domain/quizz/QuizzListing';
+import type { QuizzListingPreview } from '@domain/quizz/QuizzMarketplaceGateway';
 
 const listing = (overrides: Partial<QuizzListing> = {}): QuizzListing => ({
   id: 'listing-1',
@@ -16,12 +18,40 @@ const listing = (overrides: Partial<QuizzListing> = {}): QuizzListing => ({
   publishedAt: '2026-01-01T00:00:00.000Z',
   certifiedAt: null,
   hiddenAt: null,
+  authorDisplayName: null,
+  ...overrides,
+});
+
+const preview = (
+  overrides: Partial<QuizzListingPreview> = {},
+): QuizzListingPreview => ({
+  listingId: 'listing-1',
+  title: 'Thermodynamique',
+  description: 'Un quizz sur la thermo',
+  certified: true,
+  averageRating: 3,
+  ratingCount: 1,
+  authorDisplayName: 'lucien',
+  questions: [
+    {
+      id: 'q1',
+      prompt: [{ kind: 'text', value: 'Enoncé' }],
+      correction: [
+        {
+          id: 'step-1',
+          title: null,
+          content: [{ kind: 'text', value: 'Réponse' }],
+        },
+      ],
+    },
+  ],
   ...overrides,
 });
 
 const listVisibleListings = vi.fn(() => Promise.resolve([] as QuizzListing[]));
 const getListingPreview = vi.fn();
 const subscribeToListing = vi.fn(() => Promise.resolve());
+const hasSubscribed = vi.fn(() => Promise.resolve(false));
 const rateListing = vi.fn(() => Promise.resolve());
 
 vi.mock('@app/providers/AppServicesProvider', () => ({
@@ -30,6 +60,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
       listVisibleListings,
       getListingPreview,
       subscribeToListing,
+      hasSubscribed,
       rateListing,
     },
   }),
@@ -37,14 +68,23 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
 
 import { MarketplacePage } from '@pages/MarketplacePage/MarketplacePage';
 
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <MarketplacePage />
+    </MemoryRouter>,
+  );
+}
+
 describe('MarketplacePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     listVisibleListings.mockResolvedValue([]);
+    hasSubscribed.mockResolvedValue(false);
   });
 
   it('shows an empty state when there is nothing published', async () => {
-    render(<MarketplacePage />);
+    renderPage();
     expect(
       await screen.findByText('Aucun Quizz publié pour le moment.'),
     ).toBeInTheDocument();
@@ -52,7 +92,7 @@ describe('MarketplacePage', () => {
 
   it('shows an error when listings fail to load', async () => {
     listVisibleListings.mockRejectedValue(new Error('offline'));
-    render(<MarketplacePage />);
+    renderPage();
     expect(
       await screen.findByText(
         'Les Quizz de la marketplace n’ont pas pu être chargés.',
@@ -60,19 +100,37 @@ describe('MarketplacePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders a listing card with its rating and certification', async () => {
-    listVisibleListings.mockResolvedValue([
-      listing({ certified: true, averageRating: 4.5, ratingCount: 3 }),
-    ]);
-    render(<MarketplacePage />);
+  it('renders a listing card with its title and the reserved Pix badge', async () => {
+    listVisibleListings.mockResolvedValue([listing()]);
+    renderPage();
     expect(await screen.findByText('Thermodynamique')).toBeInTheDocument();
-    expect(screen.getByText('4.5 / 5 (3)')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Ajouter à mon espace' }),
+    ).toHaveTextContent('Pix');
   });
 
-  it('subscribes to a listing and opens the rate prompt', async () => {
+  it('filters listings by title or description behind the filter icon', async () => {
+    listVisibleListings.mockResolvedValue([
+      listing({ id: 'l1', title: 'Thermodynamique' }),
+      listing({
+        id: 'l2',
+        title: 'Algèbre linéaire',
+        description: 'Matrices',
+      }),
+    ]);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('Thermodynamique');
+    await user.click(screen.getByRole('button', { name: 'Filtrer' }));
+    await user.type(screen.getByLabelText('Recherche'), 'algèbre');
+    expect(screen.queryByText('Thermodynamique')).not.toBeInTheDocument();
+    expect(screen.getByText('Algèbre linéaire')).toBeInTheDocument();
+  });
+
+  it('subscribes to a listing directly from the Pix badge', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
     const user = userEvent.setup();
-    render(<MarketplacePage />);
+    renderPage();
     await user.click(
       await screen.findByRole('button', { name: 'Ajouter à mon espace' }),
     );
@@ -86,7 +144,7 @@ describe('MarketplacePage', () => {
     listVisibleListings.mockResolvedValue([listing()]);
     subscribeToListing.mockRejectedValueOnce(new Error('denied'));
     const user = userEvent.setup();
-    render(<MarketplacePage />);
+    renderPage();
     await user.click(
       await screen.findByRole('button', { name: 'Ajouter à mon espace' }),
     );
@@ -95,12 +153,14 @@ describe('MarketplacePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('opens a preview, shows an error on failure, then closes it', async () => {
+  it('opens the detail modal by clicking the card, shows an error on failure, then closes it', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
     getListingPreview.mockRejectedValueOnce(new Error('denied'));
     const user = userEvent.setup();
-    render(<MarketplacePage />);
-    await user.click(await screen.findByRole('button', { name: 'Aperçu' }));
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
     expect(
       await screen.findByText('L’aperçu n’a pas pu être chargé.'),
     ).toBeInTheDocument();
@@ -108,72 +168,87 @@ describe('MarketplacePage', () => {
     expect(screen.queryByText('L’aperçu n’a pas pu être chargé.')).toBeNull();
   });
 
-  it('renders a loaded preview and disables rating without a subscription', async () => {
+  it('renders a loaded preview with rating, certification and author, disabling rating without a subscription', async () => {
     listVisibleListings.mockResolvedValue([listing({ certified: true })]);
-    getListingPreview.mockResolvedValue({
-      listingId: 'listing-1',
-      title: 'Thermodynamique',
-      description: 'Un quizz sur la thermo',
-      certified: true,
-      averageRating: 3,
-      ratingCount: 1,
-      questions: [
-        {
-          id: 'q1',
-          prompt: [{ kind: 'text', value: 'Enoncé' }],
-          correction: [
-            {
-              id: 'step-1',
-              title: null,
-              content: [{ kind: 'text', value: 'Réponse' }],
-            },
-          ],
-        },
-      ],
-    });
+    getListingPreview.mockResolvedValue(preview());
     const user = userEvent.setup();
-    render(<MarketplacePage />);
-    await user.click(await screen.findByRole('button', { name: 'Aperçu' }));
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
     expect(await screen.findByText('Enoncé')).toBeInTheDocument();
+    expect(screen.getByText('3.0 / 5 (1 note)')).toBeInTheDocument();
+    expect(screen.getByText('Quizz certifié')).toBeInTheDocument();
+    expect(screen.getByText('lucien')).toBeInTheDocument();
     expect(
       screen.getByText('Abonne-toi à ce Quizz pour pouvoir le noter.'),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole('radiogroup', { name: 'Noter ce Quizz' }),
+    ).toHaveAttribute('aria-disabled', 'true');
   });
 
-  it('rates a listing after subscribing, and reports a submission error', async () => {
+  it('falls back to a generic author label when the owner never set a display name', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
-    getListingPreview.mockResolvedValue({
-      listingId: 'listing-1',
-      title: 'Thermodynamique',
-      description: '',
-      certified: false,
-      averageRating: null,
-      ratingCount: 0,
-      questions: [],
-    });
+    getListingPreview.mockResolvedValue(preview({ authorDisplayName: null }));
     const user = userEvent.setup();
-    render(<MarketplacePage />);
+    renderPage();
     await user.click(
-      await screen.findByRole('button', { name: 'Ajouter à mon espace' }),
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
     );
-    await waitFor(() => expect(subscribeToListing).toHaveBeenCalled());
-    await user.click(screen.getByRole('button', { name: 'Plus tard' }));
-    await user.click(screen.getByRole('button', { name: 'Aperçu' }));
+    expect(await screen.findByText('Auteur')).toBeInTheDocument();
+  });
+
+  it('rates a listing in two steps after subscribing, and reports a submission error', async () => {
+    listVisibleListings.mockResolvedValue([listing()]);
+    hasSubscribed.mockResolvedValue(true);
+    getListingPreview.mockResolvedValue(
+      preview({ certified: false, authorDisplayName: null }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
     const widget = await screen.findByRole('radiogroup', {
       name: 'Noter ce Quizz',
     });
-    rateListing.mockRejectedValueOnce(new Error('denied'));
     await user.click(within(widget).getByRole('radio', { name: '5 / 5' }));
+
+    rateListing.mockRejectedValueOnce(new Error('denied'));
+    await user.click(
+      screen.getByRole('button', { name: 'Mettre un avis / note' }),
+    );
     expect(
       await screen.findByText('L’envoi de la note a échoué.'),
     ).toBeInTheDocument();
+
     rateListing.mockResolvedValueOnce(undefined);
-    await user.click(within(widget).getByRole('radio', { name: '4 / 5' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Mettre un avis / note' }),
+    );
     expect(await screen.findByText('Merci pour ta note.')).toBeInTheDocument();
     expect(rateListing).toHaveBeenLastCalledWith({
       listingId: 'listing-1',
-      score: 4,
+      score: 5,
       comment: null,
     });
+  });
+
+  it('navigates to Mes Quizz when clicking Add a Quizz', async () => {
+    listVisibleListings.mockResolvedValue([]);
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/marketplace']}>
+        <Routes>
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/questions" element={<p>Mes Quizz page</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await user.click(
+      await screen.findByRole('button', { name: 'Add a Quizz' }),
+    );
+    expect(await screen.findByText('Mes Quizz page')).toBeInTheDocument();
   });
 });
