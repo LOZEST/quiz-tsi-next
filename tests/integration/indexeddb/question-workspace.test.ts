@@ -67,6 +67,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       visibility: 'private' as const,
       createdAt: '2026-01-01T00:00:00.000Z',
       updatedAt: '2026-01-01T00:00:00.000Z',
+      deletedAt: null,
     };
     await repository.saveQuestionWithQuizz(
       'account-a',
@@ -136,6 +137,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     const question = {
       ...draft(ownerId, 'atomic-q'),
@@ -249,6 +251,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     const remoteQuestion = {
       ...draft(ownerId, 'gpt-q'),
@@ -293,6 +296,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     const offlineQuestion = {
       ...draft(ownerId, 'offline-q'),
@@ -335,6 +339,7 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
       visibility: 'private' as const,
       createdAt: now,
       updatedAt: now,
+      deletedAt: null,
     };
     await repository.saveQuizz(ownerId, course, 'op-course');
     const snapshot = await repository.load(ownerId);

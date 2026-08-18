@@ -320,6 +320,7 @@ describe('push distant idempotent', () => {
       visibility: 'private' as const,
       createdAt: '2026-08-10T00:00:00.000Z',
       updatedAt: '2026-08-10T00:00:00.000Z',
+      deletedAt: null,
     };
     const remote = statefulClient({
       quizzes: [

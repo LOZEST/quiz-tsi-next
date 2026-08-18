@@ -78,6 +78,21 @@
   cursor: pointer;
 }
 
+.importReview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qtsi-space-1);
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-1);
+  font-size: 0.875rem;
+}
+
+.importReview ul {
+  margin: 0;
+  padding-inline-start: var(--qtsi-space-4);
+}
+
 .detailActions {
   display: flex;
   gap: var(--qtsi-space-2);
@@ -114,6 +129,28 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--qtsi-space-2);
+}
+
+.metaEditForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qtsi-space-3);
+}
+
+.metaEditForm label {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.85rem;
+}
+
+.metaEditForm input,
+.metaEditForm textarea {
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-1);
+  font: inherit;
+  resize: vertical;
 }
 
 .pillLink {

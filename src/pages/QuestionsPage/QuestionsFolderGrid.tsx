@@ -20,6 +20,8 @@ export function QuestionsFolderGrid({
   questions,
   onCreateQuizz,
   onToggleQuizzVisibility,
+  onUpdateQuizzMeta,
+  onDeleteQuizz,
   selectedId,
   onSelectQuestion,
   onEditQuestion,
@@ -37,6 +39,11 @@ export function QuestionsFolderGrid({
     quizzId: string,
     visibility: QuizzVisibility,
   ) => void;
+  onUpdateQuizzMeta: (
+    quizzId: string,
+    updates: { title: string; description: string },
+  ) => void;
+  onDeleteQuizz: (quizzId: string) => void;
   selectedId: string | null;
   onSelectQuestion: (id: string) => void;
   onEditQuestion: () => void;
@@ -180,6 +187,8 @@ export function QuestionsFolderGrid({
                 onValidate={onValidateQuestion}
                 onDelete={onDeleteQuestion}
                 onCreateNew={onCreateQuestion}
+                onUpdateMeta={(updates) => onUpdateQuizzMeta(quizz.id, updates)}
+                onDeleteQuizz={() => onDeleteQuizz(quizz.id)}
                 chatGptImportUrl={chatGptImportUrl}
               />
             ) : null;

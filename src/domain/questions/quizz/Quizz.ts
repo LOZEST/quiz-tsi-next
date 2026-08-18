@@ -8,6 +8,7 @@ export interface Quizz {
   readonly visibility: QuizzVisibility;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly deletedAt: string | null;
 }
 
 export function assertQuizzOwner(
