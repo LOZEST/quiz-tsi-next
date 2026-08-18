@@ -27,6 +27,9 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
     page.getByLabel('Fil d’Ariane').getByText('Quizz e2e marketplace'),
   ).toBeVisible();
 
+  // "Publier sur la marketplace" only renders on the root quizz card, not
+  // inside the quizz's own folder.
+  await page.getByRole('button', { name: 'Mes Quizz' }).click();
   await page
     .getByRole('button', { name: 'Publier sur la marketplace' })
     .click();
