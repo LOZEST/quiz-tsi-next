@@ -51,7 +51,7 @@ export function prepareQuestionForReview(
           ),
         },
       }
-    : question;
+    : { ...question, status: 'published', validated: true };
   const semantic = validateParameterizedQuestion(
     candidate,
     `${question.id}:review`,
@@ -69,16 +69,21 @@ export function prepareQuestionForReview(
               message: 'Dix variantes valides sont requises.',
             },
           ];
-  const normalizedQuestion =
-    !issues.length && question.parameterization
-      ? {
-          ...structural.value,
-          parameterization: {
-            ...structural.value.parameterization!,
-            validationVariantCount: Math.max(10, variantCount),
-          },
-        }
-      : structural.value;
+  const normalizedQuestion = !issues.length
+    ? {
+        ...structural.value,
+        status: 'published' as const,
+        validated: true,
+        ...(question.parameterization
+          ? {
+              parameterization: {
+                ...structural.value.parameterization!,
+                validationVariantCount: Math.max(10, variantCount),
+              },
+            }
+          : {}),
+      }
+    : structural.value;
   return { normalizedQuestion, issues, validationEvidence: { variantCount } };
 }
 

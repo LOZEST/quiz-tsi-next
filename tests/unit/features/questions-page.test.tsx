@@ -208,6 +208,7 @@ describe('QuestionsPage', () => {
     expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).validated).toBe(
       true,
     );
+    await user.selectOptions(screen.getByLabelText('Statut'), 'published');
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     await user.click(screen.getByRole('button', { name: 'Supprimer' }));
     await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
