@@ -48,8 +48,35 @@
   }
 }
 
+.dialogCentered {
+  inline-size: auto;
+  max-inline-size: min(48rem, calc(100vw - var(--qtsi-space-8)));
+  block-size: auto;
+  max-block-size: calc(100vh - var(--qtsi-space-8));
+  margin: auto;
+  border-radius: var(--qtsi-radius-3);
+}
+
+.panelCentered {
+  inline-size: auto;
+  block-size: auto;
+  max-block-size: calc(100vh - var(--qtsi-space-8));
+  padding: var(--qtsi-space-5);
+  border: 1.5px solid var(--qtsi-accent);
+  border-radius: var(--qtsi-radius-3);
+  animation: modal-enter var(--qtsi-duration) var(--qtsi-easing);
+}
+
+@keyframes modal-enter {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .panel {
+  .panel,
+  .panelCentered {
     animation: none;
   }
 }

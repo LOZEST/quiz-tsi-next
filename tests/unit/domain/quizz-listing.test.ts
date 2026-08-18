@@ -16,6 +16,7 @@ describe('QuizzListing shape', () => {
       publishedAt: '2026-01-01T00:00:00Z',
       certifiedAt: '2026-01-02T00:00:00Z',
       hiddenAt: null,
+      authorDisplayName: 'user',
     };
     expect(listing.certified).toBe(true);
     expect(listing.hidden).toBe(false);

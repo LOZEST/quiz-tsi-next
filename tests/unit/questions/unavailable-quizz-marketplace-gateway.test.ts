@@ -6,6 +6,7 @@ describe('UnavailableQuizzMarketplaceGateway', () => {
   const message = 'La marketplace de Quizz n’est pas configurée.';
   const methods = [
     'publishQuizz',
+    'setOwnListingHidden',
     'listVisibleListings',
     'getListingPreview',
     'subscribeToListing',

@@ -43,13 +43,13 @@ test('creates a structured local draft with math and restores it after reload', 
     .getByRole('button', { name: 'Enregistrer le brouillon' })
     .click();
   await expect(
-    page.getByRole('button', { name: 'Calculer une puissance' }),
+    page.getByRole('button', { name: 'Calculer une puissance', exact: true }),
   ).toBeVisible();
   await page.reload();
   await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Arithmétique/ }).click();
   await expect(
-    page.getByRole('button', { name: 'Calculer une puissance' }),
+    page.getByRole('button', { name: 'Calculer une puissance', exact: true }),
   ).toBeVisible();
 });
 
@@ -75,7 +75,7 @@ test('revises a quizz like an official chapter in free mode and sees it in Mon p
     .getByRole('button', { name: 'Enregistrer le brouillon' })
     .click();
   await page
-    .getByRole('button', { name: 'Question du quizz personnel' })
+    .getByRole('button', { name: 'Question du quizz personnel', exact: true })
     .click();
   await page.getByRole('button', { name: 'Valider' }).click();
   await expect(page.getByRole('button', { name: 'Valider' })).toHaveCount(0);

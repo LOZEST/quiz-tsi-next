@@ -11,4 +11,5 @@ export interface QuizzListing {
   readonly publishedAt: string;
   readonly certifiedAt: string | null;
   readonly hiddenAt: string | null;
+  readonly authorDisplayName: string | null;
 }

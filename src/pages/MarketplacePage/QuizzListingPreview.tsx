@@ -2,7 +2,6 @@ import { parseMathSource } from '@domain/math/MathParser';
 import type { ContentSegment } from '@domain/questions/Question';
 import type { QuizzListingPreview as QuizzListingPreviewData } from '@domain/quizz/QuizzMarketplaceGateway';
 import { KatexMathRenderer } from '@features/questions/math/KatexMathRenderer';
-import { CertifiedBadge } from '@design-system/components/CertifiedBadge/CertifiedBadge';
 import styles from './MarketplacePage.module.css';
 
 function PreviewSegment({ segment }: { segment: ContentSegment }) {
@@ -47,16 +46,6 @@ export function QuizzListingPreview({
 }) {
   return (
     <div className={styles.preview}>
-      <header>
-        <h2>{preview.title}</h2>
-        {preview.certified ? <CertifiedBadge /> : null}
-        <p>{preview.description}</p>
-        <p>
-          {preview.averageRating !== null
-            ? `${preview.averageRating.toFixed(1)} / 5 (${preview.ratingCount} note${preview.ratingCount > 1 ? 's' : ''})`
-            : 'Pas encore noté'}
-        </p>
-      </header>
       <p role="note">Aperçu en lecture seule — énoncé et correction.</p>
       <ol className={styles.previewList}>
         {preview.questions.map((question) => (

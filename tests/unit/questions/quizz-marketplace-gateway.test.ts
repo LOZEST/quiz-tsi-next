@@ -63,6 +63,7 @@ describe('SupabaseQuizzMarketplaceGateway', () => {
           published_at: '2026-01-01T00:00:00Z',
           certified_at: '2026-01-02T00:00:00Z',
           hidden_at: null,
+          author_display_name: 'lucien',
         },
       ],
     });
@@ -83,8 +84,53 @@ describe('SupabaseQuizzMarketplaceGateway', () => {
         publishedAt: '2026-01-01T00:00:00Z',
         certifiedAt: '2026-01-02T00:00:00Z',
         hiddenAt: null,
+        authorDisplayName: 'lucien',
       },
     ]);
+  });
+
+  it('maps a null author display name when the owner never set one', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      error: null,
+      data: [
+        {
+          id: 'l1',
+          quizz_id: 'q1',
+          owner_id: 'u1',
+          title: 'Titre',
+          description: 'Desc',
+          certified: false,
+          hidden: false,
+          average_rating: null,
+          rating_count: 0,
+          published_at: '2026-01-01T00:00:00Z',
+          certified_at: null,
+          hidden_at: null,
+          author_display_name: null,
+        },
+      ],
+    });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    const [listing] = await gateway.listVisibleListings();
+    expect(listing?.authorDisplayName).toBeNull();
+  });
+
+  it('sets a listing hidden through the self-service set_own_quizz_listing_hidden RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await gateway.setOwnListingHidden('quizz-1', true);
+    expect(rpc).toHaveBeenCalledWith('set_own_quizz_listing_hidden', {
+      p_quizz_id: 'quizz-1',
+      p_hidden: true,
+    });
+  });
+
+  it('rejects when the self-service hide RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(
+      gateway.setOwnListingHidden('quizz-1', false),
+    ).rejects.toThrow();
   });
 
   it('subscribes to a listing through subscribe_to_quizz_listing', async () => {

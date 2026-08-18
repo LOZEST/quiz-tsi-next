@@ -16,7 +16,12 @@ interface StoredListing extends QuizzListing {
   ratings: Record<string, number>;
 }
 
-function currentIdentity(): { userId: string; email: string; role: UserRole } {
+function currentIdentity(): {
+  userId: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+} {
   const stored = sessionStorage.getItem(SESSION_KEY);
   const email = stored
     ? (() => {
@@ -29,7 +34,12 @@ function currentIdentity(): { userId: string; email: string; role: UserRole } {
     : 'user@example.test';
   const roleValue = email.split('@')[0];
   const role: UserRole = isUserRole(roleValue) ? roleValue : 'user';
-  return { userId: `controlled-${role}`, email, role };
+  return {
+    userId: `controlled-${role}`,
+    email,
+    role,
+    displayName: roleValue || email,
+  };
 }
 
 function readListings(): StoredListing[] {
@@ -84,6 +94,29 @@ function isAdmin(role: UserRole): boolean {
 export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGateway {
   publishQuizz(submission: QuizzListingSubmission): Promise<void> {
     const identity = currentIdentity();
+    const listings = readListings();
+    const existing = listings.find(
+      (listing) =>
+        listing.quizzId === submission.quizzId &&
+        listing.ownerId === identity.userId,
+    );
+    if (existing) {
+      writeListings(
+        listings.map((listing) =>
+          listing.id === existing.id
+            ? {
+                ...listing,
+                title: submission.title,
+                description: submission.description,
+                hidden: false,
+                hiddenAt: null,
+                publishedAt: new Date().toISOString(),
+              }
+            : listing,
+        ),
+      );
+      return Promise.resolve();
+    }
     const listing: StoredListing = {
       id: crypto.randomUUID(),
       quizzId: submission.quizzId,
@@ -97,9 +130,32 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
       publishedAt: new Date().toISOString(),
       certifiedAt: null,
       hiddenAt: null,
+      authorDisplayName: identity.displayName,
       ratings: {},
     };
-    writeListings([listing, ...readListings()]);
+    writeListings([listing, ...listings]);
+    return Promise.resolve();
+  }
+
+  setOwnListingHidden(quizzId: string, hidden: boolean): Promise<void> {
+    const identity = currentIdentity();
+    const listings = readListings();
+    const target = listings.find(
+      (listing) =>
+        listing.quizzId === quizzId && listing.ownerId === identity.userId,
+    );
+    if (!target) return Promise.reject(new Error('Listing introuvable.'));
+    writeListings(
+      listings.map((listing) =>
+        listing.id === target.id
+          ? {
+              ...listing,
+              hidden,
+              hiddenAt: hidden ? new Date().toISOString() : null,
+            }
+          : listing,
+      ),
+    );
     return Promise.resolve();
   }
 
@@ -124,6 +180,7 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
       description: listing.description,
       certified: listing.certified,
       ...ratingSummary(listing),
+      authorDisplayName: listing.authorDisplayName,
       questions: [],
     });
   }

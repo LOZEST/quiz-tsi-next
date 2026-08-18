@@ -25,6 +25,7 @@ export interface QuizzListingPreview {
   readonly certified: boolean;
   readonly averageRating: number | null;
   readonly ratingCount: number;
+  readonly authorDisplayName: string | null;
   readonly questions: readonly QuizzListingPreviewQuestion[];
 }
 
@@ -46,6 +47,7 @@ export interface SubscribedQuizzContent {
 
 export interface QuizzMarketplaceGateway {
   publishQuizz(submission: QuizzListingSubmission): Promise<void>;
+  setOwnListingHidden(quizzId: string, hidden: boolean): Promise<void>;
   listVisibleListings(): Promise<readonly QuizzListing[]>;
   getListingPreview(listingId: string): Promise<QuizzListingPreview>;
   subscribeToListing(listingId: string): Promise<void>;

@@ -3,11 +3,14 @@ import {
   questionClassification,
   type Question,
 } from '@domain/questions/Question';
-import type { FolderLocation } from '@domain/questions/QuestionBankSearch';
+import {
+  questionsInFolder,
+  type FolderLocation,
+} from '@domain/questions/QuestionBankSearch';
 import type { Quizz, QuizzVisibility } from '@domain/questions/quizz/Quizz';
 import { RawContentPreview } from '@features/questions/RawContentPreview';
-import { PublishQuizzDialog } from '@features/quizz/PublishQuizzDialog';
 import { SubscribedQuizzesSection } from './SubscribedQuizzesSection';
+import { QuizzWorkspacePanel } from './QuizzWorkspacePanel';
 import styles from './QuestionsFolderGrid.module.css';
 
 export function QuestionsFolderGrid({
@@ -17,6 +20,13 @@ export function QuestionsFolderGrid({
   questions,
   onCreateQuizz,
   onToggleQuizzVisibility,
+  selectedId,
+  onSelectQuestion,
+  onEditQuestion,
+  onValidateQuestion,
+  onDeleteQuestion,
+  onCreateQuestion,
+  chatGptImportUrl,
 }: {
   location: FolderLocation;
   onLocationChange: (location: FolderLocation) => void;
@@ -27,11 +37,16 @@ export function QuestionsFolderGrid({
     quizzId: string,
     visibility: QuizzVisibility,
   ) => void;
+  selectedId: string | null;
+  onSelectQuestion: (id: string) => void;
+  onEditQuestion: () => void;
+  onValidateQuestion: (question: Readonly<Question>) => void;
+  onDeleteQuestion: (question: Readonly<Question>) => void;
+  onCreateQuestion: () => void;
+  chatGptImportUrl: string | null;
 }) {
   const [newFolderTitle, setNewFolderTitle] = useState('');
   const newFolderInputRef = useRef<HTMLInputElement>(null);
-  const [publishingQuizz, setPublishingQuizz] = useState<Quizz | null>(null);
-  const publishTriggerRef = useRef<HTMLButtonElement>(null);
   const countIn = (quizzId: string) =>
     questions.filter((question) => {
       const classification = questionClassification(question);
@@ -146,31 +161,30 @@ export function QuestionsFolderGrid({
                       {quizz.visibility === 'public' ? 'Public' : 'Privé'}
                     </span>
                   </label>
-                  <button
-                    type="button"
-                    ref={(element) => {
-                      if (publishingQuizz?.id === quizz.id)
-                        publishTriggerRef.current = element;
-                    }}
-                    onClick={() => setPublishingQuizz(quizz)}
-                  >
-                    Publier sur la marketplace
-                  </button>
                 </div>
               );
             })}
           </>
         ) : null}
-        {publishingQuizz ? (
-          <PublishQuizzDialog
-            open
-            triggerRef={publishTriggerRef}
-            quizzId={publishingQuizz.id}
-            defaultTitle={publishingQuizz.title}
-            onClose={() => setPublishingQuizz(null)}
-          />
-        ) : null}
       </div>
+      {location.kind === 'quizz'
+        ? (() => {
+            const quizz = quizzes.find((item) => item.id === location.courseId);
+            return quizz ? (
+              <QuizzWorkspacePanel
+                quizz={quizz}
+                questions={questionsInFolder(questions, location)}
+                selectedId={selectedId}
+                onSelect={onSelectQuestion}
+                onEdit={onEditQuestion}
+                onValidate={onValidateQuestion}
+                onDelete={onDeleteQuestion}
+                onCreateNew={onCreateQuestion}
+                chatGptImportUrl={chatGptImportUrl}
+              />
+            ) : null;
+          })()
+        : null}
       {canCreateFolder ? (
         <form
           className={styles.newFolder}

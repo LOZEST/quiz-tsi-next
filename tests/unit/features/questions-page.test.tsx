@@ -70,7 +70,10 @@ const listOutbox = vi.fn(() => Promise.resolve([]));
 const saveQuizz = vi.fn((_userId: string, course: Quizz) => {
   snapshot = {
     ...snapshot,
-    quizzes: [...snapshot.quizzes, course],
+    quizzes: [
+      ...snapshot.quizzes.filter((item) => item.id !== course.id),
+      course,
+    ],
     pendingOperationCount: snapshot.pendingOperationCount + 1,
   };
   return Promise.resolve();
@@ -97,6 +100,8 @@ const questionRemoteGateway = {
   ),
 };
 const refreshQuestionRepositoryForUser = vi.fn(() => Promise.resolve());
+const publishQuizz = vi.fn(() => Promise.resolve());
+const setOwnListingHidden = vi.fn(() => Promise.resolve());
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -124,6 +129,8 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
     programIndex: null,
     quizzMarketplaceGateway: {
       listSubscribedQuizzContent: () => Promise.resolve([]),
+      publishQuizz,
+      setOwnListingHidden,
     },
     refreshQuestionRepositoryForUser,
   }),
@@ -727,16 +734,184 @@ describe('QuestionsPage', () => {
     render(<QuestionsPage />);
     await user.click(screen.getByRole('button', { name: 'Dossiers' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Mécanique/ }));
     expect(
-      await screen.findByRole('checkbox', { name: /Question perso/ }),
+      await screen.findByRole('button', { name: 'Question perso' }),
     ).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Mes Quizz' }));
     expect(
-      screen.queryByRole('checkbox', { name: /Question perso/ }),
+      screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('publie et dépublie un quizz via le switch public/privé', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: 'Les bases',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Privé' }));
+    await waitFor(() =>
+      expect(publishQuizz).toHaveBeenCalledWith({
+        quizzId: 'course-mecanique',
+        title: 'Mécanique',
+        description: 'Les bases',
+      }),
+    );
+    await user.click(await screen.findByRole('checkbox', { name: 'Public' }));
+    await waitFor(() =>
+      expect(setOwnListingHidden).toHaveBeenCalledWith(
+        'course-mecanique',
+        true,
+      ),
+    );
+  });
+
+  it('signale une erreur quand la publication marketplace échoue', async () => {
+    publishQuizz.mockRejectedValueOnce(new Error('denied'));
+    snapshot = {
+      ...snapshot,
+      quizzes: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: '',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('checkbox', { name: 'Privé' }));
+    expect(
+      await screen.findByText(
+        'La mise à jour de la visibilité sur la marketplace a échoué.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('répartit les questions du quizz entre validées et à valider, avec les actions attendues', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: '',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      questions: [
+        question({
+          id: 'validated-1',
+          validated: true,
+          status: 'published',
+          prompt: [{ kind: 'text', value: 'Question validée' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-mecanique',
+            chapter: null,
+          },
+        }),
+        question({
+          id: 'pending-1',
+          validated: false,
+          status: 'draft',
+          prompt: [{ kind: 'text', value: 'Question en attente' }],
+          classification: {
+            kind: 'personal',
+            courseId: 'course-mecanique',
+            chapter: null,
+          },
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
+    const validatedColumn = screen.getByRole('region', {
+      name: 'question valider',
+    });
+    const toValidateColumn = screen.getByRole('region', {
+      name: 'question a valider',
+    });
+    expect(
+      within(validatedColumn).getByRole('button', { name: 'Question validée' }),
+    ).toBeInTheDocument();
+    expect(
+      within(toValidateColumn).getByRole('button', {
+        name: 'Question en attente',
+      }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(toValidateColumn).getByRole('button', {
+        name: 'Question en attente',
+      }),
+    );
+    expect(screen.getByRole('button', { name: 'valider' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'suprimer' }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(validatedColumn).getByRole('button', { name: 'Question validée' }),
+    );
+    expect(
+      screen.queryByRole('button', { name: 'valider' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('propose d’ajouter une question via GPT ou manuellement depuis le panneau du quizz', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [
+        {
+          id: 'course-mecanique',
+          ownerId: 'user-1',
+          title: 'Mécanique',
+          description: '',
+          visibility: 'private',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+    const user = userEvent.setup();
+    render(<QuestionsPage />);
+    await user.click(screen.getByRole('button', { name: 'Dossiers' }));
+    await user.click(screen.getByRole('button', { name: /Mécanique/ }));
+    expect(
+      screen.getByRole('link', { name: 'ajouter une question avec GPT' }),
+    ).toHaveAttribute('href', 'https://chatgpt.com/g/quiz-tsi-import');
+    await user.click(
+      screen.getByRole('button', { name: 'ajouter une question a la mains' }),
+    );
+    expect(
+      screen.getByRole('dialog', { name: 'Nouvelle question' }),
+    ).toBeVisible();
   });
 
   it('crée un quizz depuis la vue Dossiers', async () => {

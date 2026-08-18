@@ -7,6 +7,9 @@ export class UnavailableQuizzMarketplaceGateway implements QuizzMarketplaceGatew
   publishQuizz(): Promise<never> {
     return Promise.reject(this.unavailable());
   }
+  setOwnListingHidden(): Promise<never> {
+    return Promise.reject(this.unavailable());
+  }
   listVisibleListings(): Promise<never> {
     return Promise.reject(this.unavailable());
   }

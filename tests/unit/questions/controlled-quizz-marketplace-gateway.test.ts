@@ -34,6 +34,65 @@ describe('ControlledQuizzMarketplaceGateway', () => {
     });
   });
 
+  it('stamps the publisher’s display name as the listing author', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    const [listing] = await gateway.listVisibleListings();
+    expect(listing?.authorDisplayName).toBe('owner');
+  });
+
+  it('republishing the same quizz updates the existing listing instead of duplicating it', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'V1', description: '' });
+    const [first] = await gateway.listVisibleListings();
+    await gateway.publishQuizz({
+      quizzId: 'q1',
+      title: 'V2',
+      description: 'Nouvelle description',
+    });
+    const listings = await gateway.listVisibleListings();
+    expect(listings).toHaveLength(1);
+    expect(listings[0]).toMatchObject({
+      id: first!.id,
+      title: 'V2',
+      description: 'Nouvelle description',
+    });
+  });
+
+  it('setOwnListingHidden hides the caller’s own listing', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    await gateway.setOwnListingHidden('q1', true);
+    expect(await gateway.listVisibleListings()).toEqual([]);
+  });
+
+  it('setOwnListingHidden rejects for a quizz the caller does not own', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    signInAs('user@example.test');
+    await expect(gateway.setOwnListingHidden('q1', true)).rejects.toThrow();
+  });
+
+  it('preserves rating history across an unpublish/republish cycle', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    const [listing] = await gateway.listVisibleListings();
+    signInAs('user@example.test');
+    await gateway.subscribeToListing(listing!.id);
+    await gateway.rateListing({
+      listingId: listing!.id,
+      score: 5,
+      comment: null,
+    });
+    signInAs('owner@example.test');
+    await gateway.setOwnListingHidden('q1', true);
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    const [republished] = await gateway.listVisibleListings();
+    expect(republished?.id).toBe(listing!.id);
+    expect(republished?.averageRating).toBe(5);
+    expect(republished?.ratingCount).toBe(1);
+  });
+
   it('hides a listing so it stops appearing in the visible list', async () => {
     signInAs('owner@example.test');
     await gateway.publishQuizz({

@@ -27,26 +27,14 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
     page.getByLabel('Fil d’Ariane').getByText('Quizz e2e marketplace'),
   ).toBeVisible();
 
-  // "Publier sur la marketplace" only renders on the root quizz card, not
-  // inside the quizz's own folder.
+  // The public/privé switch only renders on the root quizz card, not inside
+  // the quizz's own folder — it publishes/unpublishes directly.
   await page.getByRole('button', { name: 'Mes Quizz' }).click();
-  await page
-    .getByRole('button', { name: 'Publier sur la marketplace' })
-    .click();
-  const publishDialog = page.getByRole('dialog', {
-    name: 'Publier sur la marketplace',
-  });
-  await expect(publishDialog).toBeVisible();
-  await publishDialog
-    .getByLabel('Description (facultatif)')
-    .fill('Un Quizz de test end-to-end.');
-  await publishDialog.getByRole('button', { name: 'Publier' }).click();
-  await expect(
-    publishDialog.getByText('Ton Quizz est publié sur la marketplace'),
-  ).toBeVisible();
-  await publishDialog
-    .getByRole('button', { name: 'Fermer', exact: true })
-    .click();
+  // The underlying input is visually hidden inside its <label> (standard
+  // accessible-toggle pattern) — click the label itself, exactly like a
+  // real user would, so the browser's native label→input forwarding fires.
+  await page.locator('label', { hasText: 'Privé' }).click();
+  await expect(page.getByRole('checkbox', { name: 'Public' })).toBeChecked();
 
   await logout(page);
   await login(page, 'admin@example.test');
@@ -57,7 +45,8 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   // Visible immediately, with no moderation step in between.
   await expect(card).toBeVisible();
 
-  await card.getByRole('button', { name: 'Aperçu' }).click();
+  await card.getByRole('button', { name: 'Quizz e2e marketplace' }).click();
+  const dialog = page.getByRole('dialog');
   await expect(page.getByText('Aperçu en lecture seule')).toBeVisible();
   const ratingBeforeSubscribe = page.getByRole('radiogroup', {
     name: 'Noter ce Quizz',
@@ -82,18 +71,14 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   await logout(page);
   await login(page, 'admin@example.test');
   await page.goto('marketplace');
-  await expect(card.getByText('Quizz certifié')).toBeVisible();
+  await card.getByRole('button', { name: 'Quizz e2e marketplace' }).click();
+  await expect(dialog.getByText('Quizz certifié')).toBeVisible();
+  await page.getByRole('button', { name: 'Fermer l’aperçu' }).click();
 
   await card.getByRole('button', { name: 'Ajouter à mon espace' }).click();
   await expect(
     page.getByText('Le Quizz a été ajouté à ton espace.'),
   ).toBeVisible();
-
-  // A dismissible rating popup appears right after a successful subscribe.
-  const ratePrompt = page.getByRole('dialog', { name: 'Noter ce Quizz' });
-  await expect(ratePrompt).toBeVisible();
-  await ratePrompt.getByRole('button', { name: 'Plus tard' }).click();
-  await expect(ratePrompt).toBeHidden();
 
   await page.goto('questions');
   await page.getByRole('button', { name: 'Dossiers' }).click();
@@ -102,12 +87,13 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   await expect(subscriptions.getByText('Quizz e2e marketplace')).toBeVisible();
 
   await page.goto('marketplace');
-  await card.getByRole('button', { name: 'Aperçu' }).click();
+  await card.getByRole('button', { name: 'Quizz e2e marketplace' }).click();
   const ratingAfterSubscribe = page.getByRole('radiogroup', {
     name: 'Noter ce Quizz',
   });
   const fifthStar = ratingAfterSubscribe.getByRole('radio').nth(4);
   await expect(fifthStar).toBeEnabled();
   await fifthStar.click();
+  await page.getByRole('button', { name: 'Mettre un avis / note' }).click();
   await expect(page.getByText('Merci pour ta note.')).toBeVisible();
 });
