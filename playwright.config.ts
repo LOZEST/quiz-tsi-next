@@ -9,6 +9,11 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
+  // CI runs 117 tests across 3 viewport projects on a 2-worker runner; the
+  // longest specs (multi-account login/logout flows) can exceed the default
+  // 30s test timeout under that contention even though nothing is actually
+  // broken, so give CI more headroom than local runs need.
+  timeout: process.env.CI ? 60_000 : 30_000,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
