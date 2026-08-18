@@ -44,7 +44,9 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   await expect(
     publishDialog.getByText('Ton Quizz est publié sur la marketplace'),
   ).toBeVisible();
-  await publishDialog.getByRole('button', { name: 'Fermer' }).click();
+  await publishDialog
+    .getByRole('button', { name: 'Fermer', exact: true })
+    .click();
 
   await logout(page);
   await login(page, 'admin@example.test');

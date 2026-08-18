@@ -96,6 +96,7 @@ const questionRemoteGateway = {
     }),
   ),
 };
+const refreshQuestionRepositoryForUser = vi.fn(() => Promise.resolve());
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -124,6 +125,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
     quizzMarketplaceGateway: {
       listSubscribedQuizzContent: () => Promise.resolve([]),
     },
+    refreshQuestionRepositoryForUser,
   }),
 }));
 

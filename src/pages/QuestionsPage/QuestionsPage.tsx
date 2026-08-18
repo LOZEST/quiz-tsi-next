@@ -59,6 +59,7 @@ export function QuestionsPage() {
     questionWorkspaceRepository,
     questionRemoteGateway,
     programIndex,
+    refreshQuestionRepositoryForUser,
   } = useAppServices();
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
   const chatGptImportUrl = readChatGptImportUrl();
@@ -94,7 +95,14 @@ export function QuestionsPage() {
   });
   const reload = useCallback(async () => {
     try {
-      if (userId) setWorkspace(await questionWorkspaceRepository.load(userId));
+      if (userId) {
+        setWorkspace(await questionWorkspaceRepository.load(userId));
+        // Keep the revision session's merged question pool (captured once at
+        // login) in sync whenever this page's own view of the workspace
+        // changes — otherwise a quizz question created/validated here never
+        // becomes selectable for revision until the next login.
+        void refreshQuestionRepositoryForUser(userId);
+      }
     } catch (reason) {
       setWorkspace(emptySnapshot);
       setStorageError(
@@ -105,7 +113,7 @@ export function QuestionsPage() {
     } finally {
       setLoading(false);
     }
-  }, [questionWorkspaceRepository, userId]);
+  }, [questionWorkspaceRepository, refreshQuestionRepositoryForUser, userId]);
   useEffect(() => {
     void reload();
   }, [reload]);
