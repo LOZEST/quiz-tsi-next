@@ -479,22 +479,17 @@ describe('index, filtres et sélection', () => {
     ).toEqual(['reflex']);
   });
 
-  it('traite un quizz personnel comme un chapitre via courseId', () => {
+  it('ignore les quizz personnels lors d’un filtre chapterId officiel', () => {
     const personal = question('quizz-question', {
       source: 'private',
       ownerId: 'owner-1',
       classification: {
         kind: 'personal',
         courseId: 'quizz-1',
-        chapterId: null,
-        notionId: null,
+        chapter: null,
       },
     });
     const index = new QuestionBankIndex([question('official'), personal]);
-    const byQuizz = index.query({ chapterId: 'quizz-1' });
-    expect(byQuizz.ok && byQuizz.questions.map((entry) => entry.id)).toEqual([
-      'quizz-question',
-    ]);
     const byOfficialChapter = index.query({ chapterId: 'c1' });
     expect(
       byOfficialChapter.ok &&
@@ -539,8 +534,7 @@ describe('index, filtres et sélection', () => {
       classification: {
         kind: 'personal',
         courseId: 'quizz-1',
-        chapterId: null,
-        notionId: null,
+        chapter: null,
       },
     });
     expect(merged.listPublished().map((entry) => entry.id)).toEqual([
@@ -553,9 +547,6 @@ describe('index, filtres et sélection', () => {
         .map((entry) => entry.id)
         .sort(),
     ).toEqual(['official', 'quizz-question']);
-    expect(
-      merged.query({ chapterId: 'quizz-1' }).map((entry) => entry.id),
-    ).toEqual(['quizz-question']);
     expect(merged.getByIdAndVersion('quizz-question', 1)?.id).toBe(
       'quizz-question',
     );

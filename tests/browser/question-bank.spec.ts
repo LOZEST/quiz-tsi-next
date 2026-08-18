@@ -21,12 +21,11 @@ test('creates a structured local draft with math and restores it after reload', 
 }) => {
   await login(page);
   await page.goto('questions');
+  await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Ajoute un quizz/ }).click();
   await page.getByPlaceholder('Nouveau quizz').fill('Arithmétique');
-  await page.getByRole('button', { name: 'Créer' }).click();
-  await page
-    .getByRole('button', { name: 'Ajouter une question à la main' })
-    .click();
+  await page.getByRole('button', { name: 'Créer', exact: true }).click();
+  await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
   const prompt = editor.getByRole('group', { name: 'Énoncé' });
   await prompt.getByLabel('Texte').fill('Calculer une puissance');
@@ -47,6 +46,7 @@ test('creates a structured local draft with math and restores it after reload', 
     page.getByRole('button', { name: 'Calculer une puissance' }),
   ).toBeVisible();
   await page.reload();
+  await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Arithmétique/ }).click();
   await expect(
     page.getByRole('button', { name: 'Calculer une puissance' }),
@@ -58,12 +58,11 @@ test('revises a quizz like an official chapter in free mode and sees it in Mon p
 }) => {
   await login(page);
   await page.goto('questions');
+  await page.getByRole('button', { name: 'Dossiers' }).click();
   await page.getByRole('button', { name: /Ajoute un quizz/ }).click();
   await page.getByPlaceholder('Nouveau quizz').fill('Ma révision');
-  await page.getByRole('button', { name: 'Créer' }).click();
-  await page
-    .getByRole('button', { name: 'Ajouter une question à la main' })
-    .click();
+  await page.getByRole('button', { name: 'Créer', exact: true }).click();
+  await page.getByRole('button', { name: 'Créer une question' }).click();
   const editor = page.getByRole('dialog', { name: 'Nouvelle question' });
   const prompt = editor.getByRole('group', { name: 'Énoncé' });
   await prompt.getByLabel('Texte').fill('Question du quizz personnel');

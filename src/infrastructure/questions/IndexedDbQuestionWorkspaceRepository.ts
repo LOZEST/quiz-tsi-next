@@ -1,15 +1,8 @@
 import { openDB, type DBSchema } from 'idb';
-import {
-  questionClassification,
-  type Question,
-} from '@domain/questions/Question';
+import type { Question } from '@domain/questions/Question';
 import { latestQuestionVersions } from '@domain/questions/LatestQuestionVersions';
-import { assertPersonalTaxonomyOwner } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import { assertQuizzOwner } from '@domain/questions/quizz/Quizz';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 import type {
   QuestionMutationKind,
   QuestionOutboxOperation,
@@ -23,20 +16,10 @@ interface OwnedQuestion {
   userId: string;
   question: Question;
 }
-interface OwnedCourse {
+interface OwnedQuizz {
   key: string;
   userId: string;
-  value: PersonalCourse;
-}
-interface OwnedChapter {
-  key: string;
-  userId: string;
-  value: PersonalChapter;
-}
-interface OwnedNotion {
-  key: string;
-  userId: string;
-  value: PersonalNotion;
+  value: Quizz;
 }
 interface OwnedOperation {
   key: string;
@@ -55,13 +38,10 @@ interface QuestionWorkspaceSchema extends DBSchema {
     value: OwnedQuestion;
     indexes: { 'by-user': string };
   };
-  courses: { key: string; value: OwnedCourse; indexes: { 'by-user': string } };
-  chapters: {
-    key: string;
-    value: OwnedChapter;
-    indexes: { 'by-user': string };
-  };
-  notions: { key: string; value: OwnedNotion; indexes: { 'by-user': string } };
+  // Physical IndexedDB store name kept as 'courses' — renaming it would require
+  // a version bump plus a copy migration, otherwise existing users' local data
+  // would silently vanish. Only the TS-facing names above/below are renamed.
+  courses: { key: string; value: OwnedQuizz; indexes: { 'by-user': string } };
   outbox: {
     key: string;
     value: OwnedOperation;
@@ -80,20 +60,28 @@ let workspaceDatabase: ReturnType<
 const database = () =>
   (workspaceDatabase ??= openDB<QuestionWorkspaceSchema>(
     'quiz-tsi-question-workspace',
-    1,
+    2,
     {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         for (const name of [
           'questions',
           'courses',
-          'chapters',
-          'notions',
           'outbox',
           'conflicts',
         ] as const) {
           if (!db.objectStoreNames.contains(name)) {
             const store = db.createObjectStore(name, { keyPath: 'key' });
             store.createIndex('by-user', 'userId');
+          }
+        }
+        // v2: personal quizzes dropped the chapter/notion hierarchy in favor of
+        // a flat text tag on the question itself — no real user data existed in
+        // these stores yet, so they're discarded outright rather than migrated.
+        if (oldVersion < 2) {
+          for (const name of ['chapters', 'notions']) {
+            if (db.objectStoreNames.contains(name as never)) {
+              db.deleteObjectStore(name as never);
+            }
           }
         }
       },
@@ -112,22 +100,17 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
   async load(userId: string) {
     if (!userId) throw new Error('Compte requis.');
     const db = await database();
-    const [questions, courses, chapters, notions, outbox, conflicts] =
-      await Promise.all([
-        db.getAllFromIndex('questions', 'by-user', userId),
-        db.getAllFromIndex('courses', 'by-user', userId),
-        db.getAllFromIndex('chapters', 'by-user', userId),
-        db.getAllFromIndex('notions', 'by-user', userId),
-        db.getAllFromIndex('outbox', 'by-user', userId),
-        db.getAllFromIndex('conflicts', 'by-user', userId),
-      ]);
+    const [questions, quizzes, outbox, conflicts] = await Promise.all([
+      db.getAllFromIndex('questions', 'by-user', userId),
+      db.getAllFromIndex('courses', 'by-user', userId),
+      db.getAllFromIndex('outbox', 'by-user', userId),
+      db.getAllFromIndex('conflicts', 'by-user', userId),
+    ]);
     return {
       questions: latestQuestionVersions(
         questions.map((row) => structuredClone(row.question)),
       ),
-      courses: courses.map((row) => structuredClone(row.value)),
-      chapters: chapters.map((row) => structuredClone(row.value)),
-      notions: notions.map((row) => structuredClone(row.value)),
+      quizzes: quizzes.map((row) => structuredClone(row.value)),
       pendingOperationCount: outbox.length,
       conflicts: conflicts.map((row) => structuredClone(row.value)),
     };
@@ -167,110 +150,43 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     await transaction.done;
   }
 
-  async saveQuestionDraftWithPersonalTaxonomy(
+  async saveQuestionWithQuizz(
     userId: string,
     question: Readonly<Question>,
-    taxonomy: {
-      course: PersonalCourse | null;
-      chapter: PersonalChapter | null;
-      notion: PersonalNotion | null;
-    },
+    quizz: Readonly<Quizz> | null,
     operationIds: {
       question: string;
-      course: string | null;
-      chapter: string | null;
-      notion: string | null;
+      quizz: string | null;
     },
   ) {
     if (!owned(question, userId) || question.source === 'static')
       throw new Error('Compte incohérent.');
-    for (const value of [taxonomy.course, taxonomy.chapter, taxonomy.notion]) {
-      if (value) assertPersonalTaxonomyOwner(value, userId);
-    }
-    const classification = questionClassification(question);
-    if (!classification || classification.kind !== 'personal')
-      throw new Error('Taxonomie personnelle requise.');
-    if (
-      taxonomy.chapter &&
-      taxonomy.chapter.courseId !== classification.courseId
-    )
-      throw new Error('Taxonomie incohérente.');
-    if (
-      taxonomy.notion &&
-      (taxonomy.notion.courseId !== classification.courseId ||
-        taxonomy.notion.chapterId !== classification.chapterId)
-    )
-      throw new Error('Taxonomie incohérente.');
+    if (quizz) assertQuizzOwner(quizz, userId);
     const db = await database();
     const transaction = db.transaction(
-      ['courses', 'chapters', 'notions', 'questions', 'outbox'],
+      ['courses', 'questions', 'outbox'],
       'readwrite',
     );
-    const course =
-      taxonomy.course ??
-      (
-        await transaction
-          .objectStore('courses')
-          .get(key(userId, classification.courseId))
-      )?.value;
-    const chapter = classification.chapterId
-      ? (taxonomy.chapter ??
-        (
-          await transaction
-            .objectStore('chapters')
-            .get(key(userId, classification.chapterId))
-        )?.value)
-      : null;
-    const notion = classification.notionId
-      ? (taxonomy.notion ??
-        (
-          await transaction
-            .objectStore('notions')
-            .get(key(userId, classification.notionId))
-        )?.value)
-      : null;
-    if (
-      !course ||
-      course.ownerId !== userId ||
-      course.id !== classification.courseId ||
-      (classification.chapterId &&
-        (!chapter ||
-          chapter.ownerId !== userId ||
-          chapter.courseId !== course.id)) ||
-      (classification.notionId &&
-        (!notion ||
-          notion.ownerId !== userId ||
-          notion.courseId !== course.id ||
-          notion.chapterId !== classification.chapterId))
-    ) {
-      throw new Error('Taxonomie incohérente.');
-    }
     const createdAt = new Date().toISOString();
-    const taxonomyEntries = [
-      ['course', 'courses', taxonomy.course, operationIds.course],
-      ['chapter', 'chapters', taxonomy.chapter, operationIds.chapter],
-      ['notion', 'notions', taxonomy.notion, operationIds.notion],
-    ] as const;
-    for (const [entity, storeName, value, operationId] of taxonomyEntries) {
-      if (!value || !operationId) continue;
-      await transaction.objectStore(storeName).put({
-        key: key(userId, value.id),
+    if (quizz && operationIds.quizz) {
+      await transaction.objectStore('courses').put({
+        key: key(userId, quizz.id),
         userId,
-        value: structuredClone(value),
-      } as OwnedCourse | OwnedChapter | OwnedNotion);
-      const operation = {
-        operationId,
+        value: structuredClone(quizz),
+      });
+      const quizzOperation: QuestionWorkspaceOutboxOperation = {
+        operationId: operationIds.quizz,
         userId,
-        entity,
-        entityId: value.id,
-        kind: 'create' as const,
-        payload: structuredClone(value),
+        entity: 'quizz',
+        entityId: quizz.id,
+        kind: 'create',
+        payload: structuredClone(quizz),
         createdAt,
-      } as QuestionWorkspaceOutboxOperation;
+      };
       await transaction.objectStore('outbox').put({
-        key: key(userId, operationId),
+        key: key(userId, operationIds.quizz),
         userId,
-        value: operation,
+        value: quizzOperation,
       });
     }
     const questionOperation: QuestionOutboxOperation = {
@@ -296,194 +212,33 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     await transaction.done;
   }
 
-  async saveCourse(
+  async saveQuizz(
     userId: string,
-    course: Readonly<PersonalCourse>,
+    quizz: Readonly<Quizz>,
     operationId: string,
     kind: 'create' | 'update' = 'create',
   ) {
-    assertPersonalTaxonomyOwner(course, userId);
+    assertQuizzOwner(quizz, userId);
     if (!operationId) throw new Error('Compte incohérent.');
     const db = await database();
     const transaction = db.transaction(['courses', 'outbox'], 'readwrite');
     await transaction.objectStore('courses').put({
-      key: key(userId, course.id),
+      key: key(userId, quizz.id),
       userId,
-      value: structuredClone(course),
+      value: structuredClone(quizz),
     });
     const operation: QuestionWorkspaceOutboxOperation = {
       operationId,
       userId,
-      entity: 'course',
-      entityId: course.id,
+      entity: 'quizz',
+      entityId: quizz.id,
       kind,
-      payload: structuredClone(course),
+      payload: structuredClone(quizz),
       createdAt: new Date().toISOString(),
     };
     await transaction
       .objectStore('outbox')
       .put({ key: key(userId, operationId), userId, value: operation });
-    await transaction.done;
-  }
-
-  async saveChapter(
-    userId: string,
-    chapter: Readonly<PersonalChapter>,
-    operationId: string,
-  ) {
-    assertPersonalTaxonomyOwner(chapter, userId);
-    if (!operationId) throw new Error('Compte incohérent.');
-    const db = await database();
-    const transaction = db.transaction(
-      ['courses', 'chapters', 'outbox'],
-      'readwrite',
-    );
-    const course = (
-      await transaction
-        .objectStore('courses')
-        .get(key(userId, chapter.courseId))
-    )?.value;
-    if (!course || course.ownerId !== userId)
-      throw new Error('Taxonomie incohérente.');
-    await transaction.objectStore('chapters').put({
-      key: key(userId, chapter.id),
-      userId,
-      value: structuredClone(chapter),
-    });
-    const operation: QuestionWorkspaceOutboxOperation = {
-      operationId,
-      userId,
-      entity: 'chapter',
-      entityId: chapter.id,
-      kind: 'create',
-      payload: structuredClone(chapter),
-      createdAt: new Date().toISOString(),
-    };
-    await transaction
-      .objectStore('outbox')
-      .put({ key: key(userId, operationId), userId, value: operation });
-    await transaction.done;
-  }
-
-  async saveNotion(
-    userId: string,
-    notion: Readonly<PersonalNotion>,
-    operationId: string,
-  ) {
-    assertPersonalTaxonomyOwner(notion, userId);
-    if (!operationId) throw new Error('Compte incohérent.');
-    const db = await database();
-    const transaction = db.transaction(
-      ['courses', 'chapters', 'notions', 'outbox'],
-      'readwrite',
-    );
-    const course = (
-      await transaction.objectStore('courses').get(key(userId, notion.courseId))
-    )?.value;
-    if (!course || course.ownerId !== userId)
-      throw new Error('Taxonomie incohérente.');
-    if (notion.chapterId) {
-      const chapter = (
-        await transaction
-          .objectStore('chapters')
-          .get(key(userId, notion.chapterId))
-      )?.value;
-      if (
-        !chapter ||
-        chapter.ownerId !== userId ||
-        chapter.courseId !== notion.courseId
-      )
-        throw new Error('Taxonomie incohérente.');
-    }
-    await transaction.objectStore('notions').put({
-      key: key(userId, notion.id),
-      userId,
-      value: structuredClone(notion),
-    });
-    const operation: QuestionWorkspaceOutboxOperation = {
-      operationId,
-      userId,
-      entity: 'notion',
-      entityId: notion.id,
-      kind: 'create',
-      payload: structuredClone(notion),
-      createdAt: new Date().toISOString(),
-    };
-    await transaction
-      .objectStore('outbox')
-      .put({ key: key(userId, operationId), userId, value: operation });
-    await transaction.done;
-  }
-
-  async deleteCourse(userId: string, courseId: string, operationId: string) {
-    if (!operationId) throw new Error('Compte incohérent.');
-    const db = await database();
-    const transaction = db.transaction(
-      ['courses', 'questions', 'outbox'],
-      'readwrite',
-    );
-    const courseRow = await transaction
-      .objectStore('courses')
-      .get(key(userId, courseId));
-    if (!courseRow || courseRow.userId !== userId)
-      throw new Error('Quizz introuvable.');
-    const now = new Date().toISOString();
-    const questionRows = await transaction
-      .objectStore('questions')
-      .index('by-user')
-      .getAll(userId);
-    const latest = latestQuestionVersions(
-      questionRows.map((row) => row.question),
-    );
-    for (const question of latest) {
-      const classification = questionClassification(question);
-      if (
-        classification?.kind !== 'personal' ||
-        classification.courseId !== courseId ||
-        question.status === 'archived'
-      )
-        continue;
-      const archived: Question = {
-        ...question,
-        version: question.version + 1,
-        status: 'archived',
-        updatedAt: now,
-      };
-      await transaction.objectStore('questions').put({
-        key: key(userId, `${archived.id}:${archived.version}`),
-        userId,
-        question: structuredClone(archived),
-      });
-      const archiveOperationId = crypto.randomUUID();
-      const archiveOperation: QuestionOutboxOperation = {
-        operationId: archiveOperationId,
-        userId,
-        entity: 'question',
-        entityId: archived.id,
-        kind: 'archive',
-        baseVersion: question.version,
-        payload: structuredClone(archived),
-        createdAt: now,
-      };
-      await transaction.objectStore('outbox').put({
-        key: key(userId, archiveOperationId),
-        userId,
-        value: archiveOperation,
-      });
-    }
-    await transaction.objectStore('courses').delete(key(userId, courseId));
-    const deleteOperation: QuestionWorkspaceOutboxOperation = {
-      operationId,
-      userId,
-      entity: 'course',
-      entityId: courseId,
-      kind: 'delete',
-      payload: structuredClone(courseRow.value),
-      createdAt: now,
-    };
-    await transaction
-      .objectStore('outbox')
-      .put({ key: key(userId, operationId), userId, value: deleteOperation });
     await transaction.done;
   }
 
@@ -557,29 +312,18 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
     userId: string,
     changes: {
       questions: readonly Readonly<Question>[];
-      courses: readonly PersonalCourse[];
-      chapters: readonly PersonalChapter[];
-      notions: readonly PersonalNotion[];
+      quizzes: readonly Quizz[];
     },
   ) {
     const db = await database();
-    const transaction = db.transaction(
-      ['courses', 'chapters', 'notions', 'questions'],
-      'readwrite',
-    );
-    for (const [storeName, values] of [
-      ['courses', changes.courses],
-      ['chapters', changes.chapters],
-      ['notions', changes.notions],
-    ] as const) {
-      for (const value of values) {
-        assertPersonalTaxonomyOwner(value, userId);
-        await transaction.objectStore(storeName).put({
-          key: key(userId, value.id),
-          userId,
-          value: structuredClone(value),
-        } as OwnedCourse | OwnedChapter | OwnedNotion);
-      }
+    const transaction = db.transaction(['courses', 'questions'], 'readwrite');
+    for (const value of changes.quizzes) {
+      assertQuizzOwner(value, userId);
+      await transaction.objectStore('courses').put({
+        key: key(userId, value.id),
+        userId,
+        value: structuredClone(value),
+      });
     }
     for (const question of changes.questions) {
       if (!accessible(question, userId)) throw new Error('Compte incohérent.');

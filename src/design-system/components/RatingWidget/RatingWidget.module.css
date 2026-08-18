@@ -1,0 +1,34 @@
+.widget {
+  display: inline-flex;
+  gap: var(--qtsi-space-1);
+}
+
+.star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: var(--qtsi-space-1);
+  color: var(--qtsi-text-secondary);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.star:disabled {
+  cursor: default;
+}
+
+.star[data-filled='true'] {
+  color: var(--qtsi-warning);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

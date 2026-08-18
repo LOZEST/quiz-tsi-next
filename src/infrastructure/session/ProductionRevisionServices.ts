@@ -4,6 +4,7 @@ import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQu
 import fullProductionBundle from '../../data/question-banks/full-production-v1.json';
 import officialProgram from '../../data/program/official-program-v2.json';
 import type { RevisionTestServices } from './RevisionServicesComposition';
+import { MergedQuestionRepository } from './MergedQuestionRepository';
 
 const program = validateProgram(officialProgram);
 if (!program.ok) throw new Error('Programme officiel de production invalide.');
@@ -28,9 +29,13 @@ if (imported.kind !== 'ready')
     `Import atomique de la banque complète impossible : ${JSON.stringify(imported.report)}`,
   );
 
+export const mergedQuestionRepository = new MergedQuestionRepository(
+  productionQuestionRepository,
+);
+
 export function createRevisionTestServices(): RevisionTestServices {
   return {
     programIndex: productionProgramIndex,
-    questionRepository: productionQuestionRepository,
+    questionRepository: mergedQuestionRepository,
   };
 }

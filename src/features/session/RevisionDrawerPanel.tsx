@@ -11,7 +11,7 @@ import {
   type QuestionType,
 } from '@domain/questions/Question';
 import type { ProgramIndex } from '@domain/program/Program';
-import type { PersonalCourse } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 import { useUserQuizzes } from '@shared/useUserQuizzes';
 import type {
   DailyPlanState,
@@ -299,7 +299,7 @@ export function RevisionDrawerPanel() {
 function resolveUnitLabel(
   id: string,
   program: ProgramIndex | null,
-  quizzes: readonly PersonalCourse[],
+  quizzes: readonly Quizz[],
 ): string {
   return (
     program?.getNotion(id)?.label ??
@@ -315,7 +315,7 @@ function Daily({
 }: {
   state: DailyPlanState;
   program: ProgramIndex | null;
-  quizzes: readonly PersonalCourse[];
+  quizzes: readonly Quizz[];
 }) {
   if (state.kind === 'none-scheduled')
     return <p>Aucune révision n’est prévue aujourd’hui. Tu es à jour.</p>;
@@ -364,7 +364,7 @@ function Weak({
 }: {
   state: WeakPointsState;
   program: ProgramIndex | null;
-  quizzes: readonly PersonalCourse[];
+  quizzes: readonly Quizz[];
   onFree: () => void;
 }) {
   if (state.kind === 'calibrating')
@@ -441,7 +441,7 @@ function Weak({
     </ul>
   );
 }
-function ChapterTest({ quizzes }: { quizzes: readonly PersonalCourse[] }) {
+function ChapterTest({ quizzes }: { quizzes: readonly Quizz[] }) {
   const { programIndex, questionRepository } = useAppServices();
   const experience = useRevisionExperience();
   const chapters = programIndex?.getAllChapters() ?? [];

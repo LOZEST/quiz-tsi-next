@@ -14,6 +14,9 @@ function matchesQuery(
   query: QuestionRepositoryQuery,
 ): boolean {
   const classification = questionClassification(item);
+  // A quizz is flat: its questions carry a `courseId` with no chapter/notion
+  // of their own, so a "chapterId" query is matched against `courseId` for
+  // personal questions — a quizz fills the chapter slot for revision.
   const chapterMatches =
     query.chapterId === undefined ||
     (classification?.kind === 'official'
@@ -26,17 +29,16 @@ function matchesQuery(
         classification.partId === query.partId)) &&
     chapterMatches &&
     (query.notionId === undefined ||
-      classification?.notionId === query.notionId) &&
+      (classification?.kind === 'official' &&
+        classification.notionId === query.notionId)) &&
     (query.source === undefined || item.source === query.source)
   );
 }
 
 /**
- * Wraps the shared static/official repository and layers in the current
- * user's own quizz questions, so revision selection can draw from both
- * pools. A quizz is flat (Phase 7): its questions carry `courseId` with
- * `chapterId`/`notionId` null, so a "chapterId" query is matched against
- * `courseId` for personal questions — a quizz fills the chapter slot.
+ * Wraps the static production/controlled repository and merges in the current
+ * user's own private/shared/marketplace-added Quizz questions, so sessions can
+ * draw from both pools instead of the static bank only.
  */
 export class MergedQuestionRepository implements QuestionRepository {
   #userQuestions: readonly Readonly<Question>[] = [];
@@ -87,4 +89,10 @@ export class MergedQuestionRepository implements QuestionRepository {
   getBankMetadata(): Readonly<QuestionBankMetadata> | null {
     return this.staticRepository.getBankMetadata();
   }
+}
+
+export function isMergedQuestionRepository(
+  repository: QuestionRepository,
+): repository is MergedQuestionRepository {
+  return repository instanceof MergedQuestionRepository;
 }

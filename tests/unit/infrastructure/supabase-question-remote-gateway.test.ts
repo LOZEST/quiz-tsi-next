@@ -16,8 +16,7 @@ const row = () => ({
   classification: {
     kind: 'personal',
     courseId: 'c',
-    chapterId: null,
-    notionId: null,
+    chapter: null,
   },
   type: 'course',
   difficulty: 'standard',
@@ -137,7 +136,7 @@ describe('questionFromRemoteRow', () => {
           },
           { ...row(), id: 'q2', owner_id: 'owner' },
         ],
-        personal_courses: [
+        quizzes: [
           {
             id: 'c',
             owner_id: 'owner',
@@ -163,7 +162,7 @@ describe('questionFromRemoteRow', () => {
     expect(pulled.rejectedRows).toHaveLength(1);
     expect(pulled.rejectedRows[0]?.index).toBe(3);
     expect(pulled.rejectedRows[0]?.message).toContain('invalide');
-    expect(pulled.courses.map((course) => course.title)).toEqual([
+    expect(pulled.quizzes.map((course) => course.title)).toEqual([
       'Thermodynamique perso',
     ]);
   });
@@ -323,7 +322,7 @@ describe('push distant idempotent', () => {
       updatedAt: '2026-08-10T00:00:00.000Z',
     };
     const remote = statefulClient({
-      personal_courses: [
+      quizzes: [
         {
           id: 'c',
           owner_id: 'owner',
@@ -339,7 +338,7 @@ describe('push distant idempotent', () => {
     const operation = {
       operationId: 'tax',
       userId: 'owner',
-      entity: 'course',
+      entity: 'quizz',
       entityId: 'c',
       kind: 'create',
       payload: course,
@@ -352,42 +351,5 @@ describe('push distant idempotent', () => {
         payload: { ...course, title: 'Autre' },
       }),
     ).toEqual({ kind: 'taxonomy-conflict' });
-  });
-
-  it('supprime un quizz distant appartenant au bon propriétaire', async () => {
-    const course = {
-      id: 'c',
-      ownerId: 'owner',
-      title: 'Cours',
-      description: '',
-      visibility: 'private' as const,
-      createdAt: '2026-08-10T00:00:00.000Z',
-      updatedAt: '2026-08-10T00:00:00.000Z',
-    };
-    const remote = statefulClient({
-      personal_courses: [
-        {
-          id: 'c',
-          owner_id: 'owner',
-          title: 'Cours',
-          description: '',
-          visibility: 'private',
-          created_at: course.createdAt,
-          updated_at: course.updatedAt,
-        },
-      ],
-    });
-    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
-    const operation = {
-      operationId: 'del',
-      userId: 'owner',
-      entity: 'course',
-      entityId: 'c',
-      kind: 'delete',
-      payload: course,
-      createdAt: course.createdAt,
-    } as const;
-    expect(await gateway.push(operation)).toEqual({ kind: 'accepted' });
-    expect(remote.tables.get('personal_courses')).toEqual([]);
   });
 });

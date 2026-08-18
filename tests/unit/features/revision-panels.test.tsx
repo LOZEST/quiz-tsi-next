@@ -7,7 +7,7 @@ import { initialFreeRevisionFilters } from '@features/session/RevisionExperience
 import type { RevisionExperienceState } from '@features/session/RevisionExperienceProvider';
 import type * as RevisionExperienceModule from '@features/session/RevisionExperienceProvider';
 import type { FreeRevisionFilters, SessionMode } from '@domain/session/Session';
-import type { PersonalCourse } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 
 const parsed = validateProgram({
   schemaVersion: 1,
@@ -29,7 +29,7 @@ const programIndex = createProgramIndex(parsed.value);
 let mode: SessionMode = 'free';
 let state: RevisionExperienceState = { kind: 'no-bank', message: 'vide' };
 let filters: FreeRevisionFilters = initialFreeRevisionFilters;
-let courses: readonly PersonalCourse[] = [];
+let quizzes: readonly Quizz[] = [];
 const setMode = vi.fn((value: SessionMode) => {
   mode = value;
 });
@@ -56,9 +56,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
       load: () =>
         Promise.resolve({
           questions: [],
-          courses,
-          chapters: [],
-          notions: [],
+          quizzes,
           pendingOperationCount: 0,
           conflicts: [],
         }),
@@ -91,7 +89,7 @@ describe('RevisionDrawerPanel', () => {
     mode = 'free';
     state = { kind: 'no-bank', message: 'vide' };
     filters = initialFreeRevisionFilters;
-    courses = [];
+    quizzes = [];
     vi.clearAllMocks();
   });
   it('shows the exact four paths and ordered dependent filters', async () => {
@@ -203,7 +201,7 @@ describe('RevisionDrawerPanel', () => {
   });
 
   it('lists the user’s quizz as a chapter option in free mode and chapter-test, and disables Notion once selected', async () => {
-    courses = [
+    quizzes = [
       {
         id: 'quizz-1',
         ownerId: 'user-1',
@@ -233,7 +231,7 @@ describe('RevisionDrawerPanel', () => {
   });
 
   it('résout le libellé Daily/Weak via le titre du quizz quand la notion officielle est introuvable', async () => {
-    courses = [
+    quizzes = [
       {
         id: 'quizz-1',
         ownerId: 'user-1',

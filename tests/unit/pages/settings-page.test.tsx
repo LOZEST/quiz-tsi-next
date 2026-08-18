@@ -65,9 +65,7 @@ describe('SettingsPage', () => {
     vi.clearAllMocks();
     snapshot = {
       questions: [question],
-      courses: [],
-      chapters: [],
-      notions: [],
+      quizzes: [],
       pendingOperationCount: 2,
       conflicts: [
         {
@@ -126,9 +124,80 @@ describe('SettingsPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('modifie les réglages Apple Pencil (épaisseur, grille, formes, gomme, main)', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user_openDisclosures();
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Afficher la grille' }),
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'Formes magiques' }));
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Effacer en griffonnant' }),
+    );
+    await user.click(screen.getByRole('radio', { name: 'Pixel' }));
+    await user.click(screen.getByRole('radio', { name: 'Gaucher' }));
+    expect(screen.getByRole('radio', { name: 'Gaucher' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Pixel' })).toBeChecked();
+  });
+
+  it('restaure une sauvegarde valide et signale les questions rejetées', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user_openDisclosures();
+    const input = screen.getByLabelText('Restaurer une sauvegarde');
+    const file = new File(
+      [
+        JSON.stringify({
+          questions: [question, { invalid: true }],
+        }),
+      ],
+      'backup.json',
+      { type: 'application/json' },
+    );
+    await user.upload(input, file);
+    expect(
+      await screen.findByText(
+        '1 question(s) restaurée(s), 1 rejetée(s) car invalide(s).',
+      ),
+    ).toBeInTheDocument();
+    expect(saveQuestion).toHaveBeenCalledTimes(1);
+  });
+
+  it('restaure une sauvegarde entièrement valide sans mention de rejet', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user_openDisclosures();
+    const input = screen.getByLabelText('Restaurer une sauvegarde');
+    const file = new File(
+      [JSON.stringify({ questions: [question] })],
+      'backup.json',
+      { type: 'application/json' },
+    );
+    await user.upload(input, file);
+    expect(
+      await screen.findByText('1 question(s) restaurée(s).'),
+    ).toBeInTheDocument();
+  });
+
+  it('signale un fichier de sauvegarde invalide', async () => {
+    const user = userEvent.setup();
+    renderSettings();
+    await user_openDisclosures();
+    const input = screen.getByLabelText('Restaurer une sauvegarde');
+    const file = new File(['not json'], 'backup.json', {
+      type: 'application/json',
+    });
+    await user.upload(input, file);
+    expect(
+      await screen.findByText('Le fichier de sauvegarde est invalide.'),
+    ).toBeInTheDocument();
+  });
+
   async function user_openDisclosures() {
     const user = userEvent.setup();
     for (const label of [
+      'Apple Pencil',
       'Données locales',
       'Synchronisation',
       'Sauvegardes',

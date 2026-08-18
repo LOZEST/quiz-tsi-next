@@ -376,12 +376,17 @@ export function RevisionExperienceProvider({
   useEffect(() => {
     if (initialLoaded.current) return;
     initialLoaded.current = true;
-    void services
-      .refreshQuestionRepositoryForUser(userId)
-      .catch(() => undefined)
-      .then(() => {
-        if (mounted.current) attemptFree(initialFreeRevisionFilters);
+    const id = request.current;
+    void services.refreshQuestionRepositoryForUser(userId).finally(() => {
+      queueMicrotask(() => {
+        // The user may have already changed mode/filters while this initial
+        // load was in flight (refreshQuestionRepositoryForUser hits IndexedDB
+        // and the marketplace RPC) — don't clobber their choice with the
+        // default free-revision question if a newer request has started.
+        if (mounted.current && id === request.current)
+          attemptFree(initialFreeRevisionFilters);
       });
+    });
   }, [attemptFree, services, userId]);
 
   const enterMode = useCallback(
@@ -449,6 +454,7 @@ export function RevisionExperienceProvider({
       trigger?: HTMLElement,
     ) => {
       void trigger;
+      request.current += 1;
       attemptFree(filters, excludeCurrent, true);
     },
     [attemptFree],

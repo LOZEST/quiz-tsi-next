@@ -1,9 +1,5 @@
 import type { Question } from '../questions/Question';
-import type {
-  PersonalChapter,
-  PersonalCourse,
-  PersonalNotion,
-} from '../questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '../questions/quizz/Quizz';
 
 export type QuestionMutationKind = 'create' | 'update' | 'archive' | 'publish';
 
@@ -18,44 +14,19 @@ export interface QuestionOutboxOperation {
   readonly createdAt: string;
 }
 
-export type PersonalTaxonomyOutboxOperation =
-  | Readonly<{
-      operationId: string;
-      userId: string;
-      entity: 'course';
-      entityId: string;
-      kind: 'create' | 'update' | 'delete';
-      payload: PersonalCourse;
-      createdAt: string;
-    }>
-  | Readonly<{
-      operationId: string;
-      userId: string;
-      entity: 'chapter';
-      entityId: string;
-      kind: 'create';
-      payload: PersonalChapter;
-      createdAt: string;
-    }>
-  | Readonly<{
-      operationId: string;
-      userId: string;
-      entity: 'notion';
-      entityId: string;
-      kind: 'create';
-      payload: PersonalNotion;
-      createdAt: string;
-    }>;
+export type QuizzTaxonomyOutboxOperation = Readonly<{
+  operationId: string;
+  userId: string;
+  entity: 'quizz';
+  entityId: string;
+  kind: 'create' | 'update';
+  payload: Quizz;
+  createdAt: string;
+}>;
 
 export type QuestionWorkspaceOutboxOperation =
   | QuestionOutboxOperation
-  | PersonalTaxonomyOutboxOperation;
-
-export interface PersonalTaxonomyDraft {
-  readonly course: PersonalCourse | null;
-  readonly chapter: PersonalChapter | null;
-  readonly notion: PersonalNotion | null;
-}
+  | QuizzTaxonomyOutboxOperation;
 
 export interface QuestionSyncConflict {
   readonly id: string;
@@ -69,9 +40,7 @@ export interface QuestionSyncConflict {
 
 export interface QuestionWorkspaceSnapshot {
   readonly questions: readonly Readonly<Question>[];
-  readonly courses: readonly PersonalCourse[];
-  readonly chapters: readonly PersonalChapter[];
-  readonly notions: readonly PersonalNotion[];
+  readonly quizzes: readonly Quizz[];
   readonly pendingOperationCount: number;
   readonly conflicts: readonly QuestionSyncConflict[];
 }
@@ -84,37 +53,20 @@ export interface QuestionWorkspaceRepository {
     kind: QuestionMutationKind,
     operationId: string,
   ): Promise<void>;
-  saveQuestionDraftWithPersonalTaxonomy(
+  saveQuestionWithQuizz(
     userId: string,
     question: Readonly<Question>,
-    taxonomy: PersonalTaxonomyDraft,
+    quizz: Readonly<Quizz> | null,
     operationIds: Readonly<{
       question: string;
-      course: string | null;
-      chapter: string | null;
-      notion: string | null;
+      quizz: string | null;
     }>,
   ): Promise<void>;
-  saveCourse(
+  saveQuizz(
     userId: string,
-    course: Readonly<PersonalCourse>,
+    quizz: Readonly<Quizz>,
     operationId: string,
     kind?: 'create' | 'update',
-  ): Promise<void>;
-  saveChapter(
-    userId: string,
-    chapter: Readonly<PersonalChapter>,
-    operationId: string,
-  ): Promise<void>;
-  saveNotion(
-    userId: string,
-    notion: Readonly<PersonalNotion>,
-    operationId: string,
-  ): Promise<void>;
-  deleteCourse(
-    userId: string,
-    courseId: string,
-    operationId: string,
   ): Promise<void>;
   resolveConflict(
     userId: string,
@@ -129,9 +81,7 @@ export interface QuestionWorkspaceRepository {
     userId: string,
     changes: Readonly<{
       questions: readonly Readonly<Question>[];
-      courses: readonly PersonalCourse[];
-      chapters: readonly PersonalChapter[];
-      notions: readonly PersonalNotion[];
+      quizzes: readonly Quizz[];
     }>,
   ): Promise<void>;
   recordConflict(userId: string, conflict: QuestionSyncConflict): Promise<void>;

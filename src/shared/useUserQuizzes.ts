@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useAppServices } from '@app/providers/AppServicesProvider';
-import type { PersonalCourse } from '@domain/questions/personal-taxonomy/PersonalTaxonomy';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 
-export function useUserQuizzes(): readonly PersonalCourse[] {
+export function useUserQuizzes(): readonly Quizz[] {
   const { state } = useAuth();
   const { questionWorkspaceRepository } = useAppServices();
-  const [courses, setCourses] = useState<readonly PersonalCourse[]>([]);
+  const [quizzes, setQuizzes] = useState<readonly Quizz[]>([]);
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
   useEffect(() => {
     if (!userId) {
-      queueMicrotask(() => setCourses([]));
+      queueMicrotask(() => setQuizzes([]));
       return;
     }
     let cancelled = false;
@@ -18,13 +18,13 @@ export function useUserQuizzes(): readonly PersonalCourse[] {
       .load(userId)
       .then((snapshot) => {
         if (cancelled) return;
-        setCourses((current) =>
-          current.length === snapshot.courses.length &&
+        setQuizzes((current) =>
+          current.length === snapshot.quizzes.length &&
           current.every(
-            (course, index) => course.id === snapshot.courses[index]?.id,
+            (quizz, index) => quizz.id === snapshot.quizzes[index]?.id,
           )
             ? current
-            : snapshot.courses,
+            : snapshot.quizzes,
         );
       })
       .catch(() => undefined);
@@ -32,5 +32,5 @@ export function useUserQuizzes(): readonly PersonalCourse[] {
       cancelled = true;
     };
   }, [questionWorkspaceRepository, userId]);
-  return courses;
+  return quizzes;
 }

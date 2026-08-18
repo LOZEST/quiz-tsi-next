@@ -44,9 +44,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
       load: () =>
         Promise.resolve({
           questions: [],
-          courses: [],
-          chapters: [],
-          notions: [],
+          quizzes: [],
           pendingOperationCount: 0,
           conflicts: [],
         }),
@@ -57,6 +55,11 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
       setAccountRole: () => Promise.resolve(),
     },
     questionReportGateway: { listReports, setReportStatus },
+    quizzMarketplaceGateway: {
+      adminListListings: () => Promise.resolve([]),
+      adminSetCertified: () => Promise.resolve(),
+      adminSetHidden: () => Promise.resolve(),
+    },
   }),
 }));
 

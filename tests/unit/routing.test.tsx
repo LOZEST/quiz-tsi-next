@@ -416,11 +416,12 @@ describe('application routing', () => {
     expect(safeRedirectTarget('/unknown')).toBe('/whiteboard');
   });
 
-  it('keeps exactly four primary destinations and the Pages basename', () => {
+  it('keeps exactly five primary destinations and the Pages basename', () => {
     expect(mainNavigation.map(({ to }) => to)).toEqual([
       '/whiteboard',
       '/progress',
       '/questions',
+      '/marketplace',
       '/settings',
     ]);
     expect(normalizeBasename('/quiz-tsi-next/')).toBe('/quiz-tsi-next');

@@ -23,7 +23,6 @@ export type ImportClassification =
       kind: 'personal';
       proposedCourseTitle: string;
       proposedChapterTitle: string | null;
-      proposedNotionTitle: string | null;
       reason: string;
       requiresUserConfirmation: true;
     }>;
@@ -260,7 +259,6 @@ function classificationIssue(value: unknown): string | null {
       'kind',
       'proposedCourseTitle',
       'proposedChapterTitle',
-      'proposedNotionTitle',
       'reason',
       'requiresUserConfirmation',
     ])
@@ -283,14 +281,6 @@ function classificationIssue(value: unknown): string | null {
     )
   )
     return 'proposedChapterTitle invalide (chaîne ou null attendu)';
-  if (
-    !boundedText(
-      value.proposedNotionTitle,
-      CHATGPT_IMPORT_LIMITS.taxonomyTitleCharacters,
-      true,
-    )
-  )
-    return 'proposedNotionTitle invalide (chaîne ou null attendu)';
   if (!text(value.reason)) return 'reason manquant, vide ou trop long';
   if (value.requiresUserConfirmation !== true)
     return 'requiresUserConfirmation doit être true';

@@ -10,7 +10,7 @@ import {
   createProgressSnapshot,
   type ProgressSnapshot,
 } from '@domain/progress/ProgressSnapshot';
-import { useUserQuizzes } from '@shared/useUserQuizzes';
+import type { Quizz } from '@domain/questions/quizz/Quizz';
 import styles from './ProgressPage.module.css';
 import type { MasteryStatus } from '@domain/mastery/MasteryPolicy';
 
@@ -56,12 +56,18 @@ const masteryStatusTones: Record<
 
 export function ProgressPage() {
   const { state } = useAuth();
-  const { evaluationRepository, chapterTestRepository, programIndex, clock } =
-    useAppServices();
+  const {
+    evaluationRepository,
+    chapterTestRepository,
+    programIndex,
+    clock,
+    questionWorkspaceRepository,
+  } = useAppServices();
   const [data, setData] = useState<{
     events: readonly MasteryEvent[];
     partial: boolean;
   } | null>(null);
+  const [quizzes, setQuizzes] = useState<readonly Quizz[]>([]);
   const [error, setError] = useState(false);
   useEffect(() => {
     if (state.status !== 'authenticated') return;
@@ -91,9 +97,23 @@ export function ProgressPage() {
       cancelled = true;
     };
   }, [chapterTestRepository, evaluationRepository, state]);
+  useEffect(() => {
+    if (state.status !== 'authenticated') return;
+    let cancelled = false;
+    void questionWorkspaceRepository
+      .load(state.session.user.id)
+      .then((snapshot) => {
+        if (!cancelled) setQuizzes(snapshot.quizzes);
+      })
+      .catch(() => {
+        if (!cancelled) setQuizzes([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [questionWorkspaceRepository, state]);
 
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
-  const quizzes = useUserQuizzes();
   const snapshot = useMemo(
     () =>
       data
@@ -138,9 +158,10 @@ export function ProgressContent({
 }) {
   const [openPart, setOpenPart] = useState<string | null>(null);
   const [openNotion, setOpenNotion] = useState<string | null>(null);
-  const [openQuizz, setOpenQuizz] = useState<string | null>(null);
   const label = (id: string) =>
-    programIndex?.getNotion(id)?.label ?? 'Notion non disponible';
+    programIndex?.getNotion(id)?.label ??
+    snapshot.quizzes.find((quizz) => quizz.quizzId === id)?.title ??
+    'Notion non disponible';
   return (
     <>
       {snapshot.partial ? (
@@ -311,62 +332,20 @@ export function ProgressContent({
         </div>
       </section>
       {snapshot.quizzes.length ? (
-        <section aria-labelledby="quizzes-title">
-          <h2 id="quizzes-title">Mes quizz</h2>
+        <section>
+          <h2>Mes quizz</h2>
           <div className={styles.parts}>
             {snapshot.quizzes.map((quizz) => (
-              <div key={quizz.notionId}>
-                <button
-                  type="button"
-                  aria-expanded={openQuizz === quizz.notionId}
-                  onClick={() =>
-                    setOpenQuizz(
-                      openQuizz === quizz.notionId ? null : quizz.notionId,
-                    )
-                  }
+              <button type="button" key={quizz.quizzId}>
+                <span>{quizz.title}</span>
+                <strong>{quizz.masteryScore} %</strong>
+                <span
+                  className={styles.pill}
+                  data-tone={masteryStatusTones[quizz.status]}
                 >
-                  <span>{quizz.label}</span>
-                  <strong>{quizz.masteryScore} %</strong>
-                  <span className={styles.partTrack} aria-hidden="true">
-                    <span style={{ inlineSize: `${quizz.masteryScore}%` }} />
-                  </span>
-                </button>
-                {openQuizz === quizz.notionId ? (
-                  <dl className={styles.details} data-testid="quizz-details">
-                    <div>
-                      <dt>Maîtrise</dt>
-                      <dd>{quizz.masteryScore} %</dd>
-                    </div>
-                    <div>
-                      <dt>Confiance</dt>
-                      <dd>{quizz.confidenceScore} %</dd>
-                    </div>
-                    <div>
-                      <dt>Statut</dt>
-                      <dd>
-                        <span
-                          className={styles.pill}
-                          data-tone={masteryStatusTones[quizz.status]}
-                        >
-                          {masteryStatusLabels[quizz.status]}
-                        </span>
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>Dernière activité</dt>
-                      <dd>{formatDate(quizz.lastReviewedAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Prochaine révision</dt>
-                      <dd>{formatDate(quizz.nextReviewAt)}</dd>
-                    </div>
-                    <div>
-                      <dt>Historique</dt>
-                      <dd>{quizz.evidenceCount} preuve(s)</dd>
-                    </div>
-                  </dl>
-                ) : null}
-              </div>
+                  {masteryStatusLabels[quizz.status]}
+                </span>
+              </button>
             ))}
           </div>
         </section>
@@ -470,7 +449,7 @@ export function ProgressContent({
           <ol className={styles.timeline}>
             {snapshot.recent.map((event) => (
               <li key={event.id} data-tone={resultTones[event.result]}>
-                <strong>{label(event.notionId)}</strong>
+                <strong>{label(event.notionId ?? event.quizzId ?? '')}</strong>
                 <span>
                   <span
                     className={styles.pill}

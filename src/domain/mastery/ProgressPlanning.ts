@@ -1,6 +1,25 @@
 import type { DailyPlanState, WeakPointsState } from '../session/Session';
 import type { MasteryEvent } from './MasteryEvent';
-import { calculateNotionMastery, type NotionMastery } from './MasteryPolicy';
+import { calculateMasteryForKey, type NotionMastery } from './MasteryPolicy';
+
+// The daily plan and weak-points queues are revision to-dos, not stats: they
+// mix official notions and personal quizzes into the same "what to review
+// next" list, keyed by whichever unit id an event carries (notionId for
+// official, quizzId for a personal quizz — a quizz is flat, so it fills the
+// "unit" slot as a whole rather than by chapter/notion).
+const unitId = (event: MasteryEvent): string | null =>
+  event.notionId ?? event.quizzId;
+function calculateUnitMastery(
+  id: string,
+  events: readonly MasteryEvent[],
+  now: number,
+): NotionMastery {
+  return calculateMasteryForKey(
+    id,
+    events.filter((event) => unitId(event) === id),
+    now,
+  );
+}
 
 export interface DayBoundary {
   startOfDay(now: number): number;
@@ -64,17 +83,22 @@ export function createDailyPlan(
     );
     const start = boundary.startOfDay(now);
     const end = boundary.endOfDay(now);
-    const notionIds = new Set(userEvents.map((event) => event.notionId));
+    const notionIds = new Set(
+      userEvents.flatMap((event) => {
+        const id = unitId(event);
+        return id ? [id] : [];
+      }),
+    );
     const items = [...notionIds].flatMap((notionId) => {
       const beforeToday = userEvents.filter(
         (event) => Date.parse(event.occurredAt) < start,
       );
-      const mastery = calculateNotionMastery(notionId, beforeToday, start);
+      const mastery = calculateUnitMastery(notionId, beforeToday, start);
       if (!mastery.nextReviewAt || Date.parse(mastery.nextReviewAt) > end)
         return [];
       const today = userEvents.filter(
         (event) =>
-          event.notionId === notionId &&
+          unitId(event) === notionId &&
           Date.parse(event.occurredAt) >= start &&
           Date.parse(event.occurredAt) <= end,
       );
@@ -123,7 +147,12 @@ export function createWeakPoints(
   const userEvents = deduplicate(events).filter(
     (event) => event.userId === userId && event.result !== 'skipped',
   );
-  const notionIds = new Set(userEvents.map((event) => event.notionId));
+  const notionIds = new Set(
+    userEvents.flatMap((event) => {
+      const id = unitId(event);
+      return id ? [id] : [];
+    }),
+  );
   if (userEvents.length < 8 || notionIds.size < 2) {
     return {
       kind: 'calibrating',
@@ -138,14 +167,14 @@ export function createWeakPoints(
     };
   }
   const mastery = [...notionIds].map((notionId) =>
-    calculateNotionMastery(notionId, userEvents, now),
+    calculateUnitMastery(notionId, userEvents, now),
   );
   mastery.sort(compareWeakness);
   return {
     kind: 'ready',
     items: mastery.slice(0, 5).map((item, index) => {
       const notionEvents = userEvents.filter(
-        (event) => event.notionId === item.notionId,
+        (event) => unitId(event) === item.notionId,
       );
       return {
         notionId: item.notionId,

@@ -15,13 +15,12 @@ import {
   type QuestionReport,
   type QuestionReportStatus,
 } from '@domain/questions/QuestionReport';
+import type { QuizzListing } from '@domain/quizz/QuizzListing';
 import styles from './AdminPage.module.css';
 
 const emptySnapshot: QuestionWorkspaceSnapshot = {
   questions: [],
-  courses: [],
-  chapters: [],
-  notions: [],
+  quizzes: [],
   pendingOperationCount: 0,
   conflicts: [],
 };
@@ -358,6 +357,108 @@ function ReportsPanel() {
   );
 }
 
+function QuizzListingsPanel() {
+  const { quizzMarketplaceGateway } = useAppServices();
+  const [listings, setListings] = useState<readonly QuizzListing[] | null>(
+    null,
+  );
+  const [error, setError] = useState<string | null>(null);
+  const [pendingListingId, setPendingListingId] = useState<string | null>(null);
+
+  const reload = () => {
+    quizzMarketplaceGateway
+      .adminListListings()
+      .then(setListings)
+      .catch(() =>
+        setError('La modération marketplace n’a pas pu être chargée.'),
+      );
+  };
+  useEffect(reload, [quizzMarketplaceGateway]);
+
+  const toggleCertified = async (listing: QuizzListing) => {
+    setPendingListingId(listing.id);
+    setError(null);
+    try {
+      await quizzMarketplaceGateway.adminSetCertified(
+        listing.id,
+        !listing.certified,
+      );
+      reload();
+    } catch {
+      setError('La certification n’a pas pu être modifiée.');
+    } finally {
+      setPendingListingId(null);
+    }
+  };
+
+  const toggleHidden = async (listing: QuizzListing) => {
+    setPendingListingId(listing.id);
+    setError(null);
+    try {
+      await quizzMarketplaceGateway.adminSetHidden(listing.id, !listing.hidden);
+      reload();
+    } catch {
+      setError('Le retrait/rétablissement a échoué.');
+    } finally {
+      setPendingListingId(null);
+    }
+  };
+
+  return (
+    <Surface>
+      <h2>Marketplace</h2>
+      {error ? <p role="alert">{error}</p> : null}
+      {listings === null ? (
+        <p>Chargement des listings…</p>
+      ) : listings.length === 0 ? (
+        <p>Aucun Quizz publié pour le moment.</p>
+      ) : (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Quizz</th>
+              <th scope="col">Description</th>
+              <th scope="col">Publié le</th>
+              <th scope="col">Certifié</th>
+              <th scope="col">Visible</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {listings.map((listing) => (
+              <tr key={listing.id}>
+                <td>{listing.title}</td>
+                <td>{listing.description || '—'}</td>
+                <td>{new Date(listing.publishedAt).toLocaleString('fr-FR')}</td>
+                <td>{listing.certified ? 'Oui' : 'Non'}</td>
+                <td>{listing.hidden ? 'Masqué' : 'Visible'}</td>
+                <td>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={pendingListingId === listing.id}
+                    onClick={() => void toggleCertified(listing)}
+                  >
+                    {listing.certified ? 'Décertifier' : 'Certifier'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={pendingListingId === listing.id}
+                    onClick={() => void toggleHidden(listing)}
+                  >
+                    {listing.hidden ? 'Rétablir' : 'Masquer'}
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Surface>
+  );
+}
+
 export function AdminPage() {
   const { state } = useAuth();
   if (state.status !== 'authenticated') return null;
@@ -371,6 +472,7 @@ export function AdminPage() {
       <AccountsPanel currentUserId={userId} />
       <ContentPanel userId={userId} />
       <ReportsPanel />
+      <QuizzListingsPanel />
     </>
   );
 }

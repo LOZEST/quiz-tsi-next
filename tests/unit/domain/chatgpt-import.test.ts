@@ -11,7 +11,6 @@ const entry = {
     kind: 'personal',
     proposedCourseTitle: 'Automatique',
     proposedChapterTitle: null,
-    proposedNotionTitle: null,
     reason: 'Hors programme',
     requiresUserConfirmation: true,
   },
@@ -116,7 +115,6 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
       kind: entry.classification.kind,
       proposedCourseTitle: entry.classification.proposedCourseTitle,
       proposedChapterTitle: entry.classification.proposedChapterTitle,
-      proposedNotionTitle: entry.classification.proposedNotionTitle,
       requiresUserConfirmation: entry.classification.requiresUserConfirmation,
     };
     const result = validateChatGptQuestionImport({

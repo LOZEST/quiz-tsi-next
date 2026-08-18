@@ -53,7 +53,7 @@ function event(
     id: `m${index}`,
     userId: 'u1',
     notionId: 'n1',
-    classificationKind: 'official',
+    quizzId: null,
     questionId: `q${index}`,
     sessionId: `free:s${index}`,
     questionInstanceId: `i${index}`,
@@ -79,43 +79,11 @@ describe('mastery projection and policy v1', () => {
       sessionMode: 'free',
       durationMs: 60_000,
       result: 'success',
-      classificationKind: 'official',
     });
     expect(result).toMatchObject({
       partial: true,
       unresolvedEvaluationIds: ['e2'],
     });
-  });
-
-  it('inclut les évaluations de quizz personnels, avec le courseId comme unité', () => {
-    const personal = evaluation({
-      id: 'e-quizz',
-      classification: {
-        kind: 'personal',
-        courseId: 'quizz-1',
-        chapterId: null,
-        notionId: null,
-      },
-      notionId: null,
-    });
-    const missingCourse = evaluation({
-      id: 'e-missing-course',
-      classification: {
-        kind: 'personal',
-        courseId: '',
-        chapterId: null,
-        notionId: null,
-      },
-      notionId: null,
-    });
-    const result = projectMasteryEvents([personal, missingCourse]);
-    expect(result.events).toHaveLength(1);
-    expect(result.events[0]).toMatchObject({
-      id: 'mastery:e-quizz',
-      notionId: 'quizz-1',
-      classificationKind: 'personal',
-    });
-    expect(result.unresolvedEvaluationIds).toEqual(['e-missing-course']);
   });
 
   it('ignores skipped and distinguishes success, partial and failed', () => {

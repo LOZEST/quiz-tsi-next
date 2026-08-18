@@ -6,7 +6,7 @@ export class UnavailableQuestionRemoteGateway implements QuestionRemoteGateway {
   pullRecent() {
     return Promise.resolve({
       questions: [],
-      courses: [],
+      quizzes: [],
       chapters: [],
       notions: [],
       rejectedRows: [],

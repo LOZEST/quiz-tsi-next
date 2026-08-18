@@ -10,6 +10,7 @@ import { AuthError } from '@domain/auth/AuthError';
 import { ControlledAuthGateway } from '@infrastructure/auth/ControlledAuthGateway';
 import type { ProgramIndex } from '@domain/program/Program';
 import type { QuestionRepository } from '@domain/repositories/QuestionRepository';
+import type { Question } from '@domain/questions/Question';
 import type {
   Clock,
   DailyPlanStateRepository,
@@ -51,7 +52,11 @@ import type { QuestionReportGateway } from '@domain/questions/QuestionReportGate
 import { SupabaseQuestionReportGateway } from '@infrastructure/questions/SupabaseQuestionReportGateway';
 import { ControlledQuestionReportGateway } from '@infrastructure/questions/ControlledQuestionReportGateway';
 import { UnavailableQuestionReportGateway } from '@infrastructure/questions/UnavailableQuestionReportGateway';
-import { MergedQuestionRepository } from '@infrastructure/session/MergedQuestionRepository';
+import type { QuizzMarketplaceGateway } from '@domain/quizz/QuizzMarketplaceGateway';
+import { SupabaseQuizzMarketplaceGateway } from '@infrastructure/quizz/SupabaseQuizzMarketplaceGateway';
+import { ControlledQuizzMarketplaceGateway } from '@infrastructure/quizz/ControlledQuizzMarketplaceGateway';
+import { UnavailableQuizzMarketplaceGateway } from '@infrastructure/quizz/UnavailableQuizzMarketplaceGateway';
+import { isMergedQuestionRepository } from '@infrastructure/session/MergedQuestionRepository';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -70,6 +75,7 @@ export interface AppServices {
   questionRemoteGateway?: QuestionRemoteGateway;
   accountManagementGateway?: AccountManagementGateway;
   questionReportGateway?: QuestionReportGateway;
+  quizzMarketplaceGateway?: QuizzMarketplaceGateway;
   refreshQuestionRepositoryForUser?: (userId: string) => Promise<void>;
 }
 
@@ -82,29 +88,57 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     services.evaluationRepository ?? new IndexedDbEvaluationRepository();
   const chapterTestRepository =
     services.chapterTestRepository ?? new IndexedDbChapterTestRepository();
+  const questionRepository =
+    services.questionRepository ?? new InMemoryQuestionRepository();
   const questionWorkspaceRepository =
     services.questionWorkspaceRepository ??
     new IndexedDbQuestionWorkspaceRepository();
-  const questionRepository = new MergedQuestionRepository(
-    services.questionRepository ?? new InMemoryQuestionRepository(),
-  );
-  const refreshQuestionRepositoryForUser =
-    services.refreshQuestionRepositoryForUser ??
-    (async (userId: string) => {
-      if (!userId) return;
-      const snapshot = await questionWorkspaceRepository.load(userId);
-      questionRepository.setUserContributions(
-        snapshot.questions.filter(
-          (question) => question.status === 'published' && question.validated,
-        ),
-      );
-    });
+  const quizzMarketplaceGateway =
+    services.quizzMarketplaceGateway ??
+    new UnavailableQuizzMarketplaceGateway();
   return {
     ...services,
     programIndex: services.programIndex ?? null,
     questionRepository,
     questionWorkspaceRepository,
-    refreshQuestionRepositoryForUser,
+    refreshQuestionRepositoryForUser:
+      services.refreshQuestionRepositoryForUser ??
+      (async (userId: string) => {
+        if (!isMergedQuestionRepository(questionRepository)) return;
+        const contributions: Readonly<Question>[] = [];
+        try {
+          const snapshot = await questionWorkspaceRepository.load(userId);
+          contributions.push(
+            ...snapshot.questions.filter(
+              (question) =>
+                question.status === 'published' &&
+                question.validated &&
+                question.source !== 'static',
+            ),
+          );
+        } catch {
+          // The user's own Quizz questions are an enhancement over the static
+          // bank; if the local workspace is unavailable, sessions still work
+          // with the static bank alone.
+        }
+        try {
+          const subscribed =
+            await quizzMarketplaceGateway.listSubscribedQuizzContent();
+          contributions.push(
+            ...subscribed.flatMap((content) =>
+              content.questions.filter(
+                (question) =>
+                  question.status === 'published' && question.validated,
+              ),
+            ),
+          );
+        } catch {
+          // Marketplace subscriptions are an enhancement over the static bank
+          // and the user's own Quizz; if unavailable, sessions still work
+          // without them.
+        }
+        questionRepository.setUserContributions(contributions);
+      }),
     dailyPlanStateRepository:
       services.dailyPlanStateRepository ??
       new ProjectedDailyPlanRepository(
@@ -136,6 +170,7 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
       new UnavailableAccountManagementGateway(),
     questionReportGateway:
       services.questionReportGateway ?? new UnavailableQuestionReportGateway(),
+    quizzMarketplaceGateway,
   };
 }
 
@@ -171,6 +206,7 @@ function createDefaultServices(): AppServices {
       workspaceRepository: new IndexedDbWorkspaceRepository(),
       accountManagementGateway: new ControlledAccountManagementGateway(),
       questionReportGateway: new ControlledQuestionReportGateway(),
+      quizzMarketplaceGateway: new ControlledQuizzMarketplaceGateway(),
       ...createControlledRevisionServices(),
     };
   }
@@ -187,6 +223,7 @@ function createDefaultServices(): AppServices {
       workspaceRepository: new IndexedDbWorkspaceRepository(),
       accountManagementGateway: new SupabaseAccountManagementGateway(client),
       questionReportGateway: new SupabaseQuestionReportGateway(client),
+      quizzMarketplaceGateway: new SupabaseQuizzMarketplaceGateway(client),
       ...createProductionRevisionServices(),
     };
   } catch {
