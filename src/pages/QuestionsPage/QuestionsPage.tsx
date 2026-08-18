@@ -188,6 +188,7 @@ export function QuestionsPage() {
       } else {
         await quizzMarketplaceGateway.setOwnListingHidden(courseId, true);
       }
+      setStorageError(null);
     } catch {
       setStorageError(
         'La mise à jour de la visibilité sur la marketplace a échoué.',
@@ -282,15 +283,15 @@ export function QuestionsPage() {
       <PageHeader
         title="Mes Quizz"
         description="Crée, organise et relis tes quizz, même hors connexion."
-        actions={
-          <IconButton
-            label={showFilter ? 'Masquer le filtre' : 'Filtrer'}
-            onClick={() => setShowFilter((value) => !value)}
-          >
-            <IconFilter />
-          </IconButton>
-        }
       />
+      <div className={styles.filterToggle}>
+        <IconButton
+          label={showFilter ? 'Masquer le filtre' : 'Filtrer'}
+          onClick={() => setShowFilter((value) => !value)}
+        >
+          <IconFilter />
+        </IconButton>
+      </div>
       {showFilter ? (
         <div className={styles.filters}>
           <label>

@@ -1,7 +1,13 @@
 .page {
+  position: relative;
   display: grid;
   gap: 12px;
   min-width: 0;
+}
+.filterToggle {
+  position: absolute;
+  top: var(--qtsi-space-2);
+  right: 0;
 }
 .actions,
 .editorFooter {
