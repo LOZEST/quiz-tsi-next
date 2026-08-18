@@ -97,7 +97,6 @@ components:
                 kind,
                 proposedCourseTitle,
                 proposedChapterTitle,
-                proposedNotionTitle,
                 reason,
                 requiresUserConfirmation,
               ],
@@ -107,7 +106,6 @@ components:
                 proposedCourseTitle: { type: string, maxLength: 200 },
                 proposedChapterTitle:
                   { type: [string, 'null'], maxLength: 200 },
-                proposedNotionTitle: { type: [string, 'null'], maxLength: 200 },
                 reason: { type: string, maxLength: 20000 },
                 requiresUserConfirmation: { const: true },
               },
