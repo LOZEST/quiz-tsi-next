@@ -122,6 +122,15 @@ export function MarketplacePage() {
     } catch {
       setPreviewError('L’aperçu n’a pas pu être chargé.');
     }
+    try {
+      if (await quizzMarketplaceGateway.hasSubscribed(listingId))
+        setSubscribedListingIds((current) =>
+          current.includes(listingId) ? current : [...current, listingId],
+        );
+    } catch {
+      // Subscription status is an enhancement over the read-only preview; if
+      // it's unavailable, rating just stays disabled instead of failing hard.
+    }
   };
 
   const closePreview = () => {
