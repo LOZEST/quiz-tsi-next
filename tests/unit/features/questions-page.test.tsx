@@ -169,6 +169,9 @@ describe('QuestionsPage', () => {
   it('crée un quizz depuis la page Mes Quizz', async () => {
     const user = userEvent.setup();
     render(<QuestionsPage />);
+    await user.click(
+      await screen.findByRole('button', { name: /Ajoute un quizz/ }),
+    );
     await user.type(
       await screen.findByPlaceholderText('Nouveau quizz'),
       'Cinématique',
@@ -251,7 +254,7 @@ describe('QuestionsPage', () => {
     );
   });
 
-  it('signale une erreur quand la publication marketplace échoue', async () => {
+  it('signale une erreur quand la publication marketplace échoue, puis efface l’erreur une fois la synchronisation réussie', async () => {
     publishQuizz.mockRejectedValueOnce(new Error('denied'));
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
@@ -262,6 +265,15 @@ describe('QuestionsPage', () => {
         'La mise à jour de la visibilité sur la marketplace a échoué.',
       ),
     ).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('checkbox', { name: 'Public' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByText(
+          'La mise à jour de la visibilité sur la marketplace a échoué.',
+        ),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it('modifie le nom et la description d’un quizz', async () => {

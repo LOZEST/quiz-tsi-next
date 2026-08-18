@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import {
   questionClassification,
   type Question,
@@ -52,8 +52,8 @@ export function QuestionsFolderGrid({
   onCreateQuestion: () => void;
   chatGptImportUrl: string | null;
 }) {
+  const [isCreatingQuizz, setIsCreatingQuizz] = useState(false);
   const [newFolderTitle, setNewFolderTitle] = useState('');
-  const newFolderInputRef = useRef<HTMLInputElement>(null);
   const countIn = (quizzId: string) =>
     questions.filter((question) => {
       const classification = questionClassification(question);
@@ -85,11 +85,15 @@ export function QuestionsFolderGrid({
   const submitNewFolder = () => {
     const title = newFolderTitle.trim();
     if (!title) return;
-    if (location.kind === 'root') onCreateQuizz(title);
+    onCreateQuizz(title);
     setNewFolderTitle('');
+    setIsCreatingQuizz(false);
   };
 
-  const canCreateFolder = location.kind === 'root';
+  const cancelNewFolder = () => {
+    setNewFolderTitle('');
+    setIsCreatingQuizz(false);
+  };
 
   return (
     <div className={styles.folderGrid}>
@@ -117,16 +121,42 @@ export function QuestionsFolderGrid({
       >
         {location.kind === 'root' ? (
           <>
-            <button
-              type="button"
-              className={styles.addQuizCard}
-              onClick={() => newFolderInputRef.current?.focus()}
-            >
-              <span>Ajoute un quizz</span>
-              <span className={styles.addQuizPlus} aria-hidden="true">
-                +
-              </span>
-            </button>
+            {isCreatingQuizz ? (
+              <form
+                className={styles.addQuizCard}
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  submitNewFolder();
+                }}
+              >
+                <input
+                  value={newFolderTitle}
+                  onChange={(event) => setNewFolderTitle(event.target.value)}
+                  placeholder="Nouveau quizz"
+                  aria-label="Nouveau quizz"
+                  autoFocus
+                />
+                <div className={styles.addQuizActions}>
+                  <button type="submit" disabled={!newFolderTitle.trim()}>
+                    Créer
+                  </button>
+                  <button type="button" onClick={cancelNewFolder}>
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                type="button"
+                className={styles.addQuizCard}
+                onClick={() => setIsCreatingQuizz(true)}
+              >
+                <span>Ajoute un quizz</span>
+                <span className={styles.addQuizPlus} aria-hidden="true">
+                  +
+                </span>
+              </button>
+            )}
             {quizzes.map((quizz) => {
               const example = exampleFor(quizz.id);
               return (
@@ -194,28 +224,6 @@ export function QuestionsFolderGrid({
             ) : null;
           })()
         : null}
-      {canCreateFolder ? (
-        <form
-          className={styles.newFolder}
-          onSubmit={(event) => {
-            event.preventDefault();
-            submitNewFolder();
-          }}
-        >
-          <label>
-            Nouveau quizz
-            <input
-              ref={newFolderInputRef}
-              value={newFolderTitle}
-              onChange={(event) => setNewFolderTitle(event.target.value)}
-              placeholder="Nouveau quizz"
-            />
-          </label>
-          <button type="submit" disabled={!newFolderTitle.trim()}>
-            Créer
-          </button>
-        </form>
-      ) : null}
       {location.kind === 'root' ? <SubscribedQuizzesSection /> : null}
     </div>
   );
