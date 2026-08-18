@@ -85,6 +85,7 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
         visibility: payload.visibility,
         created_at: payload.createdAt,
         updated_at: payload.updatedAt,
+        deleted_at: payload.deletedAt,
       };
       const { error } =
         operation.kind === 'update'
@@ -225,6 +226,7 @@ function quizzRows(data: unknown, userId: string): Quizz[] {
         visibility,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
+        deletedAt: typeof row.deleted_at === 'string' ? row.deleted_at : null,
       },
     ];
   });

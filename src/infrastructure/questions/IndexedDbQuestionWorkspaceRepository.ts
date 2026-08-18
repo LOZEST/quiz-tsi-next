@@ -110,7 +110,9 @@ export class IndexedDbQuestionWorkspaceRepository implements QuestionWorkspaceRe
       questions: latestQuestionVersions(
         questions.map((row) => structuredClone(row.question)),
       ),
-      quizzes: quizzes.map((row) => structuredClone(row.value)),
+      quizzes: quizzes
+        .map((row) => structuredClone(row.value))
+        .filter((quizz) => !quizz.deletedAt),
       pendingOperationCount: outbox.length,
       conflicts: conflicts.map((row) => structuredClone(row.value)),
     };

@@ -19,7 +19,6 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
 }) => {
   await login(page, 'user@example.test');
   await page.goto('questions');
-  await page.getByRole('button', { name: 'Dossiers' }).click();
 
   await page.getByLabel('Nouveau quizz').fill('Quizz e2e marketplace');
   await page.getByRole('button', { name: 'Créer', exact: true }).click();
@@ -81,7 +80,6 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   ).toBeVisible();
 
   await page.goto('questions');
-  await page.getByRole('button', { name: 'Dossiers' }).click();
   const subscriptions = page.getByRole('region', { name: 'Abonnements' });
   await expect(subscriptions).toBeVisible();
   await expect(subscriptions.getByText('Quizz e2e marketplace')).toBeVisible();

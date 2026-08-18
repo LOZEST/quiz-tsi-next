@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Button } from '@design-system/components/Button/Button';
 import type { Question } from '@domain/questions/Question';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
@@ -55,6 +56,8 @@ export function QuizzWorkspacePanel({
   onValidate,
   onDelete,
   onCreateNew,
+  onUpdateMeta,
+  onDeleteQuizz,
   chatGptImportUrl,
 }: {
   quizz: Quizz;
@@ -65,12 +68,29 @@ export function QuizzWorkspacePanel({
   onValidate: (question: Readonly<Question>) => void;
   onDelete: (question: Readonly<Question>) => void;
   onCreateNew: () => void;
+  onUpdateMeta: (updates: { title: string; description: string }) => void;
+  onDeleteQuizz: () => void;
   chatGptImportUrl: string | null;
 }) {
   const validated = questions.filter((question) => question.validated);
   const toValidate = questions.filter((question) => !question.validated);
   const selected =
     questions.find((question) => question.id === selectedId) ?? null;
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [editTitle, setEditTitle] = useState(quizz.title);
+  const [editDescription, setEditDescription] = useState(quizz.description);
+
+  const startEditingMeta = () => {
+    setEditTitle(quizz.title);
+    setEditDescription(quizz.description);
+    setEditingMeta(true);
+  };
+  const saveMeta = () => {
+    const title = editTitle.trim();
+    if (!title) return;
+    onUpdateMeta({ title, description: editDescription.trim() });
+    setEditingMeta(false);
+  };
 
   return (
     <div className={styles.workspace}>
@@ -99,23 +119,49 @@ export function QuizzWorkspacePanel({
                 <h4>ennoncer</h4>
                 <RawContentPreview segments={selected.prompt} />
               </button>
+              {selected.provenance?.chatGptImport ? (
+                <section className={styles.importReview}>
+                  <strong>Import ChatGPT — À vérifier</strong>
+                  <p>
+                    Couverture : {selected.provenance.chatGptImport.coverage}
+                  </p>
+                  {selected.provenance.chatGptImport.coverage !==
+                  'text-and-visuals' ? (
+                    <p role="alert">
+                      {selected.provenance.chatGptImport.coverage ===
+                      'incomplete'
+                        ? 'Analyse incomplète : vérifie attentivement le document.'
+                        : 'Les visuels n’ont pas été analysés.'}
+                    </p>
+                  ) : null}
+                  <ul>
+                    {selected.provenance.chatGptImport.uncertainties.map(
+                      (item, index) => (
+                        <li key={`${item.path}:${index}`}>
+                          {item.message} ({item.path})
+                        </li>
+                      ),
+                    )}
+                  </ul>
+                </section>
+              ) : null}
               <h4>corection</h4>
               {selected.correction.length === 0 ? (
                 <p className={styles.columnEmpty}>Aucune correction.</p>
               ) : (
                 selected.correction.map((step) => (
-                  <p key={step.id}>
+                  <div key={step.id}>
                     <RawContentPreview segments={step.content} />
-                  </p>
+                  </div>
                 ))
               )}
               <h4>indice</h4>
               {selected.hint.length === 0 ? (
                 <p className={styles.columnEmpty}>Aucun indice.</p>
               ) : (
-                <p>
+                <div>
                   <RawContentPreview segments={selected.hint} />
-                </p>
+                </div>
               )}
               <div className={styles.detailActions}>
                 {!selected.validated ? (
@@ -144,28 +190,77 @@ export function QuizzWorkspacePanel({
         </section>
       </div>
       <div className={styles.meta}>
-        <div className={styles.metaHeader}>
-          <strong>{quizz.title}</strong>
-          <span className={styles.visibilityPill}>
-            {quizz.visibility === 'public' ? 'Public' : 'Privé'}
-          </span>
-        </div>
-        {quizz.description ? <p>{quizz.description}</p> : null}
-        <div className={styles.metaActions}>
-          {chatGptImportUrl ? (
-            <a
-              className={styles.pillLink}
-              href={chatGptImportUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              ajouter une question avec GPT
-            </a>
-          ) : null}
-          <Button type="button" onClick={onCreateNew}>
-            ajouter une question a la mains
-          </Button>
-        </div>
+        {editingMeta ? (
+          <form
+            className={styles.metaEditForm}
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveMeta();
+            }}
+          >
+            <label>
+              Nom du quizz
+              <input
+                value={editTitle}
+                onChange={(event) => setEditTitle(event.target.value)}
+                required
+              />
+            </label>
+            <label>
+              Description
+              <textarea
+                value={editDescription}
+                onChange={(event) => setEditDescription(event.target.value)}
+                rows={2}
+              />
+            </label>
+            <div className={styles.metaActions}>
+              <Button type="submit">Enregistrer</Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setEditingMeta(false)}
+              >
+                Annuler
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className={styles.metaHeader}>
+              <strong>{quizz.title}</strong>
+              <span className={styles.visibilityPill}>
+                {quizz.visibility === 'public' ? 'Public' : 'Privé'}
+              </span>
+            </div>
+            {quizz.description ? <p>{quizz.description}</p> : null}
+            <div className={styles.metaActions}>
+              {chatGptImportUrl ? (
+                <a
+                  className={styles.pillLink}
+                  href={chatGptImportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  ajouter une question avec GPT
+                </a>
+              ) : null}
+              <Button type="button" onClick={onCreateNew}>
+                ajouter une question a la mains
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={startEditingMeta}
+              >
+                Modifier
+              </Button>
+              <Button type="button" variant="danger" onClick={onDeleteQuizz}>
+                Supprimer le quizz
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
