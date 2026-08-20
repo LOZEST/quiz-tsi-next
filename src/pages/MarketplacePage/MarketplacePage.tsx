@@ -42,7 +42,7 @@ function ListingCard({
         disabled={pending}
         onClick={() => onSubscribe(listing.id)}
       >
-        Pix
+        Ajouter
       </button>
     </article>
   );

@@ -51,13 +51,13 @@ export function QuizzListingPreview({
         {preview.questions.map((question) => (
           <li key={question.id}>
             <div>
-              <PreviewSegments segments={question.prompt} />
+              <PreviewSegments segments={question.prompt ?? []} />
             </div>
             <details>
               <summary>Correction</summary>
-              {question.correction.map((step) => (
+              {(question.correction ?? []).map((step) => (
                 <div key={step.id}>
-                  <PreviewSegments segments={step.content} />
+                  <PreviewSegments segments={step.content ?? []} />
                 </div>
               ))}
             </details>
