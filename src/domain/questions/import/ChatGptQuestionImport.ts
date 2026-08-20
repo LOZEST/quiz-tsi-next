@@ -12,20 +12,13 @@ import {
 } from './ChatGptImportPolicy.ts';
 
 export type AnalysisCoverage = 'text-and-visuals' | 'text-only' | 'incomplete';
-export type ImportClassification =
-  | Readonly<{
-      kind: 'official';
-      chapterId: string;
-      notionId: string;
-      confidence: 'certain' | 'uncertain';
-    }>
-  | Readonly<{
-      kind: 'personal';
-      proposedCourseTitle: string;
-      proposedChapterTitle: string | null;
-      reason: string;
-      requiresUserConfirmation: true;
-    }>;
+export type ImportClassification = Readonly<{
+  kind: 'personal';
+  proposedCourseTitle: string;
+  proposedChapterTitle: string | null;
+  reason: string;
+  requiresUserConfirmation: true;
+}>;
 export type ImportUncertaintyCode =
   | 'ocr'
   | 'formula'
@@ -241,19 +234,7 @@ function strictParameterization(value: unknown): boolean {
 // says exactly what was wrong instead of a generic "invalide ou inconnue".
 function classificationIssue(value: unknown): string | null {
   if (!record(value)) return 'classification absente ou non-objet';
-  if (value.kind === 'official') {
-    if (!hasOnlyKeys(value, ['kind', 'chapterId', 'notionId', 'confidence']))
-      return 'clé inconnue pour une classification officielle';
-    if (Object.hasOwn(value, 'partId'))
-      return 'partId non autorisé (déduit du serveur, jamais envoyé)';
-    if (!text(value.chapterId)) return 'chapterId manquant ou invalide';
-    if (!text(value.notionId)) return 'notionId manquant ou invalide';
-    if (value.confidence !== 'certain' && value.confidence !== 'uncertain')
-      return 'confidence manquant ou invalide (certain|uncertain attendu)';
-    return null;
-  }
-  if (value.kind !== 'personal')
-    return 'kind doit être "official" ou "personal"';
+  if (value.kind !== 'personal') return 'kind doit être "personal"';
   if (
     !hasOnlyKeys(value, [
       'kind',

@@ -76,40 +76,24 @@ components:
             properties: { kind: { const: line-break } },
           }
     Classification:
-      oneOf:
-        - {
-            type: object,
-            additionalProperties: false,
-            required: [kind, chapterId, notionId, confidence],
-            properties:
-              {
-                kind: { const: official },
-                chapterId: { type: string },
-                notionId: { type: string },
-                confidence: { enum: [certain, uncertain] },
-              },
-          }
-        - {
-            type: object,
-            additionalProperties: false,
-            required:
-              [
-                kind,
-                proposedCourseTitle,
-                proposedChapterTitle,
-                reason,
-                requiresUserConfirmation,
-              ],
-            properties:
-              {
-                kind: { const: personal },
-                proposedCourseTitle: { type: string, maxLength: 200 },
-                proposedChapterTitle:
-                  { type: [string, 'null'], maxLength: 200 },
-                reason: { type: string, maxLength: 20000 },
-                requiresUserConfirmation: { const: true },
-              },
-          }
+      type: object
+      additionalProperties: false
+      required:
+        [
+          kind,
+          proposedCourseTitle,
+          proposedChapterTitle,
+          reason,
+          requiresUserConfirmation,
+        ]
+      properties:
+        {
+          kind: { const: personal },
+          proposedCourseTitle: { type: string, maxLength: 200 },
+          proposedChapterTitle: { type: [string, 'null'], maxLength: 200 },
+          reason: { type: string, maxLength: 20000 },
+          requiresUserConfirmation: { const: true },
+        }
     ChatGptQuestionImportV1:
       type: object
       additionalProperties: false
