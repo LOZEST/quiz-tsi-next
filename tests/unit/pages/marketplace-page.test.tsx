@@ -100,13 +100,13 @@ describe('MarketplacePage', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders a listing card with its title and the reserved Pix badge', async () => {
+  it('renders a listing card with its title and an add button', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
     renderPage();
     expect(await screen.findByText('Thermodynamique')).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Ajouter à mon espace' }),
-    ).toHaveTextContent('Pix');
+    ).toHaveTextContent('Ajouter');
   });
 
   it('filters listings by title or description behind the filter icon', async () => {
@@ -186,6 +186,30 @@ describe('MarketplacePage', () => {
     expect(
       screen.getByRole('radiogroup', { name: 'Noter ce Quizz' }),
     ).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('renders a preview without crashing when a question has no correction or prompt segments', async () => {
+    listVisibleListings.mockResolvedValue([listing()]);
+    getListingPreview.mockResolvedValue(
+      preview({
+        questions: [
+          {
+            id: 'q1',
+            // Real production rows can store JSON null here instead of []
+            // (e.g. a draft with no correction steps yet) — the RPC passes
+            // stored content through as-is, so the frontend must tolerate it.
+            prompt: null,
+            correction: null,
+          },
+        ] as unknown as QuizzListingPreview['questions'],
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
+    expect(await screen.findByText('Correction')).toBeInTheDocument();
   });
 
   it('falls back to a generic author label when the owner never set a display name', async () => {
