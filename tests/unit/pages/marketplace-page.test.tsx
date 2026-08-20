@@ -181,7 +181,7 @@ describe('MarketplacePage', () => {
     expect(screen.getByText('Quizz certifié')).toBeInTheDocument();
     expect(screen.getByText('lucien')).toBeInTheDocument();
     expect(
-      screen.getByText('Abonne-toi à ce Quizz pour pouvoir le noter.'),
+      screen.getByText('Ajoute ce Quizz à ton espace pour pouvoir le noter.'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('radiogroup', { name: 'Noter ce Quizz' }),
@@ -199,7 +199,7 @@ describe('MarketplacePage', () => {
     expect(await screen.findByText('Auteur')).toBeInTheDocument();
   });
 
-  it('rates a listing in two steps after subscribing, and reports a submission error', async () => {
+  it('rates a listing with a comment in two steps after subscribing, and reports a submission error', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
     hasSubscribed.mockResolvedValue(true);
     getListingPreview.mockResolvedValue(
@@ -214,6 +214,10 @@ describe('MarketplacePage', () => {
       name: 'Noter ce Quizz',
     });
     await user.click(within(widget).getByRole('radio', { name: '5 / 5' }));
+    await user.type(
+      screen.getByLabelText('Ton avis (facultatif)'),
+      'Très clair, merci !',
+    );
 
     rateListing.mockRejectedValueOnce(new Error('denied'));
     await user.click(
@@ -229,6 +233,32 @@ describe('MarketplacePage', () => {
     );
     expect(await screen.findByText('Merci pour ta note.')).toBeInTheDocument();
     expect(rateListing).toHaveBeenLastCalledWith({
+      listingId: 'listing-1',
+      score: 5,
+      comment: 'Très clair, merci !',
+    });
+  });
+
+  it('submits a null comment when the comment field is left empty', async () => {
+    listVisibleListings.mockResolvedValue([listing()]);
+    hasSubscribed.mockResolvedValue(true);
+    getListingPreview.mockResolvedValue(
+      preview({ certified: false, authorDisplayName: null }),
+    );
+    rateListing.mockResolvedValue(undefined);
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
+    const widget = await screen.findByRole('radiogroup', {
+      name: 'Noter ce Quizz',
+    });
+    await user.click(within(widget).getByRole('radio', { name: '5 / 5' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Mettre un avis / note' }),
+    );
+    expect(rateListing).toHaveBeenCalledWith({
       listingId: 'listing-1',
       score: 5,
       comment: null,

@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
@@ -46,6 +47,7 @@ const quizz = (overrides: Partial<Quizz> = {}): Quizz => ({
 
 let snapshot: QuestionWorkspaceSnapshot;
 let currentRole: 'user' | 'admin' | 'owner' = 'owner';
+let currentDisplayName: string | undefined;
 const load = vi.fn(() =>
   // Mirrors IndexedDbQuestionWorkspaceRepository.load(), which filters
   // soft-deleted quizzes out of the snapshot.
@@ -125,7 +127,13 @@ vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
     state: {
       status: 'authenticated',
-      session: { user: { id: 'user-1', role: currentRole } },
+      session: {
+        user: {
+          id: 'user-1',
+          role: currentRole,
+          displayName: currentDisplayName,
+        },
+      },
     },
   }),
 }));
@@ -145,9 +153,18 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
 
 import { QuestionsPage } from '@pages/QuestionsPage/QuestionsPage';
 
+function renderPage() {
+  return render(
+    <MemoryRouter>
+      <QuestionsPage />
+    </MemoryRouter>,
+  );
+}
+
 describe('QuestionsPage', () => {
   beforeEach(() => {
     currentRole = 'owner';
+    currentDisplayName = undefined;
     snapshot = {
       questions: [],
       quizzes: [],
@@ -168,7 +185,7 @@ describe('QuestionsPage', () => {
 
   it('crée un quizz depuis la page Mes Quizz', async () => {
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(
       await screen.findByRole('button', { name: /Ajoute un quizz/ }),
     );
@@ -195,7 +212,7 @@ describe('QuestionsPage', () => {
       ],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     expect(
       screen.queryByRole('button', { name: 'Question perso' }),
     ).not.toBeInTheDocument();
@@ -218,7 +235,7 @@ describe('QuestionsPage', () => {
       ],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await screen.findByRole('button', { name: /Mécanique/ });
     await user.click(screen.getByRole('button', { name: 'Filtrer' }));
     await user.type(screen.getByLabelText('Recherche'), 'élec');
@@ -236,7 +253,7 @@ describe('QuestionsPage', () => {
       quizzes: [quizz({ description: 'Les bases' })],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('checkbox', { name: 'Privé' }));
     await waitFor(() =>
       expect(publishQuizz).toHaveBeenCalledWith({
@@ -254,11 +271,34 @@ describe('QuestionsPage', () => {
     );
   });
 
+  it('affiche un rappel pour ajouter un nom affiché en publiant sans profil renseigné', async () => {
+    currentDisplayName = undefined;
+    snapshot = { ...snapshot, quizzes: [quizz({ description: 'Les bases' })] };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('checkbox', { name: 'Privé' }));
+    expect(
+      await screen.findByText(/Ton profil n’a pas de nom affiché/),
+    ).toBeInTheDocument();
+  });
+
+  it('n’affiche pas de rappel quand le profil a déjà un nom affiché', async () => {
+    currentDisplayName = 'lucien';
+    snapshot = { ...snapshot, quizzes: [quizz({ description: 'Les bases' })] };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('checkbox', { name: 'Privé' }));
+    await waitFor(() => expect(publishQuizz).toHaveBeenCalled());
+    expect(
+      screen.queryByText(/Ton profil n’a pas de nom affiché/),
+    ).not.toBeInTheDocument();
+  });
+
   it('signale une erreur quand la publication marketplace échoue, puis efface l’erreur une fois la synchronisation réussie', async () => {
     publishQuizz.mockRejectedValueOnce(new Error('denied'));
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('checkbox', { name: 'Privé' }));
     expect(
       await screen.findByText(
@@ -279,7 +319,7 @@ describe('QuestionsPage', () => {
   it('modifie le nom et la description d’un quizz', async () => {
     snapshot = { ...snapshot, quizzes: [quizz({ description: '' })] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     const titleInput = screen.getByLabelText('Nom du quizz');
@@ -302,7 +342,7 @@ describe('QuestionsPage', () => {
       quizzes: [quizz({ visibility: 'public' })],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(screen.getByRole('button', { name: 'Modifier' }));
     const titleInput = screen.getByLabelText('Nom du quizz');
@@ -325,7 +365,7 @@ describe('QuestionsPage', () => {
       questions: [question({ id: 'private-1' })],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(
       screen.getByRole('button', { name: 'Supprimer le quizz' }),
@@ -367,7 +407,7 @@ describe('QuestionsPage', () => {
       ],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     const validatedColumn = screen.getByRole('region', {
       name: 'question valider',
@@ -410,7 +450,7 @@ describe('QuestionsPage', () => {
       ],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(
       screen.getByRole('button', { name: 'Question en attente' }),
@@ -425,7 +465,7 @@ describe('QuestionsPage', () => {
   it('propose d’ajouter une question via GPT ou manuellement depuis le panneau du quizz', async () => {
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     const gptLink = screen.getByRole('link', {
       name: 'ajouter une question avec GPT',
@@ -450,7 +490,7 @@ describe('QuestionsPage', () => {
     vi.stubEnv('VITE_CHATGPT_IMPORT_GPT_URL', 'javascript:alert(1)');
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     expect(
       screen.queryByRole('link', { name: 'ajouter une question avec GPT' }),
@@ -460,7 +500,7 @@ describe('QuestionsPage', () => {
   it('crée une question personnelle avec un chapitre en texte libre, déjà rattachée au quizz ouvert', async () => {
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(
       screen.getByRole('button', { name: 'ajouter une question a la mains' }),
@@ -489,7 +529,7 @@ describe('QuestionsPage', () => {
   it('crée et édite les segments structurés et les aides mathématiques', async () => {
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(
       screen.getByRole('button', { name: 'ajouter une question a la mains' }),
@@ -581,7 +621,7 @@ describe('QuestionsPage', () => {
 
   it('affiche une erreur si le stockage local est inaccessible', async () => {
     load.mockRejectedValueOnce('stockage');
-    render(<QuestionsPage />);
+    renderPage();
     expect(
       await screen.findByText('Stockage local inaccessible.'),
     ).toBeInTheDocument();
@@ -595,7 +635,7 @@ describe('QuestionsPage', () => {
         { index: 0, message: 'Question distante invalide : provenance.' },
       ],
     });
-    render(<QuestionsPage />);
+    renderPage();
     await waitFor(() =>
       expect(
         questionWorkspaceRepository.applyRemoteWorkspace,
@@ -628,7 +668,7 @@ describe('QuestionsPage', () => {
     });
     snapshot = { ...snapshot, quizzes: [quizz()], questions: [structured] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     await user.click(screen.getByRole('button', { name: /ennoncer/ }));
@@ -657,7 +697,7 @@ describe('QuestionsPage', () => {
   it('tester plusieurs fois puis annuler ne persiste aucune donnée', async () => {
     snapshot = { ...snapshot, quizzes: [quizz()] };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(
       screen.getByRole('button', { name: 'ajouter une question a la mains' }),
@@ -715,7 +755,7 @@ describe('QuestionsPage', () => {
       ],
     };
     const user = userEvent.setup();
-    render(<QuestionsPage />);
+    renderPage();
     await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
     await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
     expect(screen.getByText(/Analyse incomplète/)).toBeInTheDocument();

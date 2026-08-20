@@ -83,6 +83,7 @@ test('revises a quizz like an official chapter in free mode and sees it in Mon p
 
   await page.goto('whiteboard');
   await openRevisionOptions(page);
+  await page.getByRole('button', { name: 'Mes quizz' }).click();
   await page
     .getByRole('combobox', { name: 'Chapitre', exact: true })
     .selectOption({ label: 'Ma révision' });

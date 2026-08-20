@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@app/providers/AuthProvider';
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import { PageHeader } from '@design-system/components/PageHeader/PageHeader';
 import { IconButton } from '@design-system/components/IconButton/IconButton';
 import { IconFilter } from '@design-system/components/Icon/Icon';
+import { Button } from '@design-system/components/Button/Button';
 import type { FolderLocation } from '@domain/questions/QuestionBankSearch';
 import {
   officialClassification,
@@ -43,6 +45,7 @@ const emptySnapshot: QuestionWorkspaceSnapshot = {
 
 export function QuestionsPage() {
   const { state } = useAuth();
+  const navigate = useNavigate();
   const {
     questionWorkspaceRepository,
     questionRemoteGateway,
@@ -56,6 +59,7 @@ export function QuestionsPage() {
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [showDisplayNameNudge, setShowDisplayNameNudge] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [reviewErrors, setReviewErrors] = useState<
@@ -185,6 +189,8 @@ export function QuestionsPage() {
           title: quizz.title,
           description: quizz.description,
         });
+        if (state.status === 'authenticated' && !state.session.user.displayName)
+          setShowDisplayNameNudge(true);
       } else {
         await quizzMarketplaceGateway.setOwnListingHidden(courseId, true);
       }
@@ -305,6 +311,26 @@ export function QuestionsPage() {
         </div>
       ) : null}
       {storageError ? <p role="alert">{storageError}</p> : null}
+      {showDisplayNameNudge ? (
+        <p role="status">
+          Ton profil n’a pas de nom affiché : les autres utilisateurs verront «
+          Auteur » à la place sur la marketplace.{' '}
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => void navigate('/account')}
+          >
+            Ajouter un nom affiché
+          </Button>
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => setShowDisplayNameNudge(false)}
+          >
+            Fermer
+          </Button>
+        </p>
+      ) : null}
       {reviewErrors.length ? (
         <ul role="alert">
           {reviewErrors.map((entry) => (

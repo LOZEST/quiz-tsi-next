@@ -65,7 +65,7 @@ export function RevisionDrawerPanel() {
   const { programIndex } = useAppServices();
   const quizzes = useUserQuizzes();
   const quizzIds = new Set(quizzes.map((quizz) => quizz.id));
-  const update = (next: FreeRevisionFilters, trigger: HTMLSelectElement) => {
+  const update = (next: FreeRevisionFilters, trigger: HTMLElement) => {
     if (!programIndex) {
       experience.setVisibleFilters(next, trigger);
       return;
@@ -88,6 +88,19 @@ export function RevisionDrawerPanel() {
     filters.chapter.kind === 'one' && quizzIds.has(filters.chapter.value)
       ? filters.chapter.value
       : null;
+  const [source, setSource] = useState<'official' | 'personal'>(() =>
+    selectedQuizzId !== null ? 'personal' : 'official',
+  );
+  const setSourceAndReset = (
+    next: 'official' | 'personal',
+    trigger: HTMLElement,
+  ) => {
+    setSource(next);
+    update(
+      { ...filters, chapter: { kind: 'all' }, notion: { kind: 'all' } },
+      trigger,
+    );
+  };
   return (
     <div className={styles.panel}>
       <label className={styles.sessionType}>
@@ -110,25 +123,53 @@ export function RevisionDrawerPanel() {
       </label>
       {experience.mode === 'free' ? (
         <div className={styles.filters} aria-label="Options de révision libre">
-          <label>
-            Partie
-            <select
-              value={selected(filters.part)}
-              onChange={(event) =>
-                update(
-                  { ...filters, part: selection(event.target.value) },
-                  event.currentTarget,
-                )
-              }
+          {quizzes.length > 0 ? (
+            <div
+              className={styles.sourceToggle}
+              role="group"
+              aria-label="Source des questions"
             >
-              <option value="">Toutes les parties</option>
-              {programIndex?.getAllParts().map((part) => (
-                <option key={part.id} value={part.id}>
-                  {part.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              <button
+                type="button"
+                aria-pressed={source === 'official'}
+                onClick={(event) =>
+                  setSourceAndReset('official', event.currentTarget)
+                }
+              >
+                Programme officiel
+              </button>
+              <button
+                type="button"
+                aria-pressed={source === 'personal'}
+                onClick={(event) =>
+                  setSourceAndReset('personal', event.currentTarget)
+                }
+              >
+                Mes quizz
+              </button>
+            </div>
+          ) : null}
+          {source === 'official' ? (
+            <label>
+              Partie
+              <select
+                value={selected(filters.part)}
+                onChange={(event) =>
+                  update(
+                    { ...filters, part: selection(event.target.value) },
+                    event.currentTarget,
+                  )
+                }
+              >
+                <option value="">Toutes les parties</option>
+                {programIndex?.getAllParts().map((part) => (
+                  <option key={part.id} value={part.id}>
+                    {part.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label>
             Chapitre
             <select
@@ -140,36 +181,40 @@ export function RevisionDrawerPanel() {
                 )
               }
             >
-              <option value="">Tous les chapitres</option>
-              {filters.part.kind === 'all'
-                ? programIndex?.getAllParts().map((part) => {
-                    const partChapters = chapters.filter(
-                      (chapter) => chapter.partId === part.id,
-                    );
-                    return partChapters.length > 0 ? (
-                      <optgroup key={part.id} label={part.label}>
-                        {partChapters.map((chapter) => (
-                          <option key={chapter.id} value={chapter.id}>
-                            {chapter.label}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ) : null;
-                  })
-                : chapters.map((chapter) => (
-                    <option key={chapter.id} value={chapter.id}>
-                      {chapter.label}
-                    </option>
-                  ))}
-              {quizzes.length > 0 ? (
-                <optgroup label="Mes quizz">
+              {source === 'official' ? (
+                <>
+                  <option value="">Tous les chapitres</option>
+                  {filters.part.kind === 'all'
+                    ? programIndex?.getAllParts().map((part) => {
+                        const partChapters = chapters.filter(
+                          (chapter) => chapter.partId === part.id,
+                        );
+                        return partChapters.length > 0 ? (
+                          <optgroup key={part.id} label={part.label}>
+                            {partChapters.map((chapter) => (
+                              <option key={chapter.id} value={chapter.id}>
+                                {chapter.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ) : null;
+                      })
+                    : chapters.map((chapter) => (
+                        <option key={chapter.id} value={chapter.id}>
+                          {chapter.label}
+                        </option>
+                      ))}
+                </>
+              ) : (
+                <>
+                  <option value="">Tous mes quizz</option>
                   {quizzes.map((quizz) => (
                     <option key={quizz.id} value={quizz.id}>
                       {quizz.title}
                     </option>
                   ))}
-                </optgroup>
-              ) : null}
+                </>
+              )}
             </select>
           </label>
           <label>

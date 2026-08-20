@@ -52,6 +52,7 @@ export interface QuizzMarketplaceGateway {
   getListingPreview(listingId: string): Promise<QuizzListingPreview>;
   subscribeToListing(listingId: string): Promise<void>;
   hasSubscribed(listingId: string): Promise<boolean>;
+  unsubscribeFromListing(listingId: string): Promise<void>;
   rateListing(submission: QuizzRatingSubmission): Promise<void>;
   listSubscribedQuizzContent(): Promise<readonly SubscribedQuizzContent[]>;
   adminListListings(): Promise<readonly QuizzListing[]>;

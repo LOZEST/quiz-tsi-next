@@ -130,6 +130,23 @@
   color: var(--qtsi-text-secondary);
 }
 
+.commentField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qtsi-space-1);
+  color: var(--qtsi-text-secondary);
+  font-size: 0.85rem;
+}
+
+.commentField textarea {
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  color: var(--qtsi-text);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-1);
+  font: inherit;
+  resize: vertical;
+}
+
 .detailRight {
   display: flex;
   flex-direction: column;

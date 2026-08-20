@@ -109,6 +109,13 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
     return Boolean(response.data);
   }
 
+  async unsubscribeFromListing(listingId: string): Promise<void> {
+    const { error } = await this.client.rpc('unsubscribe_from_quizz_listing', {
+      p_listing_id: listingId,
+    });
+    if (error) throw new Error('Le retrait du Quizz a échoué.');
+  }
+
   async rateListing(submission: QuizzRatingSubmission): Promise<void> {
     const { error } = await this.client.rpc('rate_quizz_listing', {
       p_listing_id: submission.listingId,

@@ -22,6 +22,9 @@ export class UnavailableQuizzMarketplaceGateway implements QuizzMarketplaceGatew
   hasSubscribed(): Promise<never> {
     return Promise.reject(this.unavailable());
   }
+  unsubscribeFromListing(): Promise<never> {
+    return Promise.reject(this.unavailable());
+  }
   rateListing(): Promise<never> {
     return Promise.reject(this.unavailable());
   }
