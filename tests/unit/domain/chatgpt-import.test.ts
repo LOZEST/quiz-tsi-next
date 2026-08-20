@@ -129,7 +129,25 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     }
   });
 
-  it('accepte une classification officielle et tous les segments fermés', () => {
+  it('accepte tous les segments fermés avec une classification personnelle', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      questions: [
+        {
+          ...entry,
+          prompt: [
+            { kind: 'text', value: 'Calculer' },
+            { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x+1' } },
+            { kind: 'display-math', math: { syntaxVersion: 1, source: 'x=1' } },
+            { kind: 'line-break' },
+          ],
+        },
+      ],
+    });
+    expect(result.ok && result.acceptedIndices).toEqual([0]);
+  });
+
+  it('quarantaine une classification officielle : ce flux d’import ne produit plus que du personal', () => {
     const result = validateChatGptQuestionImport({
       ...payload,
       questions: [
@@ -141,16 +159,17 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
             notionId: 'NUM-F01',
             confidence: 'certain',
           },
-          prompt: [
-            { kind: 'text', value: 'Calculer' },
-            { kind: 'inline-math', math: { syntaxVersion: 1, source: 'x+1' } },
-            { kind: 'display-math', math: { syntaxVersion: 1, source: 'x=1' } },
-            { kind: 'line-break' },
-          ],
         },
       ],
     });
-    expect(result.ok && result.acceptedIndices).toEqual([0]);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.quarantined).toHaveLength(1);
+      expect(result.quarantined[0]?.code).toBe('invalid-classification');
+      expect(result.quarantined[0]?.message).toContain(
+        'kind doit être "personal"',
+      );
+    }
   });
 
   it.each(['ownerId', 'validated', 'source', 'status', 'partId'])(

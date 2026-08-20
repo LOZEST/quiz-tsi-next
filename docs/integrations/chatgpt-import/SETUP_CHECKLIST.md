@@ -6,7 +6,7 @@
 4. Garder le client secret uniquement dans l’éditeur GPT; ne jamais le committer.
 5. Définir `QUIZ_TSI_GPT_OAUTH_CLIENT_ID` dans les secrets de l’Edge Function.
 6. Inscrire ce même `client_id` dans `public.oauth_integration_clients` avec `purpose = 'chatgpt-question-import'` et `enabled = true` depuis une migration ou une session opérateur privilégiée; ne jamais accorder cette table à `authenticated` ou `anon`.
-7. Remplacer `PROJECT_REF` dans `openapi.yaml`, coller le schéma et `GPT_INSTRUCTIONS.md`, puis uploader le Knowledge généré.
+7. Remplacer `PROJECT_REF` dans `openapi.yaml`, coller le schéma et `GPT_INSTRUCTIONS.md` (le Knowledge `program-knowledge.json` n'est plus nécessaire — voir `GPT_KNOWLEDGE_README.md`).
 8. Définir la Privacy Policy URL sur `/quiz-tsi-next/privacy/chatgpt-import`.
 9. Tester les comptes A puis B, l’isolation, le replay `importId`, un payload hostile et un échec réseau.
 10. Vérifier la couverture PDF, les incertitudes, l’absence de publication et la relecture locale après pull.
