@@ -60,6 +60,7 @@ export class CanvasController {
   private magicShapesEnabled = true;
   private scribbleEraseEnabled = true;
   private holdTimer: ReturnType<typeof setTimeout> | null = null;
+  private holdTimerOrigin: Point2d | null = null;
   private snappedStroke: 'line' | 'circle' | 'rectangle' | null = null;
   private activePenStrokeId: string | null = null;
 
@@ -185,7 +186,7 @@ export class CanvasController {
       this.activePenStrokeId = stroke?.kind === 'stroke' ? stroke.id : null;
     }
     this.renderer.schedule(this.scene);
-    this.armMagicShapeHold();
+    this.armMagicShapeHold(this.input(event).point);
   }
 
   pointerMove(event: PointerEvent) {
@@ -236,16 +237,16 @@ export class CanvasController {
     }
     const coalesced = event.getCoalescedEvents?.();
     const samples = coalesced && coalesced.length > 0 ? coalesced : [event];
+    let latestPoint = this.input(event).point;
     for (const sample of samples) {
       if (!this.isActivePointer(sample)) continue;
-      this.scene = this.tools.current.move(
-        this.scene,
-        this.input(sample),
-      ).scene;
+      const input = this.input(sample);
+      latestPoint = input.point;
+      this.scene = this.tools.current.move(this.scene, input).scene;
     }
     if (this.snappedStroke === 'line') this.snapActiveStroke('line');
     if (this.snappedStroke === 'rectangle') this.snapActiveStroke('rectangle');
-    if (this.snappedStroke !== 'circle') this.armMagicShapeHold();
+    if (this.snappedStroke !== 'circle') this.armMagicShapeHold(latestPoint);
     this.renderer.schedule(this.scene);
   }
 
@@ -426,17 +427,44 @@ export class CanvasController {
     this.gestureKind = null;
   }
 
-  private armMagicShapeHold() {
+  // A hand-held pen (unlike a mouse) never sits perfectly still — natural
+  // hand tremor keeps producing pointermove events even while the user is
+  // trying to hold the stroke's end still for the shape-snap gesture. Only
+  // reset the hold timer once the pointer has actually drifted past this
+  // jitter radius, or the timer would restart on every micro-movement and
+  // the "hold still to snap" gesture could never complete with a stylus.
+  private static readonly HOLD_JITTER_TOLERANCE = 4;
+
+  private armMagicShapeHold(point: Point2d) {
+    if (
+      this.holdTimer !== null &&
+      this.holdTimerOrigin !== null &&
+      Math.hypot(
+        point.x - this.holdTimerOrigin.x,
+        point.y - this.holdTimerOrigin.y,
+      ) <= CanvasController.HOLD_JITTER_TOLERANCE
+    ) {
+      return;
+    }
     this.clearHoldTimer();
     if (!this.magicShapesEnabled || this.activeTool !== 'pen') return;
+    this.holdTimerOrigin = point;
+    // Freeze the point list the instant the pointer stopped moving
+    // meaningfully — jitter recorded *during* the hold still gets appended
+    // to the live stroke for rendering fidelity, but must not be allowed to
+    // corrupt the shape-candidate geometry check below (a few noisy points
+    // right at a corner are enough to flip its side classification).
+    const strokeAtHold = [...this.scene.objects]
+      .reverse()
+      .find((object) => object.kind === 'stroke');
+    const snapshotPoints =
+      strokeAtHold?.kind === 'stroke' ? strokeAtHold.points : null;
     this.holdTimer = setTimeout(() => {
-      const stroke = [...this.scene.objects]
-        .reverse()
-        .find((object) => object.kind === 'stroke');
-      if (!stroke || this.activePointerId === null) return;
-      if (rectangleCandidate(stroke.points)) this.snapActiveStroke('rectangle');
-      else if (circleCandidate(stroke.points)) this.snapActiveStroke('circle');
-      else if (straightCandidate(stroke.points)) this.snapActiveStroke('line');
+      if (!snapshotPoints || this.activePointerId === null) return;
+      if (rectangleCandidate(snapshotPoints))
+        this.snapActiveStroke('rectangle');
+      else if (circleCandidate(snapshotPoints)) this.snapActiveStroke('circle');
+      else if (straightCandidate(snapshotPoints)) this.snapActiveStroke('line');
     }, 500);
   }
 
@@ -473,6 +501,7 @@ export class CanvasController {
   private clearHoldTimer() {
     if (this.holdTimer !== null) clearTimeout(this.holdTimer);
     this.holdTimer = null;
+    this.holdTimerOrigin = null;
   }
 
   private applyScribbleErase() {

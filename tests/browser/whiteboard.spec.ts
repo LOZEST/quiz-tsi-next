@@ -75,9 +75,14 @@ async function dispatchPenPath(
   page: Page,
   points: Array<{ x: number; y: number }>,
   holdMs = 0,
+  // Absolute screen points (already through the caller's logical->screen
+  // conversion) fired as pointermove events at intervals during the hold,
+  // simulating the natural hand tremor a real Apple Pencil produces even
+  // while the user is trying to hold the stroke's end still.
+  jitterDuringHold: Array<{ x: number; y: number }> = [],
 ) {
   await page.evaluate(
-    async ({ path, hold }) => {
+    async ({ path, hold, jitter }) => {
       const canvas = document.querySelector<HTMLCanvasElement>(
         '[data-testid="whiteboard-canvas"]',
       );
@@ -101,11 +106,21 @@ async function dispatchPenPath(
         );
       emit('pointerdown', path[0]!);
       path.slice(1).forEach((sample) => emit('pointermove', sample));
-      if (hold > 0)
-        await new Promise((resolve) => window.setTimeout(resolve, hold));
+      if (hold > 0) {
+        if (jitter.length > 0) {
+          const step = hold / (jitter.length + 1);
+          for (const sample of jitter) {
+            await new Promise((resolve) => window.setTimeout(resolve, step));
+            emit('pointermove', sample);
+          }
+          await new Promise((resolve) => window.setTimeout(resolve, step));
+        } else {
+          await new Promise((resolve) => window.setTimeout(resolve, hold));
+        }
+      }
       emit('pointerup', path.at(-1)!);
     },
-    { path: points, hold: holdMs },
+    { path: points, hold: holdMs, jitter: jitterDuringHold },
   );
 }
 
@@ -522,6 +537,52 @@ test('supports Pencil rectangle snap, scribble delete and both eraser modes', as
   await expect
     .poll(async () => (await readWhiteboardScene(page)).objects.length)
     .toBe(0);
+});
+
+test('still snaps a Pencil shape when natural hand tremor jitters the hold', async ({
+  page,
+}) => {
+  await login(page);
+  const canvas = page.getByTestId('whiteboard-canvas');
+  const box = await canvas.boundingBox();
+  const initial = await readWhiteboardScene(page);
+  const screen = (point: { x: number; y: number }) =>
+    logicalToScreen(box!, initial, point);
+
+  const rectangle = [
+    ...Array.from({ length: 8 }, (_, i) =>
+      screen({ x: 260 + i * 25, y: 250 + (i % 2) }),
+    ),
+    ...Array.from({ length: 6 }, (_, i) =>
+      screen({ x: 435 + (i % 2), y: 250 + i * 25 }),
+    ),
+    ...Array.from({ length: 8 }, (_, i) =>
+      screen({ x: 435 - i * 25, y: 375 + (i % 2) }),
+    ),
+    ...Array.from({ length: 6 }, (_, i) =>
+      screen({ x: 260 + (i % 2), y: 375 - i * 25 }),
+    ),
+    screen({ x: 260, y: 250 }),
+  ];
+  // A ~1-logical-unit wobble around the hold point, well inside the
+  // controller's jitter tolerance, converted through the same logical ->
+  // screen mapping as the rest of the path so it's meaningful regardless
+  // of the canvas's actual render scale — this is what a real Apple
+  // Pencil produces even when the user believes they're holding still.
+  const holdPoint = { x: 260, y: 250 };
+  const tremor = [
+    screen({ x: holdPoint.x + 1, y: holdPoint.y }),
+    screen({ x: holdPoint.x - 1, y: holdPoint.y + 1 }),
+    screen({ x: holdPoint.x, y: holdPoint.y - 1 }),
+    screen({ x: holdPoint.x + 1, y: holdPoint.y + 1 }),
+  ];
+  await dispatchPenPath(page, rectangle, 550, tremor);
+  await expect
+    .poll(async () => {
+      const object = (await readWhiteboardScene(page)).objects[0];
+      return object?.kind === 'stroke' ? object.points.length : 0;
+    })
+    .toBe(5);
 });
 
 test('captures the four-card palette and every placed reference shape', async ({
