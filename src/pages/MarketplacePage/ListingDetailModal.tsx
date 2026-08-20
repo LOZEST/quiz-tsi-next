@@ -23,17 +23,22 @@ export function ListingDetailModal({
   canRate: boolean;
   triggerRef: RefObject<HTMLButtonElement | null>;
   onClose: () => void;
-  onSubmitRating: (score: QuizzRatingScore) => Promise<void>;
+  onSubmitRating: (
+    score: QuizzRatingScore,
+    comment: string | null,
+  ) => Promise<void>;
 }) {
   const [pendingRating, setPendingRating] = useState<QuizzRatingScore | null>(
     null,
   );
+  const [comment, setComment] = useState('');
   const [status, setStatus] = useState<
     'idle' | 'submitting' | 'submitted' | 'error'
   >('idle');
 
   const handleClose = () => {
     setPendingRating(null);
+    setComment('');
     setStatus('idle');
     onClose();
   };
@@ -42,7 +47,7 @@ export function ListingDetailModal({
     if (pendingRating === null) return;
     setStatus('submitting');
     try {
-      await onSubmitRating(pendingRating);
+      await onSubmitRating(pendingRating, comment.trim() || null);
       setStatus('submitted');
     } catch {
       setStatus('error');
@@ -81,8 +86,22 @@ export function ListingDetailModal({
                 }
                 label="Noter ce Quizz"
               />
+              <label className={styles.commentField}>
+                Ton avis (facultatif)
+                <textarea
+                  value={comment}
+                  onChange={(event) => setComment(event.target.value)}
+                  disabled={
+                    !canRate ||
+                    status === 'submitting' ||
+                    status === 'submitted'
+                  }
+                  maxLength={2000}
+                  rows={3}
+                />
+              </label>
               {!canRate ? (
-                <p>Abonne-toi à ce Quizz pour pouvoir le noter.</p>
+                <p>Ajoute ce Quizz à ton espace pour pouvoir le noter.</p>
               ) : null}
               <Button
                 type="button"

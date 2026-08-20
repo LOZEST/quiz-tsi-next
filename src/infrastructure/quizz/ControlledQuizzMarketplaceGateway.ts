@@ -13,7 +13,7 @@ const LISTINGS_KEY = 'qtsi-controlled-quizz-listings';
 const SUBSCRIPTIONS_KEY = 'qtsi-controlled-quizz-subscriptions';
 
 interface StoredListing extends QuizzListing {
-  ratings: Record<string, number>;
+  ratings: Record<string, { score: number; comment: string | null }>;
 }
 
 function currentIdentity(): {
@@ -74,7 +74,7 @@ function ratingSummary(listing: StoredListing): {
   averageRating: number | null;
   ratingCount: number;
 } {
-  const scores = Object.values(listing.ratings);
+  const scores = Object.values(listing.ratings).map((entry) => entry.score);
   if (scores.length === 0) return { averageRating: null, ratingCount: 0 };
   return {
     averageRating:
@@ -206,6 +206,13 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
     return Promise.resolve(readSubscriptions().includes(key));
   }
 
+  unsubscribeFromListing(listingId: string): Promise<void> {
+    const identity = currentIdentity();
+    const key = `${listingId}:${identity.userId}`;
+    writeSubscriptions(readSubscriptions().filter((entry) => entry !== key));
+    return Promise.resolve();
+  }
+
   rateListing(submission: QuizzRatingSubmission): Promise<void> {
     const identity = currentIdentity();
     const key = `${submission.listingId}:${identity.userId}`;
@@ -223,7 +230,10 @@ export class ControlledQuizzMarketplaceGateway implements QuizzMarketplaceGatewa
             ...listing,
             ratings: {
               ...listing.ratings,
-              [identity.userId]: submission.score,
+              [identity.userId]: {
+                score: submission.score,
+                comment: submission.comment,
+              },
             },
           }
         : listing,

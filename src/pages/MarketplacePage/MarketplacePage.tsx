@@ -123,12 +123,15 @@ export function MarketplacePage() {
     previewListingId !== null &&
     subscribedListingIds.includes(previewListingId);
 
-  const submitRating = async (score: QuizzRatingScore) => {
+  const submitRating = async (
+    score: QuizzRatingScore,
+    comment: string | null,
+  ) => {
     if (!previewListingId) return;
     await quizzMarketplaceGateway.rateListing({
       listingId: previewListingId,
       score,
-      comment: null,
+      comment,
     });
   };
 
@@ -144,7 +147,7 @@ export function MarketplacePage() {
     <>
       <PageHeader
         title="Market Place"
-        description="Découvre des Quizz publiés par la communauté, abonne-toi et note ceux que tu as essayés."
+        description="Découvre des Quizz publiés par la communauté, ajoute-les à ton espace et note ceux que tu as essayés."
         actions={
           <div className={styles.headerActions}>
             <Button

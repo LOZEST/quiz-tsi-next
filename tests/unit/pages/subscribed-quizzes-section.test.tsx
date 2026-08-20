@@ -1,14 +1,26 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SubscribedQuizzContent } from '@domain/quizz/QuizzMarketplaceGateway';
 
 const listSubscribedQuizzContent =
   vi.fn<() => Promise<readonly SubscribedQuizzContent[]>>();
+const unsubscribeFromListing = vi.fn<() => Promise<void>>();
+
+// A stable object reference matters here: the component's data-loading
+// effect depends on `quizzMarketplaceGateway` — the real AppServicesProvider
+// memoizes it, but a fresh object literal returned from this mock on every
+// call would make the effect re-fire on every render and clobber optimistic
+// local state updates (e.g. the remove button's) with a stale refetch.
+const services = {
+  quizzMarketplaceGateway: {
+    listSubscribedQuizzContent,
+    unsubscribeFromListing,
+  },
+};
 
 vi.mock('@app/providers/AppServicesProvider', () => ({
-  useAppServices: () => ({
-    quizzMarketplaceGateway: { listSubscribedQuizzContent },
-  }),
+  useAppServices: () => services,
 }));
 
 import { SubscribedQuizzesSection } from '@pages/QuestionsPage/SubscribedQuizzesSection';
@@ -30,6 +42,8 @@ describe('SubscribedQuizzesSection', () => {
   beforeEach(() => {
     listSubscribedQuizzContent.mockReset();
     listSubscribedQuizzContent.mockImplementation(() => Promise.resolve([]));
+    unsubscribeFromListing.mockReset();
+    unsubscribeFromListing.mockResolvedValue(undefined);
   });
 
   it('renders nothing when there are no subscriptions', async () => {
@@ -66,5 +80,38 @@ describe('SubscribedQuizzesSection', () => {
     render(<SubscribedQuizzesSection />);
     expect(await screen.findByText('Thermodynamique')).toBeInTheDocument();
     expect(screen.queryByText('Un quizz sur la thermo')).toBeNull();
+  });
+
+  it('removes a subscription when its remove button is clicked', async () => {
+    listSubscribedQuizzContent.mockImplementation(() =>
+      Promise.resolve([subscription()]),
+    );
+    const user = userEvent.setup();
+    render(<SubscribedQuizzesSection />);
+    await screen.findByText('Thermodynamique');
+    await user.click(
+      screen.getByRole('button', { name: 'Retirer de mon espace' }),
+    );
+    expect(unsubscribeFromListing).toHaveBeenCalledWith('l1');
+    await waitFor(() =>
+      expect(screen.queryByText('Thermodynamique')).toBeNull(),
+    );
+  });
+
+  it('shows an error and keeps the card when removal fails', async () => {
+    unsubscribeFromListing.mockRejectedValueOnce(new Error('denied'));
+    listSubscribedQuizzContent.mockImplementation(() =>
+      Promise.resolve([subscription()]),
+    );
+    const user = userEvent.setup();
+    render(<SubscribedQuizzesSection />);
+    await screen.findByText('Thermodynamique');
+    await user.click(
+      screen.getByRole('button', { name: 'Retirer de mon espace' }),
+    );
+    expect(
+      await screen.findByText('Le retrait du Quizz a échoué.'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Thermodynamique')).toBeInTheDocument();
   });
 });

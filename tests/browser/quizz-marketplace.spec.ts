@@ -81,9 +81,9 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   ).toBeVisible();
 
   await page.goto('questions');
-  const subscriptions = page.getByRole('region', { name: 'Abonnements' });
-  await expect(subscriptions).toBeVisible();
-  await expect(subscriptions.getByText('Quizz e2e marketplace')).toBeVisible();
+  const added = page.getByRole('region', { name: 'Quizz ajoutés' });
+  await expect(added).toBeVisible();
+  await expect(added.getByText('Quizz e2e marketplace')).toBeVisible();
 
   await page.goto('marketplace');
   await card.getByRole('button', { name: 'Quizz e2e marketplace' }).click();
@@ -93,6 +93,13 @@ test('publish, discover, certify, subscribe and rate a Quizz', async ({
   const fifthStar = ratingAfterSubscribe.getByRole('radio').nth(4);
   await expect(fifthStar).toBeEnabled();
   await fifthStar.click();
+  await page
+    .getByLabel('Ton avis (facultatif)')
+    .fill('Très bon quizz, merci !');
   await page.getByRole('button', { name: 'Mettre un avis / note' }).click();
   await expect(page.getByText('Merci pour ta note.')).toBeVisible();
+
+  await page.goto('questions');
+  await added.getByRole('button', { name: 'Retirer de mon espace' }).click();
+  await expect(added).toBeHidden();
 });

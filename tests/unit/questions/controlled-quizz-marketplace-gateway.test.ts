@@ -165,6 +165,25 @@ describe('ControlledQuizzMarketplaceGateway', () => {
     expect(await gateway.hasSubscribed(listing!.id)).toBe(true);
   });
 
+  it('unsubscribeFromListing removes the caller’s own subscription', async () => {
+    signInAs('owner@example.test');
+    await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });
+    const [listing] = await gateway.listVisibleListings();
+    signInAs('user@example.test');
+    await gateway.subscribeToListing(listing!.id);
+    expect(await gateway.hasSubscribed(listing!.id)).toBe(true);
+    await gateway.unsubscribeFromListing(listing!.id);
+    expect(await gateway.hasSubscribed(listing!.id)).toBe(false);
+    expect(await gateway.listSubscribedQuizzContent()).toEqual([]);
+  });
+
+  it('unsubscribeFromListing is a no-op when the caller was never subscribed', async () => {
+    signInAs('user@example.test');
+    await expect(
+      gateway.unsubscribeFromListing('missing'),
+    ).resolves.toBeUndefined();
+  });
+
   it('rejects rating a listing the user has not subscribed to', async () => {
     signInAs('owner@example.test');
     await gateway.publishQuizz({ quizzId: 'q1', title: 'T', description: '' });

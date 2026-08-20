@@ -11,6 +11,7 @@ describe('UnavailableQuizzMarketplaceGateway', () => {
     'getListingPreview',
     'subscribeToListing',
     'hasSubscribed',
+    'unsubscribeFromListing',
     'rateListing',
     'listSubscribedQuizzContent',
     'adminListListings',

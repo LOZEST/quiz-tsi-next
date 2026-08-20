@@ -156,6 +156,9 @@
   overflow: hidden;
   clip-path: inset(50%);
 }
+.removeAction {
+  margin: 0 var(--qtsi-space-4) var(--qtsi-space-4);
+}
 .addQuizCard input {
   inline-size: 100%;
   min-height: var(--qtsi-touch-target);

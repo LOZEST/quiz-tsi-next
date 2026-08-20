@@ -142,6 +142,21 @@ describe('SupabaseQuizzMarketplaceGateway', () => {
     });
   });
 
+  it('unsubscribes from a listing through unsubscribe_from_quizz_listing', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await gateway.unsubscribeFromListing('l1');
+    expect(rpc).toHaveBeenCalledWith('unsubscribe_from_quizz_listing', {
+      p_listing_id: 'l1',
+    });
+  });
+
+  it('rejects when the unsubscribe RPC fails', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
+    const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
+    await expect(gateway.unsubscribeFromListing('l1')).rejects.toThrow();
+  });
+
   it('reports subscription status via has_subscribed_to_quizz_listing', async () => {
     const rpc = vi.fn().mockResolvedValue({ error: null, data: true });
     const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));

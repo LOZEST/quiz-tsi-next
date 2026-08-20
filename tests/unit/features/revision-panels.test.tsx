@@ -200,7 +200,7 @@ describe('RevisionDrawerPanel', () => {
     expect(screen.getByRole('button', { name: /Commencer/ })).toBeDisabled();
   });
 
-  it('lists the user’s quizz as a chapter option in free mode and chapter-test, and disables Notion once selected', async () => {
+  it('lists the user’s quizz as a chapter option in free mode after switching source, and in chapter-test, and disables Notion once selected', async () => {
     quizzes = [
       {
         id: 'quizz-1',
@@ -215,6 +215,7 @@ describe('RevisionDrawerPanel', () => {
     ];
     const user = userEvent.setup();
     render(<RevisionDrawerPanel />);
+    await user.click(await screen.findByRole('button', { name: 'Mes quizz' }));
     expect(
       await screen.findByRole('option', { name: 'Mon quizz' }),
     ).toBeInTheDocument();
@@ -229,6 +230,40 @@ describe('RevisionDrawerPanel', () => {
     expect(
       testView.getByRole('option', { name: 'Mon quizz' }),
     ).toBeInTheDocument();
+  });
+
+  it('shows the source toggle only when the user has quizzes', () => {
+    quizzes = [];
+    render(<RevisionDrawerPanel />);
+    expect(
+      screen.queryByRole('group', { name: 'Source des questions' }),
+    ).toBeNull();
+  });
+
+  it('resets the chapter/notion selection when switching source', async () => {
+    quizzes = [
+      {
+        id: 'quizz-1',
+        ownerId: 'user-1',
+        title: 'Mon quizz',
+        description: '',
+        visibility: 'private',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        deletedAt: null,
+      },
+    ];
+    filters = {
+      ...initialFreeRevisionFilters,
+      chapter: { kind: 'one', value: 'c1' },
+    };
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    await user.click(await screen.findByRole('button', { name: 'Mes quizz' }));
+    expect(setVisibleFilters).toHaveBeenCalled();
+    filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
+    expect(filters.chapter).toEqual({ kind: 'all' });
+    expect(filters.notion).toEqual({ kind: 'all' });
   });
 
   it('résout le libellé Daily/Weak via le titre du quizz quand la notion officielle est introuvable', async () => {
