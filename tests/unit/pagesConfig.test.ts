@@ -39,10 +39,8 @@ describe('Pages base path configuration', () => {
   it('loads the repository Pages value used by the Node scripts', () => {
     const basePath = loadPagesBasePath({ env: {} });
 
-    expect(basePath).toBe('/quiz-tsi-next/');
-    expect(createPagesFallback(basePath)).toContain(
-      'var base = "/quiz-tsi-next/"',
-    );
+    expect(basePath).toBe('/');
+    expect(createPagesFallback(basePath)).toContain('var base = "/"');
   });
 });
 
