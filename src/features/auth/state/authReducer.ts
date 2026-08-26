@@ -47,6 +47,14 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         generation: action.generation,
         error: action.error,
       };
+    case 'SESSION_REFRESHED':
+      if (state.status !== 'authenticated' || state.generation !== action.generation)
+        return state;
+      return {
+        ...state,
+        session: { ...action.session, workspaceGeneration: state.generation },
+        offline: false,
+      };
     case 'SIGN_OUT_START':
       if (action.generation < state.generation) return state;
       return {
