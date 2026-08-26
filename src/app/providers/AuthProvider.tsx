@@ -192,6 +192,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = authGateway.subscribeToAuthChanges(
       (session) => {
         if (session) {
+          const current = stateRef.current;
+          if (
+            current.status === 'authenticated' &&
+            current.session.user.id === session.user.id
+          ) {
+            // Supabase re-emits SIGNED_IN/TOKEN_REFRESHED whenever the tab
+            // regains focus (e.g. switching apps on mobile), even when
+            // nothing actually changed. Routing that through AUTHENTICATE_START
+            // would flip status to 'authenticating', which makes
+            // ProtectedRoute swap the whole app for a loading screen and
+            // unmount RevisionExperienceProvider — wiping the in-progress
+            // question. Just refresh the session in place instead.
+            void workspaceRepository
+              .cacheValidatedProfile(session.user, current.generation)
+              .catch(() => {});
+            dispatch({
+              type: 'SESSION_REFRESHED',
+              generation: current.generation,
+              session,
+            });
+            return;
+          }
           void transitionToSession(session);
           return;
         }

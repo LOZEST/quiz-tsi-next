@@ -38,6 +38,20 @@ function Harness() {
   );
 }
 
+const statusLog: string[] = [];
+
+function StatusLoggingHarness() {
+  const auth = useAuth();
+  statusLog.push(auth.state.status);
+  return (
+    <output>
+      {auth.state.status === 'authenticated'
+        ? auth.state.session.user.email
+        : auth.state.status}
+    </output>
+  );
+}
+
 describe('AuthProvider concurrency', () => {
   it('ignores a late response from the previous account generation', async () => {
     const requestA = deferred<AuthSession>();
@@ -419,5 +433,99 @@ describe('AuthProvider concurrency', () => {
     // Vitest mocks implement the injected repository methods.
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(workspace.close).toHaveBeenCalledTimes(2);
+  });
+
+  it('refreshes an already-authenticated session in place, without an authenticating flicker', async () => {
+    let emit: ((session: AuthSession | null) => void) | undefined;
+    const gateway: AuthGateway = {
+      getCurrentSession: vi.fn().mockResolvedValue(null),
+      signInWithPassword: vi.fn(),
+      signUp: vi.fn(),
+      signOut: vi.fn().mockResolvedValue(undefined),
+      subscribeToAuthChanges: vi
+        .fn()
+        .mockImplementation(
+          (handler: (session: AuthSession | null) => void) => {
+            emit = handler;
+            return () => undefined;
+          },
+        ),
+    };
+    let active: { userId: string; generation: number } | null = null;
+    const workspace: WorkspaceRepository = {
+      open: vi.fn().mockImplementation((userId: string, generation: number) => {
+        active = { userId, generation };
+        return Promise.resolve({
+          userId,
+          workspaceGeneration: generation,
+          schemaVersion: 1,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        });
+      }),
+      cacheValidatedProfile: vi.fn().mockResolvedValue(undefined),
+      getCachedProfile: vi.fn().mockResolvedValue(null),
+      close: vi.fn().mockImplementation(() => {
+        active = null;
+        return Promise.resolve();
+      }),
+      delete: vi.fn().mockResolvedValue(undefined),
+      isGenerationActive: vi
+        .fn()
+        .mockImplementation(
+          (generation: number, userId: string) =>
+            active?.generation === generation && active.userId === userId,
+        ),
+    };
+    render(
+      <AppServicesProvider
+        services={{ authGateway: gateway, workspaceRepository: workspace }}
+      >
+        <AuthProvider>
+          <StatusLoggingHarness />
+        </AuthProvider>
+      </AppServicesProvider>,
+    );
+    await screen.findByText('unauthenticated');
+
+    act(() => {
+      emit?.({
+        user: { id: 'a', email: 'a@example.test', role: 'user' },
+        validity: 'valid',
+        workspaceGeneration: 0,
+        expiresAt: '2026-01-01T01:00:00Z',
+      });
+    });
+    expect(await screen.findByText('a@example.test')).toBeInTheDocument();
+    // Vitest mocks implement the injected repository methods.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(workspace.open).toHaveBeenCalledTimes(1);
+
+    statusLog.length = 0;
+    act(() => {
+      // Simulates Supabase re-emitting TOKEN_REFRESHED for the same user,
+      // which is what happens when the tab regains focus after the app
+      // was backgrounded (e.g. the user switched to another app).
+      emit?.({
+        user: { id: 'a', email: 'a@example.test', role: 'user' },
+        validity: 'valid',
+        workspaceGeneration: 0,
+        expiresAt: '2026-01-01T02:00:00Z',
+      });
+    });
+    expect(await screen.findByText('a@example.test')).toBeInTheDocument();
+    expect(statusLog).not.toContain('authenticating');
+    // The workspace (and therefore anything mounted under ProtectedRoute,
+    // like the in-progress question) must not be torn down for a same-user
+    // session refresh.
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(workspace.open).toHaveBeenCalledTimes(1);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(workspace.close).toHaveBeenCalledTimes(1);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    expect(workspace.cacheValidatedProfile).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'a' }),
+      expect.any(Number),
+    );
   });
 });

@@ -45,6 +45,11 @@ export type AuthAction =
       error: AuthError;
     }
   | {
+      type: 'SESSION_REFRESHED';
+      generation: number;
+      session: AuthSession;
+    }
+  | {
       type: 'SIGN_OUT_START';
       generation: number;
       operationId: number;
