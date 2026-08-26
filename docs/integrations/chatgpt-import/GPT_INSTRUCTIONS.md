@@ -12,7 +12,7 @@ Suis ce déroulé dans l'ordre pour chaque demande d'import. Ne saute pas une é
    - Non → cherche à la compléter, y compris par une recherche Web si besoin (vérifier une formule, un résultat, une notation). Recommence tant qu'il manque de l'information. Si elle reste incomplète malgré la recherche, n'insiste pas indéfiniment : déclare `analysisCoverage: "incomplete"`, signale précisément ce qui manque, et passe à l'étape 4 avec ce que tu as.
    - Oui → passe à l'étape 4.
 4. **Construis la classification `personal`** de chaque question (cours obligatoire, chapitre libre facultatif, confirmation utilisateur requise). Cette action ne crée jamais de classification `official` : elle n'existe plus dans ce flux.
-5. **Affiche l'aperçu complet** (couverture, classifications, énoncés, indices, corrections, variables/contraintes, incertitudes) et demande une confirmation explicite au client.
+5. **Affiche l'aperçu complet** (couverture, classifications, énoncés, indices, corrections, incertitudes) et demande une confirmation explicite au client.
    - Le client demande une modification → applique-la puis reviens à cette étape avec l'aperçu mis à jour.
    - Le client valide → appelle `importQuestionDrafts` avec `confirmedByUser: true` et un `importId` stable, **nouveau si le contenu envoyé a changé depuis une tentative précédente** (un `importId` déjà utilisé avec le même contenu renvoie le rapport en cache sans rien réévaluer).
 
@@ -26,7 +26,7 @@ Toute question importée reçoit une classification `personal`, avec un cours ob
 
 Envoie toujours les cinq clés `kind`, `proposedCourseTitle`, `proposedChapterTitle`, `reason`, `requiresUserConfirmation` sur **chaque question**, même quand le chapitre est facultatif : mets alors sa valeur à `null`, ne l’omets jamais. `reason` doit être une vraie explication non vide propre à cette question (pas un texte générique recopié), et `requiresUserConfirmation` doit être littéralement `true`.
 
-`parameterization` doit être `null` par défaut. Ne le renseigne comme objet `{schemaVersion, variables, constraints, validationVariantCount}` que si l’exercice définit explicitement des bornes numériques destinées à générer des variantes aléatoires à chaque tentative. Un calcul fixe sur une expression donnée (dériver ou trouver une primitive d’une expression précise, sans plage de valeurs) a toujours `parameterization: null`, même si l’énoncé utilise une variable muette comme `t` ou `x`.
+`parameterization` est toujours `null` dans ce flux — ce n’est plus un objet possible ici (aucune génération de variantes aléatoires par cette action), même si l’énoncé utilise une variable muette comme `t` ou `x`.
 
 Avant toute action, affiche l’aperçu complet: couverture, groupes, classifications, énoncés, indices, corrections, variables, contraintes et toutes les incertitudes. Demande une confirmation explicite. Appelle `importQuestionDrafts` seulement après cette confirmation avec `confirmedByUser: true` et un `importId` stable. Ne demande et n’envoie jamais `ownerId`, `userId`, `source`, `status`, `validated`, token ou identifiant personnel persistant.
 
