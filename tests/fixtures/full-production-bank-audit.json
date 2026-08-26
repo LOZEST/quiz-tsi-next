@@ -117,48 +117,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0001",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0002",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0003",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0004",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0005",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0006",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0007",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT2-0008",
       "field": "Enonce_parametrique",
       "structured": 1,
@@ -166,30 +124,6 @@
     },
     {
       "calculId": "LOT2-0008",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0009",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0010",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0011",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0012",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
@@ -207,32 +141,8 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0014",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0015",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-025",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "DUNOD-REEL-025",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-026",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -244,19 +154,7 @@
     },
     {
       "calculId": "DUNOD-REEL-027",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-027",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0016",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -274,18 +172,6 @@
     },
     {
       "calculId": "LOT2-0018",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0019",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0020",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
@@ -309,67 +195,7 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0023",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0024",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "LOT2-0025",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0026",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0027",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0028",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0029",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0030",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0031",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0032",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-031",
       "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
@@ -387,60 +213,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0034",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0035",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0036",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0037",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0038",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0039",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0040",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0041",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-028",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "DUNOD-REEL-029",
       "field": "Enonce_parametrique",
       "structured": 2,
@@ -448,19 +220,7 @@
     },
     {
       "calculId": "DUNOD-REEL-029",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-029",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-030",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -477,42 +237,6 @@
       "fallback": 1
     },
     {
-      "calculId": "LOT2-0043",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0044",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0045",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0046",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0047",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0048",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
       "calculId": "DUNOD-REEL-032",
       "field": "Enonce_parametrique",
       "structured": 1,
@@ -520,43 +244,13 @@
     },
     {
       "calculId": "DUNOD-REEL-032",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-032",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-033",
-      "field": "Reponse_generale",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "DUNOD-REEL-034",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
     {
       "calculId": "DUNOD-REEL-034",
       "field": "Correction",
-      "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0049",
-      "field": "Reponse_generale",
-      "structured": 1,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0050",
-      "field": "Reponse_generale",
       "structured": 0,
       "fallback": 1
     },
@@ -660,12 +354,6 @@
       "calculId": "LOT2-0086",
       "field": "Reponse_generale",
       "structured": 0,
-      "fallback": 1
-    },
-    {
-      "calculId": "LOT2-0087",
-      "field": "Enonce_parametrique",
-      "structured": 1,
       "fallback": 1
     },
     {
@@ -9578,8 +9266,8 @@
       "exhaustive": true
     }
   ],
-  "mathSegmentsStructured": 2888,
-  "mathSegmentsFallbackToText": 308,
+  "mathSegmentsStructured": 3019,
+  "mathSegmentsFallbackToText": 256,
   "fallbackCalculIds": [
     "DUNOD-REEL-006",
     "DUNOD-REEL-011",
@@ -9595,12 +9283,9 @@
     "DUNOD-REEL-025",
     "DUNOD-REEL-026",
     "DUNOD-REEL-027",
-    "DUNOD-REEL-028",
     "DUNOD-REEL-029",
-    "DUNOD-REEL-030",
     "DUNOD-REEL-031",
     "DUNOD-REEL-032",
-    "DUNOD-REEL-033",
     "DUNOD-REEL-034",
     "DUNOD-REEL-035",
     "DUNOD-REEL-036",
@@ -9701,56 +9386,15 @@
     "LOT1-0156",
     "LOT1-0157",
     "LOT1-0158",
-    "LOT2-0001",
-    "LOT2-0002",
-    "LOT2-0003",
-    "LOT2-0004",
-    "LOT2-0005",
-    "LOT2-0006",
-    "LOT2-0007",
     "LOT2-0008",
-    "LOT2-0009",
-    "LOT2-0010",
-    "LOT2-0011",
-    "LOT2-0012",
     "LOT2-0013",
-    "LOT2-0014",
-    "LOT2-0015",
-    "LOT2-0016",
     "LOT2-0017",
     "LOT2-0018",
-    "LOT2-0019",
-    "LOT2-0020",
     "LOT2-0021",
     "LOT2-0022",
-    "LOT2-0023",
-    "LOT2-0024",
     "LOT2-0025",
-    "LOT2-0026",
-    "LOT2-0027",
-    "LOT2-0028",
-    "LOT2-0029",
-    "LOT2-0030",
-    "LOT2-0031",
-    "LOT2-0032",
     "LOT2-0033",
-    "LOT2-0034",
-    "LOT2-0035",
-    "LOT2-0036",
-    "LOT2-0037",
-    "LOT2-0038",
-    "LOT2-0039",
-    "LOT2-0040",
-    "LOT2-0041",
     "LOT2-0042",
-    "LOT2-0043",
-    "LOT2-0044",
-    "LOT2-0045",
-    "LOT2-0046",
-    "LOT2-0047",
-    "LOT2-0048",
-    "LOT2-0049",
-    "LOT2-0050",
     "LOT2-0053",
     "LOT2-0059",
     "LOT2-0061",
@@ -44152,6 +43796,6 @@
       ]
     }
   ],
-  "generatedBundleBytes": 3279008,
+  "generatedBundleBytes": 3286461,
   "sourceBytes": 2862887
 }

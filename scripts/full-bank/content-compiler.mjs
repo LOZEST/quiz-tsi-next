@@ -438,15 +438,16 @@ function canUseMathSource(source) {
   );
 }
 
-// "f(x)=…" / "(g\circ h)(x)=…": this grammar has no user-defined functions
-// or function composition (see insertImplicitMultiplication above), so the
-// whole span would otherwise fall back to raw LaTeX text just because of
-// this prefix, even when the right-hand side is perfectly translatable on
-// its own. Splitting off the label as plain text and compiling only the
-// remainder lets the definition read naturally while still rendering the
-// actual formula.
+// "f(x)=…" / "f'(x)=…" / "(g\circ h)(x)=…": this grammar has no user-defined
+// functions, function composition, or derivative notation (see
+// insertImplicitMultiplication above), so the whole span would otherwise
+// fall back to raw LaTeX text just because of this prefix, even when the
+// right-hand side is perfectly translatable on its own. Splitting off the
+// label — primes included, since they decorate the function symbol, not
+// the formula — as plain text and compiling only the remainder lets the
+// definition read naturally while still rendering the actual formula.
 const namedFunctionDefinition =
-  /^([A-Za-z](?:_[A-Za-z0-9]+)?)\(([A-Za-z])\)\s*=\s*(.+)$/su;
+  /^([A-Za-z](?:_[A-Za-z0-9]+)?)('*)\(([A-Za-z])\)\s*=\s*(.+)$/su;
 const compositionDefinition =
   /^\(([A-Za-z](?:\\circ ?[A-Za-z])+)\)\(([A-Za-z])\)\s*=\s*(.+)$/su;
 
@@ -458,8 +459,8 @@ function extractDefinitionLabel(rawMath) {
   }
   const named = namedFunctionDefinition.exec(rawMath);
   if (named) {
-    const [, name, variable, rest] = named;
-    return [`${name}(${variable}) = `, rest];
+    const [, name, primes, variable, rest] = named;
+    return [`${name}${primes}(${variable}) = `, rest];
   }
   return null;
 }
@@ -522,7 +523,7 @@ const mathSignal = /[0-9{}\\^√±@²³⁴⁵⁶⁷⁸⁹⁰¹]/;
 // matchable as its own run starting at the second letter.
 const commandOrLetterRun = /\\[A-Za-z]+|([A-Za-z]+)/g;
 const namedFunctionOrCompositionSearch =
-  /(?:\(([A-Za-z](?:\\circ ?[A-Za-z])+)\)\(([A-Za-z])\)|([A-Za-z](?:_[A-Za-z0-9]+)?)\(([A-Za-z])\))\s*=\s*/su;
+  /(?:\(([A-Za-z](?:\\circ ?[A-Za-z])+)\)\(([A-Za-z])\)|([A-Za-z](?:_[A-Za-z0-9]+)?)('*)\(([A-Za-z])\))\s*=\s*/su;
 
 // Short French connector words this dataset's prose actually uses as
 // standalone tokens ("e^{t} et e^({t}+1)") — a 3-letter threshold alone
@@ -624,11 +625,11 @@ function compileBareClause(rawText, parameterIds) {
 
   const definitionMatch = namedFunctionOrCompositionSearch.exec(body);
   if (definitionMatch) {
-    const [, chain, compVar, name, fnVar] = definitionMatch;
+    const [, chain, compVar, name, primes, fnVar] = definitionMatch;
     const label =
       chain !== undefined
         ? `(${chain.replace(/\\circ ?/g, '∘')})(${compVar}) = `
-        : `${name}(${fnVar}) = `;
+        : `${name}${primes}(${fnVar}) = `;
     const rest = body.slice(definitionMatch.index + definitionMatch[0].length);
     const compiled = tryBareCandidate(rest, parameterIds);
     if (compiled !== null) {

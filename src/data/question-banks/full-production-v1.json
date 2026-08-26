@@ -30243,11 +30243,9 @@
             "id": "LOT3-0102-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "y'(x)=@a·e^x+C1 puis " },
-              { "kind": "text", "value": "y(x) = " },
               {
-                "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "@a*e^x+C1*x+C2" }
+                "kind": "text",
+                "value": "y'(x)=@a·e^x+C1 puis y(x)=@a·e^x+C1·x+C2"
               }
             ]
           },
@@ -35440,7 +35438,11 @@
             "id": "LOT2-0001-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=3\\cdot@k*x^2-4x+1\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "3*@k*x^2-4*x+1" }
+              }
             ]
           },
           {
@@ -35531,7 +35533,11 @@
             "id": "LOT2-0002-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=-@k*x^{-@k-1}\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k*x^(-@k-1)" }
+              }
             ]
           },
           {
@@ -35626,7 +35632,13 @@
           {
             "id": "LOT2-0003-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=-@k/x^2\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k/x^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0003-correction",
@@ -35721,7 +35733,11 @@
             "id": "LOT2-0004-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=@k\\cos x-\\sin x\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k*cos(x)-sin(x)" }
+              }
             ]
           },
           {
@@ -35821,7 +35837,13 @@
           {
             "id": "LOT2-0005-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=@k*e^x+1/x\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k*e^x+1/x" }
+              }
+            ]
           },
           {
             "id": "LOT2-0005-correction",
@@ -35916,9 +35938,13 @@
             "id": "LOT2-0006-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@k*x^{@k-1}-@k*x^{-@k-1}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*x^(@k-1)-@k*x^(-@k-1)"
+                }
               }
             ]
           },
@@ -36014,7 +36040,13 @@
           {
             "id": "LOT2-0007-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=@k*x^2-x\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k*x^2-x" }
+              }
+            ]
           },
           {
             "id": "LOT2-0007-correction",
@@ -36111,7 +36143,8 @@
             "id": "LOT2-0008-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=1/(2√x)-@k/x^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(1/(2√x)-@k/x^2\\)" }
             ]
           },
           {
@@ -36209,7 +36242,11 @@
             "id": "LOT2-0009-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=-@k\\sin x-3\\cos x\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k*sin(x)-3*cos(x)" }
+              }
             ]
           },
           {
@@ -36304,7 +36341,13 @@
           {
             "id": "LOT2-0010-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=2x+@k^2-4\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "2*x+@k^2-4" }
+              }
+            ]
           },
           {
             "id": "LOT2-0010-correction",
@@ -36397,7 +36440,13 @@
           {
             "id": "LOT2-0011-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=2x\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "2*x" }
+              }
+            ]
           },
           {
             "id": "LOT2-0011-correction",
@@ -36488,7 +36537,13 @@
           {
             "id": "LOT2-0012-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=@k*x^{@k-1}\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k*x^(@k-1)" }
+              }
+            ]
           },
           {
             "id": "LOT2-0012-correction",
@@ -36586,7 +36641,10 @@
           {
             "id": "LOT2-0013-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=@k/(2√x)\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(@k/(2√x)\\)" }
+            ]
           },
           {
             "id": "LOT2-0013-correction",
@@ -36675,7 +36733,13 @@
           {
             "id": "LOT2-0014-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=-@k/x^{@k+1}\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k/x^(@k+1)" }
+              }
+            ]
           },
           {
             "id": "LOT2-0014-correction",
@@ -36766,7 +36830,13 @@
           {
             "id": "LOT2-0015-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=3(@k+1)x^2\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "3*(@k+1)*x^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0015-correction",
@@ -36874,9 +36944,13 @@
             "id": "DUNOD-REEL-025-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=(2ax+@b)(dx+@e)+@d(ax^2+bx+@c)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2*@a*x+@b)*(@d*x+@e)+@d*(@a*x^2+@b*x+@c)"
+                }
               }
             ]
           },
@@ -36994,9 +37068,13 @@
             "id": "DUNOD-REEL-026-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=((2ax+@b)+@k(ax^2+bx+@c))e^{kx}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "((2*@a*x+@b)+@k*(@a*x^2+@b*x+@c))*e^@k*x"
+                }
               }
             ]
           },
@@ -37104,9 +37182,13 @@
             "id": "DUNOD-REEL-027-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=(2ax+@b)\\ln(x-@c)+\\dfrac{ax^2+bx}{x-@c}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2*@a*x+@b)*ln(x-@c)+(@a*x^2+@b*x)/(x-@c)"
+                }
               }
             ]
           },
@@ -37201,9 +37283,13 @@
             "id": "LOT2-0016-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@k\\cos(@k*x)\\cos x-\\sin(@k*x)\\sin x\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*cos(@k*x)*cos(x)-sin(@k*x)*sin(x)"
+                }
               }
             ]
           },
@@ -37300,7 +37386,8 @@
             "id": "LOT2-0017-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=e^{@k*x}(1+@k*x)\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(e^{@k*x}(1+@k*x)\\)" }
             ]
           },
           {
@@ -37393,10 +37480,8 @@
             "id": "LOT2-0018-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "\\(f'(x)=e^{@k*x}[(2x+1)+@k*x(x+1)]\\)"
-              }
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(e^{@k*x}[(2x+1)+@k*x(x+1)]\\)" }
             ]
           },
           {
@@ -37492,9 +37577,13 @@
             "id": "LOT2-0019-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=2x\\sin(@k*x+1)+@k*x^2\\cos(@k*x+1)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "2*x*sin(@k*x+1)+@k*x^2*cos(@k*x+1)"
+                }
               }
             ]
           },
@@ -37588,9 +37677,13 @@
             "id": "LOT2-0020-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=-@k*x^{-@k-1}(x^2+1)+2x^{1-@k}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-@k*x^(-@k-1)*(x^2+1)+2*x^(1-@k)"
+                }
               }
             ]
           },
@@ -37686,7 +37779,10 @@
           {
             "id": "LOT2-0021-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=e^x(x+@k+1)\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(e^x(x+@k+1)\\)" }
+            ]
           },
           {
             "id": "LOT2-0021-correction",
@@ -37877,9 +37973,13 @@
             "id": "LOT2-0023-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@k*x^{@k-1}e^x+x^{@k}e^x\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*x^(@k-1)*e^x+x^@k*e^x"
+                }
               }
             ]
           },
@@ -37975,7 +38075,13 @@
           {
             "id": "LOT2-0024-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=2\\cdot@k*x\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "2*@k*x" }
+              }
+            ]
           },
           {
             "id": "LOT2-0024-correction",
@@ -38069,9 +38175,10 @@
             "id": "LOT2-0025-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "text",
-                "value": "\\(f'(x)=e^{(@k*x+1)^2}[1+2\\cdot@k*x(@k*x+1)]\\)"
+                "value": "\\(e^{(@k*x+1)^2}[1+2\\cdot@k*x(@k*x+1)]\\)"
               }
             ]
           },
@@ -38168,9 +38275,13 @@
             "id": "LOT2-0026-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@k*x^{@k-1}\\cos x-x^{@k}\\sin x\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*x^(@k-1)*cos(x)-x^@k*sin(x)"
+                }
               }
             ]
           },
@@ -38273,9 +38384,13 @@
                 "math": { "syntaxVersion": 1, "source": "x^(@k+1)+x^(@k-1)" }
               },
               { "kind": "text", "value": ", donc " },
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=(@k+1)x^{@k}+(@k-1)x^{@k-2}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@k+1)*x^@k+(@k-1)*x^(@k-2)"
+                }
               },
               { "kind": "text", "value": "." }
             ]
@@ -38378,7 +38493,11 @@
             "id": "LOT2-0028-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(-@k-1)/(x-1)^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(-@k-1)/(x-1)^2" }
+              }
             ]
           },
           {
@@ -38469,7 +38588,14 @@
             "id": "LOT2-0029-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(@k-1)x^{@k-2}-1/x^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@k-1)*x^(@k-2)-1/x^2"
+                }
+              }
             ]
           },
           {
@@ -38564,7 +38690,13 @@
           {
             "id": "LOT2-0030-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=e^x/@k\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "e^x/@k" }
+              }
+            ]
           },
           {
             "id": "LOT2-0030-correction",
@@ -38655,7 +38787,13 @@
           {
             "id": "LOT2-0031-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=-@k/(x+1)^2\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k/(x+1)^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0031-correction",
@@ -38752,7 +38890,11 @@
             "id": "LOT2-0032-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(x^2+2x-@k)/(x+1)^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(x^2+2*x-@k)/(x+1)^2" }
+              }
             ]
           },
           {
@@ -38877,9 +39019,13 @@
             "id": "DUNOD-REEL-031-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=\\dfrac{@b-ax}{2\\sqrt x\\,(ax+@b)^2}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@b-@a*x)/(2*sqrt(x)*(@a*x+@b)^2)"
+                }
               }
             ]
           },
@@ -38977,7 +39123,8 @@
             "id": "LOT2-0033-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=e^x(x+@k-1)/(x+@k)^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(e^x(x+@k-1)/(x+@k)^2\\)" }
             ]
           },
           {
@@ -39075,7 +39222,11 @@
             "id": "LOT2-0034-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(1-@k*x)/(@k*x+1)^3\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(1-@k*x)/(@k*x+1)^3" }
+              }
             ]
           },
           {
@@ -39170,7 +39321,14 @@
             "id": "LOT2-0035-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=x^{@k-1}e^{-x}(@k-x)\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "x^(@k-1)*e^(-x)*(@k-x)"
+                }
+              }
             ]
           },
           {
@@ -39277,7 +39435,11 @@
                 "math": { "syntaxVersion": 1, "source": "x+@k" }
               },
               { "kind": "text", "value": " sur R@k, donc " },
-              { "kind": "text", "value": "\\(f'(x)=1\\)" },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1" }
+              },
               { "kind": "text", "value": " sur ce domaine." }
             ]
           },
@@ -39373,7 +39535,13 @@
           {
             "id": "LOT2-0037-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=@k/(x+@k)^2\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k/(x+@k)^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0037-correction",
@@ -39464,7 +39632,13 @@
           {
             "id": "LOT2-0038-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=-1/(x-@k)^2\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-1/(x-@k)^2" }
+              }
+            ]
           },
           {
             "id": "LOT2-0038-correction",
@@ -39559,7 +39733,11 @@
             "id": "LOT2-0039-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=0\\)" },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "0" }
+              },
               { "kind": "text", "value": " pour " },
               {
                 "kind": "inline-math",
@@ -39661,7 +39839,13 @@
           {
             "id": "LOT2-0040-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "\\(f'(x)=x^{@k-1}\\)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "x^(@k-1)" }
+              }
+            ]
           },
           {
             "id": "LOT2-0040-correction",
@@ -39765,7 +39949,11 @@
                 "math": { "syntaxVersion": 1, "source": "(x+@k)/(x+@k+1)" }
               },
               { "kind": "text", "value": ", donc " },
-              { "kind": "text", "value": "\\(f'(x)=1/(x+@k+1)^2\\)" },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/(x+@k+1)^2" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -39881,9 +40069,13 @@
             "id": "DUNOD-REEL-028-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@n(2ax+@b)(ax^2+bx+@c)^{@n-1}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(2*@a*x+@b)*(@a*x^2+@b*x+@c)^(@n-1)"
+                }
               }
             ]
           },
@@ -40017,7 +40209,11 @@
             "id": "DUNOD-REEL-029-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=\\dfrac{2ax}{ax^2+@c}\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(2*@a*x)/(@a*x^2+@c)" }
+              }
             ]
           },
           {
@@ -40124,9 +40320,13 @@
             "id": "DUNOD-REEL-030-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=ab\\cos(bx)e^{@a\\sin(bx)}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a*@b*cos(@b*x)*e^(@a*sin(@b*x))"
+                }
               }
             ]
           },
@@ -40219,7 +40419,8 @@
             "id": "LOT2-0042-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=@k/(2√(@k*x+1))\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              { "kind": "text", "value": "\\(@k/(2√(@k*x+1))\\)" }
             ]
           },
           {
@@ -40315,7 +40516,11 @@
             "id": "LOT2-0043-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=-@k\\sin(@k*x+1)\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k*sin(@k*x+1)" }
+              }
             ]
           },
           {
@@ -40411,7 +40616,14 @@
             "id": "LOT2-0044-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=3(2x+@k)(x^2+@k*x+1)^2\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "3*(2*x+@k)*(x^2+@k*x+1)^2"
+                }
+              }
             ]
           },
           {
@@ -40504,7 +40716,14 @@
             "id": "LOT2-0045-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(2x+@k)e^{x^2+@k*x}\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2*x+@k)*e^(x^2+@k*x)"
+                }
+              }
             ]
           },
           {
@@ -40597,7 +40816,11 @@
             "id": "LOT2-0046-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=1/(x+@k)-1/(x+1)\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/(x+@k)-1/(x+1)" }
+              }
             ]
           },
           {
@@ -40693,7 +40916,14 @@
             "id": "LOT2-0047-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(2x+@k)\\cos(x^2+@k*x)\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2*x+@k)*cos(x^2+@k*x)"
+                }
+              }
             ]
           },
           {
@@ -40786,9 +41016,13 @@
             "id": "LOT2-0048-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=@k\\cos(@k*x)e^{\\sin(@k*x)}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@k*cos(@k*x)*e^(sin(@k*x))"
+                }
               }
             ]
           },
@@ -40911,9 +41145,13 @@
             "id": "DUNOD-REEL-032-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=mx^{@m-1}\\sin(@k/x)-kx^{@m-2}\\cos(@k/x)\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@m*x^(@m-1)*sin(@k/x)-@k*x^(@m-2)*cos(@k/x)"
+                }
               }
             ]
           },
@@ -41022,7 +41260,11 @@
             "id": "DUNOD-REEL-033-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=@m(\\ln x+1)x^{mx}\\)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@m*(ln(x)+1)*x^@m*x" }
+              }
             ]
           },
           {
@@ -41137,9 +41379,13 @@
             "id": "DUNOD-REEL-034-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "\\(f'(x)=\\dfrac{nx^{@n-1}}{\\sqrt{1-x^{2n}}}\\)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@n*x^(@n-1))/(sqrt(1-x^2*@n))"
+                }
               }
             ]
           },
@@ -41246,7 +41492,11 @@
               { "kind": "text", "value": "" },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "" },
-              { "kind": "text", "value": "\\(f'(x)=-@k/(1-@k*x)\\)" },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@k/(1-@k*x)" }
+              },
               { "kind": "text", "value": "." }
             ]
           },
@@ -41348,7 +41598,11 @@
             "id": "LOT2-0050-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "\\(f'(x)=(@k-2)e^{(@k-2)x}\\)" },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@k-2)*e^((@k-2)*x)" }
+              },
               { "kind": "text", "value": "" },
               { "kind": "text", "value": " ; " },
               { "kind": "text", "value": "pour k=2, f est constante et f'=0." }
@@ -45136,7 +45390,11 @@
             "math": { "syntaxVersion": 1, "source": "1/x" }
           },
           { "kind": "text", "value": ", résoudre " },
-          { "kind": "text", "value": "\\(f'(x)=-1/@k^2\\)" },
+          { "kind": "text", "value": "f'(x) = " },
+          {
+            "kind": "inline-math",
+            "math": { "syntaxVersion": 1, "source": "-1/@k^2" }
+          },
           { "kind": "text", "value": "." }
         ],
         "hint": [
@@ -46021,7 +46279,15 @@
           {
             "id": "LOT2-0095-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "Aucune, car f'(x)=3x²≥0." }]
+            "content": [
+              { "kind": "text", "value": "Aucune, car " },
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "3*x^2≥0" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           },
           {
             "id": "LOT2-0095-correction",
@@ -46612,7 +46878,14 @@
           {
             "id": "LOT2-0101-correction",
             "title": "Correction",
-            "content": [{ "kind": "text", "value": "f'(x)=k/(x+k)²>0." }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@k/(x+@k)^2>0" }
+              },
+              { "kind": "text", "value": "." }
+            ]
           }
         ],
         "tags": [
@@ -151228,7 +151501,13 @@
           {
             "id": "AUTO6-0221-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=1" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0221-correction",
@@ -151308,7 +151587,13 @@
           {
             "id": "AUTO6-0222-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(1)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(1)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0222-correction",
@@ -151400,7 +151685,13 @@
           {
             "id": "AUTO6-0223-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@a" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0223-correction",
@@ -151482,10 +151773,10 @@
             "id": "AUTO6-0224-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@n\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "x^(@n-1)" }
+                "math": { "syntaxVersion": 1, "source": "@n* x^(@n-1)" }
               }
             ]
           },
@@ -151574,7 +151865,11 @@
             "id": "AUTO6-0225-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(@n\\cdot x^(@n-1))" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(@n* x^(@n-1))" }
+              }
             ]
           },
           {
@@ -151673,9 +151968,13 @@
             "id": "AUTO6-0226-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot@a\\cdot(@a\\cdot x+@b)^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*@a*(@a* x+@b)^(@n-1)"
+                }
               }
             ]
           },
@@ -151747,10 +152046,10 @@
             "id": "AUTO6-0227-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=3\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "x^2-2" }
+                "math": { "syntaxVersion": 1, "source": "3* x^2-2" }
               }
             ]
           },
@@ -151833,7 +152132,11 @@
             "id": "AUTO6-0228-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(3\\cdot x^2-2)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(3* x^2-2)" }
+              }
             ]
           },
           {
@@ -151930,9 +152233,13 @@
             "id": "AUTO6-0229-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@a\\cdot(3\\cdot(@a\\cdot x+@b)^2-2)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a*(3*(@a* x+@b)^2-2)"
+                }
               }
             ]
           },
@@ -152014,7 +152321,13 @@
           {
             "id": "AUTO6-0230-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=-1/x^2" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-1/x^2" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0230-correction",
@@ -152104,7 +152417,13 @@
           {
             "id": "AUTO6-0231-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(-1/x^2)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(-1/x^2)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0231-correction",
@@ -152201,7 +152520,11 @@
             "id": "AUTO6-0232-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-@a/(@a\\cdot x+@b)^2" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-@a/(@a* x+@b)^2" }
+              }
             ]
           },
           {
@@ -152282,7 +152605,13 @@
           {
             "id": "AUTO6-0233-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=-2/(x-1)^2" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-2/(x-1)^2" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0233-correction",
@@ -152373,7 +152702,11 @@
             "id": "AUTO6-0234-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(-2/(x-1)^2)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(-2/(x-1)^2)" }
+              }
             ]
           },
           {
@@ -152474,9 +152807,13 @@
             "id": "AUTO6-0235-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-2\\cdot@a/((@a\\cdot x+@b)-1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-2*@a/((@a* x+@b)-1)^2"
+                }
               }
             ]
           },
@@ -152806,7 +153143,13 @@
           {
             "id": "AUTO6-0239-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=e^x" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "e^x" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0239-correction",
@@ -152886,7 +153229,13 @@
           {
             "id": "AUTO6-0240-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(e^x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(e^x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0240-correction",
@@ -152979,10 +153328,10 @@
             "id": "AUTO6-0241-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@a\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "@a* e^(@a* x+@b)" }
               }
             ]
           },
@@ -153070,10 +153419,13 @@
             "id": "AUTO6-0242-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@base^x " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "ln(b*a*s*e)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "b*a*s*e^x* ln(b*a*s*e)"
+                }
               }
             ]
           },
@@ -153166,7 +153518,14 @@
             "id": "AUTO6-0243-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(@base^x ln(@base))" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@c*(b*a*s*e^x* ln(b*a*s*e))"
+                }
+              }
             ]
           },
           {
@@ -153269,13 +153628,13 @@
             "id": "AUTO6-0244-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=@a\\cdot@base^(@a\\cdot x+@b) "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "ln(@b*@a*s*e)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a*@b*@a*s*e^(@a* x+@b)* ln(@b*@a*s*e)"
+                }
               }
             ]
           },
@@ -153348,7 +153707,13 @@
           {
             "id": "AUTO6-0245-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=1/x" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/x" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0245-correction",
@@ -153438,7 +153803,13 @@
           {
             "id": "AUTO6-0246-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(1/x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(1/x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0246-correction",
@@ -153534,7 +153905,13 @@
           {
             "id": "AUTO6-0247-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@a/(@a\\cdot x+@b)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a/(@a* x+@b)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0247-correction",
@@ -153614,7 +153991,13 @@
           {
             "id": "AUTO6-0248-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=1/(1+x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/(1+x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0248-correction",
@@ -153704,7 +154087,13 @@
           {
             "id": "AUTO6-0249-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(1/(1+x))" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(1/(1+x))" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0249-correction",
@@ -153801,7 +154190,11 @@
             "id": "AUTO6-0250-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@a/(1+(@a\\cdot x+@b))" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a/(1+(@a* x+@b))" }
+              }
             ]
           },
           {
@@ -153944,7 +154337,13 @@
           {
             "id": "AUTO6-0252-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(cos x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(@c*o*s* x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0252-correction",
@@ -154037,10 +154436,10 @@
             "id": "AUTO6-0253-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@a\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "@a* cos(@a* x+@b)" }
               }
             ]
           },
@@ -154184,7 +154583,13 @@
           {
             "id": "AUTO6-0255-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(-sin x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(-s*i*n* x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0255-correction",
@@ -154277,10 +154682,10 @@
             "id": "AUTO6-0256-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-@a\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "-@a* sin(@a* x+@b)" }
               }
             ]
           },
@@ -154349,7 +154754,13 @@
           {
             "id": "AUTO6-0257-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=1/cos^2x" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/c*o*s^2*x" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0257-correction",
@@ -154434,7 +154845,13 @@
           {
             "id": "AUTO6-0258-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(1/cos^2x)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(1/@c*o*s^2*x)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0258-correction",
@@ -154526,7 +154943,14 @@
             "id": "AUTO6-0259-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@a/cos^2(@a\\cdot x+@b)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@a/c*o*s^2*(@a* x+@b)"
+                }
+              }
             ]
           },
           {
@@ -155113,7 +155537,13 @@
           {
             "id": "AUTO6-0266-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=1/(1+x^2)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "1/(1+x^2)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0266-correction",
@@ -155194,7 +155624,11 @@
             "id": "AUTO6-0267-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(1/(1+x^2))" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(1/(1+x^2))" }
+              }
             ]
           },
           {
@@ -155288,7 +155722,11 @@
             "id": "AUTO6-0268-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@a/(1+(@a\\cdot x+@b)^2)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@a/(1+(@a* x+@b)^2)" }
+              }
             ]
           },
           {
@@ -155380,7 +155818,13 @@
           {
             "id": "AUTO6-0269-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=(@a)+2\\cdot x" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a)+2* x" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0269-correction",
@@ -155467,7 +155911,11 @@
             "id": "AUTO6-0270-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(2\\cdot x+@a)+2\\cdot x" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(2* x+@a)+2* x" }
+              }
             ]
           },
           {
@@ -155550,7 +155998,11 @@
             "id": "AUTO6-0271-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(3\\cdot(x+@b)^2)+2\\cdot x" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(3*(x+@b)^2)+2* x" }
+              }
             ]
           },
           {
@@ -155633,9 +156085,13 @@
             "id": "AUTO6-0272-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot cos(@a\\cdot x))+2\\cdot x"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* cos(@a* x))+2* x"
+                }
               }
             ]
           },
@@ -155724,9 +156180,13 @@
             "id": "AUTO6-0273-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot e^(@a\\cdot x+@b))+2\\cdot x"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* e^(@a* x+@b))+2* x"
+                }
               }
             ]
           },
@@ -155820,9 +156280,10 @@
             "id": "AUTO6-0274-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a/(@a\\cdot x+@b))+2\\cdot x"
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a/(@a* x+@b))+2* x" }
               }
             ]
           },
@@ -155915,7 +156376,13 @@
           {
             "id": "AUTO6-0275-expected-answer",
             "title": "Réponse attendue",
-            "content": [{ "kind": "text", "value": "f'(x)=@c\\cdot(@a)" }]
+            "content": [
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(@a)" }
+              }
+            ]
           },
           {
             "id": "AUTO6-0275-correction",
@@ -156011,7 +156478,11 @@
             "id": "AUTO6-0276-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(2\\cdot x+@a)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(2* x+@a)" }
+              }
             ]
           },
           {
@@ -156103,7 +156574,11 @@
             "id": "AUTO6-0277-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(3\\cdot(x+@b)^2)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(3*(x+@b)^2)" }
+              }
             ]
           },
           {
@@ -156196,9 +156671,10 @@
             "id": "AUTO6-0278-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@c\\cdot(@a\\cdot cos(@a\\cdot x))"
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(@a* cos(@a* x))" }
               }
             ]
           },
@@ -156297,9 +156773,13 @@
             "id": "AUTO6-0279-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@c\\cdot(@a\\cdot e^(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@c*(@a* e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -156402,7 +156882,11 @@
             "id": "AUTO6-0280-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=@c\\cdot(@a/(@a\\cdot x+@b))" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "@c*(@a/(@a* x+@b))" }
+              }
             ]
           },
           {
@@ -156494,7 +156978,11 @@
             "id": "AUTO6-0281-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a\\cdot x+@b)+x\\cdot(@a)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a* x+@b)+x*(@a)" }
+              }
             ]
           },
           {
@@ -156582,9 +157070,13 @@
             "id": "AUTO6-0282-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(x^2+@a\\cdot x+@b)+x\\cdot(2\\cdot x+@a)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(x^2+@a* x+@b)+x*(2* x+@a)"
+                }
               }
             ]
           },
@@ -156668,9 +157160,13 @@
             "id": "AUTO6-0283-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=((x+@b)^3)+x\\cdot(3\\cdot(x+@b)^2)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "((x+@b)^3)+x*(3*(x+@b)^2)"
+                }
               }
             ]
           },
@@ -156754,9 +157250,13 @@
             "id": "AUTO6-0284-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(sin(@a\\cdot x))+x\\cdot(@a\\cdot cos(@a\\cdot x))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(sin(@a* x))+x*(@a* cos(@a* x))"
+                }
               }
             ]
           },
@@ -156845,9 +157345,13 @@
             "id": "AUTO6-0285-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(e^(@a\\cdot x+@b))+x\\cdot(@a\\cdot e^(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(e^(@a* x+@b))+x*(@a* e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -156941,9 +157445,13 @@
             "id": "AUTO6-0286-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(ln(@a\\cdot x+@b))+x\\cdot(@a/(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(ln(@a* x+@b))+x*(@a/(@a* x+@b))"
+                }
               }
             ]
           },
@@ -157037,9 +157545,13 @@
             "id": "AUTO6-0287-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( @a)\\cdot(x+1)-(@a\\cdot x+@b))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( @a)*(x+1)-(@a* x+@b))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157135,9 +157647,13 @@
             "id": "AUTO6-0288-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( 2\\cdot x+@a)\\cdot(x+1)-(x^2+@a\\cdot x+@b))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( 2* x+@a)*(x+1)-(x^2+@a* x+@b))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157228,9 +157744,13 @@
             "id": "AUTO6-0289-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( 3\\cdot(x+@b)^2)\\cdot(x+1)-((x+@b)^3))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( 3*(x+@b)^2)*(x+1)-((x+@b)^3))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157321,9 +157841,13 @@
             "id": "AUTO6-0290-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( @a\\cdot cos(@a\\cdot x))\\cdot(x+1)-(sin(@a\\cdot x)))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( @a* cos(@a* x))*(x+1)-(sin(@a* x)))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157419,9 +157943,13 @@
             "id": "AUTO6-0291-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( @a\\cdot e^(@a\\cdot x+@b))\\cdot(x+1)-(e^(@a\\cdot x+@b)))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( @a* e^(@a* x+@b))*(x+1)-(e^(@a* x+@b)))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157517,9 +158045,13 @@
             "id": "AUTO6-0292-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(( @a/(@a\\cdot x+@b))\\cdot(x+1)-(ln(@a\\cdot x+@b)))/(x+1)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(( @a/(@a* x+@b))*(x+1)-(ln(@a* x+@b)))/(x+1)^2"
+                }
               }
             ]
           },
@@ -157610,12 +158142,12 @@
             "id": "AUTO6-0293-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^(@a* x+@b)* sin(e^(@a* x+@b))"
+                  "source": "-(@a)* e^(@a* x+@b)* sin(e^(@a* x+@b))"
                 }
               }
             ]
@@ -157710,12 +158242,12 @@
             "id": "AUTO6-0294-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(2\\cdot x+@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^(x^2+@a* x+@b)* sin(e^(x^2+@a* x+@b))"
+                  "source": "-(2* x+@a)* e^(x^2+@a* x+@b)* sin(e^(x^2+@a* x+@b))"
                 }
               }
             ]
@@ -157805,12 +158337,12 @@
             "id": "AUTO6-0295-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(3\\cdot(x+@b)^2)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^((x+@b)^3)* sin(e^((x+@b)^3))"
+                  "source": "-(3*(x+@b)^2)* e^((x+@b)^3)* sin(e^((x+@b)^3))"
                 }
               }
             ]
@@ -157900,15 +158432,12 @@
             "id": "AUTO6-0296-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot cos(@a\\cdot x))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^(sin(@a* x))* sin(e^(sin(@a* x)))"
+                  "source": "-(@a* cos(@a* x))* e^(sin(@a* x))* sin(e^(sin(@a* x)))"
                 }
               }
             ]
@@ -158003,15 +158532,12 @@
             "id": "AUTO6-0297-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot e^(@a\\cdot x+@b))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^(e^(@a* x+@b))* sin(e^(e^(@a* x+@b)))"
+                  "source": "-(@a* e^(@a* x+@b))* e^(e^(@a* x+@b))* sin(e^(e^(@a* x+@b)))"
                 }
               }
             ]
@@ -158111,12 +158637,12 @@
             "id": "AUTO6-0298-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(@a/(@a\\cdot x+@b))\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
                 "math": {
                   "syntaxVersion": 1,
-                  "source": "e^(ln(@a* x+@b))* sin(e^(ln(@a* x+@b)))"
+                  "source": "-(@a/(@a* x+@b))* e^(ln(@a* x+@b))* sin(e^(ln(@a* x+@b)))"
                 }
               }
             ]
@@ -158216,9 +158742,13 @@
             "id": "AUTO6-0299-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(@a)\\cdot(@a\\cdot x+@b)^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(@a)*(@a* x+@b)^(@n-1)"
+                }
               }
             ]
           },
@@ -158313,9 +158843,13 @@
             "id": "AUTO6-0300-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(2\\cdot x+@a)\\cdot(x^2+@a\\cdot x+@b)^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(2* x+@a)*(x^2+@a* x+@b)^(@n-1)"
+                }
               }
             ]
           },
@@ -158405,9 +158939,13 @@
             "id": "AUTO6-0301-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(3\\cdot(x+@b)^2)\\cdot((x+@b)^3)^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(3*(x+@b)^2)*((x+@b)^3)^(@n-1)"
+                }
               }
             ]
           },
@@ -158498,9 +159036,13 @@
             "id": "AUTO6-0302-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(@a\\cdot cos(@a\\cdot x))\\cdot(sin(@a\\cdot x))^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(@a* cos(@a* x))*(sin(@a* x))^(@n-1)"
+                }
               }
             ]
           },
@@ -158596,9 +159138,13 @@
             "id": "AUTO6-0303-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(@a\\cdot e^(@a\\cdot x+@b))\\cdot(e^(@a\\cdot x+@b))^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(@a* e^(@a* x+@b))*(e^(@a* x+@b))^(@n-1)"
+                }
               }
             ]
           },
@@ -158698,9 +159244,13 @@
             "id": "AUTO6-0304-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=@n\\cdot(@a/(@a\\cdot x+@b))\\cdot(ln(@a\\cdot x+@b))^(@n-1)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "@n*(@a/(@a* x+@b))*(ln(@a* x+@b))^(@n-1)"
+                }
               }
             ]
           },
@@ -158795,7 +159345,11 @@
             "id": "AUTO6-0305-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(@a)/(@a\\cdot x+@b)^2" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "-(@a)/(@a* x+@b)^2" }
+              }
             ]
           },
           {
@@ -158888,9 +159442,13 @@
             "id": "AUTO6-0306-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-(2\\cdot x+@a)/(x^2+@a\\cdot x+@b)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(2* x+@a)/(x^2+@a* x+@b)^2"
+                }
               }
             ]
           },
@@ -158979,9 +159537,13 @@
             "id": "AUTO6-0307-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-(3\\cdot(x+@b)^2)/((x+@b)^3)^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(3*(x+@b)^2)/((x+@b)^3)^2"
+                }
               }
             ]
           },
@@ -159070,9 +159632,13 @@
             "id": "AUTO6-0308-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot cos(@a\\cdot x))/(sin(@a\\cdot x))^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a* cos(@a* x))/(sin(@a* x))^2"
+                }
               }
             ]
           },
@@ -159166,9 +159732,13 @@
             "id": "AUTO6-0309-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot e^(@a\\cdot x+@b))/(e^(@a\\cdot x+@b))^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a* e^(@a* x+@b))/(e^(@a* x+@b))^2"
+                }
               }
             ]
           },
@@ -159262,9 +159832,13 @@
             "id": "AUTO6-0310-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=-(@a/(@a\\cdot x+@b))/(ln(@a\\cdot x+@b))^2"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a/(@a* x+@b))/(ln(@a* x+@b))^2"
+                }
               }
             ]
           },
@@ -159923,10 +160497,10 @@
             "id": "AUTO6-0317-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "(@a)* e^(@a* x+@b)" }
               }
             ]
           },
@@ -160015,10 +160589,13 @@
             "id": "AUTO6-0318-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(2\\cdot x+@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(x^2+@a* x+@b)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2* x+@a)* e^(x^2+@a* x+@b)"
+                }
               }
             ]
           },
@@ -160102,10 +160679,13 @@
             "id": "AUTO6-0319-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(3\\cdot(x+@b)^2)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^((x+@b)^3)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(3*(x+@b)^2)* e^((x+@b)^3)"
+                }
               }
             ]
           },
@@ -160189,13 +160769,13 @@
             "id": "AUTO6-0320-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot cos(@a\\cdot x))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(sin(@a* x))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* cos(@a* x))* e^(sin(@a* x))"
+                }
               }
             ]
           },
@@ -160284,13 +160864,13 @@
             "id": "AUTO6-0321-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot e^(@a\\cdot x+@b))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(e^(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* e^(@a* x+@b))* e^(e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -160384,10 +160964,13 @@
             "id": "AUTO6-0322-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a/(@a\\cdot x+@b))\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "e^(ln(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/(@a* x+@b))* e^(ln(@a* x+@b))"
+                }
               }
             ]
           },
@@ -160481,7 +161064,11 @@
             "id": "AUTO6-0323-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a)/(@a\\cdot x+@b)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": { "syntaxVersion": 1, "source": "(@a)/(@a* x+@b)" }
+              }
             ]
           },
           {
@@ -160574,9 +161161,13 @@
             "id": "AUTO6-0324-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(2\\cdot x+@a)/(x^2+@a\\cdot x+@b)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2* x+@a)/(x^2+@a* x+@b)"
+                }
               }
             ]
           },
@@ -160665,7 +161256,14 @@
             "id": "AUTO6-0325-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(3\\cdot(x+@b)^2)/((x+@b)^3)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(3*(x+@b)^2)/((x+@b)^3)"
+                }
+              }
             ]
           },
           {
@@ -160753,9 +161351,13 @@
             "id": "AUTO6-0326-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot cos(@a\\cdot x))/(sin(@a\\cdot x))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* cos(@a* x))/(sin(@a* x))"
+                }
               }
             ]
           },
@@ -160849,9 +161451,13 @@
             "id": "AUTO6-0327-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot e^(@a\\cdot x+@b))/(e^(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* e^(@a* x+@b))/(e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -160945,9 +161551,13 @@
             "id": "AUTO6-0328-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a/(@a\\cdot x+@b))/(ln(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/(@a* x+@b))/(ln(@a* x+@b))"
+                }
               }
             ]
           },
@@ -161036,10 +161646,10 @@
             "id": "AUTO6-0329-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "(@a)* cos(@a* x+@b)" }
               }
             ]
           },
@@ -161130,10 +161740,13 @@
             "id": "AUTO6-0330-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(2\\cdot x+@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(x^2+@a* x+@b)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2* x+@a)* cos(x^2+@a* x+@b)"
+                }
               }
             ]
           },
@@ -161219,10 +161832,13 @@
             "id": "AUTO6-0331-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(3\\cdot(x+@b)^2)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos((x+@b)^3)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(3*(x+@b)^2)* cos((x+@b)^3)"
+                }
               }
             ]
           },
@@ -161308,13 +161924,13 @@
             "id": "AUTO6-0332-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot cos(@a\\cdot x))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(sin(@a* x))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* cos(@a* x))* cos(sin(@a* x))"
+                }
               }
             ]
           },
@@ -161405,13 +162021,13 @@
             "id": "AUTO6-0333-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot e^(@a\\cdot x+@b))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(e^(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* e^(@a* x+@b))* cos(e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -161507,10 +162123,13 @@
             "id": "AUTO6-0334-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a/(@a\\cdot x+@b))\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "cos(ln(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/(@a* x+@b))* cos(ln(@a* x+@b))"
+                }
               }
             ]
           },
@@ -161601,10 +162220,10 @@
             "id": "AUTO6-0335-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(@a* x+@b)" }
+                "math": { "syntaxVersion": 1, "source": "-(@a)* sin(@a* x+@b)" }
               }
             ]
           },
@@ -161695,10 +162314,13 @@
             "id": "AUTO6-0336-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(2\\cdot x+@a)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(x^2+@a* x+@b)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(2* x+@a)* sin(x^2+@a* x+@b)"
+                }
               }
             ]
           },
@@ -161784,10 +162406,13 @@
             "id": "AUTO6-0337-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(3\\cdot(x+@b)^2)\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin((x+@b)^3)" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(3*(x+@b)^2)* sin((x+@b)^3)"
+                }
               }
             ]
           },
@@ -161873,13 +162498,13 @@
             "id": "AUTO6-0338-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot cos(@a\\cdot x))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(sin(@a* x))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a* cos(@a* x))* sin(sin(@a* x))"
+                }
               }
             ]
           },
@@ -161970,13 +162595,13 @@
             "id": "AUTO6-0339-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              {
-                "kind": "text",
-                "value": "f'(x)=-(@a\\cdot e^(@a\\cdot x+@b))\\cdot "
-              },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(e^(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a* e^(@a* x+@b))* sin(e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -162072,10 +162697,13 @@
             "id": "AUTO6-0340-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=-(@a/(@a\\cdot x+@b))\\cdot " },
+              { "kind": "text", "value": "f'(x) = " },
               {
                 "kind": "inline-math",
-                "math": { "syntaxVersion": 1, "source": "sin(ln(@a* x+@b))" }
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "-(@a/(@a* x+@b))* sin(ln(@a* x+@b))"
+                }
               }
             ]
           },
@@ -162171,7 +162799,14 @@
             "id": "AUTO6-0341-expected-answer",
             "title": "Réponse attendue",
             "content": [
-              { "kind": "text", "value": "f'(x)=(@a)/cos^2(@a\\cdot x+@b)" }
+              { "kind": "text", "value": "f'(x) = " },
+              {
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a)/c*o*s^2*(@a* x+@b)"
+                }
+              }
             ]
           },
           {
@@ -162266,9 +162901,13 @@
             "id": "AUTO6-0342-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(2\\cdot x+@a)/cos^2(x^2+@a\\cdot x+@b)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(2* x+@a)/c*o*s^2*(x^2+@a* x+@b)"
+                }
               }
             ]
           },
@@ -162359,9 +162998,13 @@
             "id": "AUTO6-0343-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(3\\cdot(x+@b)^2)/cos^2((x+@b)^3)"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(3*(x+@b)^2)/c*o*s^2*((x+@b)^3)"
+                }
               }
             ]
           },
@@ -162452,9 +163095,13 @@
             "id": "AUTO6-0344-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot cos(@a\\cdot x))/cos^2(sin(@a\\cdot x))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* cos(@a* x))/c*o*s^2*(sin(@a* x))"
+                }
               }
             ]
           },
@@ -162550,9 +163197,13 @@
             "id": "AUTO6-0345-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a\\cdot e^(@a\\cdot x+@b))/cos^2(e^(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a* e^(@a* x+@b))/c*o*s^2*(e^(@a* x+@b))"
+                }
               }
             ]
           },
@@ -162648,9 +163299,13 @@
             "id": "AUTO6-0346-expected-answer",
             "title": "Réponse attendue",
             "content": [
+              { "kind": "text", "value": "f'(x) = " },
               {
-                "kind": "text",
-                "value": "f'(x)=(@a/(@a\\cdot x+@b))/cos^2(ln(@a\\cdot x+@b))"
+                "kind": "inline-math",
+                "math": {
+                  "syntaxVersion": 1,
+                  "source": "(@a/(@a* x+@b))/c*o*s^2*(ln(@a* x+@b))"
+                }
               }
             ]
           },

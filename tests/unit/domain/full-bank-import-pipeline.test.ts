@@ -393,6 +393,18 @@ describe('pipeline générique de banque complète', () => {
     ]);
   });
 
+  it("splits an f'(x)= derivative definition the same way, keeping the prime in the label", () => {
+    const compiled = compileContent("\\(f'(x)=3\\cdot{k}x^2-4x+1\\)", ['k']);
+    expect(compiled.structured).toBe(1);
+    expect(compiled.segments).toEqual([
+      { kind: 'text', value: "f'(x) = " },
+      {
+        kind: 'inline-math',
+        math: { syntaxVersion: 1, source: '3*@k*x^2-4*x+1' },
+      },
+    ]);
+  });
+
   it('splits a (g∘h)(x)= composition definition the same way', () => {
     const compiled = compileContent('\\((g\\circ h)(x)=a^2x^6\\)', ['a']);
     expect(compiled.structured).toBe(1);
@@ -432,6 +444,16 @@ describe('pipeline générique de banque complète', () => {
         { kind: 'text', value: "Donner l'ensemble de définition de " },
         { kind: 'text', value: 'f(x) = ' },
         { kind: 'inline-math', math: { syntaxVersion: 1, source: 'e^x' } },
+        { kind: 'text', value: '.' },
+      ]);
+    });
+
+    it("splits a bare f'(x)= derivative definition the same way", () => {
+      const compiled = compileContent("On a f'(x)=2x.", []);
+      expect(compiled.segments).toEqual([
+        { kind: 'text', value: 'On a ' },
+        { kind: 'text', value: "f'(x) = " },
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: '2*x' } },
         { kind: 'text', value: '.' },
       ]);
     });
