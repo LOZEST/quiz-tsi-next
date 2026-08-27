@@ -32,8 +32,8 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/authorize
-          tokenUrl: https://PROJECT_REF.supabase.co/auth/v1/oauth/token
+          authorizationUrl: https://PROJECT_REF.supabase.co/functions/v1/gpt-oauth-authorize
+          tokenUrl: https://PROJECT_REF.supabase.co/functions/v1/gpt-oauth-token
           scopes: { email: Identifier le compte Quiz TSI }
   schemas:
     MathSource:
