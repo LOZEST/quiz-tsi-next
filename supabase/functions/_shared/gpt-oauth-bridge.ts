@@ -1,5 +1,5 @@
 export const OPENAI_GPT_REDIRECT_URI =
-  'https://chat.openai.com/aip/g-6911186baceee17745bfc3e22a1736d6a7c5b084/oauth/callback';
+  'https://chat.openai.com/aip/g-960d8a88f7c8d121509cf425d0abfd72f9a00295/oauth/callback';
 
 const STATE_TTL_MS = 10 * 60 * 1000;
 const CODE_TTL_MS = 5 * 60 * 1000;

@@ -18,7 +18,7 @@ Dans la GPT Action OpenAI :
 - méthode d’authentification : `client_secret_basic`
 - scope : `email`
 - callback OpenAI, inchangée :
-  `https://chat.openai.com/aip/g-6911186baceee17745bfc3e22a1736d6a7c5b084/oauth/callback`
+  `https://chat.openai.com/aip/g-960d8a88f7c8d121509cf425d0abfd72f9a00295/oauth/callback`
 
 Dans le client OAuth Supabase existant, ajouter comme redirect URI autorisée :
 
@@ -50,7 +50,7 @@ Exemple de configuration (remplacer tous les placeholders dans le terminal) :
 npx supabase secrets set --project-ref jxoigcpeevegvfscryrg \
   QUIZ_TSI_GPT_OAUTH_CLIENT_ID='<client-id>' \
   QUIZ_TSI_GPT_OAUTH_CLIENT_SECRET='<client-secret>' \
-  QUIZ_TSI_GPT_REDIRECT_URI='https://chat.openai.com/aip/g-6911186baceee17745bfc3e22a1736d6a7c5b084/oauth/callback' \
+  QUIZ_TSI_GPT_REDIRECT_URI='https://chat.openai.com/aip/g-960d8a88f7c8d121509cf425d0abfd72f9a00295/oauth/callback' \
   QUIZ_TSI_OAUTH_BRIDGE_CALLBACK_URL='https://jxoigcpeevegvfscryrg.supabase.co/functions/v1/gpt-oauth-callback' \
   QUIZ_TSI_OAUTH_BRIDGE_SECRET='<base64url-32-octets>'
 ```
