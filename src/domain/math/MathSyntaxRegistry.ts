@@ -78,6 +78,17 @@ export const MATH_SYNTAX_REGISTRY_V1: readonly MathSyntaxCommand[] =
       unicodeAliases: [],
       suggestion: 'Un indice composé doit être entouré de parenthèses.',
     }),
+    command({
+      id: 'derivative',
+      category: 'powers-indices',
+      syntax: "x'",
+      description: 'Dérivée',
+      example: "y'",
+      reservedWord: null,
+      unicodeAliases: [],
+      suggestion:
+        "Répète `'` pour les dérivées successives, par exemple `y''`.",
+    }),
     ...(
       [
         ['sqrt', 'Racine carrée'],

@@ -46,6 +46,7 @@ export type MathAstNode =
     }>
   | Readonly<{ kind: 'power'; base: MathAstNode; exponent: MathAstNode }>
   | Readonly<{ kind: 'subscript'; base: MathAstNode; subscript: MathAstNode }>
+  | Readonly<{ kind: 'derivative'; base: MathAstNode; order: number }>
   | Readonly<{
       kind: 'function';
       name: MathFunctionName;

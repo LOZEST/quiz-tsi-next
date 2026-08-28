@@ -15,6 +15,7 @@ import { tokenizeMathSource, type MathToken } from './MathTokenizer.ts';
 export const MAX_MATH_AST_DEPTH = 32;
 export const MAX_MATH_AST_NODES = 256;
 export const MAX_MATH_LIST_ELEMENTS = 32;
+export const MAX_DERIVATIVE_ORDER = 9;
 
 export type MathParseResult =
   | Readonly<{
@@ -195,19 +196,45 @@ class Parser {
   private parsePostfix(): MathAstNode {
     let base = this.parsePrimary();
     let hasSubscript = false;
+    let hasDerivative = false;
     let hasPower = false;
-    while (this.atValue('_') || this.atValue('^')) {
+    while (this.atValue('_') || this.atValue('^') || this.atDerivativeMark()) {
+      if (this.atDerivativeMark()) {
+        const token = this.advance();
+        if (hasPower) {
+          this.fail(
+            'invalid-postfix-order',
+            "Une dérivée doit précéder une puissance unique. Exemple : `x'^2`.",
+            token,
+            "x'^2",
+          );
+        }
+        if (token.value.length > MAX_DERIVATIVE_ORDER) {
+          this.fail(
+            'derivative-order-too-high',
+            `L’ordre de dérivation ne peut pas dépasser ${MAX_DERIVATIVE_ORDER}.`,
+            token,
+          );
+        }
+        hasDerivative = true;
+        base = this.node({
+          kind: 'derivative',
+          base,
+          order: token.value.length,
+        });
+        continue;
+      }
       const operatorToken = this.advance();
       const operator = operatorToken.value;
       if (
-        (operator === '_' && (hasSubscript || hasPower)) ||
+        (operator === '_' && (hasSubscript || hasDerivative || hasPower)) ||
         (operator === '^' && hasPower)
       ) {
         this.fail(
           'invalid-postfix-order',
-          'Un indice unique doit précéder une puissance unique. Exemple : `x_n^2`.',
+          "Un indice doit précéder une éventuelle dérivée, qui doit précéder une puissance unique. Exemple : `x_n'^2`.",
           operatorToken,
-          'x_n^2',
+          "x_n'^2",
         );
       }
       if (operator === '_') hasSubscript = true;
@@ -226,6 +253,10 @@ class Parser {
       }
     }
     return base;
+  }
+
+  private atDerivativeMark(): boolean {
+    return this.current().value.startsWith("'");
   }
 
   private parsePostfixArgument(operator: string): MathAstNode {

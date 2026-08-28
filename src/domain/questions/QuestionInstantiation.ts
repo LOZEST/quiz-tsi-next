@@ -105,6 +105,11 @@ function resolveAst(
       base: resolveAst(node.base, values),
       subscript: resolveAst(node.subscript, values),
     }) as ResolvedMathAstNode;
+  if (node.kind === 'derivative')
+    return Object.freeze({
+      ...node,
+      base: resolveAst(node.base, values),
+    }) as ResolvedMathAstNode;
   if (node.kind === 'function')
     return Object.freeze({
       ...node,

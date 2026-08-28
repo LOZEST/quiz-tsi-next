@@ -42,6 +42,21 @@ describe('MathTokenizer V1', () => {
     }
   });
 
+  it('merges consecutive apostrophes into one derivative mark', () => {
+    const result = tokenizeMathSource("y''+1");
+    expect(result).toMatchObject({ ok: true });
+    if (result.ok) {
+      expect(
+        result.tokens.slice(0, -1).map(({ kind, value }) => ({ kind, value })),
+      ).toEqual([
+        { kind: 'identifier', value: 'y' },
+        { kind: 'operator', value: "''" },
+        { kind: 'operator', value: '+' },
+        { kind: 'number', value: '1' },
+      ]);
+    }
+  });
+
   it('keeps underscores inside parameter names only', () => {
     const result = tokenizeMathSource('@coefficient_1');
     expect(result).toMatchObject({ ok: true });

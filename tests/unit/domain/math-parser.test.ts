@@ -1,4 +1,5 @@
 import {
+  MAX_DERIVATIVE_ORDER,
   MAX_MATH_AST_DEPTH,
   MAX_MATH_AST_NODES,
   parseMathSource,
@@ -318,6 +319,52 @@ describe('MathParser V1', () => {
       ok: false,
       errors: [{ code: 'invalid-postfix-order' }],
     });
+  });
+
+  it('parses derivative marks in the normative order', () => {
+    expect(ast("y'")).toMatchObject({
+      kind: 'derivative',
+      order: 1,
+      base: { kind: 'identifier', name: 'y' },
+    });
+    expect(ast("y''")).toMatchObject({ kind: 'derivative', order: 2 });
+    expect(ast("y_1'")).toMatchObject({
+      kind: 'derivative',
+      order: 1,
+      base: { kind: 'subscript', base: { kind: 'identifier', name: 'y' } },
+    });
+    expect(ast("y'^2")).toMatchObject({
+      kind: 'power',
+      base: { kind: 'derivative', order: 1 },
+    });
+    expect(ast("y_1'^2")).toMatchObject({
+      kind: 'power',
+      base: {
+        kind: 'derivative',
+        base: { kind: 'subscript' },
+      },
+    });
+    expect(ast("(x^2)'")).toMatchObject({
+      kind: 'derivative',
+      base: { kind: 'power' },
+    });
+    expect(parseMathSourceText("y'_1")).toMatchObject({
+      ok: false,
+      errors: [{ code: 'invalid-postfix-order' }],
+    });
+    expect(parseMathSourceText("y^2'")).toMatchObject({
+      ok: false,
+      errors: [{ code: 'invalid-postfix-order' }],
+    });
+    expect(
+      parseMathSourceText(`y${"'".repeat(MAX_DERIVATIVE_ORDER + 1)}`),
+    ).toMatchObject({
+      ok: false,
+      errors: [{ code: 'derivative-order-too-high' }],
+    });
+    expect(
+      parseMathSourceText(`y${"'".repeat(MAX_DERIVATIVE_ORDER)}`),
+    ).toMatchObject({ ok: true });
   });
 
   it.each([
