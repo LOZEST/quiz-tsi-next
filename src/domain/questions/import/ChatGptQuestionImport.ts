@@ -452,7 +452,7 @@ export function validateChatGptQuestionImport(input: unknown): Result {
       ],
     };
   if (
-    input.schemaVersion !== 1 ||
+    (input.schemaVersion !== 1 && input.schemaVersion !== '1') ||
     typeof input.importId !== 'string' ||
     !input.importId.trim() ||
     input.importId.length > CHATGPT_IMPORT_LIMITS.importIdCharacters ||
