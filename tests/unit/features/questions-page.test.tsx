@@ -468,6 +468,45 @@ describe('QuestionsPage', () => {
     );
   });
 
+  it('renvoie dans la colonne "à valider" une question validée qu’on supprime', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'validated-1',
+          validated: true,
+          status: 'published',
+          prompt: [{ kind: 'text', value: 'Question validée' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    const validatedColumn = screen.getByRole('region', {
+      name: 'question valider',
+    });
+    await user.click(
+      within(validatedColumn).getByRole('button', {
+        name: 'Question validée',
+      }),
+    );
+    await user.click(screen.getByRole('button', { name: 'suprimer' }));
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.status).toBe('archived');
+    expect(saved.validated).toBe(false);
+    const toValidateColumn = await screen.findByRole('region', {
+      name: 'question a valider',
+    });
+    expect(
+      within(toValidateColumn).getByRole('button', {
+        name: 'Question validée',
+      }),
+    ).toBeInTheDocument();
+  });
+
   it('sélectionne plusieurs questions à valider via les cases à cocher et les valide en une seule action', async () => {
     snapshot = {
       ...snapshot,

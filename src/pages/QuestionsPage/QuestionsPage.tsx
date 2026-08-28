@@ -157,6 +157,7 @@ export function QuestionsPage() {
           ...question,
           version: question.version + 1,
           status: 'archived',
+          validated: false,
           updatedAt: now,
         },
         'archive',
