@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type DragEvent } from 'react';
 import { Button } from '@design-system/components/Button/Button';
 import type { Question } from '@domain/questions/Question';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
@@ -17,21 +17,71 @@ function QuestionColumn({
   items,
   selectedId,
   onSelect,
+  bulkSelectedIds,
+  onToggleBulk,
+  draggableItems = false,
+  onDragStartItem,
+  dropTarget = false,
+  onDropItems,
 }: {
   title: string;
   items: readonly Readonly<Question>[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  bulkSelectedIds: ReadonlySet<string>;
+  onToggleBulk: (id: string) => void;
+  draggableItems?: boolean;
+  onDragStartItem?: (event: DragEvent<HTMLLIElement>, id: string) => void;
+  dropTarget?: boolean;
+  onDropItems?: (event: DragEvent<HTMLElement>) => void;
 }) {
+  const [isDragOver, setIsDragOver] = useState(false);
   return (
-    <section className={styles.column} aria-label={title}>
+    <section
+      className={`${styles.column} ${
+        dropTarget && isDragOver ? styles.columnDropActive : ''
+      }`}
+      aria-label={title}
+      onDragOver={
+        dropTarget
+          ? (event) => {
+              event.preventDefault();
+              setIsDragOver(true);
+            }
+          : undefined
+      }
+      onDragLeave={dropTarget ? () => setIsDragOver(false) : undefined}
+      onDrop={
+        dropTarget
+          ? (event) => {
+              setIsDragOver(false);
+              onDropItems?.(event);
+            }
+          : undefined
+      }
+    >
       <h3>{title}</h3>
       {items.length === 0 ? (
         <p className={styles.columnEmpty}>Aucune question.</p>
       ) : (
         <ul className={styles.columnList}>
           {items.map((question) => (
-            <li key={question.id}>
+            <li
+              key={question.id}
+              className={styles.columnItem}
+              draggable={draggableItems}
+              onDragStart={
+                draggableItems
+                  ? (event) => onDragStartItem?.(event, question.id)
+                  : undefined
+              }
+            >
+              <input
+                type="checkbox"
+                checked={bulkSelectedIds.has(question.id)}
+                onChange={() => onToggleBulk(question.id)}
+                aria-label={`Sélectionner ${questionLabel(question)}`}
+              />
               <button
                 type="button"
                 aria-pressed={selectedId === question.id}
@@ -55,6 +105,8 @@ export function QuizzWorkspacePanel({
   onEdit,
   onValidate,
   onDelete,
+  onValidateQuestions,
+  onDeleteQuestions,
   onCreateNew,
   onUpdateMeta,
   onDeleteQuizz,
@@ -67,6 +119,8 @@ export function QuizzWorkspacePanel({
   onEdit: () => void;
   onValidate: (question: Readonly<Question>) => void;
   onDelete: (question: Readonly<Question>) => void;
+  onValidateQuestions: (questions: readonly Readonly<Question>[]) => void;
+  onDeleteQuestions: (questions: readonly Readonly<Question>[]) => void;
   onCreateNew: () => void;
   onUpdateMeta: (updates: { title: string; description: string }) => void;
   onDeleteQuizz: () => void;
@@ -79,6 +133,59 @@ export function QuizzWorkspacePanel({
   const [editingMeta, setEditingMeta] = useState(false);
   const [editTitle, setEditTitle] = useState(quizz.title);
   const [editDescription, setEditDescription] = useState(quizz.description);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleBulk = (id: string) =>
+    setBulkSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const bulkSelectedQuestions = questions.filter((question) =>
+    bulkSelectedIds.has(question.id),
+  );
+  const canBulkValidate = bulkSelectedQuestions.some(
+    (question) => !question.validated,
+  );
+  const canBulkDelete = bulkSelectedQuestions.some(
+    (question) => question.status !== 'archived',
+  );
+  const validateByIds = (ids: readonly string[]) => {
+    const targets = questions.filter(
+      (question) => ids.includes(question.id) && !question.validated,
+    );
+    if (targets.length) onValidateQuestions(targets);
+    setBulkSelectedIds(new Set());
+  };
+  const deleteByIds = (ids: readonly string[]) => {
+    const targets = questions.filter(
+      (question) => ids.includes(question.id) && question.status !== 'archived',
+    );
+    if (targets.length) onDeleteQuestions(targets);
+    setBulkSelectedIds(new Set());
+  };
+  const handleDragStart = (event: DragEvent<HTMLLIElement>, id: string) => {
+    const ids =
+      bulkSelectedIds.has(id) && bulkSelectedIds.size > 1
+        ? Array.from(bulkSelectedIds)
+        : [id];
+    event.dataTransfer.setData('application/json', JSON.stringify(ids));
+    event.dataTransfer.effectAllowed = 'move';
+  };
+  const handleDropOnValidated = (event: DragEvent<HTMLElement>) => {
+    event.preventDefault();
+    const raw = event.dataTransfer.getData('application/json');
+    if (!raw) return;
+    try {
+      const ids: unknown = JSON.parse(raw);
+      if (Array.isArray(ids)) validateByIds(ids as string[]);
+    } catch {
+      // Payload wasn't produced by this panel's drag source — ignore.
+    }
+  };
 
   const startEditingMeta = () => {
     setEditTitle(quizz.title);
@@ -94,18 +201,58 @@ export function QuizzWorkspacePanel({
 
   return (
     <div className={styles.workspace}>
+      {bulkSelectedIds.size > 0 ? (
+        <div
+          className={styles.bulkToolbar}
+          role="toolbar"
+          aria-label="Actions groupées"
+        >
+          <span>{bulkSelectedIds.size} sélectionnée(s)</span>
+          <Button
+            type="button"
+            variant="success"
+            disabled={!canBulkValidate}
+            onClick={() => validateByIds(Array.from(bulkSelectedIds))}
+          >
+            Valider la sélection
+          </Button>
+          <Button
+            type="button"
+            variant="danger"
+            disabled={!canBulkDelete}
+            onClick={() => deleteByIds(Array.from(bulkSelectedIds))}
+          >
+            Supprimer la sélection
+          </Button>
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => setBulkSelectedIds(new Set())}
+          >
+            Annuler la sélection
+          </Button>
+        </div>
+      ) : null}
       <div className={styles.columns}>
         <QuestionColumn
           title="question valider"
           items={validated}
           selectedId={selectedId}
           onSelect={onSelect}
+          bulkSelectedIds={bulkSelectedIds}
+          onToggleBulk={toggleBulk}
+          dropTarget
+          onDropItems={handleDropOnValidated}
         />
         <QuestionColumn
           title="question a valider"
           items={toValidate}
           selectedId={selectedId}
           onSelect={onSelect}
+          bulkSelectedIds={bulkSelectedIds}
+          onToggleBulk={toggleBulk}
+          draggableItems
+          onDragStartItem={handleDragStart}
         />
         <section className={styles.column} aria-label="detaille question">
           <h3>detaille question</h3>
