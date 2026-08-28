@@ -148,8 +148,16 @@ components:
       properties:
         clientEntryId: { type: [string, 'null'], maxLength: 200 }
         classification: { $ref: '#/components/schemas/Classification' }
-        type: { enum: [formula, course, calculation, reflex] }
-        difficulty: { enum: [fundamental, standard, trap, null] }
+        type:
+          {
+            enum: [formula, course, calculation, reflex],
+            description: 'formula = restitution d’une formule ou d’un résultat à mémoriser ; course = question de cours théorique ; calculation = un calcul à mener ; reflex = question rapide chronométrée, toujours avec difficulty=null. Ne jamais inventer un autre type (ex. "open-ended", "short-answer").',
+          }
+        difficulty:
+          {
+            enum: [fundamental, standard, trap, null],
+            description: 'fundamental = notion de base ; standard = niveau normal ; trap = piège destiné à repérer une erreur classique. Toujours null quand type=reflex, jamais null sinon. Ne jamais inventer une autre valeur (ex. "easy", "medium", "hard").',
+          }
         parameterization: { type: 'null' }
         prompt:
           {
