@@ -2,6 +2,7 @@ import type { ResolvedMathAstNode } from '@domain/questions/QuestionInstantiatio
 
 export const MAX_RENDER_MATH_DEPTH = 32;
 export const MAX_RENDER_MATH_NODES = 256;
+export const MAX_RENDER_DERIVATIVE_ORDER = 9;
 
 const escapedSymbols: Readonly<Record<string, string>> = Object.freeze({
   '∂': '\\partial',
@@ -65,6 +66,8 @@ function precedence(raw: unknown): number {
     case 'power':
       return 5;
     case 'subscript':
+      return 6;
+    case 'derivative':
       return 6;
     default:
       return 7;
@@ -164,6 +167,16 @@ export function mathAstToLatex(root: ResolvedMathAstNode): string {
         return `{${child(node.base, 5, true)}}^{${child(node.exponent, 5, true)}}`;
       case 'subscript':
         return `{${child(node.base, 6, true)}}_{${child(node.subscript, 7)}}`;
+      case 'derivative': {
+        if (
+          typeof node.order !== 'number' ||
+          !Number.isInteger(node.order) ||
+          node.order < 1 ||
+          node.order > MAX_RENDER_DERIVATIVE_ORDER
+        )
+          throw new Error('Ordre de dérivée invalide.');
+        return `{${child(node.base, 6)}}^{${'\\prime'.repeat(node.order)}}`;
+      }
       case 'function': {
         const argument = child(node.argument);
         switch (node.name) {

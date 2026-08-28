@@ -36,6 +36,22 @@ describe('safe math rendering', () => {
     ],
     [
       node({
+        kind: 'derivative',
+        base: { kind: 'identifier', name: 'y' },
+        order: 1,
+      }),
+      '{y}^{\\prime}',
+    ],
+    [
+      node({
+        kind: 'derivative',
+        base: { kind: 'identifier', name: 'y' },
+        order: 2,
+      }),
+      '{y}^{\\prime\\prime}',
+    ],
+    [
+      node({
         kind: 'function',
         name: 'sqrt',
         argument: { kind: 'identifier', name: 'x' },
@@ -298,6 +314,30 @@ describe('safe math rendering', () => {
     ],
     [
       {
+        kind: 'derivative',
+        order: 1,
+        base: {
+          kind: 'power',
+          base: { kind: 'identifier', name: 'x' },
+          exponent: { kind: 'number', value: '2' },
+        },
+      },
+      '{\\left({x}^{2}\\right)}^{\\prime}',
+    ],
+    [
+      {
+        kind: 'power',
+        base: {
+          kind: 'derivative',
+          order: 1,
+          base: { kind: 'identifier', name: 'y' },
+        },
+        exponent: { kind: 'number', value: '2' },
+      },
+      '{{y}^{\\prime}}^{2}',
+    ],
+    [
+      {
         kind: 'comparison',
         operator: 'less-than',
         left: {
@@ -377,6 +417,22 @@ describe('safe math rendering', () => {
         upper: {},
       },
       { kind: 'bounded-operator', operator: 'fetch', lower: null, upper: null },
+      { kind: 'derivative', base: { kind: 'identifier', name: 'y' }, order: 0 },
+      {
+        kind: 'derivative',
+        base: { kind: 'identifier', name: 'y' },
+        order: 1.5,
+      },
+      {
+        kind: 'derivative',
+        base: { kind: 'identifier', name: 'y' },
+        order: 'x',
+      },
+      {
+        kind: 'derivative',
+        base: { kind: 'identifier', name: 'y' },
+        order: 10,
+      },
     ])
       expect(() => mathAstToLatex(node(ast))).toThrow();
   });

@@ -143,6 +143,17 @@ export function tokenizeMathSource(value: unknown): MathTokenizeResult {
       if (error) return { ok: false, errors: [error] };
       continue;
     }
+    if (character === "'") {
+      while (index < source.length && source[index] === "'") index += 1;
+      const error = push({
+        kind: 'operator',
+        value: source.slice(start, index),
+        start,
+        end: index,
+      });
+      if (error) return { ok: false, errors: [error] };
+      continue;
+    }
     if (isLatin(character) || isGreek(character)) {
       index += 1;
       while (

@@ -86,6 +86,25 @@ describe('instantiateQuestionVariant', () => {
       },
     });
   });
+  it('résout un paramètre imbriqué dans une dérivée', () => {
+    const question: Question = {
+      ...source(),
+      prompt: [
+        { kind: 'inline-math', math: { syntaxVersion: 1, source: "@a'" } },
+      ],
+    };
+    const result = instantiateQuestionVariant(question, { a: 2, a1: true });
+    if (!result.ok) throw new Error(result.message);
+    expect(result.value.prompt[0]).toMatchObject({
+      kind: 'inline-math',
+      ast: {
+        kind: 'derivative',
+        order: 1,
+        base: { kind: 'resolved-parameter', name: 'a', value: 2 },
+      },
+    });
+  });
+
   it('préserve les sources et produit une sortie profondément immuable', () => {
     const question = source();
     const before = structuredClone(question);
