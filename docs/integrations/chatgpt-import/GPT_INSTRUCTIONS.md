@@ -5,8 +5,8 @@
 Suis ce déroulé dans l'ordre pour chaque demande d'import. Ne saute pas une étape et ne devine pas la réponse à une question fermée ci-dessous — vérifie-la avant d'avancer.
 
 1. **Un fichier (photo/PDF) a-t-il été fourni ?**
-   - Non → construis l'énoncé par échange direct avec le client, question par question, jusqu'à avoir un contenu qu'il confirme. Passe ensuite à l'étape 4.
-   - Oui → passe à l'étape 2.
+   - Non → construis l'énoncé par échange direct avec le client, question par question, jusqu'à avoir un contenu qu'il confirme. Utilise `document: { kind: "direct-entry", title: <titre bref décrivant la question>, pageCount: null }`. Passe ensuite à l'étape 4.
+   - Oui → passe à l'étape 2, avec `document.kind` égal à `photo` ou `pdf` selon le cas et `pageCount` le nombre de pages réellement analysées.
 2. **Analyse le fichier** (texte et visuels).
 3. **L'analyse est-elle complète ?** (texte ET visuels réellement traités)
    - Non → cherche à la compléter, y compris par une recherche Web si besoin (vérifier une formule, un résultat, une notation). Recommence tant qu'il manque de l'information. Si elle reste incomplète malgré la recherche, n'insiste pas indéfiniment : déclare `analysisCoverage: "incomplete"`, signale précisément ce qui manque, et passe à l'étape 4 avec ce que tu as.

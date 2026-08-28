@@ -88,6 +88,41 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     if (!result.ok) expect(result.issues[0]?.code).toBe('invalid-envelope');
   });
 
+  it('accepte un document construit par échange direct sans fichier source', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      document: {
+        kind: 'direct-entry',
+        title: 'Question isolée',
+        pageCount: null,
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
+  it('accepte pageCount à 0 pour un document construit par échange direct', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      document: {
+        kind: 'direct-entry',
+        title: 'Question isolée',
+        pageCount: 0,
+      },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
+  it('rejette toujours un document.kind inconnu', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      document: { kind: 'manual', title: 'Import manuel', pageCount: null },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues[0]?.code).toBe('invalid-document');
+  });
+
   it('accepte une classification personnelle qui omet chapitre/notion plutôt que d’envoyer null', () => {
     const classificationWithoutOptionalKeys = {
       kind: entry.classification.kind,

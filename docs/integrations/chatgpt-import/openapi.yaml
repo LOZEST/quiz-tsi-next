@@ -118,9 +118,9 @@ components:
             required: [kind, title, pageCount],
             properties:
               {
-                kind: { enum: [photo, pdf] },
+                kind: { enum: [photo, pdf, direct-entry] },
                 title: { type: [string, 'null'] },
-                pageCount: { type: [integer, 'null'], minimum: 1 },
+                pageCount: { type: [integer, 'null'], minimum: 0 },
               },
           }
         questions:
