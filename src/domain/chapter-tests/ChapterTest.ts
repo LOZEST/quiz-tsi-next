@@ -40,6 +40,10 @@ export function createChapterTestBlueprint(input: {
   createdAt: string;
   repository: QuestionRepository;
 }): ChapterTestBlueprint | null {
+  // No questionWeights argument: a chapter test stays a neutral, representative
+  // draw even for a user with heavy recurrence history — only free/daily/
+  // weak-points revision (RevisionExperienceProvider.attemptFree) biases toward
+  // missed questions.
   const selected = selectFreeRevisionQuestions(
     input.repository,
     {
