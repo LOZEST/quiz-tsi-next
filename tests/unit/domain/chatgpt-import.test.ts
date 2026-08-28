@@ -70,6 +70,24 @@ describe('ChatGptQuestionImportV1 depuis unknown', () => {
     if (result.ok) expect(result.value.questions).toHaveLength(1);
   });
 
+  it('accepte schemaVersion envoyé comme chaîne "1" par le GPT', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      schemaVersion: '1',
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.questions).toHaveLength(1);
+  });
+
+  it('rejette toujours une schemaVersion différente de 1 ou "1"', () => {
+    const result = validateChatGptQuestionImport({
+      ...payload,
+      schemaVersion: 2,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.issues[0]?.code).toBe('invalid-envelope');
+  });
+
   it('accepte une classification personnelle qui omet chapitre/notion plutôt que d’envoyer null', () => {
     const classificationWithoutOptionalKeys = {
       kind: entry.classification.kind,
