@@ -438,6 +438,76 @@ describe('QuestionsPage', () => {
     );
   });
 
+  it('affiche l’erreur de validation à côté du bouton valider au lieu de rester silencieuse', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question en attente' }],
+          correction: [
+            {
+              id: 'step-1',
+              title: null,
+              content: [{ kind: 'text', value: '' }],
+            },
+          ],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    await user.click(
+      screen.getByRole('button', { name: 'Question en attente' }),
+    );
+    const detail = screen.getByRole('region', { name: 'detaille question' });
+    await user.click(within(detail).getByRole('button', { name: 'valider' }));
+    expect(
+      await within(detail).findByText(/Une correction pédagogique est requise/),
+    ).toBeInTheDocument();
+    expect(saveQuestion).not.toHaveBeenCalled();
+  });
+
+  it('efface l’erreur de validation quand on sélectionne une autre question', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question en attente' }],
+          correction: [
+            {
+              id: 'step-1',
+              title: null,
+              content: [{ kind: 'text', value: '' }],
+            },
+          ],
+        }),
+        question({
+          id: 'pending-2',
+          prompt: [{ kind: 'text', value: 'Autre question' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    await user.click(
+      screen.getByRole('button', { name: 'Question en attente' }),
+    );
+    await user.click(screen.getByRole('button', { name: 'valider' }));
+    expect(
+      await screen.findByText(/Une correction pédagogique est requise/),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Autre question' }));
+    expect(
+      screen.queryByText(/Une correction pédagogique est requise/),
+    ).not.toBeInTheDocument();
+  });
+
   it('supprime une question depuis le panneau détail', async () => {
     snapshot = {
       ...snapshot,
@@ -618,6 +688,107 @@ describe('QuestionsPage', () => {
       chapter: 'Chapitre 1',
     });
   }, 10_000);
+
+  it('supprime et réordonne les blocs de contenu de l’énoncé', async () => {
+    snapshot = { ...snapshot, quizzes: [quizz()] };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    await user.click(
+      screen.getByRole('button', { name: 'ajouter une question a la mains' }),
+    );
+    await user.type(screen.getByLabelText('Chapitre facultatif'), 'Chapitre 1');
+    const prompt = screen.getByRole('group', { name: 'Énoncé' });
+    await user.type(within(prompt).getByLabelText('Texte'), 'Premier bloc');
+    await user.click(within(prompt).getByRole('button', { name: '+ Texte' }));
+    await user.type(
+      within(prompt).getAllByLabelText('Texte')[1] as HTMLElement,
+      'Deuxième bloc',
+    );
+    await user.click(within(prompt).getByRole('button', { name: '+ Texte' }));
+    await user.type(
+      within(prompt).getAllByLabelText('Texte')[2] as HTMLElement,
+      'Troisième bloc',
+    );
+    expect(
+      within(prompt)
+        .getAllByLabelText('Texte')
+        .map((field) => (field as HTMLTextAreaElement).value),
+    ).toEqual(['Premier bloc', 'Deuxième bloc', 'Troisième bloc']);
+
+    await user.click(
+      within(prompt).getByRole('button', { name: 'Supprimer le bloc 2' }),
+    );
+    expect(
+      within(prompt)
+        .getAllByLabelText('Texte')
+        .map((field) => (field as HTMLTextAreaElement).value),
+    ).toEqual(['Premier bloc', 'Troisième bloc']);
+
+    await user.click(
+      within(prompt).getByRole('button', { name: 'Monter le bloc 2' }),
+    );
+    expect(
+      within(prompt)
+        .getAllByLabelText('Texte')
+        .map((field) => (field as HTMLTextAreaElement).value),
+    ).toEqual(['Troisième bloc', 'Premier bloc']);
+    expect(
+      within(prompt).getByRole('button', { name: 'Monter le bloc 1' }),
+    ).toBeDisabled();
+
+    await user.click(
+      screen.getByRole('button', { name: 'Enregistrer le brouillon' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.prompt).toEqual([
+      { kind: 'text', value: 'Troisième bloc' },
+      { kind: 'text', value: 'Premier bloc' },
+    ]);
+  });
+
+  it('réordonne puis supprime une étape de correction', async () => {
+    const structured = question({
+      correction: [
+        {
+          id: 'step-a',
+          title: 'Premier',
+          content: [{ kind: 'text', value: 'Contenu A' }],
+        },
+        {
+          id: 'step-b',
+          title: 'Second',
+          content: [{ kind: 'text', value: 'Contenu B' }],
+        },
+      ],
+    });
+    snapshot = { ...snapshot, quizzes: [quizz()], questions: [structured] };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    await user.click(screen.getByRole('button', { name: /Calculer la somme/ }));
+    await user.click(screen.getByRole('button', { name: /ennoncer/ }));
+    const editor = screen.getByRole('dialog', { name: 'Modifier la question' });
+    await user.click(
+      within(editor).getByRole('button', { name: 'Descendre l’étape 1' }),
+    );
+    await user.click(
+      within(editor).getByRole('button', { name: 'Supprimer l’étape 2' }),
+    );
+    await user.click(
+      within(editor).getByRole('button', { name: 'Enregistrer le brouillon' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalled());
+    const saved = saveQuestion.mock.calls.at(-1)?.[1] as Question;
+    expect(saved.correction).toEqual([
+      {
+        id: 'step-b',
+        title: 'Second',
+        content: [{ kind: 'text', value: 'Contenu B' }],
+      },
+    ]);
+  });
 
   it('affiche une erreur si le stockage local est inaccessible', async () => {
     load.mockRejectedValueOnce('stockage');

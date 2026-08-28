@@ -54,6 +54,7 @@ export function QuizzWorkspacePanel({
   onSelect,
   onEdit,
   onValidate,
+  reviewErrors,
   onDelete,
   onCreateNew,
   onUpdateMeta,
@@ -66,6 +67,7 @@ export function QuizzWorkspacePanel({
   onSelect: (id: string) => void;
   onEdit: () => void;
   onValidate: (question: Readonly<Question>) => void;
+  reviewErrors: readonly { path: string; message: string }[];
   onDelete: (question: Readonly<Question>) => void;
   onCreateNew: () => void;
   onUpdateMeta: (updates: { title: string; description: string }) => void;
@@ -163,6 +165,15 @@ export function QuizzWorkspacePanel({
                   <RawContentPreview segments={selected.hint} />
                 </div>
               )}
+              {reviewErrors.length ? (
+                <ul role="alert" className={styles.validationErrors}>
+                  {reviewErrors.map((entry) => (
+                    <li key={`${entry.path}:${entry.message}`}>
+                      {entry.path} — {entry.message}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
               <div className={styles.detailActions}>
                 {!selected.validated ? (
                   <Button
