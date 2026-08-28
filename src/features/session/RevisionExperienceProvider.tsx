@@ -12,6 +12,7 @@ import {
 import { useAppServices } from '@app/providers/AppServicesProvider';
 import { useWhiteboard } from '@app/providers/WhiteboardProvider';
 import type { PreparedQuestion } from '@domain/questions/PreparedQuestion';
+import { computeQuestionRecurrenceWeights } from '@domain/questions/QuestionRecurrence';
 import { selectFreeRevisionQuestions } from '@domain/questions/QuestionSelection';
 import type { Question } from '@domain/questions/Question';
 import {
@@ -27,6 +28,7 @@ import {
   restoreQuestionAttempt,
   toQuestionAttemptDraft,
   type QuestionAttemptState,
+  type QuestionEvaluation,
 } from '@domain/evaluation/QuestionEvaluation';
 import type {
   DailyPlanState,
@@ -147,6 +149,7 @@ export function RevisionExperienceProvider({
   const request = useRef(0);
   const initialLoaded = useRef(false);
   const mounted = useRef(true);
+  const evaluationsRef = useRef<readonly QuestionEvaluation[]>([]);
 
   const persistAttempt = useCallback(
     (attempt: QuestionAttemptState) => {
@@ -279,6 +282,7 @@ export function RevisionExperienceProvider({
         services.revisionSeedSource.nextSeed(),
         1,
         excludeCurrent && current ? [current.question.id] : [],
+        computeQuestionRecurrenceWeights(evaluationsRef.current),
       );
       if (result.kind !== 'ready') {
         const message =
@@ -377,7 +381,17 @@ export function RevisionExperienceProvider({
     if (initialLoaded.current) return;
     initialLoaded.current = true;
     const id = request.current;
-    void services.refreshQuestionRepositoryForUser(userId).finally(() => {
+    void Promise.all([
+      services.refreshQuestionRepositoryForUser(userId),
+      services.evaluationRepository
+        .listByUser(userId)
+        .then((evaluations) => {
+          evaluationsRef.current = evaluations;
+        })
+        .catch(() => {
+          evaluationsRef.current = [];
+        }),
+    ]).finally(() => {
       queueMicrotask(() => {
         // The user may have already changed mode/filters while this initial
         // load was in flight (refreshQuestionRepositoryForUser hits IndexedDB
@@ -588,6 +602,10 @@ export function RevisionExperienceProvider({
           completed.evaluation,
           userId,
         );
+        evaluationsRef.current = [
+          ...evaluationsRef.current,
+          completed.evaluation,
+        ];
         await services.questionAttemptRepository.save(
           toQuestionAttemptDraft(completed),
           userId,

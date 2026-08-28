@@ -20,6 +20,19 @@ import type { Question } from '@domain/questions/Question';
 import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQuestionRepository';
 import type { DailyPlanState } from '@domain/session/Session';
 import type { QuestionRepository } from '@domain/repositories/QuestionRepository';
+import type { QuestionEvaluation } from '@domain/evaluation/QuestionEvaluation';
+import { computeQuestionRecurrenceWeights } from '@domain/questions/QuestionRecurrence';
+import type * as QuestionRecurrenceModule from '@domain/questions/QuestionRecurrence';
+
+vi.mock('@domain/questions/QuestionRecurrence', async (original) => {
+  const actual = await original<typeof QuestionRecurrenceModule>();
+  return {
+    ...actual,
+    computeQuestionRecurrenceWeights: vi.fn(
+      actual.computeQuestionRecurrenceWeights,
+    ),
+  };
+});
 
 const checkedProgram = validateProgram({
   schemaVersion: 1,
@@ -129,6 +142,55 @@ function repository(questions: Question[]) {
   if (!validated.ok) throw new Error('Banque de test invalide.');
   return new InMemoryQuestionRepository(validated.value);
 }
+function evaluationFixture(
+  overrides: Partial<QuestionEvaluation> = {},
+): QuestionEvaluation {
+  return {
+    id: 'e1',
+    userId: 'test-user',
+    sessionId: 'free:test-user',
+    questionInstanceId: 'i1',
+    questionId: 'q1',
+    questionVersion: 1,
+    questionSource: 'static',
+    partId: 'p1',
+    chapterId: 'c1',
+    notionId: 'n1',
+    questionType: 'course',
+    difficulty: 'standard',
+    hintUsed: false,
+    timeExceeded: false,
+    outcome: 'failed',
+    startedAt: '2026-08-09T10:00:00.000Z',
+    completedAt: '2026-08-09T10:01:00.000Z',
+    ...overrides,
+  };
+}
+function evaluationRepositoryFake(seed: QuestionEvaluation[] = []) {
+  const evaluations = [...seed];
+  return {
+    append: vi.fn((entry: QuestionEvaluation) => {
+      evaluations.push(structuredClone(entry));
+      return Promise.resolve();
+    }),
+    listByUser: vi.fn((userId: string) =>
+      Promise.resolve(evaluations.filter((entry) => entry.userId === userId)),
+    ),
+    listBySession: vi.fn((sessionId: string, userId: string) =>
+      Promise.resolve(
+        evaluations.filter(
+          (entry) => entry.sessionId === sessionId && entry.userId === userId,
+        ),
+      ),
+    ),
+  };
+}
+function questionAttemptRepositoryFake() {
+  return {
+    save: vi.fn().mockResolvedValue(undefined),
+    get: vi.fn().mockResolvedValue(null),
+  };
+}
 const baseServices = (
   questions: Question[],
   extras: Partial<AppServices> = {},
@@ -191,6 +253,7 @@ function Probe() {
       <button onClick={(event) => value.nextQuestion(event.currentTarget)}>
         Suivante
       </button>
+      <button onClick={() => void value.evaluate('failed')}>Évaluer</button>
       <button
         onClick={() =>
           value.setVisibleFilters({
@@ -537,5 +600,50 @@ describe('RevisionExperienceProvider integration', () => {
     const view = render(<Harness services={baseServices([question('q1')])} />);
     await screen.findByText('q1');
     expect(() => view.unmount()).not.toThrow();
+  });
+
+  it('loads the user evaluation history on mount and threads it into the weight computation', async () => {
+    const seeded = evaluationFixture({ id: 'e0' });
+    const evaluationRepository = evaluationRepositoryFake([seeded]);
+    render(
+      <Harness
+        services={baseServices([question('q1')], { evaluationRepository })}
+      />,
+    );
+    await screen.findByText('q1');
+    expect(evaluationRepository.listByUser).toHaveBeenCalledWith('test-user');
+    expect(computeQuestionRecurrenceWeights).toHaveBeenCalledWith([seeded]);
+  });
+
+  it('adds a completed evaluation to the in-memory history so the next selection reflects it', async () => {
+    const evaluationRepository = evaluationRepositoryFake();
+    const questionAttemptRepository = questionAttemptRepositoryFake();
+    const user = userEvent.setup();
+    render(
+      <Harness
+        services={baseServices([question('q1'), question('q2')], {
+          evaluationRepository,
+          questionAttemptRepository,
+        })}
+      />,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId('kind')).toHaveTextContent('ready'),
+    );
+    await user.click(screen.getByText('Évaluer'));
+    await waitFor(() =>
+      expect(evaluationRepository.append).toHaveBeenCalledOnce(),
+    );
+    await user.click(screen.getByText('Suivante'));
+    await waitFor(() => {
+      const lastCall = vi
+        .mocked(computeQuestionRecurrenceWeights)
+        .mock.calls.at(-1);
+      expect(lastCall?.[0]).toHaveLength(1);
+    });
+    const [history] = vi
+      .mocked(computeQuestionRecurrenceWeights)
+      .mock.calls.at(-1) as [QuestionEvaluation[]];
+    expect(history[0]).toMatchObject({ outcome: 'failed' });
   });
 });

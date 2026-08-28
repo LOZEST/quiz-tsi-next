@@ -8,6 +8,7 @@ import {
   type QuestionIndexFilter,
 } from './QuestionBankIndex';
 import { prepareQuestion, type PreparedQuestion } from './PreparedQuestion';
+import { RECURRENCE_POLICY } from './QuestionRecurrence';
 import { createSeededRandom } from './SeededRandom';
 
 export const MAX_QUESTION_SELECTION_COUNT = 1_000;
@@ -54,6 +55,7 @@ export function selectFreeRevisionQuestions(
   seed: unknown,
   quantity: unknown,
   excludedIds: readonly string[] = [],
+  questionWeights: ReadonlyMap<string, number> = new Map(),
 ): QuestionSelectionResult {
   if (
     typeof seed !== 'string' ||
@@ -124,16 +126,19 @@ export function selectFreeRevisionQuestions(
     const ordered = [...stock].sort(
       (a, b) => a.id.localeCompare(b.id) || b.version - a.version,
     );
-    for (let index = ordered.length - 1; index > 0; index -= 1) {
-      const other = random.nextInteger(index + 1);
-      [ordered[index], ordered[other]] = [
-        ordered[other] as Question,
-        ordered[index] as Question,
-      ];
-    }
+    const keyed = ordered.map((question) => {
+      const weight = questionWeights.get(question.id);
+      const safeWeight =
+        weight !== undefined && Number.isFinite(weight) && weight > 0
+          ? weight
+          : RECURRENCE_POLICY.baselineWeight;
+      return { question, key: random.next() ** (1 / safeWeight) };
+    });
+    keyed.sort((a, b) => b.key - a.key);
+    const ranked = keyed.map((entry) => entry.question);
     const items: PreparedQuestion[] = [];
     for (let index = 0; index < (quantity as number); index += 1) {
-      const prepared = prepareQuestion(ordered[index] as Question, seed, index);
+      const prepared = prepareQuestion(ranked[index] as Question, seed, index);
       if (prepared.kind !== 'ready')
         return {
           kind: 'question-preparation-error',

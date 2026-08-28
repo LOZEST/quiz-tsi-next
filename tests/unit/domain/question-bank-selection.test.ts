@@ -624,6 +624,82 @@ describe('index, filtres et sélection', () => {
       selectFreeRevisionQuestions(repository, unmatched, 'seed', 1).kind,
     ).toBe('no-match');
   });
+
+  it('favorise fortement une question à poids élevé, quel que soit le seed', () => {
+    const validated = validateQuestionBankBundle(
+      bundle(['heavy', 'a', 'b', 'c', 'd'].map((id) => question(id))),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const repository = new InMemoryQuestionRepository(validated.value);
+    const weights = new Map([
+      ['heavy', 1000],
+      ['a', 0.001],
+      ['b', 0.001],
+      ['c', 0.001],
+      ['d', 0.001],
+    ]);
+    for (const seed of ['seed-1', 'seed-2', 'seed-3', 'seed-4', 'seed-5']) {
+      const selected = selectFreeRevisionQuestions(
+        repository,
+        allFilters,
+        seed,
+        1,
+        [],
+        weights,
+      );
+      expect(selected.kind === 'ready' && selected.items[0]?.questionId).toBe(
+        'heavy',
+      );
+    }
+  });
+
+  it('ignore sans erreur un poids fourni pour une question hors stock', () => {
+    const validated = validateQuestionBankBundle(
+      bundle([question('a'), question('b')]),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const repository = new InMemoryQuestionRepository(validated.value);
+    const weights = new Map([
+      ['a', 5],
+      ['not-in-stock', 999],
+    ]);
+    const selected = selectFreeRevisionQuestions(
+      repository,
+      allFilters,
+      'seed',
+      2,
+      [],
+      weights,
+    );
+    expect(
+      selected.kind === 'ready' &&
+        new Set(selected.items.map((entry) => entry.questionId)).size,
+    ).toBe(2);
+  });
+
+  it("reste équivalente à un tirage neutre quand aucun poids n'est fourni (forme d'appel du contrôle de chapitre)", () => {
+    const validated = validateQuestionBankBundle(
+      bundle(['a', 'b', 'c'].map((id) => question(id))),
+      program,
+    );
+    expect(validated.ok).toBe(true);
+    if (!validated.ok) return;
+    const repository = new InMemoryQuestionRepository(validated.value);
+    const selected = selectFreeRevisionQuestions(
+      repository,
+      allFilters,
+      'seed',
+      3,
+    );
+    expect(
+      selected.kind === 'ready' &&
+        new Set(selected.items.map((entry) => entry.questionId)).size,
+    ).toBe(3);
+  });
 });
 
 describe('préparation', () => {
