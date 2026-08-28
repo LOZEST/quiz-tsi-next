@@ -113,43 +113,60 @@ export function QuestionsPage() {
   }, [synchronize, userId]);
   const selected =
     workspace.questions.find((question) => question.id === selectedId) ?? null;
-  const mutate = async (
-    question: Readonly<Question>,
-    kind: 'create' | 'update' | 'archive' | 'publish',
-  ) => {
-    await questionWorkspaceRepository.saveQuestion(
-      userId,
+  const validateQuestions = async (targets: readonly Readonly<Question>[]) => {
+    const prepared = targets.map((question) => ({
       question,
-      kind,
-      crypto.randomUUID(),
+      review: prepareQuestionForReview(question),
+    }));
+    const multiple = targets.length > 1;
+    setReviewErrors(
+      prepared.flatMap(({ question, review }) =>
+        review.issues.map((issue) => ({
+          path: multiple
+            ? `${question.id.slice(0, 8)} · ${issue.path}`
+            : issue.path,
+          message: issue.message,
+        })),
+      ),
     );
-    setSelectedId(question.id);
-    await reload();
-  };
-  const validateQuestion = (question: Readonly<Question>) => {
-    const prepared = prepareQuestionForReview(question);
-    setReviewErrors(prepared.issues);
-    if (!prepared.issues.length)
-      void mutate(
+    const now = new Date().toISOString();
+    for (const { question, review } of prepared) {
+      if (review.issues.length) continue;
+      await questionWorkspaceRepository.saveQuestion(
+        userId,
         {
-          ...prepared.normalizedQuestion,
+          ...review.normalizedQuestion,
           version: question.version + 1,
           validated: true,
-          updatedAt: new Date().toISOString(),
+          updatedAt: now,
         },
         'update',
+        crypto.randomUUID(),
       );
+    }
+    await reload();
+  };
+  const validateQuestion = (question: Readonly<Question>) =>
+    void validateQuestions([question]);
+  const deleteQuestions = async (targets: readonly Readonly<Question>[]) => {
+    const now = new Date().toISOString();
+    for (const question of targets) {
+      await questionWorkspaceRepository.saveQuestion(
+        userId,
+        {
+          ...question,
+          version: question.version + 1,
+          status: 'archived',
+          updatedAt: now,
+        },
+        'archive',
+        crypto.randomUUID(),
+      );
+    }
+    await reload();
   };
   const deleteQuestion = (question: Readonly<Question>) =>
-    void mutate(
-      {
-        ...question,
-        version: question.version + 1,
-        status: 'archived',
-        updatedAt: new Date().toISOString(),
-      },
-      'archive',
-    );
+    void deleteQuestions([question]);
   const onCreateQuizz = async (title: string) => {
     const now = new Date().toISOString();
     const quizz = {
@@ -361,6 +378,8 @@ export function QuestionsPage() {
           onEditQuestion={() => setEditing(true)}
           onValidateQuestion={validateQuestion}
           onDeleteQuestion={deleteQuestion}
+          onValidateQuestions={(targets) => void validateQuestions(targets)}
+          onDeleteQuestions={(targets) => void deleteQuestions(targets)}
           onCreateQuestion={() => {
             setSelectedId(null);
             setEditing(true);

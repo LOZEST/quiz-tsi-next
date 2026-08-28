@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -460,6 +466,182 @@ describe('QuestionsPage', () => {
     expect((saveQuestion.mock.calls.at(-1)?.[1] as Question).status).toBe(
       'archived',
     );
+  });
+
+  it('sélectionne plusieurs questions à valider via les cases à cocher et les valide en une seule action', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question un' }],
+        }),
+        question({
+          id: 'pending-2',
+          prompt: [{ kind: 'text', value: 'Question deux' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    const toValidateColumn = screen.getByRole('region', {
+      name: 'question a valider',
+    });
+    await user.click(
+      within(toValidateColumn).getByRole('checkbox', {
+        name: 'Sélectionner Question un',
+      }),
+    );
+    await user.click(
+      within(toValidateColumn).getByRole('checkbox', {
+        name: 'Sélectionner Question deux',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Valider la sélection' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    const savedQuestions = saveQuestion.mock.calls.map((call) => call[1]);
+    expect(savedQuestions.map((item) => item.id).sort()).toEqual([
+      'pending-1',
+      'pending-2',
+    ]);
+    expect(savedQuestions.every((item) => item.validated)).toBe(true);
+  });
+
+  it('sélectionne des questions dans les deux colonnes et les supprime en une seule action', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question un' }],
+        }),
+        question({
+          id: 'validated-1',
+          validated: true,
+          status: 'published',
+          prompt: [{ kind: 'text', value: 'Question validée' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Question un' }),
+    );
+    await user.click(
+      screen.getByRole('checkbox', { name: 'Sélectionner Question validée' }),
+    );
+    await user.click(
+      screen.getByRole('button', { name: 'Supprimer la sélection' }),
+    );
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    const savedQuestions = saveQuestion.mock.calls.map((call) => call[1]);
+    expect(savedQuestions.every((item) => item.status === 'archived')).toBe(
+      true,
+    );
+  });
+
+  it('valide une question par glisser-déposer vers la colonne des questions validées', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question en attente' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    const validatedColumn = screen.getByRole('region', {
+      name: 'question valider',
+    });
+    const toValidateColumn = screen.getByRole('region', {
+      name: 'question a valider',
+    });
+    const dataTransfer = {
+      data: {} as Record<string, string>,
+      setData(format: string, value: string) {
+        this.data[format] = value;
+      },
+      getData(format: string) {
+        return this.data[format] ?? '';
+      },
+      effectAllowed: '',
+    };
+    fireEvent.dragStart(
+      within(toValidateColumn).getByRole('button', {
+        name: 'Question en attente',
+      }),
+      { dataTransfer },
+    );
+    fireEvent.drop(validatedColumn, { dataTransfer });
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(1));
+    expect((saveQuestion.mock.calls[0]?.[1] as Question).validated).toBe(true);
+  });
+
+  it('glisse toute la sélection en cours quand on déplace une question qui en fait partie', async () => {
+    snapshot = {
+      ...snapshot,
+      quizzes: [quizz()],
+      questions: [
+        question({
+          id: 'pending-1',
+          prompt: [{ kind: 'text', value: 'Question un' }],
+        }),
+        question({
+          id: 'pending-2',
+          prompt: [{ kind: 'text', value: 'Question deux' }],
+        }),
+      ],
+    };
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: /Mécanique/ }));
+    const validatedColumn = screen.getByRole('region', {
+      name: 'question valider',
+    });
+    const toValidateColumn = screen.getByRole('region', {
+      name: 'question a valider',
+    });
+    await user.click(
+      within(toValidateColumn).getByRole('checkbox', {
+        name: 'Sélectionner Question un',
+      }),
+    );
+    await user.click(
+      within(toValidateColumn).getByRole('checkbox', {
+        name: 'Sélectionner Question deux',
+      }),
+    );
+    const dataTransfer = {
+      data: {} as Record<string, string>,
+      setData(format: string, value: string) {
+        this.data[format] = value;
+      },
+      getData(format: string) {
+        return this.data[format] ?? '';
+      },
+      effectAllowed: '',
+    };
+    fireEvent.dragStart(
+      within(toValidateColumn).getByRole('button', { name: 'Question un' }),
+      { dataTransfer },
+    );
+    fireEvent.drop(validatedColumn, { dataTransfer });
+    await waitFor(() => expect(saveQuestion).toHaveBeenCalledTimes(2));
+    const validatedIds = saveQuestion.mock.calls
+      .map((call) => call[1].id)
+      .sort();
+    expect(validatedIds).toEqual(['pending-1', 'pending-2']);
   });
 
   it('propose d’ajouter une question via GPT ou manuellement depuis le panneau du quizz', async () => {
