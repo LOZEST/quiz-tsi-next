@@ -26,6 +26,7 @@ export function QuestionsFolderGrid({
   onSelectQuestion,
   onEditQuestion,
   onValidateQuestion,
+  reviewErrors,
   onDeleteQuestion,
   onValidateQuestions,
   onDeleteQuestions,
@@ -50,6 +51,7 @@ export function QuestionsFolderGrid({
   onSelectQuestion: (id: string) => void;
   onEditQuestion: () => void;
   onValidateQuestion: (question: Readonly<Question>) => void;
+  reviewErrors: readonly { path: string; message: string }[];
   onDeleteQuestion: (question: Readonly<Question>) => void;
   onValidateQuestions: (questions: readonly Readonly<Question>[]) => void;
   onDeleteQuestions: (questions: readonly Readonly<Question>[]) => void;
@@ -219,6 +221,7 @@ export function QuestionsFolderGrid({
                 onSelect={onSelectQuestion}
                 onEdit={onEditQuestion}
                 onValidate={onValidateQuestion}
+                reviewErrors={reviewErrors}
                 onDelete={onDeleteQuestion}
                 onValidateQuestions={onValidateQuestions}
                 onDeleteQuestions={onDeleteQuestions}

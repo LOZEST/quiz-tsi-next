@@ -349,15 +349,6 @@ export function QuestionsPage() {
           </Button>
         </p>
       ) : null}
-      {reviewErrors.length ? (
-        <ul role="alert">
-          {reviewErrors.map((entry) => (
-            <li key={`${entry.path}:${entry.message}`}>
-              {entry.path} — {entry.message}
-            </li>
-          ))}
-        </ul>
-      ) : null}
       {loading ? (
         <p role="status">Chargement de la banque…</p>
       ) : (
@@ -375,13 +366,21 @@ export function QuestionsPage() {
           }
           onDeleteQuizz={(quizzId) => void onDeleteQuizz(quizzId)}
           selectedId={selectedId}
-          onSelectQuestion={setSelectedId}
-          onEditQuestion={() => setEditing(true)}
+          onSelectQuestion={(id) => {
+            setReviewErrors([]);
+            setSelectedId(id);
+          }}
+          onEditQuestion={() => {
+            setReviewErrors([]);
+            setEditing(true);
+          }}
           onValidateQuestion={validateQuestion}
+          reviewErrors={reviewErrors}
           onDeleteQuestion={deleteQuestion}
           onValidateQuestions={(targets) => void validateQuestions(targets)}
           onDeleteQuestions={(targets) => void deleteQuestions(targets)}
           onCreateQuestion={() => {
+            setReviewErrors([]);
             setSelectedId(null);
             setEditing(true);
           }}
@@ -456,6 +455,7 @@ export function QuestionsPage() {
               );
             }
             setEditing(false);
+            setReviewErrors([]);
             setSelectedId(question.id);
             await reload();
           }}
@@ -937,6 +937,55 @@ function QuestionEditor({
                   activeMath.current = input;
                 }}
               />
+              <div className={styles.actions}>
+                <button
+                  type="button"
+                  disabled={stepIndex === 0}
+                  aria-label={`Monter l’étape ${stepIndex + 1}`}
+                  onClick={() =>
+                    setCorrectionSteps((items) => {
+                      const current = items[stepIndex];
+                      const previous = items[stepIndex - 1];
+                      if (!current || !previous) return items;
+                      const next = [...items];
+                      next[stepIndex - 1] = current;
+                      next[stepIndex] = previous;
+                      return next;
+                    })
+                  }
+                >
+                  Monter l’étape
+                </button>
+                <button
+                  type="button"
+                  disabled={stepIndex === correctionSteps.length - 1}
+                  aria-label={`Descendre l’étape ${stepIndex + 1}`}
+                  onClick={() =>
+                    setCorrectionSteps((items) => {
+                      const current = items[stepIndex];
+                      const following = items[stepIndex + 1];
+                      if (!current || !following) return items;
+                      const next = [...items];
+                      next[stepIndex] = following;
+                      next[stepIndex + 1] = current;
+                      return next;
+                    })
+                  }
+                >
+                  Descendre l’étape
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Supprimer l’étape ${stepIndex + 1}`}
+                  onClick={() =>
+                    setCorrectionSteps((items) =>
+                      items.filter((_, index) => index !== stepIndex),
+                    )
+                  }
+                >
+                  Supprimer l’étape
+                </button>
+              </div>
             </div>
           ))}
           <button
@@ -1236,45 +1285,84 @@ function SegmentEditor({
       segments.map((item, position) => (position === index ? segment : item)),
     );
   const add = (segment: ContentSegment) => onChange([...segments, segment]);
+  const remove = (index: number) =>
+    onChange(segments.filter((_, position) => position !== index));
+  const move = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    const current = segments[index];
+    const swapped = segments[target];
+    if (!current || !swapped) return;
+    const next = [...segments];
+    next[index] = swapped;
+    next[target] = current;
+    onChange(next);
+  };
   return (
     <fieldset>
       <legend>{label}</legend>
       <div className={styles.segmentList}>
-        {segments.map((segment, index) =>
-          segment.kind === 'text' ? (
-            <label key={index}>
-              Texte
-              <textarea
-                value={segment.value}
-                onChange={(event) =>
-                  replace(index, { kind: 'text', value: event.target.value })
-                }
-              />
-            </label>
-          ) : segment.kind === 'line-break' ? (
-            <p key={index}>Saut de ligne</p>
-          ) : (
-            <label key={index}>
-              {segment.kind === 'inline-math'
-                ? 'Formule en ligne'
-                : 'Formule affichée'}
-              <input
-                value={segment.math.source}
-                onFocus={(event) => onMathFocus(event.currentTarget)}
-                onChange={(event) =>
-                  replace(index, {
-                    kind: segment.kind,
-                    math: {
-                      syntaxVersion: 1,
-                      source: event.target.value,
-                    },
-                  })
-                }
-              />
-              <MathError source={segment.math.source} />
-            </label>
-          ),
-        )}
+        {segments.map((segment, index) => (
+          <div className={styles.segmentItem} key={index}>
+            {segment.kind === 'text' ? (
+              <label>
+                Texte
+                <textarea
+                  value={segment.value}
+                  onChange={(event) =>
+                    replace(index, { kind: 'text', value: event.target.value })
+                  }
+                />
+              </label>
+            ) : segment.kind === 'line-break' ? (
+              <p>Saut de ligne</p>
+            ) : (
+              <label>
+                {segment.kind === 'inline-math'
+                  ? 'Formule en ligne'
+                  : 'Formule affichée'}
+                <input
+                  value={segment.math.source}
+                  onFocus={(event) => onMathFocus(event.currentTarget)}
+                  onChange={(event) =>
+                    replace(index, {
+                      kind: segment.kind,
+                      math: {
+                        syntaxVersion: 1,
+                        source: event.target.value,
+                      },
+                    })
+                  }
+                />
+                <MathError source={segment.math.source} />
+              </label>
+            )}
+            <div className={styles.actions}>
+              <button
+                type="button"
+                disabled={index === 0}
+                aria-label={`Monter le bloc ${index + 1}`}
+                onClick={() => move(index, -1)}
+              >
+                Monter
+              </button>
+              <button
+                type="button"
+                disabled={index === segments.length - 1}
+                aria-label={`Descendre le bloc ${index + 1}`}
+                onClick={() => move(index, 1)}
+              >
+                Descendre
+              </button>
+              <button
+                type="button"
+                aria-label={`Supprimer le bloc ${index + 1}`}
+                onClick={() => remove(index)}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
       <div className={styles.actions}>
         <button type="button" onClick={() => add({ kind: 'text', value: '' })}>

@@ -8,6 +8,8 @@ L'auteur manipule des blocs de texte, formule, saut de ligne structuré, étape 
 
 **+ Formule** crée un bloc avec source simple modifiable, aperçu mathématique immédiat, état valide ou invalide et erreur pédagogique. Une erreur ne vide ni ne réécrit automatiquement la source.
 
+Chaque bloc (texte, formule, saut de ligne) et chaque étape de correction peuvent être déplacés individuellement vers le haut ou le bas et supprimés, y compris pour retirer un bloc resté vide après une réorganisation. Le brouillon reste restaurable et cette suppression n'exige pas de confirmation destructive, à la différence de la suppression d'une variable utilisée.
+
 La chaîne de vérité est : syntaxe mathématique simple → `MathSource` versionné → analyseur sécurisé → arbre mathématique contrôlé → adaptateur KaTeX temporaire → affichage. `MathSource` est la seule source persistée d'une formule : le LaTeX éventuellement généré pour KaTeX et le HTML KaTeX ne sont jamais persistés comme sources de vérité. L'auteur ne saisit et ne voit jamais directement du LaTeX. Une migration versionnée et idempotente convertit un ancien contenu LaTeX persistant vers une forme contrôlée ou le met en quarantaine, sans interpréter silencieusement un contenu invalide.
 
 ## Langage mathématique simplifié
@@ -135,6 +137,8 @@ Avant publication, toute référence correspond à une variable définie ; une r
 Avant publication paramétrée, au moins dix variantes valides sont générées et contrôlées. L'unique exception concerne une question officielle statique dont l'espace valide fini contient moins de dix variantes : le moteur doit alors en apporter la preuve exhaustive, contrôler toutes les variantes distinctes et fixer `validationVariantCount` à ce nombre exact. Cette exception n'est autorisée ni pour une question privée ou partagée, ni après une recherche bornée non exhaustive. Plusieurs énoncés, indices et corrections rendus sont montrés ; l'auteur peut régénérer et modifier domaines ou contraintes. Une mauvaise variante n'est jamais ignorée silencieusement.
 
 Une configuration impossible bloque la publication : « Aucune combinaison ne respecte toutes les règles. Vérifie les intervalles ou supprime une contrainte. » Le brouillon est restaurable, la source n'est jamais perdue après erreur et toute invalidité bloque la publication.
+
+Un refus de validation affiche son motif directement à côté de l'action **valider** qui l'a déclenché, jamais dans une zone hors contexte de la page. Le motif disparaît dès qu'une autre question est sélectionnée ou que la question est de nouveau modifiée, pour ne jamais s'afficher contre le mauvais brouillon.
 
 PR7 fournit un tutoriel couvrant texte, formule, fraction, puissance, indice, symbole, variable, contrainte, dix variantes et publication. Il reste accessible via Banque de questions → Aide → Créer une question. Cette PR ne l'implémente pas.
 

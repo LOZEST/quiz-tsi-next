@@ -132,6 +132,19 @@
   padding-inline-start: var(--qtsi-space-4);
 }
 
+.validationErrors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qtsi-space-1);
+  margin: var(--qtsi-space-3) 0 0;
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  color: var(--qtsi-danger);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-1);
+  font-size: 0.875rem;
+  list-style: none;
+}
+
 .detailActions {
   display: flex;
   gap: var(--qtsi-space-2);

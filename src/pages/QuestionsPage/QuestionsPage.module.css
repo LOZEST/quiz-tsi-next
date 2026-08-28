@@ -70,6 +70,13 @@
   display: grid;
   gap: 12px;
 }
+.segmentItem {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: 10px;
+}
 .editor fieldset {
   min-width: 0;
   margin: 0;
