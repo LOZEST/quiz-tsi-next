@@ -43,6 +43,15 @@ export function IconBank(props: IconProps) {
   );
 }
 
+export function IconMarketplace(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M6.5 8V6a5.5 5.5 0 0 1 11 0v2" />
+      <rect x="3.5" y="8" width="17" height="13" rx="2" />
+    </svg>
+  );
+}
+
 export function IconSettings(props: IconProps) {
   return (
     <svg {...base} {...props}>

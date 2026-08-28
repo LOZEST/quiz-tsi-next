@@ -9,6 +9,7 @@ import { LogoMark } from '@design-system/components/Logo/Logo';
 import {
   IconAdmin,
   IconBank,
+  IconMarketplace,
   IconMenu,
   IconProgress,
   IconSettings,
@@ -25,6 +26,7 @@ const navIcons: Record<string, (props: IconProps) => ReactNode> = {
   '/whiteboard': IconWhiteboard,
   '/progress': IconProgress,
   '/questions': IconBank,
+  '/marketplace': IconMarketplace,
   '/settings': IconSettings,
 };
 
