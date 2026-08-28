@@ -51,7 +51,7 @@ export interface ChatGptQuestionImportV1 {
   readonly analysisCoverage: AnalysisCoverage;
   readonly confirmedByUser: true;
   readonly document: Readonly<{
-    kind: 'photo' | 'pdf';
+    kind: 'photo' | 'pdf' | 'direct-entry';
     title: string | null;
     pageCount: number | null;
   }>;
@@ -489,12 +489,12 @@ export function validateChatGptQuestionImport(input: unknown): Result {
     !record(input.document) ||
     hasOwnDangerousKey(input.document) ||
     !hasOnlyKeys(input.document, ['kind', 'title', 'pageCount']) ||
-    !['photo', 'pdf'].includes(String(input.document.kind)) ||
+    !['photo', 'pdf', 'direct-entry'].includes(String(input.document.kind)) ||
     !text(input.document.title, true) ||
     !(
       input.document.pageCount === null ||
       (Number.isInteger(input.document.pageCount) &&
-        Number(input.document.pageCount) > 0)
+        Number(input.document.pageCount) >= 0)
     )
   )
     return {
