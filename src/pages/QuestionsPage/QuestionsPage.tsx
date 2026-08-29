@@ -579,6 +579,44 @@ function QuestionEditor({
   const [showKeyboard, setShowKeyboard] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const activeMath = useRef<HTMLInputElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const backdrop = backdropRef.current;
+    const viewport = window.visualViewport;
+    if (!backdrop || !viewport) return;
+    const scrollActiveFieldIntoView = () => {
+      const active = document.activeElement;
+      if (
+        active instanceof HTMLElement &&
+        backdrop.contains(active) &&
+        typeof active.scrollIntoView === 'function'
+      ) {
+        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    };
+    const syncViewportSize = () => {
+      backdrop.style.setProperty('--qtsi-vv-top', `${viewport.offsetTop}px`);
+      backdrop.style.setProperty('--qtsi-vv-height', `${viewport.height}px`);
+      scrollActiveFieldIntoView();
+    };
+    syncViewportSize();
+    viewport.addEventListener('resize', syncViewportSize);
+    viewport.addEventListener('scroll', syncViewportSize);
+    return () => {
+      viewport.removeEventListener('resize', syncViewportSize);
+      viewport.removeEventListener('scroll', syncViewportSize);
+    };
+  }, []);
+  const handleFieldFocus = (event: React.FocusEvent<HTMLElement>) => {
+    const target = event.target;
+    const isField =
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement;
+    if (isField && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  };
   const insertSymbol = (symbol: string) => {
     const input = activeMath.current;
     if (!input) return;
@@ -679,23 +717,26 @@ function QuestionEditor({
     await onSave(built.question, initial ? 'update' : 'create', built.quizz);
   };
   return (
-    <div className={styles.editorBackdrop}>
+    <div className={styles.editorBackdrop} ref={backdropRef}>
       <section
         className={styles.editor}
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-title"
+        onFocus={handleFieldFocus}
       >
-        <h2 id="editor-title">
-          {initial ? 'Modifier la question' : 'Nouvelle question'}
-        </h2>
-        <div className={styles.editorFooter}>
-          <button type="button" onClick={onCancel}>
-            Annuler
-          </button>
-          <button type="button" onClick={() => void save()}>
-            Enregistrer le brouillon
-          </button>
+        <div className={styles.editorHeader}>
+          <h2 id="editor-title">
+            {initial ? 'Modifier la question' : 'Nouvelle question'}
+          </h2>
+          <div className={styles.editorFooter}>
+            <button type="button" onClick={onCancel}>
+              Annuler
+            </button>
+            <button type="button" onClick={() => void save()}>
+              Enregistrer le brouillon
+            </button>
+          </div>
         </div>
         {editorErrors.length ? (
           <ul role="alert">
