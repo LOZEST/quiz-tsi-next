@@ -601,6 +601,7 @@ function QuestionEditor({
   const [showShortcuts, setShowShortcuts] = useState(false);
   const activeMath = useRef<HTMLInputElement | null>(null);
   const backdropRef = useRef<HTMLDivElement | null>(null);
+  const headerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const backdrop = backdropRef.current;
     const viewport = window.visualViewport;
@@ -612,7 +613,7 @@ function QuestionEditor({
         backdrop.contains(active) &&
         typeof active.scrollIntoView === 'function'
       ) {
-        active.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        active.scrollIntoView({ block: 'nearest', behavior: 'auto' });
       }
     };
     const syncViewportSize = () => {
@@ -628,6 +629,19 @@ function QuestionEditor({
       viewport.removeEventListener('scroll', syncViewportSize);
     };
   }, []);
+  useEffect(() => {
+    const backdrop = backdropRef.current;
+    const header = headerRef.current;
+    if (!backdrop || !header || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      backdrop.style.setProperty(
+        '--qtsi-header-height',
+        `${header.offsetHeight}px`,
+      );
+    });
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
   const handleFieldFocus = (event: React.FocusEvent<HTMLElement>) => {
     const target = event.target;
     const isField =
@@ -635,7 +649,7 @@ function QuestionEditor({
       target instanceof HTMLTextAreaElement ||
       target instanceof HTMLSelectElement;
     if (isField && typeof target.scrollIntoView === 'function') {
-      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      target.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   };
   const insertSymbol = (symbol: string) => {
@@ -746,7 +760,7 @@ function QuestionEditor({
         aria-labelledby="editor-title"
         onFocus={handleFieldFocus}
       >
-        <div className={styles.editorHeader}>
+        <div className={styles.editorHeader} ref={headerRef}>
           <h2 id="editor-title">
             {initial ? 'Modifier la question' : 'Nouvelle question'}
           </h2>
