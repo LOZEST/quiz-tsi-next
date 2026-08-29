@@ -311,6 +311,18 @@ describe('push distant idempotent', () => {
     });
   });
 
+  it('signale une row distante préexistante invalide au lieu de lever, pour ne pas bloquer tout le lot de push', async () => {
+    const remote = statefulClient({ questions: [{ ...row(), content: null }] });
+    const gateway = new SupabaseQuestionRemoteGateway(remote.client);
+    const operation = questionOperation(questionFromRemoteRow(row()), 1);
+    const result = await gateway.push(operation);
+    expect(result.kind).toBe('remote-row-invalid');
+    if (result.kind === 'remote-row-invalid') {
+      expect(result.message).toContain('q');
+      expect(result.message).toContain('invalide');
+    }
+  });
+
   it('distingue replay et conflit de taxonomie', async () => {
     const course = {
       id: 'c',

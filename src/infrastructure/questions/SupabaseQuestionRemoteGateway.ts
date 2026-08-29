@@ -33,6 +33,9 @@ const normalizeRemoteTimestamp = (value: unknown): unknown => {
   return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : value;
 };
 
+const remoteRowInvalidMessage = (entityId: string, reason: unknown): string =>
+  `Question ${entityId} : ${reason instanceof Error ? reason.message : 'Question distante invalide.'}`;
+
 const normalizeRemoteProvenance = (value: unknown): unknown =>
   isRecord(value)
     ? {
@@ -115,7 +118,20 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
       .maybeSingle()) as { data: unknown };
     const latest = latestResponse.data;
     if (isRecord(latest)) {
-      const remote = questionFromRemoteRow(latest);
+      let remote: Question;
+      try {
+        remote = questionFromRemoteRow(latest);
+      } catch (reason) {
+        // A pre-existing remote row for this question id fails our own
+        // structural validation (e.g. legacy/imported content) — this must
+        // not block every other pending push in the same sync batch (or
+        // future ones) just because this one entity's baseline can't be
+        // read back. Leave the operation queued for a later retry instead.
+        return {
+          kind: 'remote-row-invalid' as const,
+          message: remoteRowInvalidMessage(operation.entityId, reason),
+        };
+      }
       if (remote.version === operation.payload.version)
         return questionsEqual(remote, operation.payload)
           ? { kind: 'accepted' as const }
@@ -132,10 +148,17 @@ export class SupabaseQuestionRemoteGateway implements QuestionRemoteGateway {
       .insert(rowFor(operation.payload));
     if (error?.code === '42501') return { kind: 'permission-denied' as const };
     if (error?.code === '23505') {
-      const replay = await this.readLatestQuestion(operation.entityId);
-      if (replay && questionsEqual(replay, operation.payload))
-        return { kind: 'accepted' as const };
-      if (replay) return { kind: 'conflict' as const, remote: replay };
+      try {
+        const replay = await this.readLatestQuestion(operation.entityId);
+        if (replay && questionsEqual(replay, operation.payload))
+          return { kind: 'accepted' as const };
+        if (replay) return { kind: 'conflict' as const, remote: replay };
+      } catch (reason) {
+        return {
+          kind: 'remote-row-invalid' as const,
+          message: remoteRowInvalidMessage(operation.entityId, reason),
+        };
+      }
     }
     if (error) throw new Error('Synchronisation de la question impossible.');
     return { kind: 'accepted' as const };
