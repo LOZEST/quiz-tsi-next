@@ -1,5 +1,5 @@
 begin;
-select plan(53);
+select plan(59);
 
 insert into auth.users(id, instance_id, aud, role, email, encrypted_password, created_at, updated_at)
 values
@@ -44,6 +44,26 @@ insert into import_dedup_fixture values (jsonb_build_object(
   )
 ));
 grant select on import_dedup_fixture to authenticated;
+
+create temporary table import_case_fixture(payload jsonb);
+insert into import_case_fixture values (jsonb_build_object(
+  'schemaVersion',1,'importId','dedup-fixture-case','analysisCoverage','text-only','confirmedByUser',true,
+  'document',jsonb_build_object('kind','pdf','title','Fixture','pageCount',1),
+  'questions',jsonb_build_array(
+    pg_temp.personal_import_entry('case1',' cours a ',null)
+  )
+));
+grant select on import_case_fixture to authenticated;
+
+create temporary table import_softdeleted_fixture(payload jsonb);
+insert into import_softdeleted_fixture values (jsonb_build_object(
+  'schemaVersion',1,'importId','dedup-fixture-after-delete','analysisCoverage','text-only','confirmedByUser',true,
+  'document',jsonb_build_object('kind','pdf','title','Fixture','pageCount',1),
+  'questions',jsonb_build_array(
+    pg_temp.personal_import_entry('afterdelete1','Cours A',null)
+  )
+));
+grant select on import_softdeleted_fixture to authenticated;
 
 set local role authenticated;
 select set_config('request.jwt.claim.sub','aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',true);
@@ -109,6 +129,12 @@ select is((select count(*)::integer from public.questions where owner_id='cccccc
 select is((select count(distinct classification->>'courseId')::integer from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance#>>'{chatGptImport,entryIndex}' in ('8','9')),2,'même libellé sous deux cours conserve deux cours');
 select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-dedup',(select payload from import_dedup_fixture),'[0,1,2,3,4,5,6,7,8,9]','[]','[]')$$,'replay identique accepté');
 select is((select jsonb_build_array((select count(*) from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),(select count(*) from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture'))),'[3,10]'::jsonb,'replay ne crée aucune ligne');
+select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-case-insensitive',(select payload from import_case_fixture),'[0]','[]','[]')$$,'import avec titre différent en casse/espaces accepté');
+select is((select count(*)::integer from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc'),3,'aucun quiz supplémentaire créé pour une variation de casse/espaces');
+select is((select classification->>'courseId' from public.questions where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and provenance->>'bundleId'='dedup-fixture-case'),(select id::text from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and title='Cours A'),'la question rejoint le quiz existant malgré la casse/espaces différents');
+select lives_ok($$update public.quizzes set deleted_at=now() where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and title='Cours A'$$,'le propriétaire supprime son quiz Cours A');
+select lives_ok($$select public.import_chatgpt_question_drafts('gpt-fixture','hash-after-delete',(select payload from import_softdeleted_fixture),'[0]','[]','[]')$$,'import après suppression du quiz du même nom accepté');
+select is((select count(*)::integer from public.quizzes where owner_id='cccccccc-cccc-4ccc-8ccc-cccccccccccc' and title='Cours A'),2,'un nouveau quiz Cours A est créé, l’ancien supprimé n’est pas réutilisé');
 -- Chemin "official" du RPC d'import GPT : régression du bug classification-unresolved
 -- (public.official_program_notions désynchronisée de src/data/program/official-program-v2.json).
 create function pg_temp.official_import_entry(p_client text, p_chapter text, p_notion text)
