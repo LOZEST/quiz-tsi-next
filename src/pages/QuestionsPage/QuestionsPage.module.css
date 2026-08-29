@@ -49,6 +49,8 @@
 .editorBackdrop {
   position: fixed;
   inset: 0;
+  top: var(--qtsi-vv-top, 0px);
+  height: var(--qtsi-vv-height, 100dvh);
   z-index: 50;
   display: grid;
   place-items: center;
@@ -60,11 +62,23 @@
   width: min(760px, 100%);
   max-height: 100%;
   overflow: auto;
+  overscroll-behavior: contain;
   display: grid;
   gap: 16px;
   padding: 24px;
   border-radius: 18px;
   background: var(--qtsi-surface);
+}
+.editorHeader {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: grid;
+  gap: 16px;
+  margin: -24px -24px 0;
+  padding: 24px 24px 16px;
+  background: var(--qtsi-surface);
+  border-bottom: 1px solid var(--qtsi-border);
 }
 .segmentList {
   display: grid;
