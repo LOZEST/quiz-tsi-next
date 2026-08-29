@@ -63,6 +63,8 @@
   max-height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
+  scroll-padding-top: var(--qtsi-header-height, 14rem);
+  scroll-padding-bottom: 16px;
   display: grid;
   gap: 16px;
   padding: 24px;
