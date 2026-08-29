@@ -59,6 +59,7 @@ export function QuestionsPage() {
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [loading, setLoading] = useState(true);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [showDisplayNameNudge, setShowDisplayNameNudge] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -102,10 +103,18 @@ export function QuestionsPage() {
         questionWorkspaceRepository,
         questionRemoteGateway,
       );
+      setSyncError(null);
       await reload();
-    } catch {
-      // Sync failures are non-fatal: drafts are already safe in IndexedDB
-      // and will retry on the next reload/login.
+    } catch (reason) {
+      // Sync failures are non-fatal: drafts stay safe in IndexedDB and the
+      // next reload/login retries — but silently doing nothing left users
+      // with no way to tell "still syncing" from "stuck failing", so surface
+      // the reason and let them retry manually.
+      setSyncError(
+        reason instanceof Error
+          ? `Synchronisation impossible : ${reason.message}`
+          : 'Synchronisation impossible : erreur inconnue.',
+      );
     }
   }, [questionRemoteGateway, questionWorkspaceRepository, reload, userId]);
   useEffect(() => {
@@ -329,6 +338,18 @@ export function QuestionsPage() {
         </div>
       ) : null}
       {storageError ? <p role="alert">{storageError}</p> : null}
+      {syncError ? (
+        <p role="alert">
+          {syncError}{' '}
+          <Button
+            type="button"
+            variant="quiet"
+            onClick={() => void synchronize()}
+          >
+            Réessayer
+          </Button>
+        </p>
+      ) : null}
       {showDisplayNameNudge ? (
         <p role="status">
           Ton profil n’a pas de nom affiché : les autres utilisateurs verront «

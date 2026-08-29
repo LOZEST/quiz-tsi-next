@@ -1035,6 +1035,25 @@ describe('QuestionsPage', () => {
     );
   });
 
+  it('affiche une erreur si la synchronisation distante échoue, avec un bouton pour réessayer', async () => {
+    questionRemoteGateway.pullRecent.mockRejectedValueOnce(
+      new Error('Réseau indisponible.'),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    expect(
+      await screen.findByText(
+        'Synchronisation impossible : Réseau indisponible.',
+      ),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Réessayer' }));
+    await waitFor(() =>
+      expect(
+        screen.queryByText('Synchronisation impossible : Réseau indisponible.'),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
   it('préserve indice structuré, étapes de correction, type et tags à l’édition', async () => {
     const structured = question({
       hint: [
