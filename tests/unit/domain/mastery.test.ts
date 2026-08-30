@@ -140,16 +140,16 @@ describe('mastery projection and policy v1', () => {
 
 describe('daily plan and weak points', () => {
   it('returns none, ready and completed while only successes complete work', () => {
-    expect(createDailyPlan([], 'u1', NOW, boundary).kind).toBe(
+    expect(createDailyPlan([], 'u1', NOW, new Set(), boundary).kind).toBe(
       'none-scheduled',
     );
     const oldFailure = event(1, {
       result: 'failed',
       occurredAt: '2026-08-01T10:00:00.000Z',
     });
-    expect(createDailyPlan([oldFailure], 'u1', NOW, boundary).kind).toBe(
-      'ready',
-    );
+    expect(
+      createDailyPlan([oldFailure], 'u1', NOW, new Set(), boundary).kind,
+    ).toBe('ready');
     const partial = event(2, {
       result: 'partial',
       occurredAt: '2026-08-10T08:00:00.000Z',
@@ -159,13 +159,25 @@ describe('daily plan and weak points', () => {
       occurredAt: '2026-08-10T09:00:00.000Z',
     });
     expect(
-      createDailyPlan([oldFailure, partial, failed], 'u1', NOW, boundary).kind,
+      createDailyPlan(
+        [oldFailure, partial, failed],
+        'u1',
+        NOW,
+        new Set(),
+        boundary,
+      ).kind,
     ).toBe('ready');
     const successes = [4, 5, 6].map((index) =>
       event(index, { occurredAt: `2026-08-10T1${index - 4}:00:00.000Z` }),
     );
     expect(
-      createDailyPlan([oldFailure, ...successes], 'u1', NOW, boundary).kind,
+      createDailyPlan(
+        [oldFailure, ...successes],
+        'u1',
+        NOW,
+        new Set(),
+        boundary,
+      ).kind,
     ).toBe('completed');
   });
 
@@ -178,11 +190,12 @@ describe('daily plan and weak points', () => {
       notionId: 'new-today',
       occurredAt: '2026-08-10T10:00:00.000Z',
     });
-    const first = createDailyPlan([old], 'u1', NOW, boundary);
+    const first = createDailyPlan([old], 'u1', NOW, new Set(), boundary);
     const later = createDailyPlan(
       [old, today],
       'u1',
       NOW + 3_600_000,
+      new Set(),
       boundary,
     );
     expect(
@@ -190,6 +203,45 @@ describe('daily plan and weak points', () => {
     ).toEqual(
       first.kind === 'ready' ? first.items.map((item) => item.notionId) : [],
     );
+  });
+
+  it('schedules an explicitly activated unit with no history as a first review today', () => {
+    const plan = createDailyPlan([], 'u1', NOW, new Set(['NUM-F01']), boundary);
+    expect(plan.kind).toBe('ready');
+    expect(plan.kind === 'ready' && plan.items).toEqual([
+      {
+        notionId: 'NUM-F01',
+        plannedCount: 3,
+        successCount: 0,
+        partialCount: 0,
+        failedCount: 0,
+        reason: 'Nouvelle activation : première révision.',
+        recommendedDifficulty: 'fundamental',
+        dueAt: null,
+      },
+    ]);
+  });
+
+  it('does not duplicate a unit that is both activated and already scheduled from history', () => {
+    const oldFailure = event(1, {
+      result: 'failed',
+      occurredAt: '2026-08-01T10:00:00.000Z',
+    });
+    const plan = createDailyPlan(
+      [oldFailure],
+      'u1',
+      NOW,
+      new Set(['n1']),
+      boundary,
+    );
+    expect(plan.kind === 'ready' && plan.items).toHaveLength(1);
+  });
+
+  it('does not schedule an activated unit practiced only today (not yet due)', () => {
+    const today = event(1, { occurredAt: '2026-08-10T10:00:00.000Z' });
+    expect(
+      createDailyPlan([today], 'u1', NOW, new Set(['n1']), boundary).kind,
+    ).toBe('none-scheduled');
   });
 
   it('calibrates before both thresholds then ranks deterministically, caps at five and invents no errors', () => {

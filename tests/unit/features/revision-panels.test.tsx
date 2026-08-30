@@ -6,9 +6,16 @@ import { InMemoryQuestionRepository } from '@infrastructure/questions/InMemoryQu
 import { initialFreeRevisionFilters } from '@features/session/RevisionExperienceProvider';
 import type { RevisionExperienceState } from '@features/session/RevisionExperienceProvider';
 import type * as RevisionExperienceModule from '@features/session/RevisionExperienceProvider';
-import type { FreeRevisionFilters, SessionMode } from '@domain/session/Session';
+import type {
+  DailyPlanItem,
+  FreeRevisionFilters,
+  SessionMode,
+  WeakPointItem,
+} from '@domain/session/Session';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
 import type { SubscribedQuizzContent } from '@domain/quizz/QuizzMarketplaceGateway';
+import type { RevisionSeriesSession } from '@domain/session/RevisionSeries';
+import type { DailyActivation } from '@domain/repositories/RevisionStateRepositories';
 
 const parsed = validateProgram({
   schemaVersion: 1,
@@ -32,6 +39,8 @@ let state: RevisionExperienceState = { kind: 'no-bank', message: 'vide' };
 let filters: FreeRevisionFilters = initialFreeRevisionFilters;
 let quizzes: readonly Quizz[] = [];
 let subscribedQuizzes: readonly SubscribedQuizzContent[] = [];
+let activeSeries: RevisionSeriesSession | null = null;
+let dailyActivations: readonly DailyActivation[] = [];
 const setMode = vi.fn((value: SessionMode) => {
   mode = value;
 });
@@ -41,6 +50,16 @@ const setVisibleFilters = vi.fn(
     filters = value;
   },
 );
+const startDailyItem = vi.fn<
+  (item: DailyPlanItem, unitLabel: string) => boolean
+>(() => true);
+const startConsolidationItem = vi.fn<
+  (item: WeakPointItem, unitLabel: string) => boolean
+>(() => true);
+const exitSeries = vi.fn();
+const activateDailyUnit = vi.fn(() => Promise.resolve());
+const deactivateDailyUnit = vi.fn(() => Promise.resolve());
+const listDailyActivations = vi.fn(() => Promise.resolve(dailyActivations));
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -83,6 +102,13 @@ vi.mock('@features/session/RevisionExperienceProvider', async (original) => {
       pendingChange: false,
       cancelChange: vi.fn(),
       confirmChange: vi.fn(),
+      activeSeries,
+      startDailyItem,
+      startConsolidationItem,
+      exitSeries,
+      activateDailyUnit,
+      deactivateDailyUnit,
+      listDailyActivations,
     }),
   };
 });
@@ -96,6 +122,8 @@ describe('RevisionDrawerPanel', () => {
     filters = initialFreeRevisionFilters;
     quizzes = [];
     subscribedQuizzes = [];
+    activeSeries = null;
+    dailyActivations = [];
     vi.clearAllMocks();
   });
   it('shows the exact four paths and ordered dependent filters', async () => {
@@ -162,11 +190,11 @@ describe('RevisionDrawerPanel', () => {
       { kind: 'unavailable', message: 'Indisponible.' } as const,
       'Indisponible.',
     ],
-  ])('renders daily states', (daily, text) => {
+  ])('renders daily states', async (daily, text) => {
     mode = 'daily';
     state = { kind: 'daily', state: daily };
     render(<RevisionDrawerPanel />);
-    expect(screen.getByText(text)).toBeInTheDocument();
+    expect(await screen.findByText(text)).toBeInTheDocument();
   });
 
   it('renders determined and indeterminate weak point calibration', () => {
@@ -374,5 +402,149 @@ describe('RevisionDrawerPanel', () => {
     };
     render(<RevisionDrawerPanel />);
     expect(await screen.findByText('Mon quizz')).toBeInTheDocument();
+  });
+
+  it('renders a clickable bubble for a due daily item and launches its series on click', async () => {
+    mode = 'daily';
+    state = {
+      kind: 'daily',
+      state: {
+        kind: 'ready',
+        items: [
+          {
+            notionId: 'n1',
+            plannedCount: 3,
+            successCount: 1,
+            partialCount: 0,
+            failedCount: 0,
+            reason: 'Révision arrivée à échéance.',
+            recommendedDifficulty: 'standard',
+            dueAt: null,
+          },
+        ],
+      },
+    };
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    const bubble = await screen.findByRole('button', { name: /Notion/ });
+    expect(bubble).toHaveTextContent('2 à faire aujourd’hui');
+    await user.click(bubble);
+    expect(startDailyItem).toHaveBeenCalledTimes(1);
+    expect(startDailyItem.mock.calls[0]?.[0]).toMatchObject({ notionId: 'n1' });
+    expect(startDailyItem.mock.calls[0]?.[1]).toBe('Notion');
+  });
+
+  it('excludes an already-completed daily item from the bubble list', async () => {
+    mode = 'daily';
+    state = {
+      kind: 'daily',
+      state: {
+        kind: 'ready',
+        items: [
+          {
+            notionId: 'n1',
+            plannedCount: 2,
+            successCount: 2,
+            partialCount: 0,
+            failedCount: 0,
+            reason: 'x',
+            recommendedDifficulty: 'standard',
+            dueAt: null,
+          },
+        ],
+      },
+    };
+    render(<RevisionDrawerPanel />);
+    await screen.findByRole('button', {
+      name: 'Gérer mes révisions régulières',
+    });
+    expect(screen.queryByRole('button', { name: /Notion/ })).toBeNull();
+  });
+
+  it('renders a clickable bubble for a weak point and launches consolidation on click', async () => {
+    mode = 'weak-points';
+    state = {
+      kind: 'weak-points',
+      state: {
+        kind: 'ready',
+        items: [
+          {
+            notionId: 'n1',
+            priority: 1,
+            recommendedDifficulty: 'fundamental',
+            rationale: 'x',
+            masteryEstimate: 40,
+            lastActivityAt: null,
+            successCount: 1,
+            partialCount: 1,
+            failedCount: 2,
+            recurringErrors: [],
+          },
+        ],
+      },
+    };
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    const bubble = screen.getByRole('button', { name: /Notion/ });
+    expect(bubble).toHaveTextContent('Priorité 1');
+    await user.click(bubble);
+    expect(startConsolidationItem).toHaveBeenCalledTimes(1);
+    expect(startConsolidationItem.mock.calls[0]?.[0]).toMatchObject({
+      notionId: 'n1',
+    });
+    expect(startConsolidationItem.mock.calls[0]?.[1]).toBe('Notion');
+  });
+
+  it('activates a notion for daily rotation through the management form', async () => {
+    mode = 'daily';
+    state = { kind: 'daily', state: { kind: 'none-scheduled' } };
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Gérer mes révisions régulières',
+      }),
+    );
+    await user.selectOptions(screen.getByLabelText('Chapitre'), 'c1');
+    await user.selectOptions(screen.getByLabelText('Notion'), 'n1');
+    await user.click(screen.getByRole('button', { name: 'Activer' }));
+    expect(activateDailyUnit).toHaveBeenCalledWith('n1');
+  });
+
+  it('lists an activated unit and removes it via Retirer', async () => {
+    mode = 'daily';
+    state = { kind: 'daily', state: { kind: 'none-scheduled' } };
+    dailyActivations = [
+      { unitId: 'n1', activatedAt: '2026-08-09T00:00:00.000Z' },
+    ];
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'Gérer mes révisions régulières',
+      }),
+    );
+    const remove = await screen.findByRole('button', { name: 'Retirer' });
+    await user.click(remove);
+    expect(deactivateDailyUnit).toHaveBeenCalledWith('n1');
+  });
+
+  it('shows series progress and exits back to the list', async () => {
+    mode = 'daily';
+    state = { kind: 'no-bank', message: 'vide' };
+    activeSeries = {
+      blueprint: {
+        kind: 'daily',
+        unitLabel: 'Notion 1',
+        orderedQuestionInstances: [{}, {}, {}],
+      },
+      currentIndex: 1,
+      status: 'active',
+    } as unknown as RevisionSeriesSession;
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    expect(screen.getByText('Question 2 / 3')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Quitter la série' }));
+    expect(exitSeries).toHaveBeenCalledTimes(1);
   });
 });

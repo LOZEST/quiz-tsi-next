@@ -17,8 +17,17 @@ import { selectFreeRevisionQuestions } from '@domain/questions/QuestionSelection
 import type { Question } from '@domain/questions/Question';
 import {
   createQuestionInstance,
+  type FrozenQuestionInstance,
   type QuestionInstance,
 } from '@domain/questions/Question';
+import type { ProgramIndex } from '@domain/program/Program';
+import type { DailyActivation } from '@domain/repositories/RevisionStateRepositories';
+import {
+  advanceRevisionSeries,
+  createBoundedRevisionBlueprint,
+  createConsolidationBlueprint,
+  type RevisionSeriesSession,
+} from '@domain/session/RevisionSeries';
 import {
   completeQuestionAttempt,
   createQuestionAttempt,
@@ -31,9 +40,11 @@ import {
   type QuestionEvaluation,
 } from '@domain/evaluation/QuestionEvaluation';
 import type {
+  DailyPlanItem,
   DailyPlanState,
   FreeRevisionFilters,
   SessionMode,
+  WeakPointItem,
   WeakPointsState,
 } from '@domain/session/Session';
 import {
@@ -57,6 +68,26 @@ export type ActivePreparedQuestion = Readonly<{
   question: Readonly<Question>;
   reflexDeadline: number | null;
 }>;
+
+// A daily-plan/weak-points unit id is a notion id for official content and a
+// quizz id for a personal quizz (see ProgressPlanning's unitId()) — mirrors
+// the same disambiguation RevisionDrawerPanel's resolveUnitLabel() already
+// does, translated into a query scoped to that single unit.
+function filtersForUnit(
+  unitId: string,
+  program: ProgramIndex | null,
+): FreeRevisionFilters {
+  const isOfficialNotion = Boolean(program?.getNotion(unitId));
+  return {
+    part: { kind: 'all' },
+    chapter: isOfficialNotion
+      ? { kind: 'all' }
+      : { kind: 'one', value: unitId },
+    notion: isOfficialNotion ? { kind: 'one', value: unitId } : { kind: 'all' },
+    questionType: { kind: 'all' },
+    difficulty: { kind: 'all' },
+  };
+}
 
 export type RevisionExperienceState =
   | { kind: 'idle' }
@@ -112,6 +143,13 @@ interface RevisionExperienceValue {
   ) => Promise<boolean>;
   navigateChapterTest: (index: number) => Promise<void>;
   finishChapterTest: (status: 'submitted' | 'abandoned') => Promise<void>;
+  activeSeries: RevisionSeriesSession | null;
+  startDailyItem: (item: DailyPlanItem, unitLabel: string) => boolean;
+  startConsolidationItem: (item: WeakPointItem, unitLabel: string) => boolean;
+  exitSeries: () => void;
+  activateDailyUnit: (unitId: string) => Promise<void>;
+  deactivateDailyUnit: (unitId: string) => Promise<void>;
+  listDailyActivations: () => Promise<readonly DailyActivation[]>;
   pendingChange: boolean;
   dialogTrigger: HTMLElement | null;
   cancelChange: () => void;
@@ -144,6 +182,8 @@ export function RevisionExperienceProvider({
   const [chapterTest, setChapterTest] = useState<ChapterTestSession | null>(
     null,
   );
+  const [activeSeries, setActiveSeries] =
+    useState<RevisionSeriesSession | null>(null);
   const [helpTrigger, setHelpTrigger] = useState<HTMLElement | null>(null);
   const dialogTrigger: HTMLElement | null = null;
   const request = useRef(0);
@@ -221,13 +261,55 @@ export function RevisionExperienceProvider({
     [services, userId],
   );
 
-  useEffect(
-    () => () => {
+  const loadSeriesQuestion = useCallback(
+    (instance: FrozenQuestionInstance) => {
+      const content = instantiateQuestionVariant(
+        instance.frozenQuestion,
+        instance.parameterValues,
+      );
+      if (!content.ok) return;
+      const now = new Date(services.clock.now()).toISOString();
+      const attempt = createQuestionAttempt({
+        id: `${instance.id}:attempt`,
+        userId,
+        instance,
+        startedAt: now,
+      });
+      if (!mounted.current) return;
+      setHintOpen(false);
+      setCorrectionOpen(false);
+      setState({
+        kind: 'ready',
+        prepared: {
+          questionId: instance.questionId,
+          questionVersion: instance.questionVersion,
+          seed: instance.seed,
+          parameterValues: instance.parameterValues,
+          content: content.value,
+        },
+        question: instance.frozenQuestion,
+        instance,
+        attempt,
+        reflexDeadline:
+          instance.frozenQuestion.type === 'reflex'
+            ? services.clock.now() + 60_000
+            : null,
+      });
+    },
+    [services, userId],
+  );
+
+  useEffect(() => {
+    // StrictMode double-invokes effects in dev (setup → cleanup → setup)
+    // without unmounting the component; resetting the flag on setup keeps
+    // `mounted` accurate instead of getting stuck at `false` after that
+    // simulated cycle.
+    mounted.current = true;
+    return () => {
       mounted.current = false;
       request.current += 1;
-    },
-    [],
-  );
+    };
+  }, []);
 
   const showAttemptFailure = useCallback(
     (next: RevisionExperienceState, message: string) => {
@@ -406,10 +488,17 @@ export function RevisionExperienceProvider({
   const enterMode = useCallback(
     (next: SessionMode, clearDraft = false) => {
       const id = ++request.current;
+      setActiveSeries(null);
       if (next === 'free') {
         attemptFree(activeFilters, false, clearDraft);
         return;
       }
+      // The merged question pool is only refreshed once at mount; re-run it
+      // here so a marketplace quizz subscribed to during the session (or a
+      // personal quizz just published) is picked up before building a
+      // chapter test / daily / consolidation series, without requiring a
+      // full page reload.
+      void services.refreshQuestionRepositoryForUser(userId);
       if (next === 'chapter-test') {
         if (clearDraft) board.clearDraft();
         setModeState(next);
@@ -459,6 +548,99 @@ export function RevisionExperienceProvider({
       state.kind,
       userId,
     ],
+  );
+
+  const startDailyItem = useCallback(
+    (item: DailyPlanItem, unitLabel: string) => {
+      const filters = filtersForUnit(item.notionId, services.programIndex);
+      const now = new Date(services.clock.now()).toISOString();
+      const sessionId = `daily:${userId}:${services.revisionSeedSource.nextSeed()}`;
+      const blueprint = createBoundedRevisionBlueprint({
+        id: services.revisionSeedSource.nextSeed(),
+        userId,
+        sessionId,
+        kind: 'daily',
+        unitLabel,
+        filters,
+        questionCount: Math.max(1, item.plannedCount - item.successCount),
+        seed: services.revisionSeedSource.nextSeed(),
+        createdAt: now,
+        repository: services.questionRepository,
+        questionWeights: computeQuestionRecurrenceWeights(
+          evaluationsRef.current,
+        ),
+      });
+      if (!blueprint) {
+        setNotice('Aucune question disponible pour cette révision.');
+        return false;
+      }
+      board.clearDraft();
+      setModeState('daily');
+      setNotice(null);
+      setActiveSeries({ blueprint, currentIndex: 0, status: 'active' });
+      loadSeriesQuestion(blueprint.orderedQuestionInstances[0]!);
+      return true;
+    },
+    [board, loadSeriesQuestion, services, userId],
+  );
+
+  const startConsolidationItem = useCallback(
+    (item: WeakPointItem, unitLabel: string) => {
+      const filters = filtersForUnit(item.notionId, services.programIndex);
+      const now = new Date(services.clock.now()).toISOString();
+      const sessionId = `weak-points:${userId}:${services.revisionSeedSource.nextSeed()}`;
+      const blueprint = createConsolidationBlueprint({
+        id: services.revisionSeedSource.nextSeed(),
+        userId,
+        sessionId,
+        unitLabel,
+        filters,
+        evaluations: evaluationsRef.current,
+        maxCount: 20,
+        seed: services.revisionSeedSource.nextSeed(),
+        createdAt: now,
+        repository: services.questionRepository,
+        questionWeights: computeQuestionRecurrenceWeights(
+          evaluationsRef.current,
+        ),
+      });
+      if (!blueprint) {
+        setNotice('Aucune question disponible pour cette consolidation.');
+        return false;
+      }
+      board.clearDraft();
+      setModeState('weak-points');
+      setNotice(null);
+      setActiveSeries({ blueprint, currentIndex: 0, status: 'active' });
+      loadSeriesQuestion(blueprint.orderedQuestionInstances[0]!);
+      return true;
+    },
+    [board, loadSeriesQuestion, services, userId],
+  );
+
+  const activateDailyUnit = useCallback(
+    async (unitId: string) => {
+      await services.dailyActivationRepository.activate(
+        userId,
+        unitId,
+        new Date(services.clock.now()).toISOString(),
+      );
+      if (mode === 'daily') enterMode('daily', false);
+    },
+    [enterMode, mode, services, userId],
+  );
+
+  const deactivateDailyUnit = useCallback(
+    async (unitId: string) => {
+      await services.dailyActivationRepository.deactivate(userId, unitId);
+      if (mode === 'daily') enterMode('daily', false);
+    },
+    [enterMode, mode, services, userId],
+  );
+
+  const listDailyActivations = useCallback(
+    () => services.dailyActivationRepository.list(userId),
+    [services, userId],
   );
 
   const requestFree = useCallback(
@@ -546,6 +728,23 @@ export function RevisionExperienceProvider({
             setChapterTest(moved);
             await loadChapterQuestion(moved, moved.currentIndex);
           })();
+          return;
+        }
+        if ((mode === 'daily' || mode === 'weak-points') && activeSeries) {
+          const nextIndex = activeSeries.currentIndex + 1;
+          board.clearDraft();
+          if (
+            nextIndex >= activeSeries.blueprint.orderedQuestionInstances.length
+          ) {
+            setNotice('Série terminée. Bravo !');
+            enterMode(mode, false);
+            return;
+          }
+          const moved = advanceRevisionSeries(activeSeries, nextIndex);
+          setActiveSeries(moved);
+          loadSeriesQuestion(
+            moved.blueprint.orderedQuestionInstances[nextIndex]!,
+          );
           return;
         }
         requestFree(activeFilters, true, trigger);
@@ -670,6 +869,17 @@ export function RevisionExperienceProvider({
         await services.chapterTestRepository.save(finished, userId);
         setChapterTest(finished);
       },
+      activeSeries,
+      startDailyItem,
+      startConsolidationItem,
+      exitSeries: () => {
+        if (!activeSeries) return;
+        board.clearDraft();
+        enterMode(mode, false);
+      },
+      activateDailyUnit,
+      deactivateDailyUnit,
+      listDailyActivations,
       pendingChange: pending !== null,
       dialogTrigger,
       cancelChange,
@@ -677,14 +887,20 @@ export function RevisionExperienceProvider({
     }),
     [
       activeFilters,
+      activateDailyUnit,
+      activeSeries,
       board,
       cancelChange,
       confirmChange,
+      deactivateDailyUnit,
       dialogTrigger,
       correctionOpen,
       chapterTest,
+      enterMode,
       helpTrigger,
       hintOpen,
+      listDailyActivations,
+      loadSeriesQuestion,
       mode,
       notice,
       loadChapterQuestion,
@@ -693,6 +909,8 @@ export function RevisionExperienceProvider({
       requestFree,
       setMode,
       setFreeFilters,
+      startConsolidationItem,
+      startDailyItem,
       state,
       services,
       visibleFilters,

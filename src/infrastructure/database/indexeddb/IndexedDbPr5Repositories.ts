@@ -7,9 +7,13 @@ import type {
 import type { ChapterTestRepository } from '@domain/repositories/ChapterTestRepository';
 import type { EvaluationRepository } from '@domain/repositories/EvaluationRepository';
 import type { QuestionAttemptRepository } from '@domain/repositories/QuestionAttemptRepository';
+import type {
+  DailyActivation,
+  DailyActivationRepository,
+} from '@domain/repositories/RevisionStateRepositories';
 
 const DATABASE_NAME = 'quiz-tsi-pr5-data';
-const DATABASE_VERSION = 2;
+const DATABASE_VERSION = 3;
 
 interface StoredEvaluation {
   key: string;
@@ -29,6 +33,11 @@ interface StoredChapterTest {
   status: ChapterTestSession['status'];
   session: ChapterTestSession;
 }
+interface StoredDailyActivation {
+  key: string;
+  userId: string;
+  activation: DailyActivation;
+}
 interface Pr5Schema extends DBSchema {
   evaluations: {
     key: string;
@@ -47,6 +56,11 @@ interface Pr5Schema extends DBSchema {
   questionAttempts: {
     key: string;
     value: StoredQuestionAttempt;
+    indexes: { 'by-user': string };
+  };
+  dailyActivations: {
+    key: string;
+    value: StoredDailyActivation;
     indexes: { 'by-user': string };
   };
 }
@@ -78,6 +92,12 @@ function database() {
           keyPath: 'key',
         });
         attempts.createIndex('by-user', 'userId');
+      }
+      if (!db.objectStoreNames.contains('dailyActivations')) {
+        const activations = db.createObjectStore('dailyActivations', {
+          keyPath: 'key',
+        });
+        activations.createIndex('by-user', 'userId');
       }
     },
   });
@@ -180,5 +200,26 @@ export class IndexedDbChapterTestRepository implements ChapterTestRepository {
       Math.max(0, Math.min(limit, 500)),
     );
     return rows.map((row) => row.session);
+  }
+}
+
+export class IndexedDbDailyActivationRepository implements DailyActivationRepository {
+  async list(userId: string) {
+    const rows = await (
+      await database()
+    ).getAllFromIndex('dailyActivations', 'by-user', userId);
+    return rows.map((row) => row.activation);
+  }
+  async activate(userId: string, unitId: string, activatedAt: string) {
+    await (
+      await database()
+    ).put('dailyActivations', {
+      key: `${userId}:${unitId}`,
+      userId,
+      activation: { unitId, activatedAt },
+    });
+  }
+  async deactivate(userId: string, unitId: string) {
+    await (await database()).delete('dailyActivations', `${userId}:${unitId}`);
   }
 }

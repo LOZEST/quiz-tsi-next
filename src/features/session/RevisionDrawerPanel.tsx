@@ -11,14 +11,19 @@ import {
   type QuestionType,
 } from '@domain/questions/Question';
 import type { ProgramIndex } from '@domain/program/Program';
+import type { DailyActivation } from '@domain/repositories/RevisionStateRepositories';
 import { useUserQuizzes, type SelectableQuizz } from '@shared/useUserQuizzes';
 import type {
+  DailyPlanItem,
   DailyPlanState,
   FilterSelection,
   FreeRevisionFilters,
   SessionMode,
+  WeakPointItem,
   WeakPointsState,
 } from '@domain/session/Session';
+import { Button } from '@design-system/components/Button/Button';
+import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import { useRevisionExperience } from './RevisionExperienceProvider';
 import styles from './RevisionExperience.module.css';
 
@@ -333,6 +338,10 @@ export function RevisionDrawerPanel() {
           onFree={() => experience.setMode('free')}
         />
       ) : null}
+      {(experience.mode === 'daily' || experience.mode === 'weak-points') &&
+      experience.activeSeries ? (
+        <SeriesControls />
+      ) : null}
       {experience.mode === 'chapter-test' ? (
         <ChapterTest quizzes={quizzes} />
       ) : null}
@@ -352,6 +361,166 @@ function resolveUnitLabel(
   );
 }
 
+function Bubble({
+  label,
+  meta,
+  onClick,
+}: {
+  label: string;
+  meta: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className={styles.bubble} onClick={onClick}>
+      <span className={styles.bubbleLabel}>{label}</span>
+      <span className={styles.bubbleMeta}>{meta}</span>
+    </button>
+  );
+}
+
+function SeriesControls() {
+  const experience = useRevisionExperience();
+  const series = experience.activeSeries;
+  if (!series) return null;
+  const heading =
+    series.blueprint.kind === 'daily' ? 'Révision du jour' : 'Consolidation';
+  return (
+    <div className={styles.seriesControls}>
+      <p>
+        <strong>{heading}</strong> — {series.blueprint.unitLabel}
+      </p>
+      <p>
+        Question {series.currentIndex + 1} /{' '}
+        {series.blueprint.orderedQuestionInstances.length}
+      </p>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={() => experience.exitSeries()}
+      >
+        Quitter la série
+      </Button>
+    </div>
+  );
+}
+
+function DailyActivationForm({
+  program,
+  quizzes,
+  activatedIds,
+  onActivate,
+}: {
+  program: ProgramIndex | null;
+  quizzes: readonly SelectableQuizz[];
+  activatedIds: ReadonlySet<string>;
+  onActivate: (unitId: string) => void;
+}) {
+  const [source, setSource] = useState<'official' | 'personal'>('official');
+  const [chapter, setChapter] = useState('');
+  const [notion, setNotion] = useState('');
+  const [quizzId, setQuizzId] = useState('');
+  const chapters = program
+    ? deriveAvailableChapters(program, { kind: 'all' })
+    : [];
+  const notions =
+    program && chapter
+      ? deriveAvailableNotions(program, { kind: 'all' }, selection(chapter))
+      : [];
+  const unitId = source === 'official' ? notion : quizzId;
+  const canActivate = unitId !== '' && !activatedIds.has(unitId);
+  const activate = () => {
+    if (!canActivate) return;
+    onActivate(unitId);
+    setNotion('');
+    setQuizzId('');
+  };
+  return (
+    <div className={styles.filters} aria-label="Activer une révision régulière">
+      {quizzes.length > 0 ? (
+        <div
+          className={styles.sourceToggle}
+          role="group"
+          aria-label="Source des questions"
+        >
+          <button
+            type="button"
+            aria-pressed={source === 'official'}
+            onClick={() => setSource('official')}
+          >
+            Programme officiel
+          </button>
+          <button
+            type="button"
+            aria-pressed={source === 'personal'}
+            onClick={() => setSource('personal')}
+          >
+            Mes quizz
+          </button>
+        </div>
+      ) : null}
+      {source === 'official' ? (
+        <>
+          <label>
+            Chapitre
+            <select
+              value={chapter}
+              onChange={(event) => {
+                setChapter(event.target.value);
+                setNotion('');
+              }}
+            >
+              <option value="">Choisir un chapitre</option>
+              {chapters.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Notion
+            <select
+              value={notion}
+              disabled={!chapter}
+              onChange={(event) => setNotion(event.target.value)}
+            >
+              <option value="">Choisir une notion</option>
+              {notions.map((entry) => (
+                <option key={entry.id} value={entry.id}>
+                  {entry.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </>
+      ) : (
+        <label>
+          Quizz
+          <select
+            value={quizzId}
+            onChange={(event) => setQuizzId(event.target.value)}
+          >
+            <option value="">Choisir un quizz</option>
+            {quizzes.map((quizz) => (
+              <option key={quizz.id} value={quizz.id}>
+                {quizz.title}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={!canActivate}
+        onClick={activate}
+      >
+        Activer
+      </Button>
+    </div>
+  );
+}
+
 function Daily({
   state,
   program,
@@ -361,43 +530,81 @@ function Daily({
   program: ProgramIndex | null;
   quizzes: readonly SelectableQuizz[];
 }) {
-  if (state.kind === 'none-scheduled')
-    return <p>Aucune révision n’est prévue aujourd’hui. Tu es à jour.</p>;
-  if (state.kind === 'completed')
-    return (
-      <p>
-        Révision du jour terminée. Toutes les notions prévues ont été révisées.
-      </p>
+  const experience = useRevisionExperience();
+  const [activations, setActivations] = useState<readonly DailyActivation[]>(
+    [],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    void experience.listDailyActivations().then((list) => {
+      if (!cancelled) setActivations(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [experience, state]);
+  const activatedIds = new Set(
+    activations.map((activation) => activation.unitId),
+  );
+  const items =
+    state.kind === 'ready' || state.kind === 'completed' ? state.items : [];
+  const due = items.filter((item) => item.successCount < item.plannedCount);
+  const start = (item: DailyPlanItem) =>
+    void experience.startDailyItem(
+      item,
+      resolveUnitLabel(item.notionId, program, quizzes),
     );
-  if (state.kind === 'unavailable') return <p>{state.message}</p>;
   return (
-    <ul>
-      {state.items.map((item) => (
-        <li key={item.notionId}>
-          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong> —{' '}
-          {item.successCount}/{item.plannedCount}
-          <details>
-            <summary>Détails</summary>
-            <dl>
-              <dt>Raison</dt>
-              <dd>{item.reason}</dd>
-              <dt>Réussites partielles</dt>
-              <dd>{item.partialCount}</dd>
-              <dt>Échecs</dt>
-              <dd>{item.failedCount}</dd>
-              <dt>Difficulté recommandée</dt>
-              <dd>{difficultyLabels[item.recommendedDifficulty]}</dd>
-              {item.dueAt ? (
-                <>
-                  <dt>Échéance</dt>
-                  <dd>{item.dueAt}</dd>
-                </>
-              ) : null}
-            </dl>
-          </details>
-        </li>
-      ))}
-    </ul>
+    <>
+      {state.kind === 'none-scheduled' ? (
+        <p>Aucune révision n’est prévue aujourd’hui. Tu es à jour.</p>
+      ) : null}
+      {state.kind === 'completed' ? (
+        <p>
+          Révision du jour terminée. Toutes les notions prévues ont été
+          révisées.
+        </p>
+      ) : null}
+      {state.kind === 'unavailable' ? <p>{state.message}</p> : null}
+      {due.length > 0 ? (
+        <div className={styles.bubbleGrid}>
+          {due.map((item) => (
+            <Bubble
+              key={item.notionId}
+              label={resolveUnitLabel(item.notionId, program, quizzes)}
+              meta={`${item.plannedCount - item.successCount} à faire aujourd’hui · ${difficultyLabels[item.recommendedDifficulty]}`}
+              onClick={() => start(item)}
+            />
+          ))}
+        </div>
+      ) : null}
+      <Disclosure label="Gérer mes révisions régulières">
+        <DailyActivationForm
+          program={program}
+          quizzes={quizzes}
+          activatedIds={activatedIds}
+          onActivate={(unitId) => void experience.activateDailyUnit(unitId)}
+        />
+        {activations.length > 0 ? (
+          <ul className={styles.activationList}>
+            {activations.map((activation) => (
+              <li key={activation.unitId}>
+                {resolveUnitLabel(activation.unitId, program, quizzes)}
+                <Button
+                  type="button"
+                  variant="quiet"
+                  onClick={() =>
+                    void experience.deactivateDailyUnit(activation.unitId)
+                  }
+                >
+                  Retirer
+                </Button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </Disclosure>
+    </>
   );
 }
 function Weak({
@@ -411,6 +618,7 @@ function Weak({
   quizzes: readonly SelectableQuizz[];
   onFree: () => void;
 }) {
+  const experience = useRevisionExperience();
   if (state.kind === 'calibrating')
     return (
       <>
@@ -436,53 +644,22 @@ function Weak({
         <button onClick={() => onFree()}>Ouvrir Révision libre</button>
       </>
     );
+  const start = (item: WeakPointItem) =>
+    void experience.startConsolidationItem(
+      item,
+      resolveUnitLabel(item.notionId, program, quizzes),
+    );
   return (
-    <ul>
+    <div className={styles.bubbleGrid}>
       {state.items.map((item) => (
-        <li key={item.notionId}>
-          <strong>{resolveUnitLabel(item.notionId, program, quizzes)}</strong> —
-          priorité {item.priority} ·{' '}
-          {difficultyLabels[item.recommendedDifficulty]}
-          <details>
-            <summary>Détails</summary>
-            <dl>
-              <dt>Raison</dt>
-              <dd>{item.rationale}</dd>
-              {item.lastActivityAt ? (
-                <>
-                  <dt>Dernière activité</dt>
-                  <dd>{item.lastActivityAt}</dd>
-                </>
-              ) : null}
-              <dt>Réussites</dt>
-              <dd>{item.successCount}</dd>
-              <dt>Réussites partielles</dt>
-              <dd>{item.partialCount}</dd>
-              <dt>Échecs</dt>
-              <dd>{item.failedCount}</dd>
-              {item.masteryEstimate !== null ? (
-                <>
-                  <dt>Maîtrise observée</dt>
-                  <dd>{item.masteryEstimate}</dd>
-                </>
-              ) : null}
-              {item.recurringErrors.length > 0 ? (
-                <>
-                  <dt>Erreurs récurrentes</dt>
-                  <dd>
-                    <ul>
-                      {item.recurringErrors.map((error) => (
-                        <li key={error}>{error}</li>
-                      ))}
-                    </ul>
-                  </dd>
-                </>
-              ) : null}
-            </dl>
-          </details>
-        </li>
+        <Bubble
+          key={item.notionId}
+          label={resolveUnitLabel(item.notionId, program, quizzes)}
+          meta={`Priorité ${item.priority} · ${difficultyLabels[item.recommendedDifficulty]}`}
+          onClick={() => start(item)}
+        />
       ))}
-    </ul>
+    </div>
   );
 }
 function ChapterTest({ quizzes }: { quizzes: readonly SelectableQuizz[] }) {

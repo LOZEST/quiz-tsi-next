@@ -29,7 +29,9 @@ export type QuestionSelectionResult =
       available?: number;
     }>;
 
-function toIndexFilter(filters: FreeRevisionFilters): QuestionIndexFilter {
+export function toIndexFilter(
+  filters: FreeRevisionFilters,
+): QuestionIndexFilter {
   return {
     ...(filters.part.kind === 'one' ? { partId: filters.part.value } : {}),
     ...(filters.chapter.kind === 'one'

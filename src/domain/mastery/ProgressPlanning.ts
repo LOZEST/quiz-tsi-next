@@ -75,26 +75,39 @@ export function createDailyPlan(
   events: readonly MasteryEvent[],
   userId: string,
   now: number,
+  activatedUnitIds: ReadonlySet<string> = new Set(),
   boundary: DayBoundary = localDayBoundary,
 ): DailyPlanState {
   try {
     const userEvents = deduplicate(events).filter(
       (event) => event.userId === userId,
     );
-    const start = boundary.startOfDay(now);
-    const end = boundary.endOfDay(now);
-    const notionIds = new Set(
-      userEvents.flatMap((event) => {
+    const notionIds = new Set([
+      ...userEvents.flatMap((event) => {
         const id = unitId(event);
         return id ? [id] : [];
       }),
-    );
+      ...activatedUnitIds,
+    ]);
+    const start = boundary.startOfDay(now);
+    const end = boundary.endOfDay(now);
     const items = [...notionIds].flatMap((notionId) => {
       const beforeToday = userEvents.filter(
         (event) => Date.parse(event.occurredAt) < start,
       );
       const mastery = calculateUnitMastery(notionId, beforeToday, start);
-      if (!mastery.nextReviewAt || Date.parse(mastery.nextReviewAt) > end)
+      // An activated unit with no history yet (mastery.nextReviewAt is null)
+      // is a fresh subscription to the daily rotation: it's due for its
+      // first review today rather than excluded like an unscheduled unit.
+      const hasAnyHistory = userEvents.some(
+        (event) => unitId(event) === notionId,
+      );
+      const isFreshActivation =
+        !hasAnyHistory && activatedUnitIds.has(notionId);
+      if (
+        !isFreshActivation &&
+        (!mastery.nextReviewAt || Date.parse(mastery.nextReviewAt) > end)
+      )
         return [];
       const today = userEvents.filter(
         (event) =>
@@ -102,8 +115,9 @@ export function createDailyPlan(
           Date.parse(event.occurredAt) >= start &&
           Date.parse(event.occurredAt) <= end,
       );
-      const plannedCount =
-        mastery.status === 'needs-review' || mastery.masteryScore < 50
+      const plannedCount = isFreshActivation
+        ? 3
+        : mastery.status === 'needs-review' || mastery.masteryScore < 50
           ? 3
           : mastery.status === 'overdue' || mastery.masteryScore < 70
             ? 2
@@ -118,8 +132,9 @@ export function createDailyPlan(
             .length,
           failedCount: today.filter((event) => event.result === 'failed')
             .length,
-          reason:
-            mastery.status === 'overdue'
+          reason: isFreshActivation
+            ? 'Nouvelle activation : première révision.'
+            : mastery.status === 'overdue'
               ? 'Révision arrivée à échéance.'
               : 'Consolidation recommandée.',
           recommendedDifficulty: mastery.recommendedDifficulty,

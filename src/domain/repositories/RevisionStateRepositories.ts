@@ -8,6 +8,17 @@ export interface WeakPointsStateRepository {
   getState(userId?: string, signal?: AbortSignal): Promise<WeakPointsState>;
 }
 
+export interface DailyActivation {
+  readonly unitId: string;
+  readonly activatedAt: string;
+}
+
+export interface DailyActivationRepository {
+  list(userId: string): Promise<readonly DailyActivation[]>;
+  activate(userId: string, unitId: string, activatedAt: string): Promise<void>;
+  deactivate(userId: string, unitId: string): Promise<void>;
+}
+
 export interface RevisionSeedSource {
   nextSeed(): string;
 }

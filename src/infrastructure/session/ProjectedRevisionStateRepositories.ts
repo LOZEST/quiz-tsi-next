@@ -2,6 +2,7 @@ import type { EvaluationRepository } from '@domain/repositories/EvaluationReposi
 import type { ChapterTestRepository } from '@domain/repositories/ChapterTestRepository';
 import type {
   Clock,
+  DailyActivationRepository,
   DailyPlanStateRepository,
   WeakPointsStateRepository,
 } from '@domain/repositories/RevisionStateRepositories';
@@ -35,6 +36,7 @@ export class ProjectedDailyPlanRepository implements DailyPlanStateRepository {
     private evaluations: EvaluationRepository,
     private chapterTests: ChapterTestRepository,
     private clock: Clock,
+    private activations: DailyActivationRepository,
   ) {}
   async getState(userId?: string) {
     if (!userId)
@@ -42,12 +44,16 @@ export class ProjectedDailyPlanRepository implements DailyPlanStateRepository {
         kind: 'unavailable' as const,
         message: 'Le compte actif est indisponible.',
       };
-    const projection = await eventsFor(
+    const [projection, activations] = await Promise.all([
+      eventsFor(userId, this.evaluations, this.chapterTests),
+      this.activations.list(userId),
+    ]);
+    return createDailyPlan(
+      projection.events,
       userId,
-      this.evaluations,
-      this.chapterTests,
+      this.clock.now(),
+      new Set(activations.map((activation) => activation.unitId)),
     );
-    return createDailyPlan(projection.events, userId, this.clock.now());
   }
 }
 

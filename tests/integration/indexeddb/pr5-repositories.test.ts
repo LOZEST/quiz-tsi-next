@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
   IndexedDbChapterTestRepository,
+  IndexedDbDailyActivationRepository,
   IndexedDbEvaluationRepository,
   IndexedDbQuestionAttemptRepository,
 } from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
@@ -127,5 +128,40 @@ describe('IndexedDbChapterTestRepository', () => {
     await expect(repository.save(session, 'intruder')).rejects.toThrow(
       'Compte incohérent',
     );
+  });
+});
+
+describe('IndexedDbDailyActivationRepository', () => {
+  it('active, liste et retire une unité, isolée par compte', async () => {
+    const repository = new IndexedDbDailyActivationRepository();
+    const suffix = crypto.randomUUID();
+    const userA = `user-a-${suffix}`;
+    const userB = `user-b-${suffix}`;
+    await repository.activate(userA, 'NUM-F01', '2026-08-09T00:00:00.000Z');
+    await repository.activate(userA, 'quizz-1', '2026-08-09T00:01:00.000Z');
+    await repository.activate(userB, 'NUM-F01', '2026-08-09T00:02:00.000Z');
+    expect(
+      (await repository.list(userA)).map((entry) => entry.unitId).sort(),
+    ).toEqual(['NUM-F01', 'quizz-1']);
+    expect((await repository.list(userB)).map((entry) => entry.unitId)).toEqual(
+      ['NUM-F01'],
+    );
+    await repository.deactivate(userA, 'NUM-F01');
+    expect((await repository.list(userA)).map((entry) => entry.unitId)).toEqual(
+      ['quizz-1'],
+    );
+    expect((await repository.list(userB)).map((entry) => entry.unitId)).toEqual(
+      ['NUM-F01'],
+    );
+  });
+
+  it('remplace une activation existante plutôt que de la dupliquer', async () => {
+    const repository = new IndexedDbDailyActivationRepository();
+    const userId = `user-${crypto.randomUUID()}`;
+    await repository.activate(userId, 'NUM-F01', '2026-08-09T00:00:00.000Z');
+    await repository.activate(userId, 'NUM-F01', '2026-08-09T00:05:00.000Z');
+    const list = await repository.list(userId);
+    expect(list).toHaveLength(1);
+    expect(list[0]?.activatedAt).toBe('2026-08-09T00:05:00.000Z');
   });
 });
