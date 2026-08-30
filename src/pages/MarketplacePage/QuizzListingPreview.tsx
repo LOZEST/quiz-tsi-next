@@ -15,6 +15,14 @@ function PreviewSegment({ segment }: { segment: ContentSegment }) {
       const parsed = parseMathSource(segment.math);
       if (!parsed.ok)
         return <span role="status">Formule mathématique indisponible.</span>;
+      // KatexMathRenderer only renders resolved parameters (real
+      // instantiated values); this read-only preview shows the quizz's
+      // template before any variant is generated, so an unresolved `@a`
+      // reference falls back to the readable grammar source rather than
+      // crashing mathAstToLatex's "Paramètre non résolu." guard — same
+      // handling as RawContentPreview's bank preview.
+      if (parsed.parameterReferences.length > 0)
+        return <span>{segment.math.source}</span>;
       return (
         <KatexMathRenderer
           ast={parsed.ast}

@@ -188,6 +188,36 @@ describe('MarketplacePage', () => {
     ).toHaveAttribute('aria-disabled', 'true');
   });
 
+  it('shows a parameterized formula as its raw source instead of "indisponible"', async () => {
+    listVisibleListings.mockResolvedValue([listing()]);
+    getListingPreview.mockResolvedValue(
+      preview({
+        questions: [
+          {
+            id: 'q1',
+            prompt: [
+              { kind: 'text', value: 'Calcule ' },
+              {
+                kind: 'inline-math',
+                math: { syntaxVersion: 1, source: '@a+1' },
+              },
+            ],
+            correction: [],
+          },
+        ],
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(
+      await screen.findByRole('button', { name: /Thermodynamique/ }),
+    );
+    expect(await screen.findByText('@a+1')).toBeInTheDocument();
+    expect(
+      screen.queryByText('Formule mathématique indisponible.'),
+    ).not.toBeInTheDocument();
+  });
+
   it('renders a preview without crashing when a question has no correction or prompt segments', async () => {
     listVisibleListings.mockResolvedValue([listing()]);
     getListingPreview.mockResolvedValue(
