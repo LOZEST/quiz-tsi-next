@@ -144,7 +144,13 @@ export class SupabaseQuizzMarketplaceGateway implements QuizzMarketplaceGateway 
           .from('latest_accessible_questions')
           .select('*')
           .eq('classification->>kind', 'personal')
-          .eq('classification->>courseId', quizzId),
+          .eq('classification->>courseId', quizzId)
+          // A subscriber can read any personal question tagged to the
+          // quizz via RLS, but only published/validated ones are ever
+          // actually playable — showing the rest here would claim content
+          // ("N question(s)") that a revision session can't deliver.
+          .eq('status', 'published')
+          .eq('validated', true),
       ),
     );
     if (questionResponses.some((response) => response.error))
