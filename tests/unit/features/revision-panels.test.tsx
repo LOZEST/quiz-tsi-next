@@ -8,6 +8,7 @@ import type { RevisionExperienceState } from '@features/session/RevisionExperien
 import type * as RevisionExperienceModule from '@features/session/RevisionExperienceProvider';
 import type { FreeRevisionFilters, SessionMode } from '@domain/session/Session';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
+import type { SubscribedQuizzContent } from '@domain/quizz/QuizzMarketplaceGateway';
 
 const parsed = validateProgram({
   schemaVersion: 1,
@@ -30,6 +31,7 @@ let mode: SessionMode = 'free';
 let state: RevisionExperienceState = { kind: 'no-bank', message: 'vide' };
 let filters: FreeRevisionFilters = initialFreeRevisionFilters;
 let quizzes: readonly Quizz[] = [];
+let subscribedQuizzes: readonly SubscribedQuizzContent[] = [];
 const setMode = vi.fn((value: SessionMode) => {
   mode = value;
 });
@@ -61,6 +63,9 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
           conflicts: [],
         }),
     },
+    quizzMarketplaceGateway: {
+      listSubscribedQuizzContent: () => Promise.resolve(subscribedQuizzes),
+    },
   }),
 }));
 vi.mock('@features/session/RevisionExperienceProvider', async (original) => {
@@ -90,6 +95,7 @@ describe('RevisionDrawerPanel', () => {
     state = { kind: 'no-bank', message: 'vide' };
     filters = initialFreeRevisionFilters;
     quizzes = [];
+    subscribedQuizzes = [];
     vi.clearAllMocks();
   });
   it('shows the exact four paths and ordered dependent filters', async () => {
@@ -229,6 +235,42 @@ describe('RevisionDrawerPanel', () => {
     const testView = render(<RevisionDrawerPanel />);
     expect(
       testView.getByRole('option', { name: 'Mon quizz' }),
+    ).toBeInTheDocument();
+  });
+
+  it('lists a marketplace-subscribed quizz (not owned) as a chapter option in free mode and chapter-test', async () => {
+    subscribedQuizzes = [
+      {
+        listingId: 'listing-1',
+        quizzId: 'quizz-owned-by-someone-else',
+        ownerId: 'other-user',
+        title: 'Quizz ajouté',
+        description: '',
+        certified: false,
+        questions: [],
+      },
+    ];
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    await user.click(await screen.findByRole('button', { name: 'Mes quizz' }));
+    expect(
+      await screen.findByRole('option', { name: 'Quizz ajouté' }),
+    ).toBeInTheDocument();
+    await user.selectOptions(
+      screen.getByLabelText('Chapitre'),
+      'quizz-owned-by-someone-else',
+    );
+    expect(setVisibleFilters).toHaveBeenCalled();
+    filters = setVisibleFilters.mock.calls.at(-1)?.[0] ?? filters;
+    expect(filters.chapter).toEqual({
+      kind: 'one',
+      value: 'quizz-owned-by-someone-else',
+    });
+
+    mode = 'chapter-test';
+    const testView = render(<RevisionDrawerPanel />);
+    expect(
+      testView.getByRole('option', { name: 'Quizz ajouté' }),
     ).toBeInTheDocument();
   });
 
