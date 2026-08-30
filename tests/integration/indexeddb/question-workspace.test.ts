@@ -239,6 +239,32 @@ describe('IndexedDbQuestionWorkspaceRepository', () => {
     expect(await repository.listOutbox(ownerId)).toHaveLength(1);
   });
 
+  it('signale une row distante invalide sans lever, et laisse les autres opérations se synchroniser', async () => {
+    const repository = new IndexedDbQuestionWorkspaceRepository();
+    const ownerId = 'invalid-row-owner';
+    const broken = draft(ownerId, 'broken-q');
+    const healthy = draft(ownerId, 'healthy-q');
+    await repository.saveQuestion(ownerId, broken, 'create', 'op-broken');
+    await repository.saveQuestion(ownerId, healthy, 'create', 'op-healthy');
+    const gateway = {
+      push: (operation: { entityId: string }) =>
+        operation.entityId === broken.id
+          ? Promise.resolve({
+              kind: 'remote-row-invalid' as const,
+              message: 'Question broken-q : contenu distant invalide.',
+            })
+          : Promise.resolve({ kind: 'accepted' as const }),
+      pullRecent: () =>
+        Promise.resolve({ questions: [], quizzes: [], rejectedRows: [] }),
+    };
+    const result = await syncQuestionWorkspace(ownerId, repository, gateway);
+    expect(result.rejectedRemoteRows).toHaveLength(1);
+    expect(result.rejectedRemoteRows[0]?.message).toContain('broken-q');
+    const remaining = await repository.listOutbox(ownerId);
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.entityId).toBe(broken.id);
+  });
+
   it('récupère le quizz distant avec ses libellés sans fuite intercompte', async () => {
     const repository = new IndexedDbQuestionWorkspaceRepository();
     const ownerId = 'gpt-owner';

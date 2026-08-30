@@ -16,12 +16,20 @@ export async function syncQuestionWorkspace(
     .slice(0, 50);
   let permissionDenied = false;
   let taxonomyConflict = false;
+  const rejectedPushes: { index: number; message: string }[] = [];
   for (const operation of operations) {
     const result = await remote.push(operation);
     if (result.kind === 'accepted')
       await local.completeOperation(userId, operation.operationId);
     else if (result.kind === 'permission-denied') permissionDenied = true;
     else if (result.kind === 'taxonomy-conflict') taxonomyConflict = true;
+    else if (result.kind === 'remote-row-invalid')
+      // Left queued for a later retry, same as a conflict or a denied
+      // permission — but unlike those, we have no valid `remote` question to
+      // record, so this can't go through recordConflict. Collecting it here
+      // (rather than throwing) keeps this one broken entity from blocking
+      // every other pending push in the batch, or the pull below.
+      rejectedPushes.push({ index: -1, message: result.message });
     else if (operation.entity === 'question')
       await local.recordConflict(userId, {
         id: crypto.randomUUID(),
@@ -39,6 +47,6 @@ export async function syncQuestionWorkspace(
     pushed: operations.length,
     permissionDenied,
     taxonomyConflict,
-    rejectedRemoteRows: pulled.rejectedRows,
+    rejectedRemoteRows: [...rejectedPushes, ...pulled.rejectedRows],
   };
 }

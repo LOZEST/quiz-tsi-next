@@ -6,7 +6,8 @@ export type QuestionPushResult =
   | Readonly<{ kind: 'accepted' }>
   | Readonly<{ kind: 'conflict'; remote: Readonly<Question> }>
   | Readonly<{ kind: 'taxonomy-conflict' }>
-  | Readonly<{ kind: 'permission-denied' }>;
+  | Readonly<{ kind: 'permission-denied' }>
+  | Readonly<{ kind: 'remote-row-invalid'; message: string }>;
 export interface QuestionRemoteGateway {
   push(
     operation: QuestionWorkspaceOutboxOperation,
