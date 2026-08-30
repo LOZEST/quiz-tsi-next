@@ -65,11 +65,23 @@ const convexHull = (points: readonly WhiteboardPoint[]) => {
   return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 };
 
+// A mouse produces a handful of points; a real stylus samples at a much
+// higher and more variable rate (denser still wherever the hand slows down,
+// e.g. every corner of a rectangle). Any metric that *sums* per-point noise
+// -- a summed path length, an accumulated turn angle -- grows with the
+// sample count even though the true geometry hasn't changed: the same
+// sub-pixel jitter integrated over hundreds of extra samples can inflate a
+// path length past a threshold tuned on a sparse, clean, mouse-drawn
+// stroke. Bounding those computations to an evenly strided subset keeps
+// their behaviour independent of the input device's sampling rate.
+const boundedSample = (points: readonly WhiteboardPoint[], cap = 128) =>
+  points.filter(
+    (_, index) => index % Math.max(1, Math.ceil(points.length / cap)) === 0,
+  );
+
 function fitRectangle(points: readonly WhiteboardPoint[]): RectangleFit | null {
   if (points.length < 4) return null;
-  const sampled = points.filter(
-    (_, index) => index % Math.max(1, Math.ceil(points.length / 128)) === 0,
-  );
+  const sampled = boundedSample(points);
   const hull = convexHull(sampled);
   if (hull.length < 4) return null;
   const center = points.reduce(
@@ -130,15 +142,16 @@ export function straightCandidate(points: readonly WhiteboardPoint[]): boolean {
   const first = points[0]!;
   const last = points.at(-1)!;
   const span = distance(first, last);
-  const length = pathLength(points);
+  const analysisPoints = boundedSample(points);
+  const length = pathLength(analysisPoints);
   if (span < 65 || length < 80) return false;
   const box = bounds(points);
   if (Math.max(box.width, box.height) < 65) return false;
   const mean =
-    points.reduce(
+    analysisPoints.reduce(
       (sum, point) => sum + segmentDistance(point, first, last),
       0,
-    ) / points.length;
+    ) / analysisPoints.length;
   return mean <= 3.5 && mean / span <= 0.075 && length / span < 1.18;
 }
 
@@ -160,16 +173,18 @@ export function circleCandidate(points: readonly WhiteboardPoint[]): boolean {
   const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   if (distance(points[0]!, points.at(-1)!) > Math.max(12, small * 0.3))
     return false;
-  const radii = points.map((point) =>
+  const analysisPoints = boundedSample(points);
+  const radii = analysisPoints.map((point) =>
     Math.hypot(point.x - center.x, point.y - center.y),
   );
   const variation =
     radii.reduce((sum, value) => sum + Math.abs(value - radius), 0) /
     (radii.length * radius);
   if (variation > 0.16) return false;
-  const circumferenceRatio = pathLength(points) / (2 * Math.PI * radius);
+  const circumferenceRatio =
+    pathLength(analysisPoints) / (2 * Math.PI * radius);
   if (circumferenceRatio < 0.72 || circumferenceRatio > 1.35) return false;
-  const angles = points.map((point) =>
+  const angles = analysisPoints.map((point) =>
     Math.atan2(point.y - center.y, point.x - center.x),
   );
   let travel = 0;
@@ -187,6 +202,10 @@ export function circleCandidate(points: readonly WhiteboardPoint[]): boolean {
   }
   return travel >= Math.PI * 1.65 && travel <= Math.PI * 2.7 && reversals <= 2;
 }
+
+// How much closer (in logical pixels) a side must be than the one currently
+// tracked before the side-sequence walk below accepts a transition to it.
+const CORNER_HYSTERESIS = 3;
 
 /**
  * Fits a minimum-area oriented box, then requires a closed path that follows
@@ -208,14 +227,16 @@ export function rectangleCandidate(
   const diagonal = Math.hypot(width, height);
   if (distance(points[0]!, points.at(-1)!) > Math.min(24, diagonal * 0.18))
     return false;
+  const analysisPoints = boundedSample(points);
   const perimeter = 2 * (width + height);
-  const lengthRatio = pathLength(points) / perimeter;
+  const lengthRatio = pathLength(analysisPoints) / perimeter;
   if (lengthRatio < 0.72 || lengthRatio > 1.38) return false;
 
   const sideCounts = [0, 0, 0, 0];
   const edgeErrors: number[] = [];
   const sideSequence: number[] = [];
-  for (const point of points) {
+  let trackedSide = -1;
+  for (const point of analysisPoints) {
     const local = rotate(point, fit.angle, fit.center);
     const distances = [
       Math.abs(local.y - fit.minY),
@@ -227,12 +248,26 @@ export function rectangleCandidate(
     const side = distances.indexOf(edge);
     edgeErrors.push(edge);
     sideCounts[side] = (sideCounts[side] ?? 0) + 1;
-    if (sideSequence.at(-1) !== side) sideSequence.push(side);
+    // Near a corner, two adjacent sides sit almost equidistant from the
+    // point, so the raw nearest-side pick above flickers back and forth on
+    // sub-pixel noise alone -- exactly what a real stylus produces while
+    // the hand decelerates into and lingers around a corner. Only accept a
+    // transition once the new side is unambiguously closer than the one
+    // already being tracked, so dwelling at a corner reads as one steady
+    // side instead of dozens of spurious back-and-forth changes below.
+    if (trackedSide === -1) trackedSide = side;
+    else if (
+      side !== trackedSide &&
+      distances[trackedSide]! - edge > CORNER_HYSTERESIS
+    )
+      trackedSide = side;
+    if (sideSequence.at(-1) !== trackedSide) sideSequence.push(trackedSide);
   }
   const meanError =
     edgeErrors.reduce((sum, error) => sum + error, 0) / edgeErrors.length;
   if (meanError > Math.max(3.5, small * 0.07)) return false;
-  if (sideCounts.some((count) => count / points.length < 0.12)) return false;
+  if (sideCounts.some((count) => count / analysisPoints.length < 0.12))
+    return false;
   const corners = [
     { x: fit.minX, y: fit.minY },
     { x: fit.maxX, y: fit.minY },
@@ -243,7 +278,7 @@ export function rectangleCandidate(
     corners.some(
       (corner) =>
         Math.min(
-          ...points.map((point) => {
+          ...analysisPoints.map((point) => {
             const local = rotate(point, fit.angle, fit.center);
             return Math.hypot(local.x - corner.x, local.y - corner.y);
           }),

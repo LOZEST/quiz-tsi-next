@@ -75,6 +75,23 @@ describe('magic shapes', () => {
     expect(toStraightStroke(stroke(points)).points).toHaveLength(2);
   });
 
+  it('recognises a straight line sampled at real-stylus density', () => {
+    // A mouse (and the sparse fixture above) produces a handful of evenly
+    // spaced points. A real Apple Pencil samples far more densely, and any
+    // per-sample jitter accumulates into the summed path length as extra
+    // "coastline" -- enough to have silently pushed length/span past the
+    // straight-line threshold on real devices while every mouse-shaped
+    // fixture kept passing.
+    const samples = 200;
+    const points = Array.from({ length: samples }, (_, index) => {
+      const progress = index / (samples - 1);
+      const eased = progress - Math.sin(2 * Math.PI * progress) / (2 * Math.PI);
+      const jitter = index % 2 ? 1.5 : -1.5;
+      return point(eased * 300, jitter, index * 6);
+    });
+    expect(straightCandidate(points)).toBe(true);
+  });
+
   it('does not snap short handwriting', () => {
     expect(straightCandidate([point(0, 0), point(8, 2), point(15, 0)])).toBe(
       false,
@@ -117,6 +134,24 @@ describe('magic shapes', () => {
     expect(circleCandidate(points)).toBe(true);
   });
 
+  it('recognises a circle sampled at real-stylus density with radial jitter', () => {
+    // Same "coastline" problem as the straight-line case above: at 300
+    // samples, alternating the radius by a single pixel used to inflate
+    // the summed path length (and thus circumferenceRatio) well past the
+    // circle threshold, even though the shape itself is a clean circle.
+    const samples = 300;
+    const points = Array.from({ length: samples }, (_, index) => {
+      const angle = (index / (samples - 1)) * Math.PI * 2;
+      const radius = 50 + (index % 2 ? 1 : -1);
+      return point(
+        100 + Math.cos(angle) * radius,
+        100 + Math.sin(angle) * radius,
+        index * 4,
+      );
+    });
+    expect(circleCandidate(points)).toBe(true);
+  });
+
   it.each([true, false])(
     'recognises and converts an imperfect oriented rectangle (clockwise=%s)',
     (clockwise) => {
@@ -139,6 +174,77 @@ describe('magic shapes', () => {
       ).toBeLessThan(0.01);
     },
   );
+
+  it('recognises a rectangle sampled at real-stylus density with corner dwelling', () => {
+    // A real hand decelerates into and lingers at each corner, so a
+    // physical stylus produces far more points per corner than along a
+    // side's straight middle -- unlike the evenly time-spaced fixture
+    // above. That dwelling made the per-point nearest-side pick flicker
+    // between the two adjacent sides purely from sub-pixel jitter right at
+    // the bisector, which used to blow the side-sequence "changes" count
+    // (see CORNER_HYSTERESIS in MagicShapes.ts) well past the erratic-path
+    // rejection threshold and silently break rectangle recognition on real
+    // devices while every mouse-shaped fixture kept passing.
+    const corners = [
+      { x: -70, y: -45 },
+      { x: 70, y: -45 },
+      { x: 70, y: 45 },
+      { x: -70, y: 45 },
+      { x: -70, y: -45 },
+    ];
+    const points: WhiteboardPoint[] = [];
+    let timestamp = 0;
+    for (let side = 0; side < 4; side += 1) {
+      const start = corners[side]!;
+      const end = corners[side + 1]!;
+      for (let index = 0; index < 40; index += 1) {
+        const progress = index / 39;
+        const eased =
+          progress - Math.sin(2 * Math.PI * progress) / (2 * Math.PI);
+        const jitter = index % 2 ? 2 : -1.5;
+        points.push(
+          point(
+            200 + start.x + (end.x - start.x) * eased,
+            180 + start.y + (end.y - start.y) * eased + jitter,
+            timestamp,
+          ),
+        );
+        timestamp += 8;
+      }
+    }
+    expect(rectangleCandidate(points)).toBe(true);
+  });
+
+  it('still rejects a real-density, corner-dwelling triangle as a rectangle', () => {
+    const size = 90;
+    const corners = [
+      { x: 0, y: -size },
+      { x: size * 0.87, y: size * 0.5 },
+      { x: -size * 0.87, y: size * 0.5 },
+      { x: 0, y: -size },
+    ];
+    const points: WhiteboardPoint[] = [];
+    let timestamp = 0;
+    for (let side = 0; side < 3; side += 1) {
+      const start = corners[side]!;
+      const end = corners[side + 1]!;
+      for (let index = 0; index < 50; index += 1) {
+        const progress = index / 49;
+        const eased =
+          progress - Math.sin(2 * Math.PI * progress) / (2 * Math.PI);
+        const jitter = index % 2 ? 1 : -0.7;
+        points.push(
+          point(
+            150 + start.x + (end.x - start.x) * eased + jitter,
+            150 + start.y + (end.y - start.y) * eased + jitter,
+            timestamp,
+          ),
+        );
+        timestamp += 8;
+      }
+    }
+    expect(rectangleCandidate(points)).toBe(false);
+  });
 
   it('rejects rectangle false positives', () => {
     const circle = Array.from({ length: 33 }, (_, index) => {
