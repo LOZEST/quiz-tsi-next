@@ -230,6 +230,7 @@ function BackupSection() {
         );
         imported += 1;
       }
+      if (imported > 0) void services.syncQuestionWorkspaceForUser(userId);
       setMessage(
         rejected
           ? `${imported} question(s) restaurée(s), ${rejected} rejetée(s) car invalide(s).`

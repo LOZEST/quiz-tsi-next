@@ -57,6 +57,10 @@ import { SupabaseQuizzMarketplaceGateway } from '@infrastructure/quizz/SupabaseQ
 import { ControlledQuizzMarketplaceGateway } from '@infrastructure/quizz/ControlledQuizzMarketplaceGateway';
 import { UnavailableQuizzMarketplaceGateway } from '@infrastructure/quizz/UnavailableQuizzMarketplaceGateway';
 import { isMergedQuestionRepository } from '@infrastructure/session/MergedQuestionRepository';
+import {
+  createQuestionWorkspaceSyncCoordinator,
+  type QuestionWorkspaceSyncOutcome,
+} from '@features/questions/QuestionWorkspaceSyncCoordinator';
 
 export interface AppServices {
   authGateway: AuthGateway;
@@ -77,6 +81,9 @@ export interface AppServices {
   questionReportGateway?: QuestionReportGateway;
   quizzMarketplaceGateway?: QuizzMarketplaceGateway;
   refreshQuestionRepositoryForUser?: (userId: string) => Promise<void>;
+  syncQuestionWorkspaceForUser?: (
+    userId: string,
+  ) => Promise<QuestionWorkspaceSyncOutcome>;
 }
 
 export type ResolvedAppServices = Required<AppServices>;
@@ -96,49 +103,60 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
   const quizzMarketplaceGateway =
     services.quizzMarketplaceGateway ??
     new UnavailableQuizzMarketplaceGateway();
+  const questionRemoteGateway =
+    services.questionRemoteGateway ?? new UnavailableQuestionRemoteGateway();
+  const refreshQuestionRepositoryForUser =
+    services.refreshQuestionRepositoryForUser ??
+    (async (userId: string) => {
+      if (!isMergedQuestionRepository(questionRepository)) return;
+      const contributions: Readonly<Question>[] = [];
+      try {
+        const snapshot = await questionWorkspaceRepository.load(userId);
+        contributions.push(
+          ...snapshot.questions.filter(
+            (question) =>
+              question.status === 'published' &&
+              question.validated &&
+              question.source !== 'static',
+          ),
+        );
+      } catch {
+        // The user's own Quizz questions are an enhancement over the static
+        // bank; if the local workspace is unavailable, sessions still work
+        // with the static bank alone.
+      }
+      try {
+        const subscribed =
+          await quizzMarketplaceGateway.listSubscribedQuizzContent();
+        contributions.push(
+          ...subscribed.flatMap((content) =>
+            content.questions.filter(
+              (question) =>
+                question.status === 'published' && question.validated,
+            ),
+          ),
+        );
+      } catch {
+        // Marketplace subscriptions are an enhancement over the static bank
+        // and the user's own Quizz; if unavailable, sessions still work
+        // without them.
+      }
+      questionRepository.setUserContributions(contributions);
+    });
+  const syncCoordinator = createQuestionWorkspaceSyncCoordinator(
+    questionWorkspaceRepository,
+    questionRemoteGateway,
+    refreshQuestionRepositoryForUser,
+  );
   return {
     ...services,
     programIndex: services.programIndex ?? null,
     questionRepository,
     questionWorkspaceRepository,
-    refreshQuestionRepositoryForUser:
-      services.refreshQuestionRepositoryForUser ??
-      (async (userId: string) => {
-        if (!isMergedQuestionRepository(questionRepository)) return;
-        const contributions: Readonly<Question>[] = [];
-        try {
-          const snapshot = await questionWorkspaceRepository.load(userId);
-          contributions.push(
-            ...snapshot.questions.filter(
-              (question) =>
-                question.status === 'published' &&
-                question.validated &&
-                question.source !== 'static',
-            ),
-          );
-        } catch {
-          // The user's own Quizz questions are an enhancement over the static
-          // bank; if the local workspace is unavailable, sessions still work
-          // with the static bank alone.
-        }
-        try {
-          const subscribed =
-            await quizzMarketplaceGateway.listSubscribedQuizzContent();
-          contributions.push(
-            ...subscribed.flatMap((content) =>
-              content.questions.filter(
-                (question) =>
-                  question.status === 'published' && question.validated,
-              ),
-            ),
-          );
-        } catch {
-          // Marketplace subscriptions are an enhancement over the static bank
-          // and the user's own Quizz; if unavailable, sessions still work
-          // without them.
-        }
-        questionRepository.setUserContributions(contributions);
-      }),
+    refreshQuestionRepositoryForUser,
+    syncQuestionWorkspaceForUser:
+      services.syncQuestionWorkspaceForUser ??
+      ((userId: string) => syncCoordinator.requestSync(userId)),
     dailyPlanStateRepository:
       services.dailyPlanStateRepository ??
       new ProjectedDailyPlanRepository(
@@ -163,8 +181,7 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
       new IndexedDbQuestionAttemptRepository(),
     oauthConsentGateway:
       services.oauthConsentGateway ?? new UnavailableOAuthConsentGateway(),
-    questionRemoteGateway:
-      services.questionRemoteGateway ?? new UnavailableQuestionRemoteGateway(),
+    questionRemoteGateway,
     accountManagementGateway:
       services.accountManagementGateway ??
       new UnavailableAccountManagementGateway(),

@@ -60,6 +60,9 @@ const setReportStatus = vi.fn(() => Promise.resolve());
 const adminListListings = vi.fn(() => Promise.resolve([]));
 const adminSetCertified = vi.fn(() => Promise.resolve());
 const adminSetHidden = vi.fn(() => Promise.resolve());
+const syncQuestionWorkspaceForUser = vi.fn(() =>
+  Promise.resolve({ ok: true as const }),
+);
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -72,6 +75,7 @@ vi.mock('@app/providers/AuthProvider', () => ({
 vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
     questionWorkspaceRepository: { load, saveQuestion },
+    syncQuestionWorkspaceForUser,
     accountManagementGateway: { listAccounts, setAccountRole },
     questionReportGateway: { listReports, setReportStatus },
     quizzMarketplaceGateway: {

@@ -21,9 +21,11 @@ import { RevisionExperienceProvider } from '@features/session/RevisionExperience
 import { RevisionDrawerPanel } from '@features/session/RevisionDrawerPanel';
 import { OAuthConsentPage } from '@pages/OAuthConsentPage/OAuthConsentPage';
 import { ChatGptImportPrivacyPage } from '@pages/ChatGptImportPrivacyPage/ChatGptImportPrivacyPage';
+import { useQuestionWorkspaceAutoSync } from '@features/questions/useQuestionWorkspaceAutoSync';
 
 export function AppRoutes() {
   const { state } = useAuth();
+  useQuestionWorkspaceAutoSync();
   return (
     <Routes>
       <Route
