@@ -287,6 +287,38 @@ describe('SupabaseQuizzMarketplaceGateway', () => {
     ]);
   });
 
+  it('only queries published, validated questions for subscribed content — drafts are not playable and should not be claimed', async () => {
+    const rpc = vi.fn().mockResolvedValue({
+      error: null,
+      data: [
+        {
+          listing_id: 'l1',
+          quizz_id: 'q1',
+          owner_id: 'u1',
+          title: 'T',
+          description: '',
+          certified: false,
+        },
+      ],
+    });
+    const eq = vi.fn(() => query);
+    const query = {
+      select: () => query,
+      eq,
+      then(resolve: (value: unknown) => void) {
+        resolve({ data: [], error: null });
+      },
+    };
+    const client = {
+      rpc,
+      from: () => query,
+    } as unknown as SupabaseClient;
+    const gateway = new SupabaseQuizzMarketplaceGateway(client);
+    await gateway.listSubscribedQuizzContent();
+    expect(eq).toHaveBeenCalledWith('status', 'published');
+    expect(eq).toHaveBeenCalledWith('validated', true);
+  });
+
   it('rejects when the admin listings RPC fails', async () => {
     const rpc = vi.fn().mockResolvedValue({ error: new Error('denied') });
     const gateway = new SupabaseQuizzMarketplaceGateway(fakeClient(rpc));
