@@ -34,12 +34,15 @@ export function useUserQuizzes(): readonly SelectableQuizz[] {
       quizzMarketplaceGateway.listSubscribedQuizzContent().catch(() => []),
     ]).then(([owned, subscribed]) => {
       if (cancelled) return;
+      // Nothing stops a user from subscribing to their own published
+      // listing, which would otherwise list the same quizz twice — once as
+      // owned, once as subscribed. Owned wins since it's the real thing.
+      const ownedIds = new Set(owned.map((quizz) => quizz.id));
       const next: SelectableQuizz[] = [
         ...owned.map((quizz) => ({ id: quizz.id, title: quizz.title })),
-        ...subscribed.map((content) => ({
-          id: content.quizzId,
-          title: content.title,
-        })),
+        ...subscribed
+          .filter((content) => !ownedIds.has(content.quizzId))
+          .map((content) => ({ id: content.quizzId, title: content.title })),
       ];
       setQuizzes((current) =>
         current.length === next.length &&
