@@ -109,6 +109,69 @@
   font: inherit;
   text-overflow: ellipsis;
 }
+.bubbleGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qtsi-space-2);
+}
+
+.bubble {
+  display: grid;
+  gap: var(--qtsi-space-1);
+  min-block-size: var(--qtsi-touch-target);
+  padding: var(--qtsi-space-2) var(--qtsi-space-4);
+  color: var(--qtsi-text);
+  text-align: start;
+  background: var(--qtsi-surface);
+  border: 1px solid var(--qtsi-border-strong);
+  border-radius: var(--qtsi-radius-full);
+  cursor: pointer;
+}
+
+.bubble:hover,
+.bubble:focus-visible {
+  color: var(--qtsi-accent);
+  background: var(--qtsi-accent-soft);
+  border-color: var(--qtsi-accent);
+}
+
+.bubbleLabel {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.bubbleMeta {
+  color: var(--qtsi-text-secondary);
+  font-size: 0.75rem;
+}
+
+.activationList {
+  display: grid;
+  gap: var(--qtsi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activationList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--qtsi-space-2);
+  padding: var(--qtsi-space-2) var(--qtsi-space-3);
+  background: var(--qtsi-surface-muted);
+  border-radius: var(--qtsi-radius-2);
+}
+
+.seriesControls {
+  display: grid;
+  gap: var(--qtsi-space-2);
+  padding: var(--qtsi-space-4);
+  background: var(--qtsi-surface-muted);
+  border: 1px solid var(--qtsi-border);
+  border-radius: var(--qtsi-radius-3);
+}
+
 .helpPanel {
   position: static;
   inline-size: min(30rem, calc(100% - 2rem));

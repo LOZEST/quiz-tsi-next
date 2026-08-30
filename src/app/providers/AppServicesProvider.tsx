@@ -13,6 +13,7 @@ import type { QuestionRepository } from '@domain/repositories/QuestionRepository
 import type { Question } from '@domain/questions/Question';
 import type {
   Clock,
+  DailyActivationRepository,
   DailyPlanStateRepository,
   RevisionSeedSource,
   WeakPointsStateRepository,
@@ -31,6 +32,7 @@ import type { ChapterTestRepository } from '@domain/repositories/ChapterTestRepo
 import type { QuestionAttemptRepository } from '@domain/repositories/QuestionAttemptRepository';
 import {
   IndexedDbChapterTestRepository,
+  IndexedDbDailyActivationRepository,
   IndexedDbEvaluationRepository,
   IndexedDbQuestionAttemptRepository,
 } from '@infrastructure/database/indexeddb/IndexedDbPr5Repositories';
@@ -69,6 +71,7 @@ export interface AppServices {
   questionRepository?: QuestionRepository;
   dailyPlanStateRepository?: DailyPlanStateRepository;
   weakPointsStateRepository?: WeakPointsStateRepository;
+  dailyActivationRepository?: DailyActivationRepository;
   revisionSeedSource?: RevisionSeedSource;
   clock?: Clock;
   evaluationRepository?: EvaluationRepository;
@@ -95,6 +98,9 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
     services.evaluationRepository ?? new IndexedDbEvaluationRepository();
   const chapterTestRepository =
     services.chapterTestRepository ?? new IndexedDbChapterTestRepository();
+  const dailyActivationRepository =
+    services.dailyActivationRepository ??
+    new IndexedDbDailyActivationRepository();
   const questionRepository =
     services.questionRepository ?? new InMemoryQuestionRepository();
   const questionWorkspaceRepository =
@@ -163,6 +169,7 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
         evaluationRepository,
         chapterTestRepository,
         clock,
+        dailyActivationRepository,
       ),
     weakPointsStateRepository:
       services.weakPointsStateRepository ??
@@ -171,6 +178,7 @@ function withRevisionDefaults(services: AppServices): ResolvedAppServices {
         chapterTestRepository,
         clock,
       ),
+    dailyActivationRepository,
     revisionSeedSource:
       services.revisionSeedSource ?? new BrowserRevisionSeedSource(),
     clock,
