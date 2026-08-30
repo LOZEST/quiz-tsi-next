@@ -1,5 +1,6 @@
 import { useState, type DragEvent } from 'react';
 import { Button } from '@design-system/components/Button/Button';
+import { Disclosure } from '@design-system/components/Disclosure/Disclosure';
 import type { Question } from '@domain/questions/Question';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
 import { RawContentPreview } from '@features/questions/RawContentPreview';
@@ -60,39 +61,40 @@ function QuestionColumn({
           : undefined
       }
     >
-      <h3>{title}</h3>
-      {items.length === 0 ? (
-        <p className={styles.columnEmpty}>Aucune question.</p>
-      ) : (
-        <ul className={styles.columnList}>
-          {items.map((question) => (
-            <li
-              key={question.id}
-              className={styles.columnItem}
-              draggable={draggableItems}
-              onDragStart={
-                draggableItems
-                  ? (event) => onDragStartItem?.(event, question.id)
-                  : undefined
-              }
-            >
-              <input
-                type="checkbox"
-                checked={bulkSelectedIds.has(question.id)}
-                onChange={() => onToggleBulk(question.id)}
-                aria-label={`Sélectionner ${questionLabel(question)}`}
-              />
-              <button
-                type="button"
-                aria-pressed={selectedId === question.id}
-                onClick={() => onSelect(question.id)}
+      <Disclosure label={`${title} (${items.length})`} defaultOpen>
+        {items.length === 0 ? (
+          <p className={styles.columnEmpty}>Aucune question.</p>
+        ) : (
+          <ul className={styles.columnList}>
+            {items.map((question) => (
+              <li
+                key={question.id}
+                className={styles.columnItem}
+                draggable={draggableItems}
+                onDragStart={
+                  draggableItems
+                    ? (event) => onDragStartItem?.(event, question.id)
+                    : undefined
+                }
               >
-                {questionLabel(question)}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                <input
+                  type="checkbox"
+                  checked={bulkSelectedIds.has(question.id)}
+                  onChange={() => onToggleBulk(question.id)}
+                  aria-label={`Sélectionner ${questionLabel(question)}`}
+                />
+                <button
+                  type="button"
+                  aria-pressed={selectedId === question.id}
+                  onClick={() => onSelect(question.id)}
+                >
+                  {questionLabel(question)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Disclosure>
     </section>
   );
 }

@@ -4,10 +4,15 @@ import styles from './Disclosure.module.css';
 interface DisclosureProps {
   label: string;
   children: ReactNode;
+  defaultOpen?: boolean;
 }
 
-export function Disclosure({ label, children }: DisclosureProps) {
-  const [open, setOpen] = useState(false);
+export function Disclosure({
+  label,
+  children,
+  defaultOpen = false,
+}: DisclosureProps) {
+  const [open, setOpen] = useState(defaultOpen);
   const contentId = useId();
 
   return (

@@ -78,8 +78,9 @@ test('revises a quizz like an official chapter in free mode and sees it in Mon p
   await page
     .getByRole('button', { name: 'Question du quizz personnel', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Valider' }).click();
-  await expect(page.getByRole('button', { name: 'Valider' })).toHaveCount(0);
+  const detail = page.getByRole('region', { name: 'detaille question' });
+  await detail.getByRole('button', { name: 'Valider' }).click();
+  await expect(detail.getByRole('button', { name: 'Valider' })).toHaveCount(0);
 
   await page.goto('whiteboard');
   await openRevisionOptions(page);
