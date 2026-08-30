@@ -784,6 +784,50 @@ describe('CanvasController', () => {
     vi.unstubAllGlobals();
   });
 
+  it('still fires the hold timer when the pen keeps drifting instead of settling on one exact point', () => {
+    // A real hand can't hold a mathematically fixed point -- it wanders.
+    // Judging stillness by cumulative drift from a single frozen origin
+    // means that wander eventually exceeds any fixed radius and keeps
+    // resetting the 500 ms window forever, so the gesture could never
+    // complete on real hardware even though every individual step is tiny.
+    // Simulate 12 steps that each stay within the per-step tolerance of the
+    // *previous* sample, but whose combined drift (36 logical units) would
+    // have blown past the old fixed-origin tolerance (4 units) many times
+    // over.
+    vi.useFakeTimers();
+    const { controller } = prepareController();
+    controller.pointerDown(
+      pointer(90, 'pen', { clientX: 100, clientY: 200, timeStamp: 0 }),
+    );
+    for (let index = 1; index <= 10; index += 1)
+      controller.pointerMove(
+        pointer(90, 'pen', {
+          clientX: 100 + index * 20,
+          clientY: 200,
+          timeStamp: index * 10,
+        }),
+      );
+    for (let index = 1; index <= 12; index += 1) {
+      vi.advanceTimersByTime(30);
+      controller.pointerMove(
+        pointer(90, 'pen', {
+          clientX: 300 + index * 3,
+          clientY: 200,
+          timeStamp: 100 + index * 30,
+        }),
+      );
+    }
+    vi.advanceTimersByTime(500 - 12 * 30);
+    const snapped = controller.getScene().objects[0];
+    expect(snapped?.kind === 'stroke' ? snapped.points : []).toHaveLength(2);
+    controller.pointerUp(
+      pointer(90, 'pen', { clientX: 336, clientY: 200, timeStamp: 460 }),
+    );
+    controller.destroy();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
   it('snaps a held circular Pencil stroke and keeps ordinary writing unsnapped when disabled', () => {
     vi.useFakeTimers();
     const { controller } = prepareController();
