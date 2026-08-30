@@ -274,6 +274,38 @@ describe('RevisionDrawerPanel', () => {
     ).toBeInTheDocument();
   });
 
+  it('lists a quizz only once when the user is both its owner and a subscriber to its own listing', async () => {
+    quizzes = [
+      {
+        id: 'quizz-1',
+        ownerId: 'user-1',
+        title: 'Mon quizz',
+        description: '',
+        visibility: 'public',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        deletedAt: null,
+      },
+    ];
+    subscribedQuizzes = [
+      {
+        listingId: 'listing-1',
+        quizzId: 'quizz-1',
+        ownerId: 'user-1',
+        title: 'Mon quizz',
+        description: '',
+        certified: false,
+        questions: [],
+      },
+    ];
+    const user = userEvent.setup();
+    render(<RevisionDrawerPanel />);
+    await user.click(await screen.findByRole('button', { name: 'Mes quizz' }));
+    expect(
+      await screen.findAllByRole('option', { name: 'Mon quizz' }),
+    ).toHaveLength(1);
+  });
+
   it('shows the source toggle only when the user has quizzes', () => {
     quizzes = [];
     render(<RevisionDrawerPanel />);
