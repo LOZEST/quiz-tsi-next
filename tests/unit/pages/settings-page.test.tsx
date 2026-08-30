@@ -34,6 +34,9 @@ const question: Question = {
 let snapshot: QuestionWorkspaceSnapshot;
 const load = vi.fn(() => Promise.resolve(snapshot));
 const saveQuestion = vi.fn(() => Promise.resolve());
+const syncQuestionWorkspaceForUser = vi.fn(() =>
+  Promise.resolve({ ok: true as const }),
+);
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -46,6 +49,7 @@ vi.mock('@app/providers/AuthProvider', () => ({
 vi.mock('@app/providers/AppServicesProvider', () => ({
   useAppServices: () => ({
     questionWorkspaceRepository: { load, saveQuestion },
+    syncQuestionWorkspaceForUser,
   }),
 }));
 

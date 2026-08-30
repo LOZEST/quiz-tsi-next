@@ -31,7 +31,6 @@ import type { ProgramIndex } from '@domain/program/Program';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
 import styles from './QuestionsPage.module.css';
 import { QuestionsFolderGrid } from './QuestionsFolderGrid';
-import { syncQuestionWorkspace } from '@features/questions/syncQuestionWorkspace';
 import { readChatGptImportUrl } from '@infrastructure/chatgpt/ChatGptImportConfiguration';
 import { QuestionContentRenderer } from '@features/questions/QuestionContentRenderer';
 import type { InstantiatedContentSegment } from '@domain/questions/QuestionInstantiation';
@@ -48,9 +47,9 @@ export function QuestionsPage() {
   const navigate = useNavigate();
   const {
     questionWorkspaceRepository,
-    questionRemoteGateway,
     programIndex,
     refreshQuestionRepositoryForUser,
+    syncQuestionWorkspaceForUser,
     quizzMarketplaceGateway,
   } = useAppServices();
   const userId = state.status === 'authenticated' ? state.session.user.id : '';
@@ -97,26 +96,21 @@ export function QuestionsPage() {
   }, [reload]);
   const synchronize = useCallback(async () => {
     if (!userId || !navigator.onLine) return;
-    try {
-      await syncQuestionWorkspace(
-        userId,
-        questionWorkspaceRepository,
-        questionRemoteGateway,
-      );
+    // Routed through the shared coordinator (also used by the periodic
+    // background sync and by mutations below) so every trigger coalesces
+    // into a single in-flight run instead of racing the same outbox.
+    const outcome = await syncQuestionWorkspaceForUser(userId);
+    if (outcome.ok) {
       setSyncError(null);
       await reload();
-    } catch (reason) {
+    } else {
       // Sync failures are non-fatal: drafts stay safe in IndexedDB and the
       // next reload/login retries — but silently doing nothing left users
       // with no way to tell "still syncing" from "stuck failing", so surface
       // the reason and let them retry manually.
-      setSyncError(
-        reason instanceof Error
-          ? `Synchronisation impossible : ${reason.message}`
-          : 'Synchronisation impossible : erreur inconnue.',
-      );
+      setSyncError(`Synchronisation impossible : ${outcome.error.message}`);
     }
-  }, [questionRemoteGateway, questionWorkspaceRepository, reload, userId]);
+  }, [syncQuestionWorkspaceForUser, reload, userId]);
   useEffect(() => {
     if (userId && navigator.onLine) void synchronize();
   }, [synchronize, userId]);
@@ -154,6 +148,7 @@ export function QuestionsPage() {
       );
     }
     await reload();
+    void synchronize();
   };
   const validateQuestion = (question: Readonly<Question>) =>
     void validateQuestions([question]);
@@ -174,6 +169,7 @@ export function QuestionsPage() {
       );
     }
     await reload();
+    void synchronize();
   };
   const deleteQuestion = (question: Readonly<Question>) =>
     void deleteQuestions([question]);
@@ -195,6 +191,7 @@ export function QuestionsPage() {
       crypto.randomUUID(),
     );
     await reload();
+    void synchronize();
     setFolderLocation({ kind: 'quizz', courseId: quizz.id });
   };
   const onToggleQuizzVisibility = async (
@@ -228,6 +225,7 @@ export function QuestionsPage() {
       );
     }
     await reload();
+    void synchronize();
   };
   const onUpdateQuizzMeta = async (
     quizzId: string,
@@ -258,6 +256,7 @@ export function QuestionsPage() {
       }
     }
     await reload();
+    void synchronize();
   };
   const onDeleteQuizz = async (quizzId: string) => {
     const quizz = workspace.quizzes.find((item) => item.id === quizzId);
@@ -300,6 +299,7 @@ export function QuestionsPage() {
     }
     setFolderLocation({ kind: 'root' });
     await reload();
+    void synchronize();
   };
 
   const visibleQuizzes = (() => {
@@ -431,7 +431,8 @@ export function QuestionsPage() {
                 onClick={() => {
                   void questionWorkspaceRepository
                     .resolveConflict(userId, conflict.id, choice)
-                    .then(reload);
+                    .then(reload)
+                    .then(synchronize);
                 }}
               >
                 {choice === 'local'
@@ -479,6 +480,7 @@ export function QuestionsPage() {
             setReviewErrors([]);
             setSelectedId(question.id);
             await reload();
+            void synchronize();
           }}
         />
       ) : null}

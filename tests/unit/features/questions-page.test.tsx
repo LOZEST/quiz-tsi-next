@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Question } from '@domain/questions/Question';
 import type { QuestionWorkspaceSnapshot } from '@domain/repositories/QuestionWorkspaceRepository';
 import type { Quizz } from '@domain/questions/quizz/Quizz';
+import { createQuestionWorkspaceSyncCoordinator } from '@features/questions/QuestionWorkspaceSyncCoordinator';
 
 const question = (overrides: Partial<Question> = {}): Question => ({
   id: 'private-1',
@@ -128,6 +129,16 @@ const questionRemoteGateway = {
 const refreshQuestionRepositoryForUser = vi.fn(() => Promise.resolve());
 const publishQuizz = vi.fn(() => Promise.resolve());
 const setOwnListingHidden = vi.fn(() => Promise.resolve());
+// Wired the same way AppServicesProvider builds it, against the same mocked
+// repository/gateway above — so it still exercises real push/pullRecent
+// plumbing rather than a hand-rolled stand-in for the coordinator.
+const syncCoordinator = createQuestionWorkspaceSyncCoordinator(
+  questionWorkspaceRepository,
+  questionRemoteGateway,
+  refreshQuestionRepositoryForUser,
+);
+const syncQuestionWorkspaceForUser = (userId: string) =>
+  syncCoordinator.requestSync(userId);
 
 vi.mock('@app/providers/AuthProvider', () => ({
   useAuth: () => ({
@@ -154,6 +165,7 @@ vi.mock('@app/providers/AppServicesProvider', () => ({
       setOwnListingHidden,
     },
     refreshQuestionRepositoryForUser,
+    syncQuestionWorkspaceForUser,
   }),
 }));
 
@@ -204,6 +216,27 @@ describe('QuestionsPage', () => {
     const createdCourse = saveQuizz.mock.calls[0]?.[1] as Quizz;
     expect(createdCourse.title).toBe('Cinématique');
     expect(createdCourse.deletedAt).toBeNull();
+  });
+
+  it('synchronise automatiquement après la création d’un quizz, sans clic sur "Synchroniser"', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() =>
+      expect(questionRemoteGateway.pullRecent).toHaveBeenCalledTimes(1),
+    );
+    await user.click(
+      await screen.findByRole('button', { name: /Ajoute un quizz/ }),
+    );
+    await user.type(
+      await screen.findByPlaceholderText('Nouveau quizz'),
+      'Cinématique',
+    );
+    await user.click(screen.getByRole('button', { name: 'Créer' }));
+    await waitFor(() => expect(saveQuizz).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(questionRemoteGateway.pullRecent).toHaveBeenCalledTimes(2),
+    );
+    expect(screen.queryByText(/Synchronisation impossible/)).toBeNull();
   });
 
   it('n’affiche que les questions du quizz dont on a ouvert le dossier', async () => {

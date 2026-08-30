@@ -120,7 +120,8 @@ function AccountsPanel({ currentUserId }: { currentUserId: string }) {
 }
 
 function ContentPanel({ userId }: { userId: string }) {
-  const { questionWorkspaceRepository } = useAppServices();
+  const { questionWorkspaceRepository, syncQuestionWorkspaceForUser } =
+    useAppServices();
   const [workspace, setWorkspace] =
     useState<QuestionWorkspaceSnapshot>(emptySnapshot);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -152,6 +153,7 @@ function ContentPanel({ userId }: { userId: string }) {
         crypto.randomUUID(),
       );
       reload();
+      void syncQuestionWorkspaceForUser(userId);
     } finally {
       setBusyId(null);
     }
